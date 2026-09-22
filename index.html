@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apex Forged BMW Wheel Configurator</title>
+    <meta name="description" content="Interactive 3D configurator for custom forged magnesium & aluminum performance wheels on BMW M series with Aston Martin style studio experience, 2D to 3D wheel guide, and brochure requests." />
+    <meta property="og:title" content="Apex Forged BMW Wheel Configurator" />
+    <meta property="og:description" content="Interactive 3D configurator for custom forged magnesium & aluminum performance wheels on BMW M series with Aston Martin style studio experience, 2D to 3D wheel guide, and brochure requests." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              neon: {
+                orange: '#FF5500',
+                glow: '#FF6600',
+                bright: '#FF3D00',
+                soft: '#FF7722',
+                dark: '#CC4400'
+              },
+              vercel: {
+                black: '#000000',
+                dark: '#080808',
+                card: '#0d0d0d',
+                hover: '#141414',
+                border: 'rgba(255, 255, 255, 0.09)',
+                borderHover: 'rgba(255, 255, 255, 0.20)',
+                textMuted: '#888888',
+                textSecondary: '#A1A1A1',
+              }
+            },
+            fontFamily: {
+              sans: ['Verdana', 'Geneva', 'Tahoma', 'sans-serif'],
+              mono: ['Verdana', 'Geneva', 'Tahoma', 'sans-serif'],
+            },
+            boxShadow: {
+              'neon-orange': '0 0 25px rgba(255, 85, 0, 0.35)',
+              'neon-orange-sm': '0 0 12px rgba(255, 85, 0, 0.25)',
+              'neon-orange-lg': '0 0 45px rgba(255, 85, 0, 0.50)',
+              'vercel-card': '0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 32px -4px rgba(0, 0, 0, 0.7)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --color-neon-orange: #FF5500;
+      }
+      *, *::before, *::after {
+        font-family: 'Verdana', Geneva, Tahoma, sans-serif !important;
+      }
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Verdana', Geneva, Tahoma, sans-serif !important;
+        background-color: #000000;
+        color: #EDEDED;
+        letter-spacing: -0.01em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      ::selection {
+        background-color: #FF5500;
+        color: #000000;
+      }
+      /* Site-Wide Verdana typography */
+      .font-mono, .font-sans {
+        font-family: 'Verdana', Geneva, Tahoma, sans-serif !important;
+      }
+      /* Custom Precision Scrollbars */
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #080808;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #222222;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #FF5500;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.985); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      /* Subtle Vercel Ambient Dot Pattern */
+      .bg-vercel-grid {
+        background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      /* Signature Vercel Grid Mesh */
+      .bg-vercel-lines {
+        background-size: 48px 48px;
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      }
+      .mask-radial-top {
+        mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%);
+        -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%);
+      }
+      @keyframes beamRotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .animate-beam-spin {
+        animation: beamRotate 6s linear infinite;
+      }
+      @keyframes beamPulse {
+        0%, 100% { opacity: 0.55; transform: scale(1); }
+        50% { opacity: 0.95; transform: scale(1.04); }
+      }
+      .animate-beam-pulse {
+        animation: beamPulse 4s ease-in-out infinite;
+      }
+      @keyframes raySweep {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.1); }
+        100% { transform: rotate(360deg) scale(1); }
+      }
+      .animate-ray-sweep {
+        animation: raySweep 12s linear infinite;
+      }
+      @keyframes borderBeamTravel {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .animate-border-beam {
+        animation: borderBeamTravel 4s linear infinite;
+      }
+    </style>
+    <link rel="stylesheet" href="/index.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

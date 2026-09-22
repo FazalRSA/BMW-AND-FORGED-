@@ -1,0 +1,6 @@
+{
+  "name": "Apex Forged BMW Wheel Configurator",
+  "description": "Interactive 3D configurator for custom forged magnesium & aluminum performance wheels on BMW M series with Aston Martin style studio experience, 2D to 3D wheel guide, and brochure requests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

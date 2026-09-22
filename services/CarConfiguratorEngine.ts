@@ -1,0 +1,1328 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { 
+  CarModel, 
+  PaintColor, 
+  WheelDesign, 
+  WheelFinish, 
+  CaliperColor, 
+  CameraViewPreset,
+  StudioTheme,
+  Custom2DWheelConfig
+} from '../types';
+
+export class CarConfiguratorEngine {
+  private container: HTMLElement;
+  private scene: THREE.Scene;
+  private camera: THREE.PerspectiveCamera;
+  private renderer: THREE.WebGLRenderer;
+  private animationFrameId: number | null = null;
+  private clock: THREE.Clock;
+
+  // Post-Processing Bloom Pipeline
+  private composer!: EffectComposer;
+  private bloomPass!: UnrealBloomPass;
+  private isBloomEnabled: boolean = true;
+
+  // Car Hierarchy
+  private carGroup: THREE.Group;
+  private bodyMeshGroup: THREE.Group;
+  private wheelsGroup: THREE.Group;
+  private wheelAssemblies: {
+    group: THREE.Group;
+    spinGroup: THREE.Group;
+    spokeMeshGroup: THREE.Group;
+    caliperMesh: THREE.Mesh;
+    discMesh: THREE.Mesh;
+    tireMesh: THREE.Mesh;
+    barrelMesh: THREE.Mesh;
+    isFront: boolean;
+    isRight: boolean;
+  }[] = [];
+
+  // Materials Cache
+  private carBodyMaterial!: THREE.MeshPhysicalMaterial;
+  private wheelMaterial!: THREE.MeshPhysicalMaterial;
+  private caliperMaterial!: THREE.MeshStandardMaterial;
+  private brakeDiscMaterial!: THREE.MeshStandardMaterial;
+  private tireMaterial!: THREE.MeshStandardMaterial;
+  private carbonMaterial!: THREE.MeshPhysicalMaterial;
+  private glassMaterial!: THREE.MeshPhysicalMaterial;
+  private chromeMaterial!: THREE.MeshStandardMaterial;
+  private lightMaterial!: THREE.MeshBasicMaterial;
+  private redLightMaterial!: THREE.MeshBasicMaterial;
+
+  // Environment & Studio
+  private groundMesh!: THREE.Mesh;
+  private studioLightsGroup: THREE.Group;
+  private softboxLight!: THREE.DirectionalLight;
+  private rimLight1!: THREE.DirectionalLight;
+  private rimLight2!: THREE.DirectionalLight;
+  private fillLight!: THREE.AmbientLight;
+
+  // Interactive State
+  private isAutoRotate: boolean = false;
+  private isSpinningWheels: boolean = false;
+  private spinSpeed: number = 0;
+  private rideHeightOffset: number = 0;
+
+  // Camera Controls (Smooth lerping + mouse dragging)
+  private targetCameraPos: THREE.Vector3 = new THREE.Vector3(3.6, 1.4, 3.8);
+  private targetLookAt: THREE.Vector3 = new THREE.Vector3(0, 0.45, 0);
+  private currentLookAt: THREE.Vector3 = new THREE.Vector3(0, 0.45, 0);
+  private isUserInteracting: boolean = false;
+  private pointerDownPos = { x: 0, y: 0 };
+  private spherical = { radius: 5.5, theta: 0.8, phi: 1.25 };
+  private targetSpherical = { radius: 5.5, theta: 0.8, phi: 1.25 };
+
+  // 2D Custom Texture Cache
+  private customWheelTexture: THREE.Texture | null = null;
+
+  // Event Listeners for cleanup
+  private boundOnPointerDown?: (e: MouseEvent | TouchEvent) => void;
+  private boundOnPointerMove?: (e: MouseEvent | TouchEvent) => void;
+  private boundOnPointerUp?: () => void;
+  private boundOnWheel?: (e: WheelEvent) => void;
+
+  // Callbacks
+  private onReady?: () => void;
+
+  constructor(container: HTMLElement, onReady?: () => void) {
+    this.container = container;
+    this.onReady = onReady;
+    this.clock = new THREE.Clock();
+
+    // Scene
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0a0b0d);
+    this.scene.fog = new THREE.FogExp2(0x0a0b0d, 0.04);
+
+    // Safe Dimensions
+    const w = container.clientWidth || window.innerWidth || 800;
+    const h = container.clientHeight || window.innerHeight || 600;
+    const aspect = w / (h > 0 ? h : 1);
+
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 100);
+    this.camera.position.copy(this.targetCameraPos);
+
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    this.renderer.setSize(w, h);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+    this.container.appendChild(this.renderer.domElement);
+
+    // Setup Post-Processing Specular Bloom Pass Pipeline
+    this.setupPostProcessing(w, h);
+
+    // Groups
+    this.carGroup = new THREE.Group();
+    this.bodyMeshGroup = new THREE.Group();
+    this.wheelsGroup = new THREE.Group();
+    this.studioLightsGroup = new THREE.Group();
+
+    this.carGroup.add(this.bodyMeshGroup);
+    this.carGroup.add(this.wheelsGroup);
+    this.scene.add(this.carGroup);
+    this.scene.add(this.studioLightsGroup);
+
+    // Init components
+    this.setupMaterials();
+    this.setupStudioEnvironment();
+    this.setupStudioLighting('studio_dark');
+    this.buildBMWCarBody('coupe');
+    this.buildWheels();
+    this.setupInputHandlers();
+
+    // Generate procedural studio environment reflection
+    this.generateStudioEnvironment();
+
+    // Start loop
+    this.animate = this.animate.bind(this);
+    this.animationFrameId = requestAnimationFrame(this.animate);
+
+    if (this.onReady) {
+      setTimeout(() => this.onReady?.(), 100);
+    }
+  }
+
+  // ----------------------------------------------------
+  // POST-PROCESSING BLOOM PIPELINE
+  // ----------------------------------------------------
+  private setupPostProcessing(width: number, height: number) {
+    const renderTarget = new THREE.WebGLRenderTarget(width, height, {
+      type: THREE.HalfFloatType,
+      format: THREE.RGBAFormat,
+      samples: 4
+    });
+
+    this.composer = new EffectComposer(this.renderer, renderTarget);
+
+    // 1. Base Scene Pass
+    const renderPass = new RenderPass(this.scene, this.camera);
+    this.composer.addPass(renderPass);
+
+    // 2. Unreal Bloom Pass tuned specifically for metallic reflections on forged rims
+    // strength: 0.52 gives radiant specular bloom on high-metalness surfaces
+    // radius: 0.42 gives a tight, photorealistic automotive studio gleam around spoke bevels
+    // threshold: 0.82 selectively blooms high-intensity studio softbox & rim light glints
+    this.bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(width, height),
+      0.52, // strength
+      0.42, // radius
+      0.82  // threshold
+    );
+    this.bloomPass.enabled = this.isBloomEnabled;
+    this.composer.addPass(this.bloomPass);
+
+    // 3. Final Output Pass with ACES Tone Mapping
+    const outputPass = new OutputPass();
+    this.composer.addPass(outputPass);
+  }
+
+  // ----------------------------------------------------
+  // MATERIALS SETUP
+  // ----------------------------------------------------
+  private setupMaterials() {
+    // Car paint (default Isle of Man Green)
+    this.carBodyMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#0d4332'),
+      metalness: 0.72,
+      roughness: 0.18,
+      clearcoat: 0.95,
+      clearcoatRoughness: 0.08,
+      reflectivity: 0.9
+    });
+
+    // Wheel Forged Material (default Liquid Metal)
+    this.wheelMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#d6dde3'),
+      metalness: 0.98,
+      roughness: 0.12,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1
+    });
+
+    // Caliper Material (default M Blue)
+    this.caliperMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#0055b8'),
+      metalness: 0.65,
+      roughness: 0.25
+    });
+
+    // Brake Disc Rotor (Ceramic Slotted)
+    this.brakeDiscMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#787d82'),
+      metalness: 0.88,
+      roughness: 0.32
+    });
+
+    // High Performance Tires
+    this.tireMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#141416'),
+      roughness: 0.85,
+      metalness: 0.08
+    });
+
+    // Carbon Fiber Aerodynamic Components
+    this.carbonMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#161719'),
+      metalness: 0.45,
+      roughness: 0.3,
+      clearcoat: 0.95,
+      clearcoatRoughness: 0.1
+    });
+
+    // Automotive Glass (Deep Smoke tint)
+    this.glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#080a0d'),
+      metalness: 0.1,
+      roughness: 0.05,
+      transmission: 0.7,
+      transparent: true,
+      opacity: 0.82
+    });
+
+    // Chrome/Exhaust
+    this.chromeMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#c0c8cf'),
+      metalness: 0.95,
+      roughness: 0.15
+    });
+
+    // Headlight DRLs (Iconic BMW Hexagonal LED white-blue)
+    this.lightMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#cceeff')
+    });
+
+    // Taillight LEDs
+    this.redLightMaterial = new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#ff1828')
+    });
+  }
+
+  // ----------------------------------------------------
+  // PROCEDURAL STUDIO ENVIRONMENT & LIGHTING
+  // ----------------------------------------------------
+  private setupStudioEnvironment() {
+    // Aston Martin style infinity reflection floor
+    const groundGeo = new THREE.PlaneGeometry(35, 35, 32, 32);
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x0c0e12,
+      roughness: 0.35,
+      metalness: 0.55
+    });
+
+    this.groundMesh = new THREE.Mesh(groundGeo, groundMat);
+    this.groundMesh.rotation.x = -Math.PI / 2;
+    this.groundMesh.position.y = 0;
+    this.groundMesh.receiveShadow = true;
+    this.scene.add(this.groundMesh);
+
+    // Decorative floor target ring with subtle glowing perimeter
+    const ringGeo = new THREE.RingGeometry(2.8, 2.85, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x242d38,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.45
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.rotation.x = -Math.PI / 2;
+    ringMesh.position.y = 0.002;
+    this.scene.add(ringMesh);
+  }
+
+  public setupStudioLighting(theme: StudioTheme) {
+    // Clear existing
+    while (this.studioLightsGroup.children.length > 0) {
+      this.studioLightsGroup.remove(this.studioLightsGroup.children[0]);
+    }
+
+    if (theme === 'studio_dark') {
+      this.scene.background = new THREE.Color(0x0a0b0d);
+      if (this.scene.fog) (this.scene.fog as THREE.FogExp2).color.set(0x0a0b0d);
+
+      this.fillLight = new THREE.AmbientLight(0xffffff, 0.7);
+      this.studioLightsGroup.add(this.fillLight);
+
+      // Key Softbox Overhead (simulating large studio diffuser)
+      this.softboxLight = new THREE.DirectionalLight(0xffffff, 2.2);
+      this.softboxLight.position.set(0, 7, 1);
+      this.softboxLight.castShadow = true;
+      this.softboxLight.shadow.mapSize.width = 2048;
+      this.softboxLight.shadow.mapSize.height = 2048;
+      this.softboxLight.shadow.camera.near = 0.5;
+      this.softboxLight.shadow.camera.far = 15;
+      this.softboxLight.shadow.camera.left = -4;
+      this.softboxLight.shadow.camera.right = 4;
+      this.softboxLight.shadow.camera.top = 4;
+      this.softboxLight.shadow.camera.bottom = -4;
+      this.softboxLight.shadow.bias = -0.0004;
+      this.studioLightsGroup.add(this.softboxLight);
+
+      // Side Rim Light (to sculpt wheel reflections)
+      this.rimLight1 = new THREE.DirectionalLight(0xb0d0ff, 2.4);
+      this.rimLight1.position.set(5, 1.8, 2.5);
+      this.studioLightsGroup.add(this.rimLight1);
+
+      // Opposite Rim Light
+      this.rimLight2 = new THREE.DirectionalLight(0xffdfba, 1.8);
+      this.rimLight2.position.set(-5, 1.8, -2.5);
+      this.studioLightsGroup.add(this.rimLight2);
+
+      // Front low accent for kidney grille & lower lip
+      const frontLowLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      frontLowLight.position.set(0, 0.8, 5.5);
+      this.studioLightsGroup.add(frontLowLight);
+
+      // Rear low accent for quad exhaust
+      const rearLowLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      rearLowLight.position.set(0, 0.8, -5.5);
+      this.studioLightsGroup.add(rearLowLight);
+    } else if (theme === 'studio_pure') {
+      this.scene.background = new THREE.Color(0xdde3ea);
+      if (this.scene.fog) (this.scene.fog as THREE.FogExp2).color.set(0xdde3ea);
+
+      this.fillLight = new THREE.AmbientLight(0xffffff, 1.3);
+      this.studioLightsGroup.add(this.fillLight);
+
+      this.softboxLight = new THREE.DirectionalLight(0xffffff, 2.0);
+      this.softboxLight.position.set(2, 8, 3);
+      this.softboxLight.castShadow = true;
+      this.studioLightsGroup.add(this.softboxLight);
+
+      this.rimLight1 = new THREE.DirectionalLight(0xffffff, 1.5);
+      this.rimLight1.position.set(-4, 2, -2);
+      this.studioLightsGroup.add(this.rimLight1);
+    } else {
+      // Night runway
+      this.scene.background = new THREE.Color(0x050608);
+      if (this.scene.fog) (this.scene.fog as THREE.FogExp2).color.set(0x050608);
+
+      this.fillLight = new THREE.AmbientLight(0x303b4f, 0.5);
+      this.studioLightsGroup.add(this.fillLight);
+
+      this.softboxLight = new THREE.DirectionalLight(0x7090ff, 1.8);
+      this.softboxLight.position.set(2, 6, 2);
+      this.softboxLight.castShadow = true;
+      this.studioLightsGroup.add(this.softboxLight);
+
+      this.rimLight1 = new THREE.DirectionalLight(0xff2a48, 3.2);
+      this.rimLight1.position.set(5, 1.2, -2);
+      this.studioLightsGroup.add(this.rimLight1);
+
+      this.rimLight2 = new THREE.DirectionalLight(0x00f0ff, 3.0);
+      this.rimLight2.position.set(-5, 1.2, 2);
+      this.studioLightsGroup.add(this.rimLight2);
+    }
+  }
+
+  private generateStudioEnvironment() {
+    // Generate an ambient studio reflection cube with soft gradient for realistic metallic reflections
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256);
+    const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRenderTarget);
+    
+    // Create temporary studio dome
+    const domeGeo = new THREE.SphereGeometry(20, 16, 16);
+    const domeMat = new THREE.MeshBasicMaterial({
+      color: 0x181c22,
+      side: THREE.BackSide
+    });
+    const dome = new THREE.Mesh(domeGeo, domeMat);
+    this.scene.add(dome);
+
+    // Render environment
+    cubeCamera.update(this.renderer, this.scene);
+    this.scene.environment = cubeRenderTarget.texture;
+    this.scene.remove(dome);
+    domeGeo.dispose();
+    domeMat.dispose();
+  }
+
+  // ----------------------------------------------------
+  // PROCEDURAL BMW M PERFORMANCE 3D MODEL
+  // ----------------------------------------------------
+  public buildBMWCarBody(bodyStyle: 'coupe' | 'sedan' = 'coupe') {
+    // Clear existing car body
+    while (this.bodyMeshGroup.children.length > 0) {
+      this.bodyMeshGroup.remove(this.bodyMeshGroup.children[0]);
+    }
+
+    const mainBody = new THREE.Group();
+
+    // Dimensions: length ~ 4.7m (Z: -2.3 to +2.4), width ~ 1.9m (X: -0.95 to +0.95), height ~ 1.35m
+    const carYBase = 0.28; // ground clearance above wheels
+
+    // 1. Lower Chassis & Underbody
+    const underbodyGeo = new THREE.BoxGeometry(1.72, 0.12, 4.4);
+    const underbodyMat = new THREE.MeshStandardMaterial({ color: 0x111214, roughness: 0.9 });
+    const underbody = new THREE.Mesh(underbodyGeo, underbodyMat);
+    underbody.position.set(0, carYBase + 0.06, 0);
+    underbody.castShadow = true;
+    mainBody.add(underbody);
+
+    // 2. Main Aerodynamic Fuselage / Cabin Lower Tub
+    const mainTubGeo = new THREE.BoxGeometry(1.82, 0.42, 4.25);
+    const mainTub = new THREE.Mesh(mainTubGeo, this.carBodyMaterial);
+    mainTub.position.set(0, carYBase + 0.28, 0);
+    mainTub.castShadow = true;
+    mainTub.receiveShadow = true;
+    mainBody.add(mainTub);
+
+    // 3. Sculpted Hood (BMW Power Bulge + Dual Character Grooves)
+    const hoodGeo = new THREE.BoxGeometry(1.70, 0.18, 1.45);
+    const hood = new THREE.Mesh(hoodGeo, this.carBodyMaterial);
+    hood.position.set(0, carYBase + 0.44, 1.35);
+    hood.rotation.x = -0.06;
+    hood.castShadow = true;
+    mainBody.add(hood);
+
+    // Central hood powerdome crease
+    const domeGeo = new THREE.BoxGeometry(0.72, 0.05, 1.15);
+    const dome = new THREE.Mesh(domeGeo, this.carBodyMaterial);
+    dome.position.set(0, carYBase + 0.53, 1.32);
+    dome.rotation.x = -0.07;
+    mainBody.add(dome);
+
+    // Carbon Hood Heat Vents
+    const ventL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.02, 0.4), this.carbonMaterial);
+    ventL.position.set(-0.42, carYBase + 0.52, 1.25);
+    const ventR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.02, 0.4), this.carbonMaterial);
+    ventR.position.set(0.42, carYBase + 0.52, 1.25);
+    mainBody.add(ventL, ventR);
+
+    // 4. Iconic BMW M Double Kidney Grille
+    const grilleFrameGeo = new THREE.BoxGeometry(0.38, 0.36, 0.08);
+    const grilleFrameMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.2, metalness: 0.8 });
+    
+    const grilleLeft = new THREE.Mesh(grilleFrameGeo, grilleFrameMat);
+    grilleLeft.position.set(-0.24, carYBase + 0.32, 2.18);
+    const grilleRight = new THREE.Mesh(grilleFrameGeo, grilleFrameMat);
+    grilleRight.position.set(0.24, carYBase + 0.32, 2.18);
+
+    // Slat horizontal bars for M Performance aggressive nose
+    for (let i = -2; i <= 2; i++) {
+      const slatL = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.02, 0.03), grilleFrameMat);
+      slatL.position.set(-0.24, carYBase + 0.32 + i * 0.06, 2.21);
+      const slatR = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.02, 0.03), grilleFrameMat);
+      slatR.position.set(0.24, carYBase + 0.32 + i * 0.06, 2.21);
+      mainBody.add(slatL, slatR);
+    }
+
+    // BMW Roundel Hood Emblem
+    const roundelGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 24);
+    const roundelMat = new THREE.MeshStandardMaterial({ color: 0x0055b8, metalness: 0.5, roughness: 0.2 });
+    const roundel = new THREE.Mesh(roundelGeo, roundelMat);
+    roundel.rotation.x = Math.PI / 2 - 0.06;
+    roundel.position.set(0, carYBase + 0.51, 2.08);
+    mainBody.add(grilleLeft, grilleRight, roundel);
+
+    // 5. Front Aerodynamic Bumper & Lower Carbon Splitter
+    const frontBumperGeo = new THREE.BoxGeometry(1.86, 0.28, 0.35);
+    const frontBumper = new THREE.Mesh(frontBumperGeo, this.carBodyMaterial);
+    frontBumper.position.set(0, carYBase + 0.22, 2.12);
+    frontBumper.castShadow = true;
+    mainBody.add(frontBumper);
+
+    // Carbon fiber front splitter
+    const splitterGeo = new THREE.BoxGeometry(1.92, 0.04, 0.42);
+    const splitter = new THREE.Mesh(splitterGeo, this.carbonMaterial);
+    splitter.position.set(0, carYBase + 0.05, 2.18);
+    splitter.castShadow = true;
+    mainBody.add(splitter);
+
+    // 6. Iconic Hexagonal LED Headlights
+    const headlightGeo = new THREE.BoxGeometry(0.42, 0.12, 0.18);
+    const hlLeft = new THREE.Mesh(headlightGeo, this.lightMaterial);
+    hlLeft.position.set(-0.68, carYBase + 0.42, 2.06);
+    hlLeft.rotation.y = -0.22;
+    const hlRight = new THREE.Mesh(headlightGeo, this.lightMaterial);
+    hlRight.position.set(0.68, carYBase + 0.42, 2.06);
+    hlRight.rotation.y = 0.22;
+    mainBody.add(hlLeft, hlRight);
+
+    // 7. Muscular Flared Wheel Arches (Fenders)
+    // Front Fenders (flared wide for wide forged stance)
+    const fenderGeo = new THREE.BoxGeometry(0.18, 0.38, 0.95);
+    const fenderFL = new THREE.Mesh(fenderGeo, this.carBodyMaterial);
+    fenderFL.position.set(-0.95, carYBase + 0.35, 1.45);
+    const fenderFR = new THREE.Mesh(fenderGeo, this.carBodyMaterial);
+    fenderFR.position.set(0.95, carYBase + 0.35, 1.45);
+
+    // Rear Fenders (extreme widebody hips for deep concave wheel fitment)
+    const rearFenderGeo = new THREE.BoxGeometry(0.22, 0.40, 1.05);
+    const fenderRL = new THREE.Mesh(rearFenderGeo, this.carBodyMaterial);
+    fenderRL.position.set(-0.98, carYBase + 0.38, -1.35);
+    const fenderRR = new THREE.Mesh(rearFenderGeo, this.carBodyMaterial);
+    fenderRR.position.set(0.98, carYBase + 0.38, -1.35);
+
+    mainBody.add(fenderFL, fenderFR, fenderRL, fenderRR);
+
+    // 8. Carbon Fiber Side Skirts / Blades
+    const sideSkirtL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 2.1), this.carbonMaterial);
+    sideSkirtL.position.set(-0.93, carYBase + 0.06, 0.05);
+    const sideSkirtR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 2.1), this.carbonMaterial);
+    sideSkirtR.position.set(0.93, carYBase + 0.06, 0.05);
+    mainBody.add(sideSkirtL, sideSkirtR);
+
+    // 9. Aerodynamic Greenhouse (Cabin, Windows, Windshield)
+    // Cabin Pillar Structure
+    const cabinLength = bodyStyle === 'coupe' ? 2.1 : 2.3;
+    const cabinGeo = new THREE.BoxGeometry(1.52, 0.46, cabinLength);
+    const cabin = new THREE.Mesh(cabinGeo, this.glassMaterial);
+    cabin.position.set(0, carYBase + 0.68, bodyStyle === 'coupe' ? -0.12 : -0.05);
+    cabin.castShadow = true;
+    mainBody.add(cabin);
+
+    // Carbon Fiber Roof with Signature M Double-Bubble Center Channel
+    const roofGeo = new THREE.BoxGeometry(1.44, 0.04, cabinLength * 0.92);
+    const roof = new THREE.Mesh(roofGeo, this.carbonMaterial);
+    roof.position.set(0, carYBase + 0.91, bodyStyle === 'coupe' ? -0.12 : -0.05);
+    roof.castShadow = true;
+    mainBody.add(roof);
+
+    // Roof Center Indentation strip
+    const roofStrip = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.02, cabinLength * 0.9), this.carbonMaterial);
+    roofStrip.position.set(0, carYBase + 0.89, bodyStyle === 'coupe' ? -0.12 : -0.05);
+    mainBody.add(roofStrip);
+
+    // 10. M Stalk Aero Side Mirrors
+    const mirrorStemGeo = new THREE.BoxGeometry(0.04, 0.04, 0.12);
+    const mirrorHousingGeo = new THREE.BoxGeometry(0.24, 0.12, 0.14);
+    
+    // Left mirror
+    const mirLGroup = new THREE.Group();
+    const stemL = new THREE.Mesh(mirrorStemGeo, this.carbonMaterial);
+    const housingL = new THREE.Mesh(mirrorHousingGeo, this.carbonMaterial);
+    housingL.position.set(-0.1, 0.05, 0);
+    housingL.rotation.y = 0.15;
+    mirLGroup.add(stemL, housingL);
+    mirLGroup.position.set(-0.88, carYBase + 0.58, 0.62);
+
+    // Right mirror
+    const mirRGroup = new THREE.Group();
+    const stemR = new THREE.Mesh(mirrorStemGeo, this.carbonMaterial);
+    const housingR = new THREE.Mesh(mirrorHousingGeo, this.carbonMaterial);
+    housingR.position.set(0.1, 0.05, 0);
+    housingR.rotation.y = -0.15;
+    mirRGroup.add(stemR, housingR);
+    mirRGroup.position.set(0.88, carYBase + 0.58, 0.62);
+
+    mainBody.add(mirLGroup, mirRGroup);
+
+    // 11. Rear Decklid, Trunk & Carbon Ducktail Spoiler
+    const trunkGeo = new THREE.BoxGeometry(1.65, 0.28, 0.85);
+    const trunk = new THREE.Mesh(trunkGeo, this.carBodyMaterial);
+    trunk.position.set(0, carYBase + 0.48, -1.78);
+    trunk.rotation.x = 0.08;
+    trunk.castShadow = true;
+    mainBody.add(trunk);
+
+    // Carbon ducktail lip spoiler
+    const spoilerGeo = new THREE.BoxGeometry(1.68, 0.05, 0.18);
+    const spoiler = new THREE.Mesh(spoilerGeo, this.carbonMaterial);
+    spoiler.position.set(0, carYBase + 0.62, -2.18);
+    spoiler.rotation.x = -0.18;
+    spoiler.castShadow = true;
+    mainBody.add(spoiler);
+
+    // 12. Rear Fascia, L-Shaped LED Taillights & Carbon Diffuser
+    const rearBumperGeo = new THREE.BoxGeometry(1.84, 0.32, 0.25);
+    const rearBumper = new THREE.Mesh(rearBumperGeo, this.carBodyMaterial);
+    rearBumper.position.set(0, carYBase + 0.26, -2.22);
+    rearBumper.castShadow = true;
+    mainBody.add(rearBumper);
+
+    // LED Taillights (L-Shaped Signature)
+    const tlLeft = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.09, 0.08), this.redLightMaterial);
+    tlLeft.position.set(-0.58, carYBase + 0.46, -2.28);
+    const tlRight = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.09, 0.08), this.redLightMaterial);
+    tlRight.position.set(0.58, carYBase + 0.46, -2.28);
+    mainBody.add(tlLeft, tlRight);
+
+    // Rear Carbon Diffuser with Vertical Aero Fins
+    const diffuserGeo = new THREE.BoxGeometry(1.65, 0.16, 0.38);
+    const diffuser = new THREE.Mesh(diffuserGeo, this.carbonMaterial);
+    diffuser.position.set(0, carYBase + 0.08, -2.18);
+    diffuser.castShadow = true;
+    mainBody.add(diffuser);
+
+    for (let i = -2; i <= 2; i++) {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.28), this.carbonMaterial);
+      fin.position.set(i * 0.28, carYBase + 0.06, -2.22);
+      mainBody.add(fin);
+    }
+
+    // Quad Titanium Exhaust Tips (M Performance hallmark)
+    const exhaustGeo = new THREE.CylinderGeometry(0.048, 0.048, 0.22, 24);
+    exhaustGeo.rotateX(Math.PI / 2);
+    const exhaustMat = new THREE.MeshStandardMaterial({ 
+      color: 0x405060, 
+      metalness: 0.95, 
+      roughness: 0.18 
+    });
+
+    const exhaust1 = new THREE.Mesh(exhaustGeo, exhaustMat);
+    exhaust1.position.set(-0.52, carYBase + 0.10, -2.32);
+    const exhaust2 = new THREE.Mesh(exhaustGeo, exhaustMat);
+    exhaust2.position.set(-0.38, carYBase + 0.10, -2.32);
+    const exhaust3 = new THREE.Mesh(exhaustGeo, exhaustMat);
+    exhaust3.position.set(0.38, carYBase + 0.10, -2.32);
+    const exhaust4 = new THREE.Mesh(exhaustGeo, exhaustMat);
+    exhaust4.position.set(0.52, carYBase + 0.10, -2.32);
+    mainBody.add(exhaust1, exhaust2, exhaust3, exhaust4);
+
+    this.bodyMeshGroup.add(mainBody);
+  }
+
+  // ----------------------------------------------------
+  // HIGH-DETAIL FORGED WHEEL ASSEMBLIES
+  // ----------------------------------------------------
+  private buildWheels() {
+    // Clear existing
+    while (this.wheelsGroup.children.length > 0) {
+      this.wheelsGroup.remove(this.wheelsGroup.children[0]);
+    }
+    this.wheelAssemblies = [];
+
+    // BMW M Wheelbase & Track Specs
+    const wheelPositions = [
+      { x: -0.92, y: 0.35, z: 1.45, isFront: true, isRight: false },  // Front Left
+      { x: 0.92, y: 0.35, z: 1.45, isFront: true, isRight: true },    // Front Right
+      { x: -0.94, y: 0.35, z: -1.38, isFront: false, isRight: false }, // Rear Left (wider track)
+      { x: 0.94, y: 0.35, z: -1.38, isFront: false, isRight: true }    // Rear Right (wider track)
+    ];
+
+    wheelPositions.forEach((wp) => {
+      const assemblyGroup = new THREE.Group();
+      assemblyGroup.position.set(wp.x, wp.y, wp.z);
+
+      // Rotation orientation: wheels on right side face outward along +X, left face outward along -X
+      if (wp.isRight) {
+        assemblyGroup.rotation.y = 0; // facing +X
+      } else {
+        assemblyGroup.rotation.y = Math.PI; // facing -X
+      }
+
+      // Spin group rotates around Z-axis in local space (or X in world)
+      const spinGroup = new THREE.Group();
+
+      // 1. TIRE (Low profile ultra-high performance Pilot Sport Cup 2 style)
+      // Radius: 0.35m (~27.5 inch outer diameter), width ~ 0.28m
+      const tireWidth = wp.isFront ? 0.26 : 0.30;
+      const tireRadius = 0.35;
+      const rimRadius = 0.26; // 20-inch rim
+
+      const tireGeo = new THREE.CylinderGeometry(tireRadius, tireRadius, tireWidth, 48, 4, true);
+      tireGeo.rotateZ(Math.PI / 2);
+      const tireMesh = new THREE.Mesh(tireGeo, this.tireMaterial);
+      tireMesh.castShadow = true;
+      spinGroup.add(tireMesh);
+
+      // Tire sidewall bevels
+      const sidewallGeo1 = new THREE.RingGeometry(rimRadius, tireRadius, 48);
+      sidewallGeo1.rotateY(Math.PI / 2);
+      const sidewallOuter = new THREE.Mesh(sidewallGeo1, this.tireMaterial);
+      sidewallOuter.position.x = tireWidth / 2;
+      const sidewallInner = new THREE.Mesh(sidewallGeo1, this.tireMaterial);
+      sidewallInner.position.x = -tireWidth / 2;
+      sidewallInner.rotation.y = Math.PI;
+      spinGroup.add(sidewallOuter, sidewallInner);
+
+      // 2. FORGED WHEEL BARREL / RIM LIP
+      const barrelGeo = new THREE.CylinderGeometry(rimRadius, rimRadius * 0.96, tireWidth * 0.95, 48, 1, true);
+      barrelGeo.rotateZ(Math.PI / 2);
+      const barrelMesh = new THREE.Mesh(barrelGeo, this.wheelMaterial);
+      spinGroup.add(barrelMesh);
+
+      // Stepped polished outer rim lip ring
+      const lipGeo = new THREE.TorusGeometry(rimRadius * 0.98, 0.012, 16, 48);
+      lipGeo.rotateY(Math.PI / 2);
+      const lipMesh = new THREE.Mesh(lipGeo, this.wheelMaterial);
+      lipMesh.position.x = tireWidth / 2 - 0.01;
+      spinGroup.add(lipMesh);
+
+      // 3. SPOKE MESH GROUP (Replaced dynamically when wheel design changes)
+      const spokeMeshGroup = new THREE.Group();
+      spokeMeshGroup.position.x = tireWidth / 2 - 0.025; // outer face of wheel
+      spinGroup.add(spokeMeshGroup);
+
+      // 4. CENTER CAP & TITANIUM LUG BOLTS
+      const centerCapGeo = new THREE.CylinderGeometry(0.042, 0.042, 0.02, 32);
+      centerCapGeo.rotateZ(Math.PI / 2);
+      const centerCapMat = new THREE.MeshStandardMaterial({
+        color: 0x0f1114,
+        metalness: 0.9,
+        roughness: 0.2
+      });
+      const centerCap = new THREE.Mesh(centerCapGeo, centerCapMat);
+      centerCap.position.x = tireWidth / 2 - 0.015;
+      spinGroup.add(centerCap);
+
+      // 5 Lug Bolts (Titanium star pattern)
+      for (let l = 0; l < 5; l++) {
+        const angle = (l * Math.PI * 2) / 5;
+        const boltGeo = new THREE.CylinderGeometry(0.009, 0.009, 0.015, 12);
+        boltGeo.rotateZ(Math.PI / 2);
+        const bolt = new THREE.Mesh(boltGeo, this.chromeMaterial);
+        bolt.position.set(tireWidth / 2 - 0.02, Math.cos(angle) * 0.075, Math.sin(angle) * 0.075);
+        spinGroup.add(bolt);
+      }
+
+      assemblyGroup.add(spinGroup);
+
+      // 5. STATIONARY BRAKE ROTOR DISC (Inside the wheel)
+      const rotorRadius = wp.isFront ? 0.21 : 0.19; // huge 400mm carbon ceramic discs
+      const discGeo = new THREE.CylinderGeometry(rotorRadius, rotorRadius, 0.025, 36);
+      discGeo.rotateZ(Math.PI / 2);
+      const discMesh = new THREE.Mesh(discGeo, this.brakeDiscMaterial);
+      discMesh.position.x = 0.02;
+      assemblyGroup.add(discMesh);
+
+      // Slotted Cross-Drilled Rotor Hat (Center bell)
+      const hatGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.035, 24);
+      hatGeo.rotateZ(Math.PI / 2);
+      const hatMesh = new THREE.Mesh(hatGeo, this.chromeMaterial);
+      hatMesh.position.x = 0.035;
+      assemblyGroup.add(hatMesh);
+
+      // 6. STATIONARY MONOBLOCK BRAKE CALIPER (M Performance 6-Piston)
+      const caliperGeo = new THREE.BoxGeometry(0.07, 0.14, 0.22);
+      const caliperMesh = new THREE.Mesh(caliperGeo, this.caliperMaterial);
+      caliperMesh.position.set(0.04, 0.12, 0.11);
+      caliperMesh.rotation.x = 0.25;
+      assemblyGroup.add(caliperMesh);
+
+      this.wheelsGroup.add(assemblyGroup);
+
+      this.wheelAssemblies.push({
+        group: assemblyGroup,
+        spinGroup,
+        spokeMeshGroup,
+        caliperMesh,
+        discMesh,
+        tireMesh,
+        barrelMesh,
+        isFront: wp.isFront,
+        isRight: wp.isRight
+      });
+    });
+  }
+
+  // ----------------------------------------------------
+  // PROCEDURAL SPOKE GENERATION FOR FORGED WHEEL DESIGNS
+  // ----------------------------------------------------
+  public applyWheelDesign(wheel: WheelDesign, custom2DConfig?: Custom2DWheelConfig) {
+    this.wheelAssemblies.forEach((assembly) => {
+      // Clear spokes
+      while (assembly.spokeMeshGroup.children.length > 0) {
+        assembly.spokeMeshGroup.remove(assembly.spokeMeshGroup.children[0]);
+      }
+
+      // If custom 2D image texture is provided and active:
+      if (custom2DConfig && custom2DConfig.imageUrl) {
+        this.applyCustom2DSpokeTexture(assembly.spokeMeshGroup, custom2DConfig, assembly.isFront);
+        return;
+      }
+
+      const outerR = 0.245;
+      const innerR = 0.055;
+      const concavity = assembly.isFront ? 0.025 : 0.055; // deeper concave for rear forged wheels!
+
+      switch (wheel.spokeType) {
+        case 'multi': // FW-01 Apex Monoblock GT3 (9 spokes)
+          this.buildMultiSpokeGeometry(assembly.spokeMeshGroup, 9, outerR, innerR, concavity);
+          break;
+
+        case 'aerodisc': // FW-02 AeroDisc Motorsport (Split 5 + aero carbon ring)
+          this.buildAeroDiscGeometry(assembly.spokeMeshGroup, outerR, innerR, concavity);
+          break;
+
+        case 'y_spoke': // FW-03 Competition CSL Y-Spoke (5 split Y-spokes)
+          this.buildYSpokeGeometry(assembly.spokeMeshGroup, 5, outerR, innerR, concavity);
+          break;
+
+        case 'directional': // FW-04 Vortex Turbine
+          this.buildTurbineSpokeGeometry(assembly.spokeMeshGroup, 10, outerR, innerR, concavity, assembly.isRight);
+          break;
+
+        case 'mesh': // FW-05 DTM High Density (15 spokes)
+          this.buildMultiSpokeGeometry(assembly.spokeMeshGroup, 15, outerR, innerR, concavity);
+          break;
+
+        case 'clubsport': // FW-06 Clubsport 2-Piece Stepped Lip (5 chunky spokes + perimeter hardware)
+          this.buildClubsportSpokeGeometry(assembly.spokeMeshGroup, outerR, innerR, concavity);
+          break;
+
+        default:
+          this.buildMultiSpokeGeometry(assembly.spokeMeshGroup, 10, outerR, innerR, concavity);
+          break;
+      }
+    });
+  }
+
+  // 1. Multi-spoke Monoblock (Apex GT3 / DTM)
+  private buildMultiSpokeGeometry(parent: THREE.Group, count: number, outerR: number, innerR: number, concavity: number) {
+    const spokeGroup = new THREE.Group();
+    const length = outerR - innerR;
+
+    for (let i = 0; i < count; i++) {
+      const angle = (i * Math.PI * 2) / count;
+      const spokeGeo = new THREE.BoxGeometry(0.018, length, 0.028);
+      const spoke = new THREE.Mesh(spokeGeo, this.wheelMaterial);
+      
+      // Position along radius
+      const midR = innerR + length / 2;
+      spoke.position.set(-concavity * (midR / outerR), Math.cos(angle) * midR, Math.sin(angle) * midR);
+      spoke.rotation.x = -angle;
+      // Slight taper/concave angle
+      spoke.rotation.z = Math.atan2(concavity, length) * (Math.cos(angle) > 0 ? 1 : -1) * 0.2;
+      spokeGroup.add(spoke);
+
+      // Lightening pocket cutout on each spoke
+      const pocketGeo = new THREE.BoxGeometry(0.02, length * 0.55, 0.012);
+      const pocket = new THREE.Mesh(pocketGeo, this.wheelMaterial);
+      pocket.position.copy(spoke.position);
+      pocket.position.x += 0.006;
+      pocket.rotation.copy(spoke.rotation);
+      spokeGroup.add(pocket);
+    }
+
+    parent.add(spokeGroup);
+  }
+
+  // 2. AeroDisc Turbofan Spoke with Carbon Outer Extraction Ring
+  private buildAeroDiscGeometry(parent: THREE.Group, outerR: number, innerR: number, concavity: number) {
+    const group = new THREE.Group();
+
+    // Split 5-spoke base
+    this.buildYSpokeGeometry(group, 5, outerR * 0.95, innerR, concavity);
+
+    // Carbon fiber aerodynamic outer extraction disc
+    const ringGeo = new THREE.RingGeometry(outerR * 0.68, outerR * 0.98, 48);
+    ringGeo.rotateY(Math.PI / 2);
+    const aeroRing = new THREE.Mesh(ringGeo, this.carbonMaterial);
+    aeroRing.position.x = -concavity * 0.4;
+    group.add(aeroRing);
+
+    // 10 aerodynamic turbofan cooling air extraction slots
+    for (let i = 0; i < 10; i++) {
+      const angle = (i * Math.PI * 2) / 10;
+      const slotGeo = new THREE.BoxGeometry(0.015, 0.055, 0.018);
+      const slot = new THREE.Mesh(slotGeo, this.wheelMaterial);
+      const slotR = outerR * 0.82;
+      slot.position.set(-concavity * 0.45, Math.cos(angle) * slotR, Math.sin(angle) * slotR);
+      slot.rotation.x = -angle + 0.35; // angled blade
+      group.add(slot);
+    }
+
+    parent.add(group);
+  }
+
+  // 3. Heritage CSL Deep Concave Y-Spoke (5 pairs of branching Y spokes)
+  private buildYSpokeGeometry(parent: THREE.Group, pairs: number, outerR: number, innerR: number, concavity: number) {
+    const group = new THREE.Group();
+    const midR = innerR + (outerR - innerR) * 0.42;
+
+    for (let i = 0; i < pairs; i++) {
+      const baseAngle = (i * Math.PI * 2) / pairs;
+
+      // Base main root spoke
+      const rootLength = midR - innerR;
+      const rootGeo = new THREE.BoxGeometry(0.022, rootLength, 0.034);
+      const root = new THREE.Mesh(rootGeo, this.wheelMaterial);
+      const rPos = innerR + rootLength / 2;
+      root.position.set(-concavity * (rPos / outerR), Math.cos(baseAngle) * rPos, Math.sin(baseAngle) * rPos);
+      root.rotation.x = -baseAngle;
+      group.add(root);
+
+      // Branch 1
+      const branchLength = outerR - midR;
+      const bAngle1 = baseAngle - 0.16;
+      const branchGeo1 = new THREE.BoxGeometry(0.016, branchLength, 0.024);
+      const b1 = new THREE.Mesh(branchGeo1, this.wheelMaterial);
+      const bPos1 = midR + branchLength / 2;
+      b1.position.set(-concavity * (bPos1 / outerR), Math.cos(bAngle1) * bPos1, Math.sin(bAngle1) * bPos1);
+      b1.rotation.x = -bAngle1 - 0.12;
+      group.add(b1);
+
+      // Branch 2
+      const bAngle2 = baseAngle + 0.16;
+      const branchGeo2 = new THREE.BoxGeometry(0.016, branchLength, 0.024);
+      const b2 = new THREE.Mesh(branchGeo2, this.wheelMaterial);
+      const bPos2 = midR + branchLength / 2;
+      b2.position.set(-concavity * (bPos2 / outerR), Math.cos(bAngle2) * bPos2, Math.sin(bAngle2) * bPos2);
+      b2.rotation.x = -bAngle2 + 0.12;
+      group.add(b2);
+    }
+
+    parent.add(group);
+  }
+
+  // 4. Directional Turbine Vortex Spoke
+  private buildTurbineSpokeGeometry(parent: THREE.Group, count: number, outerR: number, innerR: number, concavity: number, isRight: boolean) {
+    const group = new THREE.Group();
+    const length = outerR - innerR;
+    const direction = isRight ? 1 : -1;
+
+    for (let i = 0; i < count; i++) {
+      const angle = (i * Math.PI * 2) / count;
+      const spokeGeo = new THREE.BoxGeometry(0.016, length, 0.038);
+      const spoke = new THREE.Mesh(spokeGeo, this.wheelMaterial);
+      const midR = innerR + length / 2;
+      spoke.position.set(-concavity * (midR / outerR), Math.cos(angle) * midR, Math.sin(angle) * midR);
+      spoke.rotation.x = -angle;
+      spoke.rotation.y = direction * 0.38; // twist blade angle for vortex effect
+      group.add(spoke);
+    }
+
+    parent.add(group);
+  }
+
+  // 5. Clubsport 2-Piece Modular Stepped Lip
+  private buildClubsportSpokeGeometry(parent: THREE.Group, outerR: number, innerR: number, concavity: number) {
+    const group = new THREE.Group();
+    const length = outerR * 0.88 - innerR;
+
+    // 5 bold forged face spokes
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * Math.PI * 2) / 5;
+      const spokeGeo = new THREE.BoxGeometry(0.025, length, 0.065);
+      const spoke = new THREE.Mesh(spokeGeo, this.wheelMaterial);
+      const midR = innerR + length / 2;
+      spoke.position.set(-concavity * (midR / outerR), Math.cos(angle) * midR, Math.sin(angle) * midR);
+      spoke.rotation.x = -angle;
+      group.add(spoke);
+    }
+
+    // 2-piece stepped lip step ring
+    const stepGeo = new THREE.RingGeometry(outerR * 0.86, outerR * 0.98, 48);
+    stepGeo.rotateY(Math.PI / 2);
+    const stepMesh = new THREE.Mesh(stepGeo, this.wheelMaterial);
+    stepMesh.position.x = -concavity * 0.25;
+    group.add(stepMesh);
+
+    // 24 perimeter ARP aerospace titanium assembly bolts
+    for (let b = 0; b < 24; b++) {
+      const bAngle = (b * Math.PI * 2) / 24;
+      const boltGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.012, 8);
+      boltGeo.rotateZ(Math.PI / 2);
+      const bolt = new THREE.Mesh(boltGeo, this.chromeMaterial);
+      const bR = outerR * 0.89;
+      bolt.position.set(-concavity * 0.22, Math.cos(bAngle) * bR, Math.sin(bAngle) * bR);
+      group.add(bolt);
+    }
+
+    parent.add(group);
+  }
+
+  // ----------------------------------------------------
+  // 2D-TO-3D WHEEL IMAGE PROJECTION PIPELINE
+  // ----------------------------------------------------
+  private applyCustom2DSpokeTexture(parent: THREE.Group, config: Custom2DWheelConfig, isFront: boolean) {
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      config.imageUrl,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        this.customWheelTexture = texture;
+
+        const outerR = 0.245;
+        const concavity = isFront ? 0.025 : 0.055;
+
+        // Create dual-sided circular face disc with alpha cutout
+        const faceGeo = new THREE.CircleGeometry(outerR, 64);
+        faceGeo.rotateY(Math.PI / 2);
+
+        const customMat = new THREE.MeshPhysicalMaterial({
+          map: texture,
+          transparent: true,
+          alphaTest: config.spokeThreshold || 0.15,
+          metalness: this.wheelMaterial.metalness,
+          roughness: this.wheelMaterial.roughness,
+          clearcoat: this.wheelMaterial.clearcoat,
+          color: this.wheelMaterial.color,
+          bumpMap: texture,
+          bumpScale: config.bumpScale || 0.012,
+          side: THREE.DoubleSide
+        });
+
+        const faceMesh = new THREE.Mesh(faceGeo, customMat);
+        faceMesh.position.x = -concavity * 0.5;
+        parent.add(faceMesh);
+
+        // Add 3D structural back support ring
+        const supportRing = new THREE.Mesh(
+          new THREE.TorusGeometry(outerR * 0.95, 0.01, 16, 48),
+          this.wheelMaterial
+        );
+        supportRing.position.x = -concavity * 0.6;
+        supportRing.rotation.y = Math.PI / 2;
+        parent.add(supportRing);
+      },
+      undefined,
+      (err) => {
+        console.warn('Failed to load custom 2D wheel texture:', err);
+      }
+    );
+  }
+
+  // ----------------------------------------------------
+  // COLOR & FINISH UPDATES
+  // ----------------------------------------------------
+  public applyPaintColor(paint: PaintColor) {
+    this.carBodyMaterial.color.set(paint.hex);
+    this.carBodyMaterial.roughness = paint.roughness;
+    this.carBodyMaterial.metalness = paint.metalness;
+    this.carBodyMaterial.clearcoat = paint.clearcoat;
+    this.carBodyMaterial.clearcoatRoughness = paint.clearcoatRoughness;
+    this.carBodyMaterial.needsUpdate = true;
+  }
+
+  public applyWheelFinish(finish: WheelFinish) {
+    this.wheelMaterial.color.set(finish.hex);
+    this.wheelMaterial.roughness = finish.roughness;
+    this.wheelMaterial.metalness = finish.metalness;
+    this.wheelMaterial.clearcoat = finish.clearcoat;
+    this.wheelMaterial.needsUpdate = true;
+
+    // Also update barrel meshes
+    this.wheelAssemblies.forEach((a) => {
+      a.barrelMesh.material = this.wheelMaterial;
+    });
+  }
+
+  public applyCaliperColor(caliper: CaliperColor) {
+    this.caliperMaterial.color.set(caliper.hex);
+    this.caliperMaterial.needsUpdate = true;
+  }
+
+  public setRideHeight(dropMeters: number) {
+    this.rideHeightOffset = dropMeters;
+    // Lower car chassis relative to wheels
+    this.bodyMeshGroup.position.y = dropMeters;
+  }
+
+  // ----------------------------------------------------
+  // CAMERA VIEW PRESETS (Aston Martin style)
+  // ----------------------------------------------------
+  public setCameraPreset(view: CameraViewPreset) {
+    switch (view) {
+      case 'frontThreeQuarter':
+        this.targetCameraPos.set(3.5, 1.35, 3.6);
+        this.targetLookAt.set(0, 0.45, 0.3);
+        break;
+
+      case 'side':
+        this.targetCameraPos.set(4.9, 0.95, 0.0);
+        this.targetLookAt.set(0, 0.45, 0.0);
+        break;
+
+      case 'frontWheel':
+        // Close-up on Front Left forged wheel
+        this.targetCameraPos.set(2.2, 0.48, 1.8);
+        this.targetLookAt.set(0.92, 0.35, 1.45);
+        break;
+
+      case 'rearWheel':
+        // Close-up on Rear Left deep concave wheel
+        this.targetCameraPos.set(2.3, 0.48, -1.2);
+        this.targetLookAt.set(0.94, 0.35, -1.38);
+        break;
+
+      case 'rearThreeQuarter':
+        this.targetCameraPos.set(3.6, 1.30, -3.5);
+        this.targetLookAt.set(0, 0.45, -0.4);
+        break;
+
+      case 'top':
+        this.targetCameraPos.set(0.1, 5.8, 0.1);
+        this.targetLookAt.set(0, 0.2, 0);
+        break;
+    }
+
+    // Convert targetCameraPos to spherical coordinates for seamless orbit continuity
+    const offset = new THREE.Vector3().subVectors(this.targetCameraPos, this.targetLookAt);
+    this.targetSpherical.radius = offset.length();
+    this.targetSpherical.theta = Math.atan2(offset.x, offset.z);
+    this.targetSpherical.phi = Math.acos(THREE.MathUtils.clamp(offset.y / this.targetSpherical.radius, -1, 1));
+  }
+
+  public setAutoRotate(enabled: boolean) {
+    this.isAutoRotate = enabled;
+  }
+
+  public setSpinningWheels(enabled: boolean, kmh: number = 50) {
+    this.isSpinningWheels = enabled;
+    // Calculate angular velocity rad/sec based on tire circumference ~ 2.2m
+    this.spinSpeed = enabled ? (kmh * 1000 / 3600) / 0.35 : 0;
+  }
+
+  // ----------------------------------------------------
+  // INPUT HANDLERS (Smooth orbital rotation & zoom)
+  // ----------------------------------------------------
+  private setupInputHandlers() {
+    const el = this.container;
+
+    this.boundOnPointerDown = (e: MouseEvent | TouchEvent) => {
+      this.isUserInteracting = true;
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      this.pointerDownPos.x = clientX;
+      this.pointerDownPos.y = clientY;
+    };
+
+    this.boundOnPointerMove = (e: MouseEvent | TouchEvent) => {
+      if (!this.isUserInteracting) return;
+
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - this.pointerDownPos.x;
+      const deltaY = clientY - this.pointerDownPos.y;
+
+      this.pointerDownPos.x = clientX;
+      this.pointerDownPos.y = clientY;
+
+      // Orbit sensitivity
+      this.targetSpherical.theta -= deltaX * 0.007;
+      this.targetSpherical.phi = THREE.MathUtils.clamp(
+        this.targetSpherical.phi - deltaY * 0.007,
+        0.15,
+        Math.PI / 2 - 0.05 // don't go below ground
+      );
+    };
+
+    this.boundOnPointerUp = () => {
+      this.isUserInteracting = false;
+    };
+
+    this.boundOnWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      this.targetSpherical.radius = THREE.MathUtils.clamp(
+        this.targetSpherical.radius + e.deltaY * 0.0035,
+        2.0,
+        9.0
+      );
+    };
+
+    el.addEventListener('mousedown', this.boundOnPointerDown);
+    window.addEventListener('mousemove', this.boundOnPointerMove);
+    window.addEventListener('mouseup', this.boundOnPointerUp);
+
+    el.addEventListener('touchstart', this.boundOnPointerDown, { passive: true });
+    window.addEventListener('touchmove', this.boundOnPointerMove, { passive: true });
+    window.addEventListener('touchend', this.boundOnPointerUp);
+
+    el.addEventListener('wheel', this.boundOnWheel, { passive: false });
+  }
+
+  public handleResize() {
+    if (!this.container || !this.renderer || !this.camera) return;
+    const w = this.container.clientWidth || window.innerWidth || 800;
+    const h = this.container.clientHeight || window.innerHeight || 600;
+    if (h <= 0) return;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+    if (this.composer) {
+      this.composer.setSize(w, h);
+    }
+    if (this.bloomPass) {
+      this.bloomPass.resolution.set(w, h);
+    }
+  }
+
+  // ----------------------------------------------------
+  // ANIMATION LOOP
+  // ----------------------------------------------------
+  private animate() {
+    this.animationFrameId = requestAnimationFrame(this.animate);
+    const delta = this.clock.getDelta();
+
+    // Auto turntable rotation if idle
+    if (this.isAutoRotate && !this.isUserInteracting) {
+      this.targetSpherical.theta += 0.25 * delta;
+    }
+
+    // Smooth lerp spherical to target
+    this.spherical.radius += (this.targetSpherical.radius - this.spherical.radius) * 0.08;
+    this.spherical.theta += (this.targetSpherical.theta - this.spherical.theta) * 0.08;
+    this.spherical.phi += (this.targetSpherical.phi - this.spherical.phi) * 0.08;
+
+    // Calculate actual camera pos from spherical
+    const x = this.spherical.radius * Math.sin(this.spherical.phi) * Math.sin(this.spherical.theta);
+    const y = this.spherical.radius * Math.cos(this.spherical.phi);
+    const z = this.spherical.radius * Math.sin(this.spherical.phi) * Math.cos(this.spherical.theta);
+
+    this.camera.position.set(
+      this.currentLookAt.x + x,
+      this.currentLookAt.y + y,
+      this.currentLookAt.z + z
+    );
+
+    // Smooth lookAt target lerping
+    this.currentLookAt.lerp(this.targetLookAt, 0.08);
+    this.camera.lookAt(this.currentLookAt);
+
+    // Wheel spin animation
+    if (this.isSpinningWheels) {
+      this.wheelAssemblies.forEach((assembly) => {
+        // Spin around Z axis in local space
+        assembly.spinGroup.rotation.z += this.spinSpeed * delta * (assembly.isRight ? -1 : 1);
+      });
+    }
+
+    // Render frame through Post-Processing Bloom composer or direct WebGL fallback
+    if (this.isBloomEnabled && this.composer) {
+      this.composer.render();
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
+  }
+
+  // ----------------------------------------------------
+  // CLEANUP
+  // ----------------------------------------------------
+  public cleanup() {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+
+    // Detach event listeners
+    if (this.container && this.boundOnPointerDown) {
+      this.container.removeEventListener('mousedown', this.boundOnPointerDown);
+      this.container.removeEventListener('touchstart', this.boundOnPointerDown);
+    }
+    if (this.boundOnPointerMove) {
+      window.removeEventListener('mousemove', this.boundOnPointerMove);
+      window.removeEventListener('touchmove', this.boundOnPointerMove);
+    }
+    if (this.boundOnPointerUp) {
+      window.removeEventListener('mouseup', this.boundOnPointerUp);
+      window.removeEventListener('touchend', this.boundOnPointerUp);
+    }
+    if (this.container && this.boundOnWheel) {
+      this.container.removeEventListener('wheel', this.boundOnWheel);
+    }
+
+    if (this.composer) {
+      this.composer.dispose();
+    }
+
+    if (this.renderer) {
+      if (this.renderer.domElement && this.renderer.domElement.parentNode === this.container) {
+        this.container.removeChild(this.renderer.domElement);
+      }
+      this.renderer.dispose();
+    }
+    if (this.customWheelTexture) {
+      this.customWheelTexture.dispose();
+    }
+  }
+
+  // ----------------------------------------------------
+  // PUBLIC BLOOM PASS CONTROLS
+  // ----------------------------------------------------
+  public setBloomEnabled(enabled: boolean) {
+    this.isBloomEnabled = enabled;
+    if (this.bloomPass) {
+      this.bloomPass.enabled = enabled;
+    }
+  }
+
+  public getBloomEnabled(): boolean {
+    return this.isBloomEnabled;
+  }
+
+  public setBloomStrength(strength: number) {
+    if (this.bloomPass) {
+      this.bloomPass.strength = strength;
+    }
+  }
+
+  public setBloomThreshold(threshold: number) {
+    if (this.bloomPass) {
+      this.bloomPass.threshold = threshold;
+    }
+  }
+
+  public setBloomRadius(radius: number) {
+    if (this.bloomPass) {
+      this.bloomPass.radius = radius;
+    }
+  }
+}
