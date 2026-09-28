@@ -6,6 +6,17 @@ A modern, interactive wheel configurator for BMW vehicles, built with TypeScript
 
 ---
 
+## 🌟 Outstanding Highlights
+
+- **Luxury Brand Experience** – Designed to match the premium look and feel of BMW styling.
+- **Real-Time Visual Feedback** – See updates instantly as wheel configuration changes are applied.
+- **High-End Customization Flow** – Tailor finish, size, style, and aesthetic preferences in a smooth experience.
+- **Interactive Product Storytelling** – Turns wheel selection into a premium digital showroom experience.
+- **TypeScript-Powered Reliability** – Maintains clean logic and scalable front-end architecture.
+- **Modern UI/UX Approach** – Built for a polished, responsive, and highly engaging user journey.
+
+---
+
 ## ✨ Features
 
 - **🎨 Interactive Visualization** – Real-time wheel preview and customization
