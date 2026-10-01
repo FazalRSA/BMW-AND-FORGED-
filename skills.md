@@ -59,3 +59,10 @@ npm run build
 ## Notes
 
 This file is intended to communicate the technical skills and workflow expectations for contributors and automation working in this repository.
+
+## Project-specific playbooks
+
+The capabilities above are written up as step-by-step playbooks (exact files, commands, values
+and known pitfalls) in `.claude/skills/`, indexed in [`docs/SKILLS.md`](docs/SKILLS.md). Claude
+Code loads them automatically. This project uses **bun**: `bun install`, `bun run dev`,
+`bun run build`, `bun run lint`.

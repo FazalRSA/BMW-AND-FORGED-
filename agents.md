@@ -58,3 +58,9 @@ This repository is a BMW wheel configurator built with:
 ## Ownership
 
 This file is intended as a lightweight system note for contributors and automation agents working in the repo.
+
+## Task playbooks
+
+Before changing a specific area (cars, wheels, paint, PDF, lead emails, brand, docs, deploys,
+secrets), read the matching skill in `.claude/skills/` — index: [`docs/SKILLS.md`](docs/SKILLS.md).
+Secrets on this project live in Supabase Vault and n8n credentials (no `.env` is needed for the app).
