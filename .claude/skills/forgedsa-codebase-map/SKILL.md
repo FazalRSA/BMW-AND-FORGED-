@@ -49,7 +49,7 @@ Shared UI lives in `components/journey/ui.tsx` (Button, Modal, PaintChip, RimThu
 
 ## Docs
 
-`README.md`, `docs/HANDOVER.md` (technical), `docs/CLIENT_HANDOVER.md` + PDF (client),
+`docs/PHOTOREAL_SPEC.md` (photoreal goal + sprints), `README.md`, `docs/HANDOVER.md` (technical), `docs/CLIENT_HANDOVER.md` + PDF (client),
 `docs/WHEEL_PIPELINE.md`, `docs/SKILLS.md` (this skill set).
 
 ## Conventions
