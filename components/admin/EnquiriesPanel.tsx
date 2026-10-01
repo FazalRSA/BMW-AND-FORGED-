@@ -21,7 +21,13 @@ interface Lead {
   created_at: string;
 }
 
-const csvCell = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+/** Quotes a CSV cell; visitor text starting with = + - @ (or tab/CR) is prefixed with ' so Excel
+ * and Sheets don't run it as a formula (CSV injection). */
+const csvCell = (v: unknown) => {
+  let s = String(v ?? '');
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+};
 
 /** Enquiries sent from the configurator (public.leads, readable by admins only), newest first. */
 export const EnquiriesPanel: React.FC = () => {

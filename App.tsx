@@ -433,7 +433,7 @@ export const App: React.FC = () => {
     async (code: string) => {
       const cfg = await loadConfiguration(code);
       if (!cfg || !applyConfig(cfg)) return false;
-      setConfigCode({ key: configKey(cfg), code: code.trim().toUpperCase() });
+      setConfigCode({ key: configKey(cfg), code: code.toUpperCase().replace(/[^A-Z0-9]/g, '') });
       setStep('overview');
       navigateTo({ name: 'configure' });
       return true;
@@ -576,7 +576,11 @@ export const App: React.FC = () => {
                 paint: selectedPaint.name,
                 wheel: selectedWheel.name,
                 size: selectedSize,
-                finish: selectedFinish.name
+                finish: selectedFinish.name,
+                carId: selectedCar.id,
+                paintId: selectedPaint.id,
+                wheelId: selectedWheel.id,
+                finishId: selectedFinish.id
               },
               region: region.id
             });
@@ -615,7 +619,12 @@ export const App: React.FC = () => {
             paint: selectedPaint.name,
             wheel: selectedWheel.name,
             size: selectedSize,
-            finish: selectedFinish.name
+            finish: selectedFinish.name,
+            // Ids too: some paint names are shared by two BMW codes, so the lead email looks these up
+            carId: selectedCar.id,
+            paintId: selectedPaint.id,
+            wheelId: selectedWheel.id,
+            finishId: selectedFinish.id
           },
           region: region.id
         }}

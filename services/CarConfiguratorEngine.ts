@@ -71,6 +71,9 @@ export class CarConfiguratorEngine {
 
   // Materials Cache
   private carBodyMaterial!: THREE.MeshPhysicalMaterial;
+  /** Copies of the paint for body parts whose own material carried surface detail (normal/AO maps). */
+  private paintVariants = new Set<THREE.MeshPhysicalMaterial>();
+  private pendingVariants = new Set<THREE.MeshPhysicalMaterial>();
   private wheelMaterial!: THREE.MeshPhysicalMaterial;
   /** Bright neutral room reflections for the rims only; the studio HDRI is too dark behind the camera for chrome. */
   private wheelEnvMap: THREE.Texture | null = null;
@@ -1027,6 +1030,8 @@ export class CarConfiguratorEngine {
     const unmatched: string[] = [];
     const wheelMeshes: THREE.Mesh[] = [];
 
+    const usedVariants = new Set<THREE.MeshPhysicalMaterial>();
+    this.pendingVariants = usedVariants;
     model.traverse((obj) => {
       // SketchUp/Collada conversions carry their edge outlines as line primitives; drawn over a
       // shaded body they read as heavy black seams, so only triangle meshes are kept.
@@ -1060,8 +1065,8 @@ export class CarConfiguratorEngine {
       const ownNames = `${mesh.name} ${materialNames}`;
       if (paintRe.test(ownNames) && !notPaintRe.test(ownNames)) {
         mesh.material = Array.isArray(mesh.material)
-          ? mesh.material.map(() => this.carBodyMaterial)
-          : this.carBodyMaterial;
+          ? mesh.material.map((m) => this.paintMaterialFor(m))
+          : this.paintMaterialFor(mesh.material);
       } else {
         unmatched.push(mesh.name || '(unnamed)');
         materials.forEach(CarConfiguratorEngine.fixDefaultedMaterial);
@@ -1070,6 +1075,7 @@ export class CarConfiguratorEngine {
 
     this.disposeBody();
     this.bodyMeshGroup.add(model);
+    this.paintVariants = usedVariants;
     this.markShadowDirty();
 
     // All four wheels merged into one mesh: split its vertices by side of the car instead.
@@ -1644,13 +1650,43 @@ export class CarConfiguratorEngine {
   static BODY_ENV_INTENSITY = 0.45;
 
   public applyPaintColor(paint: PaintColor) {
-    this.carBodyMaterial.envMapIntensity = CarConfiguratorEngine.BODY_ENV_INTENSITY;
-    this.carBodyMaterial.color.set(paint.hex);
-    this.carBodyMaterial.roughness = paint.roughness;
-    this.carBodyMaterial.metalness = paint.metalness;
-    this.carBodyMaterial.clearcoat = paint.clearcoat;
-    this.carBodyMaterial.clearcoatRoughness = paint.clearcoatRoughness;
-    this.carBodyMaterial.needsUpdate = true;
+    for (const m of [this.carBodyMaterial, ...this.paintVariants]) {
+      m.envMapIntensity = CarConfiguratorEngine.BODY_ENV_INTENSITY;
+      m.color.set(paint.hex);
+      m.roughness = paint.roughness;
+      m.metalness = paint.metalness;
+      m.clearcoat = paint.clearcoat;
+      m.clearcoatRoughness = paint.clearcoatRoughness;
+      m.needsUpdate = true;
+    }
+  }
+
+  /**
+   * The paint for one body material. The model's own colour map is dropped (it is the baked original
+   * colour), but its surface detail (panel-gap normal map, ambient occlusion) is kept on a copy of the
+   * paint, so painted panels keep the shading the artist baked in.
+   */
+  private paintMaterialFor(src: THREE.Material): THREE.MeshPhysicalMaterial {
+    const own = src as THREE.MeshPhysicalMaterial;
+    if (own === this.carBodyMaterial) return own;
+    if (own.userData?.paintVariant) {
+      this.pendingVariants.add(own); // cached model mounted again
+      return own;
+    }
+    if (!own.normalMap && !own.aoMap) return this.carBodyMaterial;
+    const m = this.carBodyMaterial.clone();
+    m.userData = { paintVariant: true };
+    if (own.normalMap) {
+      m.normalMap = own.normalMap;
+      m.normalMapType = own.normalMapType;
+      if (own.normalScale) m.normalScale.copy(own.normalScale);
+    }
+    if (own.aoMap) {
+      m.aoMap = own.aoMap;
+      m.aoMapIntensity = own.aoMapIntensity ?? 1;
+    }
+    this.pendingVariants.add(m);
+    return m;
   }
 
   public applyWheelFinish(finish: WheelFinish) {

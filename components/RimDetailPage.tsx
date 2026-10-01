@@ -50,9 +50,11 @@ export const RimDetailPage: React.FC<RimDetailPageProps> = ({
   const [finish, setFinish] = useState<WheelFinish | undefined>(defaultFinish);
   const [size, setSize] = useState<string>(() => (wheel ? nearestRimSize(wheel, initialSize ?? '20"') : '20"'));
 
-  // One showcase engine for the page's lifetime
+  // One showcase engine for the page's lifetime. Waits for the wheel: on a direct link to a wheel
+  // that only exists in Supabase, the first render is "not found" and has no container yet.
+  const hasWheel = !!wheel;
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!hasWheel || !containerRef.current) return;
     const engine = new CarConfiguratorEngine(containerRef.current, () => setReady(true), { showcase: true });
     engineRef.current = engine;
     engine.setAutoRotate(true);
@@ -63,7 +65,7 @@ export const RimDetailPage: React.FC<RimDetailPageProps> = ({
       engine.cleanup();
       engineRef.current = null;
     };
-  }, []);
+  }, [hasWheel]);
 
   // Switching rims keeps the finish/size when the new rim offers them
   useEffect(() => {

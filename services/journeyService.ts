@@ -46,15 +46,19 @@ export const configKey = (c: SavedConfiguration) =>
 
 /** Stores the configuration under a new code (Supabase, plus this browser as a fallback). */
 export async function saveConfiguration(config: SavedConfiguration): Promise<string> {
-  const code = newConfigCode();
+  // Wait for the shared copy: the code goes into the PDF and the lead email, so it must open on
+  // the salesperson's device too, not only in this browser. Retries cover a dropped request or a
+  // (very unlikely) code collision.
+  let code = newConfigCode();
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt) code = newConfigCode();
+    const { error } = await supabase.from('saved_configurations').insert({ code, payload: config });
+    if (!error) break;
+    console.warn(`Saving configuration ${code} failed (attempt ${attempt + 1}):`, error.message);
+  }
   const local = readLocal<Record<string, SavedConfiguration>>(LOCAL_CODES, {});
   local[code] = config;
   writeLocal(LOCAL_CODES, local);
-  // The code is usable straight away; the shared copy is written in the background.
-  supabase
-    .from('saved_configurations')
-    .insert({ code, payload: config })
-    .then(({ error }) => error && console.warn('Configuration saved in this browser only:', error.message));
   return code;
 }
 
