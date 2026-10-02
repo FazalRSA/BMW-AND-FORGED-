@@ -70,10 +70,13 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
      fat spokes. Full detail: `forgedsa-rim-from-photo`;
    - read the photo at 1536 px, detect symmetry, then take the **median** across sectors (in a
      polar table of one sector);
-   - smooth along the radius (σ 8 px), which removes the small steps along spoke edges;
-   - solid hub pad, then blur about 2 px.
+   - smooth along the radius (σ 8 px), then refit every spoke edge as a smooth curve
+     (`regulariseEdges`), which removes the steps where the cut-out meets the traced arms;
+   - solid hub pad, blur, then opening and closing (no slivers, no hooked window tips);
+   - a design the photo can't give cleanly gets a prepared face (a bar face, or an AI face mask
+     in `services/rimFaces.ts`). The process for any new wheel: the `wheel3d` skill.
 2. **Mask → face:**
-   - `traceMaskShapes` with outline smoothing (σ 4 px; corners kept) and tolerance 0.4 px;
+   - `traceMaskShapes` with outline smoothing (σ 6 px; corners kept) and tolerance 2 px;
    - `buildSpokeFace`: bevelled extrude, cap subdivision, dish −d·(1−ρ²), creased normals on
      the bevel and walls, and the dish's exact normal on the front cap (averaged with the bevel,
      the tops shade in blotches).
@@ -81,7 +84,9 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
    - tyre profile with grooves, tread normal map and sidewall markings;
    - lip and barrel lathe (polished, bolted lip for two- and three-piece designs);
    - cross-drilled vented disc with **radial** anisotropy;
-   - 6-piston caliper about 278 mm long;
+   - 6-piston M Compound-style caliper about 278 mm long: firm 7 mm cast edges, a raised face,
+     the BMW M logo, pad window, bridge bolts, bleed nipples, pads with backing plates, in
+     M Performance Blue. Detail in `docs/PHOTOREAL_METHOD.md`;
    - lug nuts and centre cap.
 4. **Fake the occlusion the environment can't do:**
    - barrel at 40% brightness with a profile AO map and envMapIntensity 0.45;
@@ -94,11 +99,14 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
 6. **Rubber colour:** #302e2d–#333130 with `sheenColor` set. Below about #262626, ACES makes it a
    black hole.
 7. **Check the sidewall text orientation on a render:** it must read clockwise with the letter
-   tops towards the tread. Use generic markings only (no Michelin, Pirelli, Brembo or BMW-M logos).
+   tops towards the tread. Use generic tyre markings only (no Michelin, Pirelli or Brembo logos). The BMW M logo on the
+   caliper is the owner's choice (Oct 2026); don't add other brands' marks.
 8. **Clearance:** the caliper sits behind the concave spokes and inside the 19" drop centre. Move
    the disc plane (`discX`), never the spokes.
 
-**Wheel QA:** close-ups of every design, alternating finishes. Look for:
+**Wheel QA:** measured first, then by eye (the `visual-qa` skill):
+`scripts/render/wheel-qa.cjs` for every face (pieces, windows, symmetry, wiggle, thinnest
+spoke), then `scripts/render/qa-matrix.py` on the car. Look for:
 - jagged or lumpy spoke edges:
   - run `scripts/render/outlines.cjs`: it draws the traced outlines over the mask at 2× for each
     settings variant, in seconds;

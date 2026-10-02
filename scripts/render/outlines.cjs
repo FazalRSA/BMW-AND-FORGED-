@@ -8,7 +8,7 @@
  * processRimPhoto + traceMaskShapes once per variant and writes <outDir>/<photo>-<name>.png:
  * the mask in grey with the traced outlines drawn over it at 2x (red = outer, yellow = holes).
  * A variant is { "name": "a", "res": 1536, "quantile": 0.5, "radialSigma": 8, "smooth": 4,
- * "tol": 0.4 }; omitted fields use the engine defaults. Takes seconds per photo, so compare
+ * "tol": 2.0, "cleanFace": false }; omitted fields use the engine defaults. Takes seconds per photo, so compare
  * settings here before rendering close-ups.
  */
 const { chromium } = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
@@ -44,7 +44,7 @@ const STORAGE = 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/publ
         fold = m.symmetry;
         mode = m.mode;
         const t1 = performance.now();
-        const shapes = rx.traceMaskShapes(m.data, m.size, m.size, 0.5, v.tol ?? 0.4, v.smooth ?? 4) || [];
+        const shapes = rx.traceMaskShapes(m.data, m.size, m.size, 0.5, v.tol ?? 2.0, v.smooth ?? 6) || [];
         const ms = `${Math.round(t1 - t0)}+${Math.round(performance.now() - t1)}ms`;
         const S = m.size * 2;
         const c = document.createElement('canvas');

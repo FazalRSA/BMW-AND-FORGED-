@@ -458,7 +458,10 @@ export interface WheelKitMaterials {
   discEdge: THREE.MeshStandardMaterial;
   hat: THREE.MeshPhysicalMaterial;
   caliper: THREE.MeshPhysicalMaterial;
+  caliperWindow: THREE.MeshStandardMaterial;
+  caliperCap: THREE.MeshStandardMaterial;
   pad: THREE.MeshStandardMaterial;
+  padBacking: THREE.MeshStandardMaterial;
 }
 
 export function createWheelKitMaterials(): WheelKitMaterials {
@@ -532,16 +535,20 @@ export function createWheelKitMaterials(): WheelKitMaterials {
       envMapIntensity: 0.7
     }),
     // Gloss caliper paint under clear coat
+    // M Compound blue: high-temperature gloss paint under a clear coat
     caliper: new THREE.MeshPhysicalMaterial({
       name: 'caliper_paint',
-      color: 0x1d4f9c,
+      color: 0x0055b8, // M Performance Blue (CALIPER_COLORS m_blue)
       metalness: 0,
-      roughness: 0.36,
+      roughness: 0.32,
       clearcoat: 1,
-      clearcoatRoughness: 0.03,
-      envMapIntensity: 0.8
+      clearcoatRoughness: 0.025,
+      envMapIntensity: 0.85
     }),
-    pad: new THREE.MeshStandardMaterial({ name: 'brake_pad', color: 0x1b1b1c, metalness: 0.2, roughness: 0.85 })
+    caliperWindow: new THREE.MeshStandardMaterial({ name: 'caliper_window', color: 0x0b0b0c, metalness: 0, roughness: 0.9 }),
+    caliperCap: new THREE.MeshStandardMaterial({ name: 'bleed_cap', color: 0x111112, metalness: 0, roughness: 0.6 }),
+    pad: new THREE.MeshStandardMaterial({ name: 'brake_pad', color: 0x1b1b1c, metalness: 0.2, roughness: 0.85 }),
+    padBacking: new THREE.MeshStandardMaterial({ name: 'pad_backing', color: 0x6c6d70, metalness: 0.9, roughness: 0.45 })
   };
   installWheelShading(kit.tread, { arch: 0.62, flatten: true });
   installWheelShading(kit.sidewall, { arch: 0.62, flatten: true });
@@ -550,6 +557,8 @@ export function createWheelKitMaterials(): WheelKitMaterials {
   installWheelShading(kit.hat, { arch: 0.45 });
   installWheelShading(kit.caliper, { arch: 0.4 });
   installWheelShading(kit.pad, { arch: 0.45 });
+  installWheelShading(kit.caliperWindow, { arch: 0.45 });
+  installWheelShading(kit.padBacking, { arch: 0.45 });
   return kit;
 }
 
@@ -761,7 +770,7 @@ export interface RimFaceMask {
    * between them, `flange` = a solid face ring out to the lip, `stretch` = fallback (the
    * see-through spokes stretched to the lip).
    */
-  mode: 'barrel' | 'flange' | 'stretch';
+  mode: 'barrel' | 'flange' | 'stretch' | 'clean';
 }
 
 /** Where the spokes meet the lip, as a fraction of the rim's outer radius (3D: 240 / 262 mm). */
@@ -779,6 +788,20 @@ export interface RimPhotoOptions {
   quantile?: number;
   /** Smoothing along the radius in output pixels, applied before the mask is drawn. Default 8. */
   radialSigma?: number;
+  /** How the symmetric sectors are combined: per-pixel `median` (default) or the single most
+   *  typical real sector copied round the wheel (`best`). */
+  sectorMode?: 'median' | 'best';
+  /** Spoke edges continue straight across the barrel band (default: forged arms are straight
+   *  bars, and a straight continuation of the cut-out edge is cleaner than any brightness edge
+   *  in the photo). false follows the photo's brightness edges, for curved arms. */
+  straightArms?: boolean;
+  /** Blur passes on the final mask; more removes larger dents in the cut-out. Default 12 (about
+   *  2.5 px), which keeps corners and 3 mm tips. */
+  edgeBlur?: number;
+  /** The image is a clean face: see-through wherever there is no spoke, out to the lip. */
+  cleanFace?: boolean;
+  /** Refit spoke edges as locally straight lines (default on). */
+  edgeFit?: boolean;
 }
 
 /**
@@ -883,9 +906,11 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   // seen solid behind the outer half of the spokes, so the see-through windows end well inside
   // the lip. Trace the spoke arms across it to the lip and map the photo 1:1 onto the 3D face;
   // if that fails, fall back to stretching the see-through spokes out to the lip.
-  const arms = traceFaceArms(a, lum, RES, fold, rOut);
-  const mode: RimFaceMask['mode'] = arms ? arms.mode : 'stretch';
-  const rFace = arms ? arms.rLip : rEnd; // photo radius (of RES / 2) that becomes rho = 1
+  // A clean face (the barrel already cut away between the spokes, e.g. a prepared face mask) is
+  // mapped 1:1: the spokes meet the lip where the 3D layout puts it, nothing is traced or stretched
+  const arms = opts.cleanFace ? null : traceFaceArms(a, lum, RES, fold, rOut, opts.straightArms ?? true);
+  const mode: RimFaceMask['mode'] = opts.cleanFace ? 'clean' : arms ? arms.mode : 'stretch';
+  const rFace = opts.cleanFace ? LIP_FRACTION * rOut : arms ? arms.rLip : rEnd; // photo radius (of RES / 2) that becomes rho = 1
   const value = (rr: number, t: number) => (arms ? arms.value(rr, t) : sample(c + Math.cos(t) * rr * (RES / 2), c + Math.sin(t) * rr * (RES / 2)));
 
   // One sector in polar form (rows: rho 0..1, columns: angle within the sector), about one
@@ -898,21 +923,62 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   const NA = Math.max(8, Math.ceil(faceR * sector));
   const polar = new Float32Array(NR * NA);
   const sectors = new Float32Array(fold);
+  const all = new Float32Array(fold * NR * NA); // every sector, for the single-sector option
   for (let i = 0; i < NR; i++) {
     const rr = (i / (NR - 1)) * rFace;
     for (let j = 0; j < NA; j++) {
       const t0 = (j / NA) * sector;
-      for (let k = 0; k < fold; k++) sectors[k] = value(rr, t0 + k * sector);
+      for (let k = 0; k < fold; k++) {
+        sectors[k] = value(rr, t0 + k * sector);
+        all[(k * NR + i) * NA + j] = sectors[k];
+      }
       polar[i * NA + j] = fold === 1 ? sectors[0] : quantile(sectors, fold, q);
     }
   }
-  // Smoothing along the radius turns the small steps a cut-out leaves along a spoke edge into
-  // straight runs, without softening the edge itself. Traced arms are smooth already and often
-  // slanted, so the smoothing fades out before they start.
-  if (radialSigma > 0) {
-    const stop = arms ? arms.rStart / rFace : Infinity;
-    gaussianColumns(polar, NR, NA, (i) => radialSigma * THREE.MathUtils.clamp((stop - i / (NR - 1)) / 0.05, 0, 1));
+  // Seam: the column (angle) that is most see-through, so a copied sector meets itself in a window
+  let seamCol = 0;
+  if (fold > 1) {
+    let bestSolid = Infinity;
+    for (let j = 0; j < NA; j++) {
+      let sum = 0;
+      for (let i = Math.floor(0.4 * NR); i < NR; i++) sum += polar[i * NA + j];
+      if (sum < bestSolid) { bestSolid = sum; seamCol = j; }
+    }
   }
+  const seam = (seamCol / NA) * sector;
+  if (fold > 1 && (opts.sectorMode ?? 'median') === 'best') {
+    // The most typical real sector (closest to the median), copied round the wheel: one coherent
+    // piece of the photo instead of a per-pixel collage of sectors that disagree
+    let bestK = 0, bestDev = Infinity;
+    for (let k = 0; k < fold; k++) {
+      let dev = 0;
+      for (let n = 0; n < NR * NA; n++) dev += Math.abs(all[k * NR * NA + n] - polar[n]);
+      if (dev < bestDev) { bestDev = dev; bestK = k; }
+    }
+    for (let i = 0; i < NR; i++) {
+      for (let j = 0; j < NA; j++) {
+        const jj = j + seamCol;
+        const k = jj >= NA ? (bestK + 1) % fold : bestK;
+        polar[i * NA + j] = all[(k * NR + i) * NA + (jj % NA)];
+      }
+    }
+  } else if (fold > 1) {
+    const tmp = Float32Array.from(polar);
+    for (let i = 0; i < NR; i++) for (let j = 0; j < NA; j++) polar[i * NA + j] = tmp[i * NA + ((j + seamCol) % NA)];
+  }
+  // Smoothing along the radius turns the small steps a cut-out leaves along a spoke edge into
+  // straight runs: a symmetric blur leaves a straight edge's 0.5 contour where it is, whatever its
+  // slant. It runs on across the handover to the traced arms (where the two meet a few pixels
+  // apart, the step becomes a short taper) and fades out well inside the lip, where the arms
+  // join the lip ring.
+  if (radialSigma > 0) {
+    const stop = arms ? 1 : Infinity;
+    gaussianColumns(polar, NR, NA, (i) => radialSigma * THREE.MathUtils.clamp((stop - 0.06 - i / (NR - 1)) / 0.05, 0, 1));
+  }
+  // Every spoke edge, followed from row to row, as a locally straight line: the steps left where
+  // the cut-out meets the traced arms, and where the window fillets or a branch slot start, go
+  // (real spoke edges are smooth); joints, where edges start or end, are kept.
+  if (opts.edgeFit ?? true) regulariseEdges(polar, NR, NA, Math.ceil((HUB + 0.05) * (NR - 1)), Math.floor(0.95 * (NR - 1)));
 
   // output mask: rho = 1 at the spoke ends
   const data = new Float32Array(out * out);
@@ -925,7 +991,7 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
       if (rho > OVERLAP) v = 0;
       else if (rho > 1 || rho < HUB) v = 1;
       else {
-        let t = Math.atan2(dy, dx) % sector;
+        let t = (Math.atan2(dy, dx) - seam) % sector;
         if (t < 0) t += sector;
         const fi = rho * (NR - 1);
         const fj = (t / sector) * NA;
@@ -944,8 +1010,139 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   }
   // Soften the cut-out edges (Gaussian-like, about 2 px) so the traced outline follows the
   // spoke's real edge instead of every pixel step and speck of the photo's alpha.
-  blur(data, out, out, 4, false);
+  blur(data, out, out, opts.edgeBlur ?? 12, false);
+  // Opening (min then max, 3 px, about 1.5 mm): slivers and hairline strands where the cut-out and
+  // the traced arms meet would be extruded as knife edges; real spokes are far wider
+  morphology(data, out, 3, Math.min);
+  morphology(data, out, 3, Math.max);
+  // and closing (max then min): window slivers and hooked window tips narrower than ~5 mm (where
+  // a window's tip curls into the hub in the cut-out) are filled, and V-gap tips end in a small
+  // fillet as on the machined wheel; real windows are far wider
+  morphology(data, out, 5, Math.max);
+  morphology(data, out, 5, Math.min);
   return { data, size: out, symmetry: fold, mode };
+}
+
+/**
+ * Spoke edges in a polar sector table (rows: radius, columns: angle, cyclic), each edge followed
+ * from row to row and refitted with a sliding, Gaussian-weighted parabola (sigma 16 rows): a
+ * straight or evenly curved edge stays exactly where it is, a step (up to 14 columns, where the cut-out meets a
+ * traced arm or a window fillet starts) becomes a short taper. Only edges in a track of 24+ rows,
+ * running along the radius (at most 2 columns a row), move, by at most 8 columns; a row whose edges move is redrawn from its edges (solid between a rising and a falling
+ * edge, a one-column ramp at each) where its edges moved.
+ */
+function regulariseEdges(g: Float32Array, rows: number, cols: number, i0: number, i1: number) {
+  type Edge = { x: number; rise: boolean; track: number };
+  const cd = (a: number, b: number) => ((a - b + cols * 1.5) % cols) - cols / 2;
+  const edges: Edge[][] = [];
+  for (let i = i0; i <= i1; i++) {
+    const o = i * cols, list: Edge[] = [];
+    for (let j = 0; j < cols; j++) {
+      const v0 = g[o + j], v1 = g[o + ((j + 1) % cols)];
+      if ((v0 < 0.5) !== (v1 < 0.5)) list.push({ x: j + (0.5 - v0) / (v1 - v0), rise: v1 >= 0.5, track: -1 });
+    }
+    edges.push(list);
+  }
+  // an edge continues the nearest edge of the same kind in the row before, if each is the
+  // other's nearest (so two edges meeting at a joint never join one track)
+  const TOL = 14;
+  const nearest = (e: Edge, list: Edge[]) => {
+    let best: Edge | null = null, bd = TOL;
+    for (const p of list) {
+      if (p.rise !== e.rise) continue;
+      const d = Math.abs(cd(e.x, p.x));
+      if (d < bd) { bd = d; best = p; }
+    }
+    return best;
+  };
+  const tracks: { i: number; e: Edge }[][] = [];
+  for (let r = 0; r < edges.length; r++) {
+    for (const e of edges[r]) {
+      const p = r > 0 ? nearest(e, edges[r - 1]) : null;
+      if (p && nearest(p, edges[r]) === e && p.track >= 0) e.track = p.track;
+      else { e.track = tracks.length; tracks.push([]); }
+      tracks[e.track].push({ i: i0 + r, e });
+    }
+  }
+  const moved = new Map<Edge, number>();
+  const SIG = 16, REACH = 48;
+  for (const t of tracks) {
+    if (t.length < 24) continue;
+    const xs = new Float64Array(t.length);
+    xs[0] = t[0].e.x;
+    for (let k = 1; k < t.length; k++) xs[k] = xs[k - 1] + cd(t[k].e.x, t[k - 1].e.x);
+    for (let k = 0; k < t.length; k++) {
+      // weighted least squares x = c0 + c1 d + c2 d^2 around this row; the fit at d = 0 is c0
+      const Mq = [new Float64Array(3), new Float64Array(3), new Float64Array(3)], vq = new Float64Array(3);
+      for (let d = -REACH; d <= REACH; d++) {
+        const m = k + d;
+        if (m < 0 || m >= t.length) continue;
+        const w = Math.exp(-(d * d) / (2 * SIG * SIG)), bas = [1, d / REACH, (d / REACH) ** 2];
+        for (let p = 0; p < 3; p++) {
+          vq[p] += w * bas[p] * xs[m];
+          for (let q = 0; q < 3; q++) Mq[p][q] += w * bas[p] * bas[q];
+        }
+      }
+      const sol = solveSmall(Mq, vq);
+      const fit = sol ? sol[0] : xs[k];
+      // edges running along the row (window ends, the hub and lip arcs) are curves, not steps
+      const slope = Math.abs(xs[Math.min(t.length - 1, k + 3)] - xs[Math.max(0, k - 3)]) / (Math.min(t.length - 1, k + 3) - Math.max(0, k - 3));
+      if (slope <= 2 && Math.abs(fit - xs[k]) > 0.05 && Math.abs(fit - xs[k]) <= 8) moved.set(t[k].e, t[k].e.x + (fit - xs[k]));
+    }
+  }
+  for (let r = 0; r < edges.length; r++) {
+    const list = edges[r];
+    if (list.length < 2 || !list.some((e) => moved.has(e))) continue;
+    // new positions, in order round the row starting at the first edge; a row whose edges would
+    // cross is left as it is
+    const base = list[0].x;
+    const xs = list.map((e) => base + ((((moved.get(e) ?? e.x) - base) % cols) + cols) % cols);
+    xs[0] = moved.get(list[0]) ?? base;
+    let ok = true;
+    for (let n = 1; n < xs.length && ok; n++) if (xs[n] <= xs[n - 1] + 1) ok = false;
+    if (!ok || xs[xs.length - 1] >= xs[0] + cols - 1) continue;
+    const o = (i0 + r) * cols;
+    // only the pixels between an edge's old and new place are redrawn: elsewhere (window ends
+    // running along the row) the soft values carry the edge's sub-pixel position along the radius
+    const touch = new Uint8Array(cols);
+    for (let n = 0; n < list.length; n++) {
+      const to = moved.get(list[n]);
+      if (to === undefined) continue;
+      const lo = Math.min(list[n].x, to), hi = Math.max(list[n].x, to);
+      for (let j = Math.floor(lo) - 1; j <= Math.ceil(hi) + 1; j++) touch[((j % cols) + cols) % cols] = 1;
+    }
+    for (let n = 0; n < list.length; n++) {
+      const a = xs[n], b = xs[(n + 1) % list.length] + (n + 1 === list.length ? cols : 0);
+      const inside = list[n].rise ? 1 : 0;
+      for (let j = Math.floor(a); j <= Math.ceil(b); j++) {
+        if (!touch[((j % cols) + cols) % cols]) continue;
+        // pixel centres sit on whole columns (as the edges were measured): a one-column ramp
+        // across each edge, the run's value between them
+        const v = THREE.MathUtils.clamp(j - a + 0.5, 0, 1) * THREE.MathUtils.clamp(b - j + 0.5, 0, 1);
+        if (v <= 0) continue;
+        g[o + (((j % cols) + cols) % cols)] = inside ? v : 1 - v;
+      }
+    }
+  }
+}
+
+/** Grey-scale erosion (Math.min) or dilation (Math.max) with a square of radius r, separable. */
+function morphology(data: Float32Array, n: number, r: number, op: (...v: number[]) => number) {
+  const tmp = new Float32Array(data.length);
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      let v = data[y * n + x];
+      for (let d = 1; d <= r; d++) v = op(v, data[y * n + Math.max(0, x - d)], data[y * n + Math.min(n - 1, x + d)]);
+      tmp[y * n + x] = v;
+    }
+  }
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      let v = tmp[y * n + x];
+      for (let d = 1; d <= r; d++) v = op(v, tmp[Math.max(0, y - d) * n + x], tmp[Math.min(n - 1, y + d) * n + x]);
+      data[y * n + x] = v;
+    }
+  }
 }
 
 /** Quantile q (0..1) of the first n values (sorts them in place; n is small). */
@@ -990,7 +1187,7 @@ interface FaceArms {
  *
  * Returns null when the photo can't be read this way (the caller then stretches as before).
  */
-function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: number, rOut: number): FaceArms | null {
+function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: number, rOut: number, straight = false): FaceArms | null {
   const NRp = 768, NT = 4096;
   const c = (RES - 1) / 2, half = RES / 2;
   const rowR = (i: number) => i / (NRp - 1);
@@ -1178,10 +1375,13 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
     const stop = Math.max(iS - Math.floor(0.07 * NRp), ia);
     for (let i = iS; i > stop; i--) {
       const r0 = Math.round(th);
-      const vals = [-2, -1, 0, 1, 2].map((d) => ealp(i, r0 + d));
+      // the first row locks on within +-8 columns: the span was measured on its own column's row,
+      // which for a slanted arm is a few rows from iS
+      const R = i === iS ? 8 : 2;
+      const vals = Array.from({ length: 2 * R + 1 }, (_, d) => ealp(i, r0 + d - R));
       const pk = peak(vals);
       if (pk.v < 0.05) break;
-      th = r0 - 2 + pk.k;
+      th = r0 - R + pk.k;
       const ang = (th / NT) * Math.PI * 2, rr = rowR(i);
       P.push([rr * Math.cos(ang), rr * Math.sin(ang)]);
     }
@@ -1208,7 +1408,7 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
     const x = p0[0] + sl * d[0], y = p0[1] + sl * d[1];
     return (((Math.atan2(y, x) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * NT;
   };
-  const WD = 24, NO = 2 * WD + 1, LAM = 0.35, MU = 0.004, MU_IN = 0.03;
+  const WD = 24, NO = 2 * WD + 1, LAM = 0.35, MU = 0.004, MU_IN = 0.03, STRAIGHT_DEV = 5;
   // side: -1 for an arm's left edge (the arm lies at larger columns), +1 for its right edge
   const trackEdge = (e: { p0: [number, number]; d: [number, number] }, iS: number, side: number) => {
     const n = iLip - iS;
@@ -1271,6 +1471,28 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
       sm[i] = sum / sw;
     }
     sm[0] = path[0];
+    // A straight bar: the followed edge stays near the fitted line, which is then the cleaner edge
+    // (the photo's chamfers and reflections make the followed path wobble a few pixels)
+    // compared on average over the band, ignoring the systematic offset a chamfer line gives
+    let mean = 0;
+    for (let s2 = 0; s2 < n; s2++) mean += sm[s2 + 1] - prior[s2];
+    mean /= n;
+    let dev = 0;
+    for (let s2 = 0; s2 < n; s2++) dev += Math.abs(sm[s2 + 1] - prior[s2] - mean);
+    dev /= n;
+    if (straight || dev < STRAIGHT_DEV) {
+      for (let s2 = 0; s2 < n; s2++) sm[s2 + 1] = prior[s2];
+    } else {
+      // A curved edge that settles inside the silhouette line follows a chamfer or a rib on the
+      // spoke face, parallel to the real edge: moved back out by that offset (measured just
+      // after the start, where the path has left the cut-out), the arm keeps the cut-out's width
+      // and meets it without a step
+      let off = 0, cnt = 0;
+      for (let s2 = Math.floor(0.1 * n); s2 < Math.floor(0.35 * n); s2++) { off += sm[s2 + 1] - prior[s2]; cnt++; }
+      off = cnt ? off / cnt : 0;
+      const inwardOff = side < 0 ? Math.max(0, off) : Math.min(0, off);
+      for (let s2 = 1; s2 <= n; s2++) sm[s2] -= inwardOff * Math.min(1, s2 / (0.1 * n));
+    }
     return { path: sm, ev: good / n };
   };
   const sectorCols = NT / fold;
@@ -1332,16 +1554,23 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
     if (slot.members.size < Math.max(2, Math.ceil(0.4 * fold))) continue; // not repeated around the wheel
     const ref = mid(slot.ref);
     const members = [...slot.members.entries()];
-    const iS = Math.min(...members.map(([, m]) => m.x.iS));
+    // only the best-traced copies shape the arm: copies in a part of the photo seen at an angle
+    // (or where the cut-out is poor) trace badly, and averaging them in bends the arm
+    const bestEv = Math.max(...members.map(([, m]) => m.x.ev));
+    const shaping = members.filter(([, m]) => m.x.ev >= bestEv - 0.15);
+    // from the row where every shaping copy has started: a copy joining the average part-way
+    // would make the arm jump sideways by its offset (a step on the spoke)
+    const iS = Math.max(...shaping.map(([, m]) => m.x.iS));
     const n = iLip - iS + 1;
     const L = new Float64Array(n), R = new Float64Array(n), cnt = new Float64Array(n);
     const own = new Map<number, Arm>();
     for (const [k, m] of members) {
       own.set(k, m.x);
+      if (m.x.ev < bestEv - 0.15) continue;
       // whole sectors between this copy and the reference arm (its residual offset is kept)
       const dd = mid(m.x) - ref;
       const shift = dd - ((((dd % S) + S * 1.5) % S) - S / 2);
-      for (let i = m.x.iS; i <= iLip; i++) {
+      for (let i = iS; i <= iLip; i++) {
         L[i - iS] += m.x.L[i - m.x.iS] - shift;
         R[i - iS] += m.x.R[i - m.x.iS] - shift;
         cnt[i - iS]++;
@@ -1364,6 +1593,31 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
   let rcMinS = ib;
   for (let j = 0; j < NT; j++) rcMinS = Math.min(rcMinS, rcs[j]);
 
+  // one sector's copy of a canonical arm at row i: [left, right] columns, or null
+  const armEdges = (arm: (typeof canon)[number], k: number, i: number): [number, number] | null => {
+    // Each sector's arm starts on its own traced edges (continuous with its own cut-out, even
+    // in a photo taken slightly off-axis) and eases into the symmetric shape once that starts.
+    const mine = arm.own.get(k);
+    const hasOwn = !!mine && i >= mine.iS;
+    if (i < arm.iS) return hasOwn ? [mine!.L[i - mine!.iS], mine!.R[i - mine!.iS]] : null;
+    const cl = arm.L[i - arm.iS], cr = arm.R[i - arm.iS];
+    if (Number.isNaN(cl) || Number.isNaN(cr)) return null;
+    let x0 = cl + k * S, x1 = cr + k * S;
+    if (hasOwn) {
+      const w = Math.min(1, (i - Math.max(mine!.iS, arm.iS)) / 60);
+      const near = (v: number, ref: number) => ref + (wrap(v - ref + NT / 2) - NT / 2);
+      x0 = (1 - w) * near(mine!.L[i - mine!.iS], x0) + w * x0;
+      x1 = (1 - w) * near(mine!.R[i - mine!.iS], x1) + w * x1;
+    }
+    // an arm always meets the lip: tapered tips keep at least ~3 mm of width
+    if (x1 - x0 < MIN_ARM) {
+      const m2 = (x0 + x1) / 2;
+      x0 = m2 - MIN_ARM / 2;
+      x1 = m2 + MIN_ARM / 2;
+    }
+    return [x0, x1];
+  };
+
   const mRows = iLip - ia + 1;
   const M = new Uint8Array(mRows * NT);
   for (let i = ia; i <= iLip; i++) {
@@ -1371,31 +1625,55 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
     for (let j = 0; j < NT; j++) M[o + j] = i >= rcs[j] ? (barrel ? 0 : 1) : solid(i, j) ? 1 : 0;
     if (!barrel) continue;
     for (const arm of canon) {
-      if (i < arm.iS) continue;
-      const cl = arm.L[i - arm.iS], cr = arm.R[i - arm.iS];
-      if (Number.isNaN(cl) || Number.isNaN(cr)) continue;
       for (let k = 0; k < fold; k++) {
-        // Each sector's arm starts on its own traced edges (continuous with its own cut-out, even
-        // in a photo taken slightly off-axis) and eases into the symmetric shape.
-        let x0 = cl + k * S, x1 = cr + k * S;
-        const mine = arm.own.get(k);
-        if (mine && i >= mine.iS) {
-          const w = Math.min(1, (i - mine.iS) / 60);
-          const near = (v: number, ref: number) => ref + (wrap(v - ref + NT / 2) - NT / 2);
-          x0 = (1 - w) * near(mine.L[i - mine.iS], x0) + w * x0;
-          x1 = (1 - w) * near(mine.R[i - mine.iS], x1) + w * x1;
-        }
-        // an arm always meets the lip: tapered tips keep at least ~3 mm of width
-        if (x1 - x0 < MIN_ARM) {
-          const m2 = (x0 + x1) / 2;
-          x0 = m2 - MIN_ARM / 2;
-          x1 = m2 + MIN_ARM / 2;
-        }
-        for (let col = Math.floor(x0); col <= Math.ceil(x1); col++) {
+        const e = armEdges(arm, k, i);
+        if (!e) continue;
+        for (let col = Math.floor(e[0]); col <= Math.ceil(e[1]); col++) {
           const jj = wrap(col);
           // drawn from 16 rows before the handover, so a small offset against the cut-out arm
           // widens it slightly instead of leaving a step
           if (i >= rcs[jj] - 16) M[o + jj] = 1;
+        }
+      }
+    }
+  }
+  // The last rows of each window round off into the barrel (the cut-out follows the window's
+  // corner fillets), so the cut-out arm swells just before the traced arm takes over and the
+  // spoke shows a shoulder. Over those rows the arm's own straight edges, carried back inwards,
+  // trim the swelling: only solid connected to the arm edge, and never past halfway to the next
+  // arm, so twin arms and their joints are kept.
+  if (barrel) {
+    const Z = Math.round(0.05 * NRp), FIT = 20;
+    const copies: { lo: (i: number) => number; hi: (i: number) => number; i0: number }[] = [];
+    for (const arm of canon) {
+      for (let k = 0; k < fold; k++) {
+        const a0 = armEdges(arm, k, arm.iS), a1 = armEdges(arm, k, arm.iS + FIT);
+        if (!a0 || !a1) continue;
+        const s0 = (a1[0] - a0[0]) / FIT, s1 = (a1[1] - a0[1]) / FIT;
+        copies.push({ lo: (i) => a0[0] + s0 * (i - arm.iS), hi: (i) => a0[1] + s1 * (i - arm.iS), i0: arm.iS });
+      }
+    }
+    for (const cp of copies) {
+      for (let i = Math.max(ia, cp.i0 - Z); i < cp.i0 + FIT && i <= iLip; i++) {
+        const o = (i - ia) * NT;
+        const lo = cp.lo(i), hi = cp.hi(i), m0 = (lo + hi) / 2;
+        // halfway to the nearest other arm on each side
+        let gapL = 0.12 * S, gapR = 0.12 * S;
+        for (const q of copies) {
+          if (q === cp) continue;
+          const qm = (q.lo(i) + q.hi(i)) / 2, d = wrap(qm - m0 + NT / 2) - NT / 2;
+          if (d < 0) gapL = Math.min(gapL, (lo - (m0 + d + (q.hi(i) - q.lo(i)) / 2)) / 2);
+          else if (d > 0) gapR = Math.min(gapR, ((m0 + d - (q.hi(i) - q.lo(i)) / 2) - hi) / 2);
+        }
+        for (let col = Math.floor(lo) - 2, n = 0; n < gapL; col--, n++) {
+          const jj = wrap(col);
+          if (!M[o + jj] || i >= rcs[jj]) break;
+          M[o + jj] = 0;
+        }
+        for (let col = Math.ceil(hi) + 2, n = 0; n < gapR; col++, n++) {
+          const jj = wrap(col);
+          if (!M[o + jj] || i >= rcs[jj]) break;
+          M[o + jj] = 0;
         }
       }
     }
@@ -1411,9 +1689,11 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
     for (let i = ia; i <= iLip; i++) {
       const o = (i - ia) * NT;
       for (let j = 0; j < NT; ) {
-        if (!M[o + j] || solid(i, j)) { j++; continue; }
+        // only past the handover: in the overlap rows the traced arm is drawn over the photo's own
+        // window corner, which is not a branch gap
+        if (!M[o + j] || solid(i, j) || i < rcs[j]) { j++; continue; }
         let e = j;
-        while (e < NT && M[o + e] && !solid(i, e)) e++;
+        while (e < NT && M[o + e] && !solid(i, e) && i >= rcs[e]) e++;
         const left = wrap(j - 1), right = wrap(e);
         if (e - j >= 2 && e - j < 0.3 * S && M[o + left] && solid(i, left) && M[o + right] && solid(i, right)) {
           for (let k = j; k < e; k++) {
@@ -1802,78 +2082,237 @@ const caliperGeoCache = new Map<string, THREE.BufferGeometry[]>();
  * a raised outer plate, a bridge over the disc and two bleed screws. Stationary (not in the
  * spinning group); sits on the upper trailing side of the disc.
  */
+let caliperDecalTex: THREE.Texture | null = null;
+/**
+ * The decal on the caliper's outer face, laid out along the arc (u runs along the caliper from
+ * its trailing to its leading end, v from the inner to the outer radius): the BMW M tricolour
+ * stripes and a white italic "M", as on the factory M Compound calipers.
+ */
+function caliperDecalTexture(): THREE.Texture {
+  if (caliperDecalTex) return caliperDecalTex;
+  // about the decal's real proportions (arc length : radial height), so the logo isn't squashed
+  const W = 1024, H = 400;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d')!;
+  g.clearRect(0, 0, W, H);
+  const cx = W * 0.5, cy = H * 0.5, h = H * 0.74;
+  const slant = h * 0.3; // italic lean
+  // three stripes: light blue, dark blue, red (BMW M)
+  const sw = h * 0.17, gap = h * 0.05;
+  const colours = ['#3f9fdc', '#2b3d8f', '#e0262b'];
+  let x = cx - h * 0.95;
+  for (const col of colours) {
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(x + slant, cy - h / 2);
+    g.lineTo(x + slant + sw, cy - h / 2);
+    g.lineTo(x + sw, cy + h / 2);
+    g.lineTo(x, cy + h / 2);
+    g.closePath();
+    g.fill();
+    x += sw + gap;
+  }
+  // the "M"
+  g.save();
+  g.translate(x + h * 0.08, cy);
+  g.transform(1, 0, -0.32, 1, 0, 0);
+  g.fillStyle = '#ffffff';
+  g.font = `800 ${Math.round(h * 1.32)}px "Arial Black", Arial, Helvetica, sans-serif`;
+  g.textBaseline = 'middle';
+  g.fillText('M', 0, h * 0.04);
+  g.restore();
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  caliperDecalTex = tex;
+  return tex;
+}
+
+let caliperDecalMat: THREE.MeshPhysicalMaterial | null = null;
+function caliperDecalMaterial() {
+  if (caliperDecalMat) return caliperDecalMat;
+  caliperDecalMat = new THREE.MeshPhysicalMaterial({
+    name: 'caliper_decal',
+    map: caliperDecalTexture(),
+    transparent: true,
+    alphaTest: 0.02,
+    metalness: 0,
+    roughness: 0.3,
+    clearcoat: 1,
+    clearcoatRoughness: 0.03,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    envMapIntensity: 0.8
+  });
+  installWheelShading(caliperDecalMat, { arch: 0.4 });
+  return caliperDecalMat;
+}
+
+/**
+ * Six-piston fixed monoblock caliper, modelled on the BMW M Compound front caliper:
+ * - one-piece body around the disc with generously rounded edges and slightly tapered ends;
+ * - a raised, softly bevelled outer face carrying the M decal along the arc;
+ * - the pad window on the radial top with the pads, the retaining pin and the anti-rattle spring;
+ * - hex bridge bolts and bleed nipples with rubber caps at the ends.
+ * Front about 278 mm long, rear (four-piston look) 230 mm.
+ */
 export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boolean): THREE.Group {
   const L = rimLayout(d);
   const Rd = L.discRadius;
-  const rIn = Rd - 0.064;
-  const rOut = Rd + 0.022;
+  const rIn = Rd - 0.066;
+  const rOut = Rd + 0.024;
   const span = THREE.MathUtils.degToRad(d.isFront ? 84 : 70); // ~278 / 230 mm along the disc
-  const halfW = L.discThickness / 2 + (d.isFront ? 0.036 : 0.03); // disc plane to outer face
-  const key = `${Rd}|${span}|${halfW}`;
+  const halfW = L.discThickness / 2 + (d.isFront ? 0.038 : 0.032); // disc plane to outer face
+  const key = `${Rd}|${span}|${halfW}|v2`;
   let geos = caliperGeoCache.get(key);
   if (!geos) {
-    const kidney = (r0: number, r1: number, a0: number, a1: number) => {
-      const s = new THREE.Shape();
+    const kidney = (r0: number, r1: number, b0: number, b1: number) => {
+      const sh = new THREE.Shape();
       const mr = (r0 + r1) / 2, er = (r1 - r0) / 2;
-      s.absarc(0, 0, r1, a0, a1, false);
-      s.absarc(Math.cos(a1) * mr, Math.sin(a1) * mr, er, a1, a1 + Math.PI, false);
-      s.absarc(0, 0, r0, a1, a0, true);
-      s.absarc(Math.cos(a0) * mr, Math.sin(a0) * mr, er, a0 + Math.PI, a0 + Math.PI * 2, false);
-      return s;
+      sh.absarc(0, 0, r1, b0, b1, false);
+      sh.absarc(Math.cos(b1) * mr, Math.sin(b1) * mr, er, b1, b1 + Math.PI, false);
+      sh.absarc(0, 0, r0, b1, b0, true);
+      sh.absarc(Math.cos(b0) * mr, Math.sin(b0) * mr, er, b0 + Math.PI, b0 + Math.PI * 2, false);
+      return sh;
     };
     const a0 = Math.PI / 2 - span / 2, a1 = Math.PI / 2 + span / 2; // centred on +Y (top) before rotation
-    const bodyShape = kidney(rIn, rOut, a0, a1);
-    const bev = 0.011;
-    const body = new THREE.ExtrudeGeometry(bodyShape, {
+    const at = (f: number) => a0 + (a1 - a0) * f;
+    const polar = (r: number, a: number, z: number) => new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, z);
+
+    // body: the outer half is the deep, rounded part seen through the spokes
+    // a cast body: firm 7 mm radius on the edges (a soft "sausage" edge reads as a toy)
+    const bev = 0.007;
+    const body = new THREE.ExtrudeGeometry(kidney(rIn, rOut, a0, a1), {
       depth: halfW * 2 - bev * 2,
-      curveSegments: 40,
+      curveSegments: 48,
       bevelEnabled: true,
       bevelThickness: bev,
-      bevelSize: bev * 0.9,
-      bevelOffset: -bev * 0.9,
-      bevelSegments: 6
+      bevelSize: bev,
+      bevelOffset: -bev,
+      bevelSegments: 5
     });
     body.translate(0, 0, -(halfW * 2 - bev * 2) / 2);
-    // raised plate on the outer face
-    const plateShape = kidney(rIn + 0.012, rOut - 0.014, a0 + 0.06, a1 - 0.06);
-    const plate = new THREE.ExtrudeGeometry(plateShape, {
-      depth: 0.0015,
-      curveSegments: 40,
+
+    // raised outer face
+    const faceShape = kidney(rIn + 0.011, rOut - 0.012, a0 + 0.05, a1 - 0.05);
+    const face = new THREE.ExtrudeGeometry(faceShape, {
+      depth: 0.002,
+      curveSegments: 48,
       bevelEnabled: true,
-      bevelThickness: 0.0018,
-      bevelSize: 0.0018,
-      bevelOffset: -0.0018,
-      bevelSegments: 3
+      bevelThickness: 0.003,
+      bevelSize: 0.003,
+      bevelOffset: -0.003,
+      bevelSegments: 4
     });
-    plate.translate(0, 0, halfW - 0.0005);
-    // bleed screws on top of the bridge
-    const screws: THREE.BufferGeometry[] = [];
-    for (const f of [0.22, 0.78]) {
-      const a = a0 + (a1 - a0) * f;
-      const sc = new THREE.CylinderGeometry(0.0035, 0.0042, 0.012, 6);
-      sc.rotateZ(-(Math.PI / 2 - a));
-      sc.translate(Math.cos(a) * (rOut + 0.007), Math.sin(a) * (rOut + 0.007), halfW * 0.25);
-      screws.push(sc);
+    face.translate(0, 0, halfW - 0.001);
+
+    const rMid = (rIn + rOut) / 2 - 0.004;
+
+    // decal plate (UVs along the arc, see caliperDecalTexture)
+    const decalShape = kidney(rIn + 0.016, rOut - 0.017, at(0.12), at(0.88));
+    const decal = new THREE.ShapeGeometry(decalShape, 64);
+    {
+      const pos = decal.attributes.position as THREE.BufferAttribute;
+      const uv = new Float32Array(pos.count * 2);
+      const r0 = rIn + 0.016, r1 = rOut - 0.017, b0 = at(0.12), b1 = at(0.88);
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i);
+        const a = Math.atan2(y, x), r = Math.hypot(x, y);
+        uv[i * 2] = (b1 - a) / (b1 - b0); // trailing (left, seen from outside) -> leading
+        uv[i * 2 + 1] = (r - r0) / (r1 - r0);
+      }
+      decal.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+      decal.translate(0, 0, halfW + 0.0052);
     }
-    // pads, visible in the gap at the caliper's inner edge
-    const padShape = kidney(Rd - 0.058, Rd - 0.004, a0 + 0.1, a1 - 0.1);
-    const pad = new THREE.ExtrudeGeometry(padShape, { depth: 0.012, curveSegments: 24, bevelEnabled: false });
+
+    // pad window on the radial top: a dark recess, with the pads' backing plates either side of
+    // the disc, the retaining pin across and the anti-rattle spring
+    const winSpan = (a1 - a0) * 0.42;
+    const winShape = new THREE.Shape();
+    {
+      const w0 = Math.PI / 2 - winSpan / 2, w1 = Math.PI / 2 + winSpan / 2;
+      const ri = rOut - 0.004, ro = rOut + 0.0008;
+      winShape.absarc(0, 0, ro, w0, w1, false);
+      winShape.absarc(0, 0, ri, w1, w0, true);
+    }
+    const win = new THREE.ExtrudeGeometry(winShape, { depth: halfW * 1.4, curveSegments: 24, bevelEnabled: false });
+    win.translate(0, 0, -halfW * 0.7);
+    const metal: THREE.BufferGeometry[] = [];
+    const pin = new THREE.CylinderGeometry(0.0028, 0.0028, halfW * 1.9, 16);
+    pin.rotateX(Math.PI / 2);
+    pin.translate(0, rOut - 0.0005, 0);
+    metal.push(pin);
+    // spring: a bent flat strip over the pin, with two legs
+    const spring = new THREE.BoxGeometry(winSpan * rOut * 0.85, 0.0016, 0.014);
+    spring.translate(0, rOut + 0.0018, 0);
+    metal.push(spring);
+    for (const sx of [-1, 1]) {
+      const leg = new THREE.BoxGeometry(0.004, 0.0016, halfW * 1.1);
+      leg.translate(sx * winSpan * rOut * 0.42, rOut + 0.0018, 0);
+      metal.push(leg);
+    }
+    // bridge bolts (hex, on the outer face at both ends) and bleed nipples (radial top ends)
+    for (const f of [0.06, 0.94]) {
+      const hex = new THREE.CylinderGeometry(0.0062, 0.0062, 0.006, 6);
+      hex.rotateX(Math.PI / 2);
+      const p = polar(rMid + 0.004, at(f), halfW + 0.003);
+      hex.translate(p.x, p.y, p.z);
+      metal.push(hex);
+      const washer = new THREE.CylinderGeometry(0.0075, 0.0075, 0.0012, 24);
+      washer.rotateX(Math.PI / 2);
+      washer.translate(p.x, p.y, halfW + 0.0002);
+      metal.push(washer);
+    }
+    const caps: THREE.BufferGeometry[] = [];
+    for (const f of [0.2, 0.8]) {
+      const a = at(f);
+      const nip = new THREE.CylinderGeometry(0.0026, 0.0034, 0.006, 6);
+      nip.rotateZ(-(Math.PI / 2 - a));
+      const p = polar(rOut + 0.003, a, halfW * 0.35);
+      nip.translate(p.x, p.y, p.z);
+      metal.push(nip);
+      const cap = new THREE.CylinderGeometry(0.0034, 0.0036, 0.006, 16);
+      cap.rotateZ(-(Math.PI / 2 - a));
+      const q = polar(rOut + 0.0075, a, halfW * 0.35);
+      cap.translate(q.x, q.y, q.z);
+      caps.push(cap);
+    }
+    // pads inside the caliper, seen in the window and at its inner edge
+    const padShape = kidney(Rd - 0.06, Rd - 0.003, a0 + 0.08, a1 - 0.08);
+    const pad = new THREE.ExtrudeGeometry(padShape, { depth: 0.011, curveSegments: 32, bevelEnabled: false });
+    const plateShape = kidney(Rd - 0.062, Rd + 0.006, a0 + 0.07, a1 - 0.07);
+    const backing = new THREE.ExtrudeGeometry(plateShape, { depth: 0.004, curveSegments: 32, bevelEnabled: false });
     const pads = mergeGeometries([
       pad.clone().translate(0, 0, L.discThickness / 2 + 0.0005),
-      pad.clone().translate(0, 0, -L.discThickness / 2 - 0.0125)
+      pad.clone().translate(0, 0, -L.discThickness / 2 - 0.0115)
     ])!;
-    geos = [body, plate, mergeGeometries(screws)!, pads];
-    for (const gg of geos) gg.rotateY(Math.PI / 2); // shape plane -> disc plane (YZ), extrusion -> axle
+    const backs = mergeGeometries([
+      backing.clone().translate(0, 0, L.discThickness / 2 + 0.0115),
+      backing.clone().translate(0, 0, -L.discThickness / 2 - 0.0155)
+    ])!;
+    const flat = (list: THREE.BufferGeometry[]) => mergeGeometries(list.map((g0) => (g0.index ? g0.toNonIndexed() : g0)))!;
+    geos = [mergeGeometries([body, face].map((g0) => (g0.index ? g0.toNonIndexed() : g0)))!, decal, win, flat(metal), flat(caps), pads, backs];
+    for (const gg of geos) {
+      gg.rotateY(Math.PI / 2); // shape plane -> disc plane (YZ), extrusion -> axle
+      gg.computeVertexNormals();
+    }
+    // keep the body's machined edges crisp where the face meets the bevel
+    geos[0] = toCreasedNormals(geos[0], THREE.MathUtils.degToRad(35));
     caliperGeoCache.set(key, geos);
   }
-  const [body, plate, screws, pads] = geos;
+  const [body, decal, win, metal, caps, pads, backs] = geos;
   const g = new THREE.Group();
   g.name = 'caliper';
   g.add(
     new THREE.Mesh(body, mats.caliper),
-    new THREE.Mesh(plate, mats.caliper),
-    new THREE.Mesh(screws, mats.lugNut),
-    new THREE.Mesh(pads, mats.pad)
+    new THREE.Mesh(decal, caliperDecalMaterial()),
+    new THREE.Mesh(win, mats.caliperWindow),
+    new THREE.Mesh(metal, mats.lugNut),
+    new THREE.Mesh(caps, mats.caliperCap),
+    new THREE.Mesh(pads, mats.pad),
+    new THREE.Mesh(backs, mats.padBacking)
   );
   g.position.x = L.discX;
   // Upper trailing side of the disc on both sides of the car: right-hand assemblies face +X with

@@ -158,10 +158,15 @@ webhook URL lives in Supabase Vault (`lead_webhook_url`), and the template is in
 
 ## Project skills (for Claude Code and developers)
 
-Sixteen task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
+Eighteen task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
 and wheels (including turning a rim photo into a swappable 3D rim, and the wheel finishes), tuning
 paint, verifying renders, the PDF, lead emails, branding, docs, deploys and secrets. Claude Code loads them automatically; the index with when-to-use notes is
 [`docs/SKILLS.md`](docs/SKILLS.md).
+
+**A new wheel:** `/wheel3d` (`.claude/skills/wheel3d`) takes any wheel from a photo to a clean,
+photoreal rim on every car, size and finish. `visual-qa` is the general quality check behind it:
+measured checks (`scripts/render/wheel-qa.cjs`), then a render matrix over every combination
+(`scripts/render/qa-matrix.py`) with contact sheets.
 
 **Photorealism.** How the cars, wheels, tyres and brakes are made to look like studio photos, with
 the numbers and the pitfalls, is in [`docs/PHOTOREAL_METHOD.md`](docs/PHOTOREAL_METHOD.md). The

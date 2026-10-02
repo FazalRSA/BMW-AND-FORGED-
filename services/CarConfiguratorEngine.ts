@@ -27,6 +27,7 @@ import {
   SPOKE_BEVEL,
   LipStyle,
   WheelDims,
+  RimPhotoOptions,
   WheelKitMaterials,
   buildCaliper,
   buildDisc,
@@ -40,6 +41,7 @@ import {
   rimLayout
 } from './wheelKit';
 import { finishLook, installFinishLayers, applyFinishLook } from './wheelFinish';
+import { RIM_FACE_MASKS, RIM_FACE_OPTIONS } from './rimFaces';
 import { proceduralRimShapes } from './proceduralRims';
 import { 
   CarModel, 
@@ -1417,7 +1419,7 @@ export class CarConfiguratorEngine {
 
     if (imageConfig && imageConfig.extrude !== false) {
       // Photo -> cleaned, symmetric spoke mask -> bevelled concave 3D face in the wheel's finish
-      this.loadRimFace(imageConfig.imageUrl).then(
+      this.loadRimFace(imageConfig.imageUrl, RIM_FACE_MASKS[wheel.id], RIM_FACE_OPTIONS[wheel.id]).then(
         (faces) => {
           if (token !== this.wheelDesignToken) return;
           if (!faces) {
@@ -1450,19 +1452,22 @@ export class CarConfiguratorEngine {
   }
 
   /** 3D spoke faces (front and rear dish) from a rim photo; cached per image. */
-  private loadRimFace(url: string) {
+  private loadRimFace(photoUrl: string, faceMaskUrl?: string, options: RimPhotoOptions = {}) {
+    // a prepared face mask (rimFaces.ts) replaces the photo for the 3D spokes
+    const url = faceMaskUrl ?? photoUrl;
     let p = this.rimFaceCache.get(url);
     if (!p) {
       p = this.loadWheelTexture(url).then((texture) => {
         let mask: ReturnType<typeof processRimPhoto> = null;
         try {
-          mask = processRimPhoto(texture.image as HTMLImageElement);
+          mask = processRimPhoto(texture.image as HTMLImageElement, 1024, { ...options, cleanFace: !!faceMaskUrl });
         } catch (err) {
           console.warn('Could not read rim image pixels (CORS?); showing it flat.', err);
         }
         if (!mask) return null;
-        // outlines smoothed along their length (4 px) with the corners kept, then simplified
-        const raw = traceMaskShapes(mask.data, mask.size, mask.size, 0.5, 0.4, 4);
+        // outlines smoothed along their length (6 px) with the corners kept, then simplified to
+        // 2 px: straight spoke edges come out as straight lines
+        const raw = traceMaskShapes(mask.data, mask.size, mask.size, 0.5, 2.0, 6);
         if (!raw) return null;
         // traced radius 1 = mask edge; rescale so 1 = the spoke ends
         const k = 1 / FACE_FRACTION;

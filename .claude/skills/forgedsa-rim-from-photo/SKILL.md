@@ -21,7 +21,7 @@ Pipeline: photo → cut-out PNG → ingest (normalise + 3D-readiness test) → `
 - **Front-on**, camera on the wheel's axis, the whole rim in frame including the outer lip.
   - A slight angle puts the barrel off-centre. The app copes with a little (FSA-01).
   - A clear angle tears the arms, because the sectors no longer match (FSA-07). Ask for a
-    front-on shot or the CAD file.
+    front-on shot or the CAD file, or give it a prepared face (the `wheel3d` skill, step 3).
 - **Sharp and large:** at least 1500 px across the rim (2048+ is better). Edge smoothness comes
   from resolution.
 - **One photo per design,** in any finish: the finish is chosen in the app.
@@ -79,19 +79,26 @@ What the app needs in the PNG:
 3. **The outer band** (`traceFaceArms`). In most photos the barrel is seen solid behind the outer
    half of the spokes, so the windows end well inside the lip. The app decides between:
    - **barrel:** arms cross the band. Each arm edge is fitted as a straight line on its cut-out
-     edge, then followed to the lip through the photo's brightness edges (an optimal smooth path,
-     preferring the outer silhouette over chamfer lines). Copies of an arm in the other sectors
-     are averaged into one symmetric arm. Only arms are solid; the barrel between them is open.
-     FSA-01 to 08.
+     edge and continued straight to the lip (default; `straightArms: false` follows the photo's
+     brightness edges instead, for curved arms). Copies of an arm in the other sectors are
+     averaged into one symmetric arm, from the row where all copies have started. Only arms are
+     solid; the barrel between them is open. FSA-01 to 06 and 08.
    - **flange:** no arms cross. A solid face ring runs out to the lip (FSA-09).
    - **stretch:** the fallback when arms can't be traced (too few seeds, no arms repeating
      round the wheel). The see-through spokes are stretched to the lip. ⚠️ This is what made
      FSA-01's slender split arms fat before the tracer existed.
+   - **clean:** a prepared face mask (`services/rimFaces.ts`), mapped 1:1, nothing traced
+     (FSA-07, a bar face).
    - Spokes always end at `LIP_FRACTION` = 0.916 of the photo's rim radius (3D: 240 / 262 mm).
-4. **Clean-up:** median across the symmetric sectors, smoothing along the radius (σ 8 px,
-   fading out where traced arms start), solid hub pad (lug nuts and cap are 3D), 2 px blur.
+4. **Clean-up:**
+   - median across the symmetric sectors;
+   - smoothing along the radius (σ 8 px, to just inside the lip);
+   - **edge refit** (`regulariseEdges`): every spoke edge refitted as a smooth curve, so the
+     steps where the cut-out meets the traced arms go;
+   - solid hub pad (lug nuts and cap are 3D);
+   - blur, then a 3 px opening (slivers) and a 5 px closing (hooked window tips).
 5. **Outline and face:**
-   - `traceMaskShapes(mask, …, 0.5, 0.4, 4)`: marching squares, outline smoothing (σ 4 px,
+   - `traceMaskShapes(mask, …, 0.5, 2.0, 6)`: marching squares, outline smoothing (σ 6 px,
      corners kept), simplify;
    - pin-hole holes dropped;
    - `buildSpokeFace`: 32 mm deep, 3 mm rounded bevel, concave dish (36 mm front / 58 mm
@@ -102,6 +109,9 @@ What the app needs in the PNG:
 
 ## 5. QA, every new photo
 
+0. **Measured face check (seconds):** `node scripts/render/wheel-qa.cjs <rimCacheDir> <outDir>`.
+   Every wheel must PASS: pieces, windows, symmetry, ragged, **wiggle** (nicks and wobble) and
+   thinnest spoke. The thresholds are in the `visual-qa` skill, the full process in `wheel3d`.
 1. **Outlines (seconds per photo).** Dev server on 127.0.0.1:5173, then:
    ```bash
    node scripts/render/outlines.cjs <rimCacheDir> <outDir> '[{"name":"default"}]' forged_fsa_10
@@ -127,10 +137,11 @@ What the app needs in the PNG:
 |---|---|---|
 | Fat, stretched spokes; split arms merged | `stretch` mode on a photo whose barrel shows behind the arms | Check the mode in outlines.cjs. Front-on, larger photo, or cut the barrel out between the arms |
 | Spokes end at a solid ring | `flange` chosen: no arm edges found in the band | Real flange designs (FSA-09) are right. Otherwise the photo is too soft: a sharper photo |
-| Torn or broken arms, floating pieces | Angled photo: the sectors disagree (FSA-07) | Front-on photo or CAD |
+| Torn or broken arms, floating pieces | Angled photo: the sectors disagree (FSA-07) | Front-on photo or CAD; else a bar face or AI face mask (`wheel3d` step 3) |
+| Nicks or steps halfway along the spokes | The cut-out half and the traced half of each arm meet a few pixels apart | Fixed in the engine (Oct 2026); if `wheel-qa` wiggle > 15° on a new photo, see `wheel3d` step 3 |
 | Wide wedges instead of Y-branched arms | Branches split inside the barrel band (FSA-02). The app follows a see-through slot enclosed by an arm out to the lip (≤ ~18 mm wide, never narrowing), but only once the slot shows in the cut-out | Cut the barrel out between the branches, so the slot starts where the branches part |
 | Pin-holes in spokes | Holes in the cut-out over ~170 mm² | Clean the cut-out |
-| Jagged or lumpy edges | Low resolution, or a noisy cut-out edge | A larger photo; check `traceMaskShapes` smoothing is on (4 px) |
+| Jagged or lumpy edges | Low resolution, or a noisy cut-out edge | A larger photo; check `traceMaskShapes` smoothing is on (6 px) |
 | Flat disc with the photo printed on it | No transparency inside the rim, or *Build 3D spokes* off | Cut out the windows; tick the box |
 | Wrong arm count or wrong symmetry | A defect or reflection breaks the repeat; fold detection picked a multiple | Check the printed fold; clean the photo |
 | Caliper or hat showing through the spokes | Clearance, not the photo | Move `discX` in `rimLayout`, never the spokes (`3d-car-perfect`) |

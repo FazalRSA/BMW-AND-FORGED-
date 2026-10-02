@@ -153,8 +153,26 @@ This is `processRimPhoto` → `traceMaskShapes` → `buildSpokeFace`:
      240 / 262 mm. Tips keep at least 3 mm of width, so every arm meets the lip.
    - **Fallback:** `stretch` (the old behaviour) when arms can't be traced.
    - **Branch slots** (Y-spokes): a see-through run enclosed by an arm is cut out. Its edges are followed to the lip, averaged across sectors (copies up to 0.15 sector apart), never narrowing and capped at ~18 mm. Clustering at different radii failed, because the slots slant.
-   - Results: FSA-01 to 08 `barrel`, FSA-09 `flange`. FSA-02's Y-branches now fork near the lip; the photo's
-     split starts further in. FSA-07 (an angled photo) still tears where its sectors disagree.
+   - Results: FSA-01 to 06 and 08 `barrel`, FSA-09 `flange`. FSA-07 (an angled photo of crossing
+     bars) is a **bar face** drawn from measured straight bars (`scripts/render/make-bar-face.py`,
+     `services/rimFaces.ts`).
+   - **Clean joins (Oct 2026).** The owner saw nicks and shoulders on the spokes, where each
+     spoke's cut-out half meets its traced outer half. The causes and fixes:
+     - The shared arm shape averaged copies that start at different rows, so it jumped sideways
+       each time a copy joined. It is now averaged from the row where all copies have started;
+       before that, each sector follows its own edges.
+     - Window fillets swell the cut-out arm just before the join. It is trimmed against the arm's
+       own straight edges.
+     - The Y-slot detector cut "pockets" in the overlap rows. Pockets now count only past the
+       handover.
+     - Brightness edges follow chamfers inside the silhouette. **Straight arms are the default**:
+       the fitted cut-out line continues to the lip.
+     - Every spoke edge in the sector table is then refitted with a sliding, Gaussian-weighted
+       parabola (σ 16 rows; `regulariseEdges`). Straight and evenly curved edges stay put; steps
+       of up to 14 columns become short tapers.
+     - A 5 px closing fills hooked window tips.
+     - Measured by `scripts/render/wheel-qa.cjs`'s **wiggle** check: 17–113° before, 0–10° after
+       (limit 15°).
 3. **Detect the rotational symmetry.** Angular correlation at four radii over folds 3–24. Take
    the largest fold scoring within 85% of the best. It is applied only when the best score is
    ≥ 0.4.
@@ -171,13 +189,15 @@ This is `processRimPhoto` → `traceMaskShapes` → `buildSpokeFace`:
      spokes.
    - Radial smoothing turns the steps into straight runs and leaves each edge where it is.
    - The window corners get a fillet of a few millimetres, as real forged windows have.
-   - It fades out where the traced arms start: they are smooth already and often slanted.
+   - It runs on across the handover to the traced arms (a symmetric blur leaves a straight edge's
+     0.5 contour where it is, whatever its slant) and fades out just inside the lip.
 6. **Replace the centre** with a solid hub pad (0.3 of the face radius). Lug nuts and cap are 3D.
 7. **Trace:**
    - blur the mask about 2 px (four passes), then trace it at 0.5 with marching squares;
-   - **smooth each outline along its length** (σ 4 px, resampled every pixel). Corners, where
+   - **smooth each outline along its length** (σ 6 px, resampled every pixel). Corners, where
      the outline turns more than 50° within ±2σ, stay fixed and the filter stops at them;
-   - simplify with a 0.4 px tolerance.
+   - simplify with a 2 px tolerance (`traceMaskShapes(mask, n, n, 0.5, 2.0, 6)`), so straight
+     edges come out as straight lines.
    - Contour smoothing alone can't remove the steps: a step is two sharp turns, so it counts as
      corners and is kept. Steps 5 and 7 work together.
 8. **Extrude:**
@@ -231,13 +251,24 @@ kind is picked from the numbers, so admin-made finishes work unchanged. Details 
   - Face: cast iron #a19f9b, metal 1, roughness 0.38, normal-map machining grooves.
   - **Anisotropy 0.8 with a radial direction map:** turned marks are circles, so highlights
     stretch radially. A (0.5, 0.5) texel gives NaN.
-- **Caliper:** 6-piston monoblock, stationary, on the upper trailing side.
-  - Kidney body spanning 84° front and 70° rear (about 278 / 230 mm), from 64 mm inside the disc
-    edge to 22 mm outside it.
-  - 11 mm rounded bevels, with the outline kept inside its radii by a negative bevel offset.
-  - Raised face plate, bleed screws, pads.
-  - Gloss paint: default blue #1d4f9c, roughness 0.36, clear coat 1 / 0.03.
-  - No logo, because there is no licence for one.
+- **Caliper (M Compound style):** 6-piston monoblock, stationary, on the upper trailing side.
+  The first version was a smooth blue kidney with soft 11 mm edges and domed pistons: the owner
+  called it "a blue blob". What makes it read as a real caliper:
+  - Kidney body spanning 84° front and 70° rear (about 278 / 230 mm), from 66 mm inside the disc
+    edge to 24 mm outside it. **Firm 7 mm cast edges** (a soft edge reads as a toy).
+  - A **raised outer face** with its own 3 mm bevel. This is where the light catches, as on the
+    real part.
+  - **The BMW M logo** on the face (the owner chose it over a FORGEDSA wordmark or none):
+    - the light blue / dark blue / red stripes and a white italic "M", drawn on a canvas
+      (1024 × 400, the decal's real proportions);
+    - mapped along the arc from 12% to 88% of the span;
+    - polygon offset and clear coat, so it sits in the paint.
+  - **Pad window** recessed flush in the radial face. Pad pin and anti-rattle spring, flush with
+    the top.
+  - **Hex bridge bolts with washers**, short bleed nipples with dark caps, and pads with metal
+    backing plates. The old domes read as blobs and were removed.
+  - Gloss paint: **M Performance Blue #0055b8**, roughness 0.36, clear coat 1 / 0.03. The colour
+    can be changed per car (`applyCaliperColor`).
 - **Clearance:**
   - the disc centre sits at x = −14 mm front and −8 mm rear, so the caliper clears the back of
     the concave spokes;
