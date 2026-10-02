@@ -175,9 +175,17 @@ export function traceRimShapes(image: CanvasImageSource & { width: number; heigh
   // Nothing see-through between the spokes: not a cut-out image.
   if (insideCount === 0 || transparentInside / insideCount < 0.02) return null;
 
+  return traceMaskShapes(mask, w, h, threshold);
+}
+
+/**
+ * Outlines of a solid/empty mask (row-major, w x h, values 0..1) as shapes in rim-plane units
+ * (radius 1 = half the mask's larger side), with holes nested by even/odd depth.
+ */
+export function traceMaskShapes(mask: Float32Array, w: number, h: number, threshold = 0.5, tolerance = 0.6): THREE.Shape[] | null {
   const minArea = (w * h) * 0.00008;
   const loops = traceLoops(mask, w, h, threshold)
-    .map((l) => simplify(l, 0.6))
+    .map((l) => simplify(l, tolerance))
     .map((l) => ({ l, area: Math.abs(signedArea(l)) }))
     .filter(({ area, l }) => area > minArea && l.length >= 6)
     .sort((a, b) => b.area - a.area);

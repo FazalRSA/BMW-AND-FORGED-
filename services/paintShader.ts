@@ -27,14 +27,14 @@ export interface PaintLayerUniforms {
 
 /** Look per BMW paint type. Exposed so tuning sessions can adjust them live. */
 export const PAINT_LAYERS: Record<PaintColor['type'], { flake: number; flop: number }> = {
-  Metallic: { flake: 0.22, flop: 0.66 },
+  Metallic: { flake: 0.07, flop: 0.66 },
   // Frozen (matte) paints are metallic underneath, but the matte clear coat diffuses the sparkle.
-  Frozen: { flake: 0.08, flop: 0.78 },
+  Frozen: { flake: 0.03, flop: 0.78 },
   Uni: { flake: 0, flop: 0.92 }
 };
 
-/** Flake cells per metre in model space (about 1.5 mm flakes on a real-scale car). */
-export const FLAKE_SCALE = 650;
+/** Flake cells per metre (about 0.7 mm: a fine sparkle up close that fades out with distance). */
+export const FLAKE_SCALE = 1400;
 
 export function installPaintLayers(material: THREE.MeshPhysicalMaterial): PaintLayerUniforms {
   const uniforms: PaintLayerUniforms = {
@@ -43,12 +43,13 @@ export function installPaintLayers(material: THREE.MeshPhysicalMaterial): PaintL
     uFlop: { value: PAINT_LAYERS.Metallic.flop }
   };
   material.userData.paintLayers = uniforms;
-  material.customProgramCacheKey = () => 'forgedsa-paint-v1';
+  material.customProgramCacheKey = () => 'forgedsa-paint-v2';
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vPaintPos;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaintPos = transformed;');
+      // world space, so flakes are a real size whatever units the car file uses
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvPaintPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     shader.fragmentShader = shader.fragmentShader
       .replace(
         '#include <common>',
@@ -74,7 +75,7 @@ vec3 paintHash3(vec3 p) {
   // Flakes: one random tilt per cell, faded out once cells are smaller than a pixel
   vec3 fp = vPaintPos * uFlakeScale;
   float footprint = length(fwidth(fp));
-  float visible = 1.0 - smoothstep(0.6, 1.6, footprint);
+  float visible = 1.0 - smoothstep(0.35, 0.9, footprint);
   if (uFlakeStrength > 0.0 && visible > 0.0) {
     vec3 tilt = paintHash3(floor(fp)) * 2.0 - 1.0;
     vec3 tiltView = normalize((viewMatrix * vec4(tilt, 0.0)).xyz);

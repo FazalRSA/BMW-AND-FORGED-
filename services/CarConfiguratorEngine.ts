@@ -17,7 +17,25 @@ import { applyPaintLayers, installPaintLayers } from './paintShader';
 import { buildSoftboxStudio } from './studioSoftbox';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
-import { traceRimShapes, buildRimFaceGeometry } from './rimExtrusion';
+import { traceRimShapes, traceMaskShapes, buildRimFaceGeometry } from './rimExtrusion';
+import {
+  FACE_FRACTION,
+  barrelAoMap,
+  SPOKE_BEVEL,
+  LipStyle,
+  WheelDims,
+  WheelKitMaterials,
+  buildCaliper,
+  buildDisc,
+  buildHub,
+  buildRimShell,
+  buildSpokeFace,
+  buildTyre,
+  createWheelKitMaterials,
+  lipStyleFor,
+  processRimPhoto,
+  rimLayout
+} from './wheelKit';
 import { proceduralRimShapes } from './proceduralRims';
 import { 
   CarModel, 
@@ -56,20 +74,26 @@ export class CarConfiguratorEngine {
   private wheelsGroup: THREE.Group;
   private wheelAssemblies: {
     group: THREE.Group;
+    /** Rotates around the axle: tyre, rim, spokes, hub and disc. The caliper stays put. */
     spinGroup: THREE.Group;
     spokeMeshGroup: THREE.Group;
-    caliperMesh: THREE.Mesh;
-    discMesh: THREE.Mesh;
-    tireMesh: THREE.Mesh;
-    barrelMesh: THREE.Mesh;
-    lipMesh: THREE.Mesh;
-    /** Generic centre cap + bolts; hidden when a real rim (image or GLB) brings its own. */
-    hubParts: THREE.Object3D[];
-    sidewalls: THREE.Mesh[];
-    tireWidth: number;
+    tyre: THREE.Group | null;
+    /** Lip + barrel (+ lip bolts); rebuilt when the rim size or lip style changes. */
+    rim: THREE.Group | null;
+    /** Lug nuts + centre cap; hidden when a GLB rim brings its own. */
+    hub: THREE.Group;
+    disc: THREE.Group;
+    caliper: THREE.Group;
+    dims: WheelDims;
     isFront: boolean;
     isRight: boolean;
   }[] = [];
+  private kit!: WheelKitMaterials;
+  /** Inside of the barrel: the finish, a touch darker and less polished. */
+  private barrelMaterial!: THREE.MeshPhysicalMaterial;
+  private lipStyle: LipStyle = 'mono';
+  private wheelMode: 'model' | 'image' | 'procedural' = 'procedural';
+  private rimFaceCache = new Map<string, Promise<{ front: THREE.BufferGeometry; rear: THREE.BufferGeometry } | null>>();
 
   // Materials Cache
   private carBodyMaterial!: THREE.MeshPhysicalMaterial;
@@ -79,9 +103,6 @@ export class CarConfiguratorEngine {
   private wheelMaterial!: THREE.MeshPhysicalMaterial;
   /** Bright neutral room reflections for the rims only; the studio HDRI is too dark behind the camera for chrome. */
   private wheelEnvMap: THREE.Texture | null = null;
-  private caliperMaterial!: THREE.MeshStandardMaterial;
-  private brakeDiscMaterial!: THREE.MeshStandardMaterial;
-  private tireMaterial!: THREE.MeshStandardMaterial;
   private carbonMaterial!: THREE.MeshPhysicalMaterial;
   private glassMaterial!: THREE.MeshPhysicalMaterial;
   private chromeMaterial!: THREE.MeshStandardMaterial;
@@ -152,6 +173,15 @@ export class CarConfiguratorEngine {
    */
   static STUDIO: 'softbox' | 'hdri' =
     typeof window !== 'undefined' && /[?&]studio=hdri/.test(window.location.search) ? 'hdri' : 'softbox';
+  /** Tone mapping: 'aces' (default), 'agx' or 'neutral'; ?tone=agx compares. */
+  static TONE: 'aces' | 'agx' | 'neutral' = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]tone=(agx|neutral|aces)/.exec(window.location.search) : null;
+    return (m?.[1] as 'aces' | 'agx' | 'neutral') ?? 'aces';
+  })();
+  static EXPOSURE: number | undefined = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]exposure=([0-9.]+)/.exec(window.location.search) : null;
+    return m ? +m[1] : undefined;
+  })();
   static DEFAULT_HIDE = '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)';
   private isDisposed = false;
   private contactShadow: {
@@ -205,8 +235,9 @@ export class CarConfiguratorEngine {
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    const tone = CarConfiguratorEngine.TONE;
+    this.renderer.toneMapping = tone === 'agx' ? THREE.AgXToneMapping : tone === 'neutral' ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = CarConfiguratorEngine.EXPOSURE ?? (tone === 'agx' ? 1.25 : tone === 'neutral' ? 0.95 : 1.08);
     this.container.appendChild(this.renderer.domElement);
 
     // Setup Post-Processing Specular Bloom Pass Pipeline
@@ -306,26 +337,21 @@ export class CarConfiguratorEngine {
       clearcoatRoughness: 0.1
     });
 
-    // Caliper Material (default M Blue)
-    this.caliperMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#1c1e22'),
-      metalness: 0.55,
-      roughness: 0.35
+    // Inside of the barrel, seen through the spokes
+    this.barrelMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#b9c0c6'),
+      metalness: 0.98,
+      roughness: 0.22,
+      clearcoat: 0.5,
+      side: THREE.DoubleSide,
+      envMapIntensity: 0.6, // deep inside the wheel: far less of the studio reaches it
+      aoMap: barrelAoMap(),
+      aoMapIntensity: 1
     });
+    this.wheelMaterial.side = THREE.DoubleSide;
 
-    // Brake Disc Rotor (Ceramic Slotted)
-    this.brakeDiscMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#787d82'),
-      metalness: 0.88,
-      roughness: 0.32
-    });
-
-    // High Performance Tires
-    this.tireMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#141416'),
-      roughness: 0.85,
-      metalness: 0.08
-    });
+    // Tyres, discs, calipers, lip, nuts and cap
+    this.kit = createWheelKitMaterials();
 
     // Carbon Fiber Aerodynamic Components
     this.carbonMaterial = new THREE.MeshPhysicalMaterial({
@@ -597,14 +623,12 @@ export class CarConfiguratorEngine {
     const roomTarget = pmrem.fromScene(room, 0.04);
     this.scene.environment = roomTarget.texture;
     this.wheelEnvMap = roomTarget.texture;
-    this.wheelMaterial.envMap = this.wheelEnvMap;
-    this.wheelMaterial.needsUpdate = true;
     this.scene.environmentIntensity = 0.9;
     room.dispose?.();
 
     if (CarConfiguratorEngine.STUDIO === 'softbox') {
       const studio = buildSoftboxStudio();
-      const studioTarget = pmrem.fromScene(studio, 0.02);
+      const studioTarget = pmrem.fromScene(studio, 0.02, 0.1, 100, { size: 512 });
       studio.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh) {
@@ -1197,6 +1221,7 @@ export class CarConfiguratorEngine {
   // ----------------------------------------------------
   private buildWheels() {
     // Clear existing
+    this.wheelAssemblies.forEach((a) => this.disposeWheelShell(a));
     while (this.wheelsGroup.children.length > 0) {
       this.wheelsGroup.remove(this.wheelsGroup.children[0]);
     }
@@ -1213,138 +1238,37 @@ export class CarConfiguratorEngine {
     this.defaultWheelLayout = wheelPositions.map(({ x, y, z }) => ({ x, y, z }));
 
     wheelPositions.forEach((wp) => {
-      const assemblyGroup = new THREE.Group();
-      assemblyGroup.position.set(wp.x, wp.y, wp.z);
+      const group = new THREE.Group();
+      group.position.set(wp.x, wp.y, wp.z);
+      // Right-hand wheels face +X; left-hand ones are turned round so their face points -X
+      group.rotation.y = wp.isRight ? 0 : Math.PI;
 
-      // Rotation orientation: wheels on right side face outward along +X, left face outward along -X
-      if (wp.isRight) {
-        assemblyGroup.rotation.y = 0; // facing +X
-      } else {
-        assemblyGroup.rotation.y = Math.PI; // facing -X
-      }
-
-      // Spin group rotates around Z-axis in local space (or X in world)
+      // 265/35 front, 295/35 rear on a 20" rim (outer radius 0.35 m); the spin group turns on X
+      const dims: WheelDims = { tyreRadius: 0.35, tyreWidth: wp.isFront ? 0.265 : 0.295, rimScale: this.rimScale, isFront: wp.isFront };
       const spinGroup = new THREE.Group();
+      group.add(spinGroup);
 
-      // 1. TIRE (Low profile ultra-high performance Pilot Sport Cup 2 style)
-      // Radius: 0.35m (~27.5 inch outer diameter), width ~ 0.28m
-      const tireWidth = wp.isFront ? 0.26 : 0.30;
-      const tireRadius = 0.35;
-      const rimRadius = 0.26; // 20-inch rim
-
-      // Tread with rounded shoulders (lathed profile), flat sidewalls down to the rim
-      const tireGeo = CarConfiguratorEngine.buildTreadGeometry(tireRadius, tireWidth);
-      const tireMesh = new THREE.Mesh(tireGeo, this.tireMaterial);
-      tireMesh.castShadow = true;
-      spinGroup.add(tireMesh);
-
-      const sidewallGeo1 = new THREE.RingGeometry(rimRadius, tireRadius - 0.04, 64);
-      sidewallGeo1.rotateY(Math.PI / 2);
-      const sidewallOuter = new THREE.Mesh(sidewallGeo1.clone(), this.tireMaterial);
-      sidewallOuter.position.x = tireWidth / 2 - 0.004;
-      const sidewallInner = new THREE.Mesh(sidewallGeo1, this.tireMaterial);
-      sidewallInner.position.x = -tireWidth / 2 + 0.004;
-      sidewallInner.rotation.y = Math.PI;
-      spinGroup.add(sidewallOuter, sidewallInner);
-
-      // 2. FORGED WHEEL BARREL / RIM LIP
-      const barrelGeo = new THREE.CylinderGeometry(rimRadius, rimRadius * 0.96, tireWidth * 0.95, 48, 1, true);
-      barrelGeo.rotateZ(Math.PI / 2);
-      const barrelMesh = new THREE.Mesh(barrelGeo, this.wheelMaterial);
-      spinGroup.add(barrelMesh);
-
-      // Stepped polished outer rim lip ring
-      const lipGeo = new THREE.TorusGeometry(rimRadius * 0.98, 0.012, 16, 48);
-      lipGeo.rotateY(Math.PI / 2);
-      const lipMesh = new THREE.Mesh(lipGeo, this.wheelMaterial);
-      lipMesh.position.x = tireWidth / 2 - 0.01;
-      spinGroup.add(lipMesh);
-
-      // 3. SPOKE MESH GROUP (Replaced dynamically when wheel design changes)
       const spokeMeshGroup = new THREE.Group();
-      spokeMeshGroup.position.x = tireWidth / 2 - 0.025; // outer face of wheel
+      spokeMeshGroup.position.x = rimLayout(dims).faceEdgeX;
       spinGroup.add(spokeMeshGroup);
 
-      // 4. CENTER CAP & TITANIUM LUG BOLTS
-      const centerCapGeo = new THREE.CylinderGeometry(0.042, 0.042, 0.02, 32);
-      centerCapGeo.rotateZ(Math.PI / 2);
-      const centerCapMat = new THREE.MeshStandardMaterial({
-        color: 0x0f1114,
-        metalness: 0.9,
-        roughness: 0.2
-      });
-      const centerCap = new THREE.Mesh(centerCapGeo, centerCapMat);
-      centerCap.position.x = tireWidth / 2 - 0.015;
-      spinGroup.add(centerCap);
-      const hubParts: THREE.Object3D[] = [centerCap];
+      const hub = buildHub(dims, this.kit);
+      const disc = buildDisc(dims, this.kit);
+      spinGroup.add(hub, disc);
+      const caliper = buildCaliper(dims, this.kit, wp.isRight);
+      group.add(caliper);
 
-      // 5 Lug Bolts (Titanium star pattern)
-      for (let l = 0; l < 5; l++) {
-        const angle = (l * Math.PI * 2) / 5;
-        const boltGeo = new THREE.CylinderGeometry(0.009, 0.009, 0.015, 12);
-        boltGeo.rotateZ(Math.PI / 2);
-        const bolt = new THREE.Mesh(boltGeo, this.chromeMaterial);
-        bolt.position.set(tireWidth / 2 - 0.02, Math.cos(angle) * 0.075, Math.sin(angle) * 0.075);
-        spinGroup.add(bolt);
-        hubParts.push(bolt);
-      }
-
-      assemblyGroup.add(spinGroup);
-
-      // 5. STATIONARY BRAKE ROTOR DISC (Inside the wheel)
-      const rotorRadius = wp.isFront ? 0.21 : 0.19; // huge 400mm carbon ceramic discs
-      const discGeo = new THREE.CylinderGeometry(rotorRadius, rotorRadius, 0.025, 36);
-      discGeo.rotateZ(Math.PI / 2);
-      const discMesh = new THREE.Mesh(discGeo, this.brakeDiscMaterial);
-      discMesh.position.x = 0.02;
-      assemblyGroup.add(discMesh);
-
-      // Slotted Cross-Drilled Rotor Hat (Center bell)
-      const hatGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.035, 24);
-      hatGeo.rotateZ(Math.PI / 2);
-      const hatMesh = new THREE.Mesh(hatGeo, this.chromeMaterial);
-      hatMesh.position.x = 0.035;
-      assemblyGroup.add(hatMesh);
-
-      // 6. STATIONARY MONOBLOCK BRAKE CALIPER (M Performance 6-Piston)
-      // Curved monoblock caliper hugging the top-front of the disc
-      const cInner = rotorRadius - 0.075;
-      const cOuter = rotorRadius + 0.022;
-      const a0 = THREE.MathUtils.degToRad(100);
-      const a1 = THREE.MathUtils.degToRad(165);
-      const caliperShape = new THREE.Shape();
-      caliperShape.absarc(0, 0, cOuter, a0, a1, false);
-      caliperShape.absarc(0, 0, cInner, a1, a0, true);
-      caliperShape.closePath();
-      const caliperDepth = 0.075;
-      const caliperGeo = new THREE.ExtrudeGeometry(caliperShape, {
-        depth: caliperDepth,
-        bevelEnabled: true,
-        bevelThickness: 0.01,
-        bevelSize: 0.01,
-        bevelSegments: 3,
-        curveSegments: 24
-      });
-      caliperGeo.rotateY(Math.PI / 2); // shape plane -> disc plane, extrusion -> axle
-      caliperGeo.translate(0.02 - caliperDepth / 2, 0, 0);
-      const caliperMesh = new THREE.Mesh(caliperGeo, this.caliperMaterial);
-      caliperMesh.castShadow = true;
-      assemblyGroup.add(caliperMesh);
-
-      this.wheelsGroup.add(assemblyGroup);
-
+      this.wheelsGroup.add(group);
       this.wheelAssemblies.push({
-        group: assemblyGroup,
+        group,
         spinGroup,
         spokeMeshGroup,
-        caliperMesh,
-        discMesh,
-        tireMesh,
-        barrelMesh,
-        lipMesh,
-        hubParts,
-        sidewalls: [sidewallOuter, sidewallInner],
-        tireWidth,
+        tyre: null,
+        rim: null,
+        hub,
+        disc,
+        caliper,
+        dims,
         isFront: wp.isFront,
         isRight: wp.isRight
       });
@@ -1353,24 +1277,39 @@ export class CarConfiguratorEngine {
     this.applyRimScale();
   }
 
-  /** Tyre tread: a lathed profile with rounded shoulders, axle along X. */
-  private static buildTreadGeometry(radius: number, width: number): THREE.BufferGeometry {
-    const half = width / 2;
-    const shoulder = 0.035;
-    const pts: THREE.Vector2[] = [];
-    pts.push(new THREE.Vector2(radius - 0.045, -half + 0.004));
-    for (let i = 0; i <= 8; i++) {
-      const t = (i / 8) * (Math.PI / 2); // inner shoulder
-      pts.push(new THREE.Vector2(radius - shoulder + Math.sin(t) * shoulder, -half + shoulder - Math.cos(t) * shoulder));
+  /** Tyre and rim shell follow the rim size and the design's lip style, so they are rebuilt on either change. */
+  private rebuildWheelShells() {
+    this.wheelAssemblies.forEach((a) => {
+      this.disposeWheelShell(a);
+      a.dims = { ...a.dims, rimScale: this.rimScale };
+      a.tyre = buildTyre(a.dims, this.kit);
+      a.spinGroup.add(a.tyre);
+      const shell = buildRimShell(a.dims, this.lipStyle, this.wheelMaterial, this.barrelMaterial, this.kit);
+      const rim = new THREE.Group();
+      rim.name = 'rim_shell';
+      rim.add(shell.lipMesh, shell.barrelMesh);
+      if (shell.bolts) rim.add(shell.bolts);
+      rim.visible = this.wheelMode !== 'model';
+      a.rim = rim;
+      a.spinGroup.add(rim);
+    });
+  }
+
+  private disposeWheelShell(a: (typeof this.wheelAssemblies)[number]) {
+    if (a.tyre) {
+      a.spinGroup.remove(a.tyre);
+      (a.tyre.userData.dispose as (() => void) | undefined)?.();
+      a.tyre = null;
     }
-    for (let i = 0; i <= 8; i++) {
-      const t = (i / 8) * (Math.PI / 2); // outer shoulder
-      pts.push(new THREE.Vector2(radius - shoulder + Math.cos(t) * shoulder, half - shoulder + Math.sin(t) * shoulder));
+    if (a.rim) {
+      a.spinGroup.remove(a.rim);
+      a.rim.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh) m.geometry.dispose();
+        if ((o as THREE.InstancedMesh).isInstancedMesh) (o as THREE.InstancedMesh).dispose();
+      });
+      a.rim = null;
     }
-    pts.push(new THREE.Vector2(radius - 0.045, half - 0.004));
-    const geo = new THREE.LatheGeometry(pts, 72);
-    geo.rotateZ(Math.PI / 2); // lathe axis Y -> axle X
-    return geo;
   }
 
   /** Resizes the rim inside a fixed tyre, e.g. '21"'. Bigger rim = thinner sidewall, like a real upgrade. */
@@ -1383,24 +1322,9 @@ export class CarConfiguratorEngine {
 
   private applyRimScale() {
     const s = this.rimScale;
-    const rimRadius = 0.26 * s; // 20" base rim radius
-    const tireRadius = 0.35;
-    this.wheelAssemblies.forEach((a) => {
-      a.spokeMeshGroup.scale.set(1, s, s);
-      a.barrelMesh.scale.set(1, s, s);
-      a.lipMesh.scale.set(1, s, s); // ring geometry is baked into the YZ plane
-      a.hubParts.forEach((p) => {
-        p.userData.baseYZ ??= [p.position.y, p.position.z];
-        p.position.y = p.userData.baseYZ[0] * s;
-        p.position.z = p.userData.baseYZ[1] * s;
-      });
-      a.sidewalls.forEach((wall) => {
-        wall.geometry.dispose();
-        const g = new THREE.RingGeometry(rimRadius, tireRadius - 0.04, 64);
-        g.rotateY(Math.PI / 2);
-        wall.geometry = g;
-      });
-    });
+    this.rebuildWheelShells();
+    // Spoke faces are built for 20"; they scale across the face, not in depth
+    this.wheelAssemblies.forEach((a) => a.spokeMeshGroup.scale.set(1, s, s));
   }
 
   // ----------------------------------------------------
@@ -1419,16 +1343,22 @@ export class CarConfiguratorEngine {
         : null;
     const modelUrl = custom2DConfig?.imageUrl ? null : wheel.modelUrl;
     const mode = modelUrl ? 'model' : imageConfig ? 'image' : 'procedural';
+    this.wheelMode = mode;
+
+    // Two- and three-piece designs get a polished, bolted lip
+    const lip = lipStyleFor(wheel.style, wheel.name);
+    if (lip !== this.lipStyle) {
+      this.lipStyle = lip;
+      this.rebuildWheelShells();
+    }
 
     this.wheelAssemblies.forEach((assembly) => {
-      // Clear spokes
       while (assembly.spokeMeshGroup.children.length > 0) {
         assembly.spokeMeshGroup.remove(assembly.spokeMeshGroup.children[0]);
       }
-      // A GLB rim brings its own barrel and lip; any real rim brings its own centre cap.
-      assembly.barrelMesh.visible = mode !== 'model';
-      assembly.lipMesh.visible = mode !== 'model';
-      assembly.hubParts.forEach((p) => (p.visible = mode === 'procedural'));
+      // A GLB rim brings its own barrel, lip and centre
+      if (assembly.rim) assembly.rim.visible = mode !== 'model';
+      assembly.hub.visible = mode !== 'model';
     });
 
     if (modelUrl) {
@@ -1445,25 +1375,71 @@ export class CarConfiguratorEngine {
       return;
     }
 
+    if (imageConfig && imageConfig.extrude !== false) {
+      // Photo -> cleaned, symmetric spoke mask -> bevelled concave 3D face in the wheel's finish
+      this.loadRimFace(imageConfig.imageUrl).then(
+        (faces) => {
+          if (token !== this.wheelDesignToken) return;
+          if (!faces) {
+            this.wheelAssemblies.forEach((a) => this.applyCustom2DSpokeTexture(a.spokeMeshGroup, { ...imageConfig, extrude: false }, a.isFront, token));
+            return;
+          }
+          this.wheelAssemblies.forEach((a) => {
+            const face = new THREE.Mesh(a.isFront ? faces.front : faces.rear, this.wheelMaterial);
+            face.name = 'rim_spokes';
+            a.spokeMeshGroup.add(face);
+          });
+          this.markShadowDirty(30);
+        },
+        (err) => console.warn('Failed to build the rim face from its image:', err)
+      );
+      return;
+    }
+
     this.wheelAssemblies.forEach((assembly) => {
       if (imageConfig) {
         this.applyCustom2DSpokeTexture(assembly.spokeMeshGroup, imageConfig, assembly.isFront, token);
         return;
       }
-
-      const concavity = assembly.isFront ? 0.03 : 0.05; // deeper dish on the wider rear rims
+      const concavity = rimLayout(assembly.dims).dish;
       const mirror = !assembly.isRight && (wheel.spokeType === 'directional' || wheel.spokeType === 'aerodisc');
       const face = new THREE.Mesh(this.getProceduralFaceGeometry(wheel, mirror, concavity), this.wheelMaterial);
-      face.castShadow = true;
-      face.receiveShadow = true;
       assembly.spokeMeshGroup.add(face);
       if (wheel.spokeType === 'clubsport') this.addLipBolts(assembly.spokeMeshGroup);
-      // Seat the centre cap and lug bolts on the dished hub
-      assembly.hubParts.forEach((p) => {
-        p.userData.baseX ??= p.position.x;
-        p.position.x = p.userData.baseX - concavity * 0.7;
-      });
     });
+  }
+
+  /** 3D spoke faces (front and rear dish) from a rim photo; cached per image. */
+  private loadRimFace(url: string) {
+    let p = this.rimFaceCache.get(url);
+    if (!p) {
+      p = this.loadWheelTexture(url).then((texture) => {
+        let mask: ReturnType<typeof processRimPhoto> = null;
+        try {
+          mask = processRimPhoto(texture.image as HTMLImageElement);
+        } catch (err) {
+          console.warn('Could not read rim image pixels (CORS?); showing it flat.', err);
+        }
+        if (!mask) return null;
+        const raw = traceMaskShapes(mask.data, mask.size, mask.size, 0.5, 0.7);
+        if (!raw) return null;
+        // traced radius 1 = mask edge; rescale so 1 = the spoke ends
+        const k = 1 / FACE_FRACTION;
+        const shapes = raw.map((sh) => {
+          const out = new THREE.Shape(sh.getPoints().map((pt) => pt.multiplyScalar(k)));
+          out.holes = sh.holes.map((h) => new THREE.Path(h.getPoints().map((pt) => pt.multiplyScalar(k))));
+          return out;
+        });
+        const build = (isFront: boolean) => {
+          const L = rimLayout({ tyreRadius: 0.35, tyreWidth: isFront ? 0.265 : 0.295, rimScale: 1, isFront });
+          return buildSpokeFace(shapes, { radius: L.faceRadius, depth: L.spokeDepth, dish: L.dish, bevel: SPOKE_BEVEL });
+        };
+        return { front: build(true), rear: build(false) };
+      });
+      p.catch(() => this.rimFaceCache.delete(url));
+      this.rimFaceCache.set(url, p);
+    }
+    return p;
   }
 
   private getProceduralFaceGeometry(wheel: WheelDesign, mirror: boolean, dish: number): THREE.BufferGeometry {
@@ -1730,12 +1706,14 @@ export class CarConfiguratorEngine {
     this.wheelMaterial.clearcoat = finish.clearcoat;
     this.wheelMaterial.needsUpdate = true;
 
-    // Also update barrel meshes
-    this.wheelAssemblies.forEach((a) => {
-      a.barrelMesh.material = this.wheelMaterial;
-    });
+    // The barrel's inside: same finish, a little darker and less polished (it is also in shadow)
+    this.barrelMaterial.color.set(finish.hex).multiplyScalar(0.7);
+    this.barrelMaterial.roughness = Math.min(1, finish.roughness + 0.1);
+    this.barrelMaterial.metalness = finish.metalness;
+    this.barrelMaterial.clearcoat = finish.clearcoat * 0.5;
+    this.barrelMaterial.needsUpdate = true;
 
-    // Image-based rim faces tint with the finish too
+    // GLB and flat image rim faces tint with the finish too
     this.customFaceMaterials.forEach((m) => {
       m.color.copy(this.wheelMaterial.color);
       m.roughness = finish.roughness;
@@ -1746,8 +1724,8 @@ export class CarConfiguratorEngine {
   }
 
   public applyCaliperColor(caliper: CaliperColor) {
-    this.caliperMaterial.color.set(caliper.hex);
-    this.caliperMaterial.needsUpdate = true;
+    this.kit.caliper.color.set(caliper.hex);
+    this.kit.caliper.needsUpdate = true;
   }
 
   public setRideHeight(dropMeters: number) {
