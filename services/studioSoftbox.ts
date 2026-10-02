@@ -32,6 +32,8 @@ export function buildSoftboxStudio(): THREE.Scene {
   for (const side of [-1, 1]) {
     panel(scene, { w: 11, h: 0.9, at: [side * 6.5, 2.2, 0], lookAt: [0, 1.1, 0], intensity: 2.6 });
     panel(scene, { w: 11, h: 0.5, at: [side * 6.5, 4.4, 0], lookAt: [0, 1.0, 0], intensity: 1.1 });
+    // Low strip: doors and sills reflect the opposite low side of the studio from a raised camera
+    panel(scene, { w: 12, h: 1.2, at: [side * 7, 0.7, 0], lookAt: [0, 0.6, 0], intensity: 1.4 });
   }
 
   // Front and rear kickers: soft fill for the grille, lights and rear diffuser
@@ -76,7 +78,7 @@ function roomMaterial() {
 void main() {
   float y = vDir.y;
   float horizon = exp(-abs(y) * 9.0);
-  vec3 c = vec3(0.012) + vec3(0.05) * horizon + vec3(0.02) * max(y, 0.0);
+  vec3 c = vec3(0.035) + vec3(0.14) * horizon + vec3(0.03) * max(y, 0.0);
   gl_FragColor = vec4(c, 1.0);
 }`
   });

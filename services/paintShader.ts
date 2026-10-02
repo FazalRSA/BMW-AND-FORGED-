@@ -27,7 +27,7 @@ export interface PaintLayerUniforms {
 
 /** Look per BMW paint type. Exposed so tuning sessions can adjust them live. */
 export const PAINT_LAYERS: Record<PaintColor['type'], { flake: number; flop: number }> = {
-  Metallic: { flake: 0.22, flop: 0.55 },
+  Metallic: { flake: 0.22, flop: 0.66 },
   // Frozen (matte) paints are metallic underneath, but the matte clear coat diffuses the sparkle.
   Frozen: { flake: 0.08, flop: 0.78 },
   Uni: { flake: 0, flop: 0.92 }
