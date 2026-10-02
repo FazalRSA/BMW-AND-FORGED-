@@ -29,7 +29,8 @@ How a photo becomes the 3D wheel on the car (since Oct 2026, `services/wheelKit.
 - The photo is **not** used as a texture any more.
 - `processRimPhoto` cuts away the photo's outer ring (lip plus the barrel wall seen in
   perspective) and stretches the spokes to the 3D lip.
-- It then detects the rotational symmetry and median-filters the photo across it, before
+- It then detects the rotational symmetry and median-filters the photo across it, smoothing
+  the result along the radius. `traceMaskShapes` smooths the outlines (corners kept), and
   `buildSpokeFace` extrudes a bevelled, concave face in the finish material.
 - Tyre, lip and barrel, disc, caliper, lug nuts and centre cap are all generated.
 - Details and pitfalls: the `3d-car-perfect` skill and `docs/PHOTOREAL_METHOD.md`.

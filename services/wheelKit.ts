@@ -762,18 +762,32 @@ export const FACE_FRACTION = 0.94; // face radius inside the mask square (the re
 const OVERLAP = 1.035; // face outline extends this far past the spoke ends, into the lip wall
 const HUB = 0.3; // solid hub pad radius (of the face radius)
 
+export interface RimPhotoOptions {
+  /** Resolution the photo is read at (capped at the photo's own size). Default 1536. */
+  res?: number;
+  /** Quantile taken across the symmetric sectors. Default 0.5 (median); lower values thin the
+   *  spokes and let partly covered windows through, which tested worse. */
+  quantile?: number;
+  /** Smoothing along the radius in output pixels, applied before the mask is drawn. Default 8. */
+  radialSigma?: number;
+}
+
 /**
  * Cleans a front-on rim photo into a spoke mask the 3D face is built from:
  *
  * 1. measures where the spoke windows end: the photo's outer ring (lip and the barrel wall seen
  *    in perspective) is cut away and the spokes are stretched out to meet the 3D lip;
- * 2. detects the design's rotational symmetry and averages the photo over it, which removes
- *    perspective, reflections and cut-out noise (skipped when the photo isn't symmetric enough,
- *    e.g. shot at an angle);
- * 3. replaces the centre with a solid hub pad (lug nuts and centre cap are 3D parts).
+ * 2. detects the design's rotational symmetry and takes the median of the photo over it, which
+ *    removes perspective, reflections and cut-out noise (skipped when the photo isn't symmetric
+ *    enough, e.g. shot at an angle);
+ * 3. smooths the result along the radius, so the small steps a cut-out leaves along each spoke
+ *    edge become straight runs (the outline is smoothed again when traced);
+ * 4. replaces the centre with a solid hub pad (lug nuts and centre cap are 3D parts).
  */
-export function processRimPhoto(image: CanvasImageSource & { width: number; height: number }, out = 1024): RimFaceMask | null {
-  const RES = 768;
+export function processRimPhoto(image: CanvasImageSource & { width: number; height: number }, out = 1024, opts: RimPhotoOptions = {}): RimFaceMask | null {
+  const RES = Math.round(Math.min(opts.res ?? 1536, Math.max(256, image.width, image.height)));
+  const q = opts.quantile ?? 0.5;
+  const radialSigma = opts.radialSigma ?? 8;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = RES;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -796,7 +810,7 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   const ringSolid = new Float32Array(BINS), ringAll = new Float32Array(BINS);
   for (let y = 0; y < RES; y++) {
     for (let x = 0; x < RES; x++) {
-      const r = Math.hypot(x - c, y - c) / (RES / 2);
+      const r = Math.sqrt((x - c) * (x - c) + (y - c) * (y - c)) / (RES / 2); // (hypot is slow)
       if (r >= 1) continue;
       const b = Math.floor(r * BINS);
       ringAll[b]++;
@@ -852,28 +866,53 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
     for (const [n, v] of scores) if (v >= 0.85 * best && n > fold) fold = n;
   }
 
+  // One sector in polar form (rows: rho 0..1, columns: angle within the sector), about one
+  // output pixel per cell. Each cell is a quantile across the symmetric sectors: a spoke is solid
+  // in (nearly) all of them, while the barrel wall, a reflection or a side wall seen in
+  // perspective shows in only some and is rejected.
+  const faceR = (out / 2) * FACE_FRACTION;
+  const sector = (Math.PI * 2) / fold;
+  const NR = Math.ceil(faceR) + 1;
+  const NA = Math.max(8, Math.ceil(faceR * sector));
+  const polar = new Float32Array(NR * NA);
+  const sectors = new Float32Array(fold);
+  for (let i = 0; i < NR; i++) {
+    const rr = (i / (NR - 1)) * rEnd * (RES / 2);
+    for (let j = 0; j < NA; j++) {
+      const t0 = (j / NA) * sector;
+      for (let k = 0; k < fold; k++) {
+        const t = t0 + k * sector;
+        sectors[k] = sample(c + Math.cos(t) * rr, c + Math.sin(t) * rr);
+      }
+      polar[i * NA + j] = fold === 1 ? sectors[0] : quantile(sectors, fold, q);
+    }
+  }
+  // Smoothing along the radius turns the small steps a cut-out leaves along a spoke edge into
+  // straight runs, without softening the edge itself.
+  if (radialSigma > 0) gaussianColumns(polar, NR, NA, radialSigma);
+
   // output mask: rho = 1 at the spoke ends
   const data = new Float32Array(out * out);
-  const sectors = new Float32Array(Math.max(1, fold));
   const oc = (out - 1) / 2;
-  const faceR = (out / 2) * FACE_FRACTION;
   for (let y = 0; y < out; y++) {
     for (let x = 0; x < out; x++) {
       const dx = x - oc, dy = y - oc;
-      const rho = Math.hypot(dx, dy) / faceR;
+      const rho = Math.sqrt(dx * dx + dy * dy) / faceR;
       let v = 0;
       if (rho > OVERLAP) v = 0;
       else if (rho > 1 || rho < HUB) v = 1;
       else {
-        const t0 = Math.atan2(dy, dx);
-        const rr = rho * rEnd * (RES / 2);
-        // Median across the symmetric sectors: a spoke is solid in (nearly) all of them, while
-        // the barrel wall or a reflection seen in only a few sectors is rejected.
-        for (let k = 0; k < fold; k++) {
-          const t = t0 + (k / fold) * Math.PI * 2;
-          sectors[k] = sample(c + Math.cos(t) * rr, c + Math.sin(t) * rr);
-        }
-        v = fold === 1 ? sectors[0] : median(sectors, fold);
+        let t = Math.atan2(dy, dx) % sector;
+        if (t < 0) t += sector;
+        const fi = rho * (NR - 1);
+        const fj = (t / sector) * NA;
+        const i0 = Math.min(NR - 2, Math.floor(fi));
+        const j0 = Math.floor(fj) % NA;
+        const j1 = (j0 + 1) % NA;
+        const fy = fi - i0, fx = fj - Math.floor(fj);
+        v =
+          (polar[i0 * NA + j0] * (1 - fx) + polar[i0 * NA + j1] * fx) * (1 - fy) +
+          (polar[(i0 + 1) * NA + j0] * (1 - fx) + polar[(i0 + 1) * NA + j1] * fx) * fy;
         // blend the hub pad edge into the spoke roots
         v = Math.max(v, 1 - smoothstep(HUB, HUB + 0.04, rho));
       }
@@ -886,21 +925,43 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   return { data, size: out, symmetry: fold };
 }
 
-/** Median of the first n values (sorts them in place; n is small). */
-function median(v: Float32Array, n: number) {
+/** Quantile q (0..1) of the first n values (sorts them in place; n is small). */
+function quantile(v: Float32Array, n: number, q: number) {
   for (let i = 1; i < n; i++) {
     const x = v[i];
     let j = i - 1;
     while (j >= 0 && v[j] > x) { v[j + 1] = v[j]; j--; }
     v[j + 1] = x;
   }
-  return n % 2 ? v[(n - 1) >> 1] : (v[n / 2 - 1] + v[n / 2]) / 2;
+  const p = q * (n - 1);
+  const i = Math.floor(p);
+  return i + 1 < n ? v[i] + (v[i + 1] - v[i]) * (p - i) : v[i];
+}
+
+/** 1D Gaussian down each column of a row-major grid (ends clamped). */
+function gaussianColumns(g: Float32Array, rows: number, cols: number, sigma: number) {
+  const R = Math.ceil(sigma * 3);
+  const w = new Float32Array(R + 1);
+  for (let d = 0; d <= R; d++) w[d] = Math.exp(-(d * d) / (2 * sigma * sigma));
+  const col = new Float32Array(rows);
+  for (let j = 0; j < cols; j++) {
+    for (let i = 0; i < rows; i++) col[i] = g[i * cols + j];
+    for (let i = 0; i < rows; i++) {
+      let s = col[i] * w[0], sw = w[0];
+      for (let d = 1; d <= R; d++) {
+        if (i - d >= 0) { s += col[i - d] * w[d]; sw += w[d]; }
+        if (i + d < rows) { s += col[i + d] * w[d]; sw += w[d]; }
+      }
+      g[i * cols + j] = s / sw;
+    }
+  }
 }
 
 /**
  * Bevelled, dished 3D spoke face from mask outlines (shapes on a unit disc, 1 = spoke ends).
- * The dish is a curve, steep near the lip and flat at the hub, like a concave forged face;
- * normals are smooth across the rounded edges and sharp at the machined corners.
+ * The dish is a curve, steep near the lip and flat at the hub, like a concave forged face. The
+ * front face takes the dish's exact normal; the bevel and walls are smooth among themselves and
+ * sharp at the machined corners.
  */
 export function buildSpokeFace(shapes: THREE.Shape[], opts: { radius: number; depth: number; dish: number; bevel: number }): THREE.BufferGeometry {
   const { radius, depth, dish, bevel } = opts;
@@ -925,15 +986,43 @@ export function buildSpokeFace(shapes: THREE.Shape[], opts: { radius: number; de
   });
   subdivideCaps(geo, radius * 0.045);
   const pos = geo.attributes.position as THREE.BufferAttribute;
+  // front cap: the triangles lying in the extrude's top plane, before the dish moves them
+  const capZ = depth + bevel;
+  const frontCap = new Uint8Array(pos.count / 3);
+  for (let f = 0; f < frontCap.length; f++) {
+    let onCap = true;
+    for (let k = 0; k < 3 && onCap; k++) onCap = Math.abs(pos.getZ(f * 3 + k) - capZ) < 1e-7;
+    frontCap[f] = onCap ? 1 : 0;
+  }
   for (let i = 0; i < pos.count; i++) {
     const rho = Math.min(1, Math.hypot(pos.getX(i), pos.getY(i)) / radius);
     const sink = dish * (1 - rho * rho);
     pos.setZ(i, pos.getZ(i) - depth - bevel - sink);
   }
   pos.needsUpdate = true;
-  geo.rotateY(Math.PI / 2); // front (+Z) -> +X
+  // Before turning: front (+Z) -> +X maps (x, y, z) to (z, y, -x).
+  geo.rotateY(Math.PI / 2);
   const creased = toCreasedNormals(geo, THREE.MathUtils.degToRad(38));
-  geo.dispose();
+  if (creased !== geo) geo.dispose();
+  // The front cap gets the dish's exact normal. Averaged with the bevel (whose first row is
+  // within the crease angle), the long cap triangles carried the bevel's tilt across the spoke
+  // and shaded it in blotches, like a hand-filed face rather than a machined one.
+  const p = creased.attributes.position as THREE.BufferAttribute;
+  const nrm = creased.attributes.normal as THREE.BufferAttribute;
+  const k = (2 * dish) / (radius * radius);
+  const n = new THREE.Vector3();
+  for (let f = 0; f < frontCap.length; f++) {
+    if (!frontCap[f]) continue;
+    for (let v = f * 3; v < f * 3 + 3; v++) {
+      // pre-turn coordinates: x = -z', y = y'
+      const x = -p.getZ(v), y = p.getY(v);
+      const inside = Math.hypot(x, y) < radius;
+      const gx = inside ? k * x : 0, gy = inside ? k * y : 0;
+      n.set(-gx, -gy, 1).normalize();
+      nrm.setXYZ(v, n.z, n.y, -n.x);
+    }
+  }
+  nrm.needsUpdate = true;
   creased.computeBoundingSphere();
   return creased;
 }

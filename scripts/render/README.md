@@ -14,3 +14,8 @@ into the bundled catalogue), `finish`, `size` and `view`. For ad-hoc GLBs it als
 `exposure=` and `photoreal=1`.
 
 Shots take about a minute each on SwiftShader. Judge colour and gloss on a real device as well.
+
+`outlines.cjs` checks how rim photos turn into spoke outlines, in seconds rather than minutes. It
+draws the processed mask with the traced outlines over it, once per settings variant (see its
+header). Use it to compare settings before rendering wheel close-ups. `blank.html` is the empty
+page it runs in.

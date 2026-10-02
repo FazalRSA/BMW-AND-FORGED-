@@ -1458,13 +1458,19 @@ export class CarConfiguratorEngine {
           console.warn('Could not read rim image pixels (CORS?); showing it flat.', err);
         }
         if (!mask) return null;
-        const raw = traceMaskShapes(mask.data, mask.size, mask.size, 0.5, 0.7);
+        // outlines smoothed along their length (4 px) with the corners kept, then simplified
+        const raw = traceMaskShapes(mask.data, mask.size, mask.size, 0.5, 0.4, 4);
         if (!raw) return null;
         // traced radius 1 = mask edge; rescale so 1 = the spoke ends
         const k = 1 / FACE_FRACTION;
         const shapes = raw.map((sh) => {
           const out = new THREE.Shape(sh.getPoints().map((pt) => pt.multiplyScalar(k)));
-          out.holes = sh.holes.map((h) => new THREE.Path(h.getPoints().map((pt) => pt.multiplyScalar(k))));
+          // Specks in the cut-out (about 35 mm²) would show as pin-holes in the spokes; the
+          // smallest real window is about 25 times larger.
+          out.holes = sh.holes
+            .map((h) => h.getPoints().map((pt) => pt.multiplyScalar(k)))
+            .filter((pts) => Math.abs(THREE.ShapeUtils.area(pts)) > 0.003)
+            .map((pts) => new THREE.Path(pts));
           return out;
         });
         const build = (isFront: boolean) => {

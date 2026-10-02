@@ -134,20 +134,40 @@ This is `processRimPhoto` → `traceMaskShapes` → `buildSpokeFace`:
 2. **Detect the rotational symmetry.** Angular correlation at four radii over folds 3–24. Take
    the largest fold scoring within 85% of the best. It is applied only when the best score is
    ≥ 0.4.
-3. **Take the median across the symmetric sectors (not the mean).** A spoke is solid in nearly
-   every sector. The barrel or a reflection seen in a few sectors is rejected. The mean left grey
-   ghosts and jagged edges.
-4. **Replace the centre** with a solid hub pad (0.3 of the face radius). Lug nuts and cap are 3D.
-5. **Blur the mask** about 2 px (four passes), then trace it at 0.5 with marching squares and
-   simplify with a 0.7 px tolerance.
-6. **Extrude:**
+3. **Take the median across the symmetric sectors (not the mean).**
+   - A spoke is solid in nearly every sector, while the barrel or a reflection seen in only a
+     few sectors is rejected. The mean left grey ghosts and jagged edges.
+   - Read the photo at 1536 px (it was 768) and build one sector as a polar table, about one
+     output pixel per cell, before drawing the mask.
+   - A lower quantile (0.35) was tested: it thinned the spokes and let partly covered windows
+     through, so the median stays.
+4. **Smooth along the radius** (Gaussian, σ 8 px on the 1024 px mask) in the polar table.
+   - The median still leaves small steps along spoke edges, wherever the photo's sectors
+     disagree (perspective side walls, cut-out wobble). Up close they read as lumpy, hand-made
+     spokes.
+   - Radial smoothing turns the steps into straight runs and leaves each edge where it is.
+   - The window corners get a fillet of a few millimetres, as real forged windows have.
+5. **Replace the centre** with a solid hub pad (0.3 of the face radius). Lug nuts and cap are 3D.
+6. **Trace:**
+   - blur the mask about 2 px (four passes), then trace it at 0.5 with marching squares;
+   - **smooth each outline along its length** (σ 4 px, resampled every pixel). Corners, where
+     the outline turns more than 50° within ±2σ, stay fixed and the filter stops at them;
+   - simplify with a 0.4 px tolerance.
+   - Contour smoothing alone can't remove the steps: a step is two sharp turns, so it counts as
+     corners and is kept. Steps 4 and 6 work together.
+7. **Extrude:**
    - 32 mm deep with a 3 mm, four-segment rounded bevel; the negative offset chamfers the windows
      too;
    - subdivide the caps to 11 mm;
    - dish with **z = −dish·(1 − ρ²)** (steep at the lip, flat at the hub): 36 mm front,
      58 mm rear;
-   - `toCreasedNormals` at 38°.
-7. **Material:** the finish only (no photo texture), DoubleSide, light arch occlusion.
+   - `toCreasedNormals` at 38° for the bevel and walls;
+   - the **front cap gets the dish's exact normal** (−2d·x/R², −2d·y/R², 1). Left to the creased
+     normals, the cap mixed with the bevel's first row (22.5° away, inside the crease angle), and
+     the long cap triangles spread that tilt across the spoke. The tops shaded in blotches, like a
+     hand-filed part. Cap triangles are tagged before the dish moves them (all three vertices in
+     the extrude's top plane).
+8. **Material:** the finish only (no photo texture), DoubleSide, light arch occlusion.
 
 Results (fold detected): FSA-01 5, 02 10, 03 15, 04 5, 05 5, 06 12, 07 5, 08 5, 09 10. FSA-01 and
 FSA-07 come from angled photos and keep some irregular edges; manufacturer CAD (the admin CAD

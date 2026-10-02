@@ -66,11 +66,15 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
 1. **Photo → mask** (`processRimPhoto`):
    - cut away the outer ring (lip + perspective barrel) at the radius where window coverage
      reaches 0.9, and stretch the spokes to the lip;
-   - detect symmetry, then take the **median** across sectors;
+   - read the photo at 1536 px, detect symmetry, then take the **median** across sectors (in a
+     polar table of one sector);
+   - smooth along the radius (σ 8 px), which removes the small steps along spoke edges;
    - solid hub pad, then blur about 2 px.
 2. **Mask → face:**
-   - `traceMaskShapes` (tolerance 0.7 px);
-   - `buildSpokeFace`: bevelled extrude, cap subdivision, dish −d·(1−ρ²), creased normals.
+   - `traceMaskShapes` with outline smoothing (σ 4 px; corners kept) and tolerance 0.4 px;
+   - `buildSpokeFace`: bevelled extrude, cap subdivision, dish −d·(1−ρ²), creased normals on
+     the bevel and walls, and the dish's exact normal on the front cap (averaged with the bevel,
+     the tops shade in blotches).
 3. **Everything else is generated:**
    - tyre profile with grooves, tread normal map and sidewall markings;
    - lip and barrel lathe (polished, bolted lip for two- and three-piece designs);
@@ -90,7 +94,13 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
    the disc plane (`discX`), never the spokes.
 
 **Wheel QA:** close-ups of every design, alternating finishes. Look for:
-- jagged spoke edges (more blur or tolerance);
+- jagged or lumpy spoke edges:
+  - run `scripts/render/outlines.cjs`: it draws the traced outlines over the mask at 2× for each
+    settings variant, in seconds;
+  - compare settings there before any full render;
+  - steps survive outline smoothing (they count as corners); radial smoothing removes them;
+  - don't use a lower sector quantile: it distorts the windows;
+- blotchy, hand-filed-looking spoke tops: the cap normals are mixing with the bevel (see step 2);
 - a "solid disc" look on silver (barrel too bright);
 - the hat or caliper poking through the spokes (clearance).
 
