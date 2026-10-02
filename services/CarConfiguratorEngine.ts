@@ -39,6 +39,7 @@ import {
   processRimPhoto,
   rimLayout
 } from './wheelKit';
+import { finishLook, installFinishLayers, applyFinishLook } from './wheelFinish';
 import { proceduralRimShapes } from './proceduralRims';
 import { 
   CarModel, 
@@ -355,6 +356,8 @@ export class CarConfiguratorEngine {
     // under the wheel arch, the spokes' top and the barrel are in the fender's shade
     installWheelShading(this.wheelMaterial, { arch: 0.3 });
     installWheelShading(this.barrelMaterial, { arch: 0.5 });
+    // face/flop and flake sparkle for metallic-paint finishes (see wheelFinish.ts)
+    installFinishLayers(this.wheelMaterial);
 
     // Tyres, discs, calipers, lip, nuts and cap
     this.kit = createWheelKitMaterials();
@@ -1595,6 +1598,7 @@ export class CarConfiguratorEngine {
       metalness: this.wheelMaterial.metalness,
       roughness: this.wheelMaterial.roughness,
       clearcoat: this.wheelMaterial.clearcoat,
+      clearcoatRoughness: this.wheelMaterial.clearcoatRoughness,
       envMap: this.wheelMaterial.envMap
     });
     this.customFaceMaterials.push(shared);
@@ -1633,6 +1637,7 @@ export class CarConfiguratorEngine {
             metalness: this.wheelMaterial.metalness,
             roughness: this.wheelMaterial.roughness,
             clearcoat: this.wheelMaterial.clearcoat,
+            clearcoatRoughness: this.wheelMaterial.clearcoatRoughness,
             color: this.wheelMaterial.color.clone(),
             envMap: this.wheelMaterial.envMap,
             bumpMap: texture,
@@ -1657,6 +1662,7 @@ export class CarConfiguratorEngine {
           metalness: this.wheelMaterial.metalness,
           roughness: this.wheelMaterial.roughness,
           clearcoat: this.wheelMaterial.clearcoat,
+          clearcoatRoughness: this.wheelMaterial.clearcoatRoughness,
           color: this.wheelMaterial.color,
           envMap: this.wheelMaterial.envMap,
           bumpMap: texture,
@@ -1743,28 +1749,22 @@ export class CarConfiguratorEngine {
   }
 
   public applyWheelFinish(finish: WheelFinish) {
-    this.wheelMaterial.color.set(finish.hex);
-    this.wheelMaterial.roughness = finish.roughness;
-    this.wheelMaterial.metalness = finish.metalness;
-    this.wheelMaterial.clearcoat = finish.clearcoat;
-    this.wheelMaterial.needsUpdate = true;
+    // The admin's four numbers are read as a layered coating (polished metal, gloss paint, satin
+    // metallic or metallic paint): see wheelFinish.ts
+    const look = finishLook(finish);
+    applyFinishLook(this.wheelMaterial, look);
 
     // The barrel's inside: same finish, a little darker and less polished (it is also in shadow)
     // (direct studio lights reach it unshadowed, so it is darkened well below the face colour)
-    this.barrelMaterial.color.set(finish.hex).multiplyScalar(0.4);
-    this.barrelMaterial.roughness = Math.min(1, finish.roughness + 0.15);
-    this.barrelMaterial.metalness = finish.metalness;
-    this.barrelMaterial.clearcoat = finish.clearcoat * 0.5;
+    this.barrelMaterial.color.copy(look.color).multiplyScalar(0.4);
+    this.barrelMaterial.roughness = Math.min(1, look.roughness + 0.15);
+    this.barrelMaterial.metalness = look.metalness;
+    this.barrelMaterial.clearcoat = look.clearcoat * 0.5;
+    this.barrelMaterial.clearcoatRoughness = Math.min(1, look.clearcoatRoughness + 0.1);
     this.barrelMaterial.needsUpdate = true;
 
-    // GLB and flat image rim faces tint with the finish too
-    this.customFaceMaterials.forEach((m) => {
-      m.color.copy(this.wheelMaterial.color);
-      m.roughness = finish.roughness;
-      m.metalness = finish.metalness;
-      m.clearcoat = finish.clearcoat;
-      m.needsUpdate = true;
-    });
+    // GLB and flat image rim faces take the finish too (without flake: their units vary)
+    this.customFaceMaterials.forEach((m) => applyFinishLook(m, look));
   }
 
   public applyCaliperColor(caliper: CaliperColor) {

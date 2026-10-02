@@ -32,6 +32,10 @@ How a photo becomes the 3D wheel on the car (since Oct 2026, `services/wheelKit.
 - It then detects the rotational symmetry and median-filters the photo across it, smoothing
   the result along the radius. `traceMaskShapes` smooths the outlines (corners kept), and
   `buildSpokeFace` extrudes a bevelled, concave face in the finish material.
+- Where the photo shows the barrel solid behind the outer spokes (most photos), the arms are
+  traced across it to the lip instead of stretching the inner spokes.
+- The step-by-step for one photo, with QA and a symptom → fix table, is the
+  `forgedsa-rim-from-photo` skill. How the finishes look is `forgedsa-rim-finishes`.
 - Tyre, lip and barrel, disc, caliper, lug nuts and centre cap are all generated.
 - Details and pitfalls: the `3d-car-perfect` skill and `docs/PHOTOREAL_METHOD.md`.
 

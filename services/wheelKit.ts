@@ -756,7 +756,16 @@ export interface RimFaceMask {
   data: Float32Array;
   size: number;
   symmetry: number; // fold applied (1 = none)
+  /**
+   * How the photo's outer ring was read: `barrel` = spoke arms traced across a barrel seen
+   * between them, `flange` = a solid face ring out to the lip, `stretch` = fallback (the
+   * see-through spokes stretched to the lip).
+   */
+  mode: 'barrel' | 'flange' | 'stretch';
 }
+
+/** Where the spokes meet the lip, as a fraction of the rim's outer radius (3D: 240 / 262 mm). */
+const LIP_FRACTION = 0.916;
 
 export const FACE_FRACTION = 0.94; // face radius inside the mask square (the rest is the overlap band)
 const OVERLAP = 1.035; // face outline extends this far past the spoke ends, into the lip wall
@@ -795,7 +804,11 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   ctx.drawImage(image, 0, 0, RES, RES);
   const px = ctx.getImageData(0, 0, RES, RES).data; // throws on a tainted image
   const a = new Float32Array(RES * RES);
-  for (let i = 0; i < RES * RES; i++) a[i] = px[i * 4 + 3] / 255;
+  const lum = new Float32Array(RES * RES);
+  for (let i = 0; i < RES * RES; i++) {
+    a[i] = px[i * 4 + 3] / 255;
+    lum[i] = (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255;
+  }
   const c = (RES - 1) / 2;
 
   const sample = (x: number, y: number) => {
@@ -866,6 +879,15 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
     for (const [n, v] of scores) if (v >= 0.85 * best && n > fold) fold = n;
   }
 
+  // Spokes over the barrel: in most photos the barrel (and its bolts, rings and lettering) is
+  // seen solid behind the outer half of the spokes, so the see-through windows end well inside
+  // the lip. Trace the spoke arms across it to the lip and map the photo 1:1 onto the 3D face;
+  // if that fails, fall back to stretching the see-through spokes out to the lip.
+  const arms = traceFaceArms(a, lum, RES, fold, rOut);
+  const mode: RimFaceMask['mode'] = arms ? arms.mode : 'stretch';
+  const rFace = arms ? arms.rLip : rEnd; // photo radius (of RES / 2) that becomes rho = 1
+  const value = (rr: number, t: number) => (arms ? arms.value(rr, t) : sample(c + Math.cos(t) * rr * (RES / 2), c + Math.sin(t) * rr * (RES / 2)));
+
   // One sector in polar form (rows: rho 0..1, columns: angle within the sector), about one
   // output pixel per cell. Each cell is a quantile across the symmetric sectors: a spoke is solid
   // in (nearly) all of them, while the barrel wall, a reflection or a side wall seen in
@@ -877,19 +899,20 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   const polar = new Float32Array(NR * NA);
   const sectors = new Float32Array(fold);
   for (let i = 0; i < NR; i++) {
-    const rr = (i / (NR - 1)) * rEnd * (RES / 2);
+    const rr = (i / (NR - 1)) * rFace;
     for (let j = 0; j < NA; j++) {
       const t0 = (j / NA) * sector;
-      for (let k = 0; k < fold; k++) {
-        const t = t0 + k * sector;
-        sectors[k] = sample(c + Math.cos(t) * rr, c + Math.sin(t) * rr);
-      }
+      for (let k = 0; k < fold; k++) sectors[k] = value(rr, t0 + k * sector);
       polar[i * NA + j] = fold === 1 ? sectors[0] : quantile(sectors, fold, q);
     }
   }
   // Smoothing along the radius turns the small steps a cut-out leaves along a spoke edge into
-  // straight runs, without softening the edge itself.
-  if (radialSigma > 0) gaussianColumns(polar, NR, NA, radialSigma);
+  // straight runs, without softening the edge itself. Traced arms are smooth already and often
+  // slanted, so the smoothing fades out before they start.
+  if (radialSigma > 0) {
+    const stop = arms ? arms.rStart / rFace : Infinity;
+    gaussianColumns(polar, NR, NA, (i) => radialSigma * THREE.MathUtils.clamp((stop - i / (NR - 1)) / 0.05, 0, 1));
+  }
 
   // output mask: rho = 1 at the spoke ends
   const data = new Float32Array(out * out);
@@ -922,7 +945,7 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   // Soften the cut-out edges (Gaussian-like, about 2 px) so the traced outline follows the
   // spoke's real edge instead of every pixel step and speck of the photo's alpha.
   blur(data, out, out, 4, false);
-  return { data, size: out, symmetry: fold };
+  return { data, size: out, symmetry: fold, mode };
 }
 
 /** Quantile q (0..1) of the first n values (sorts them in place; n is small). */
@@ -938,17 +961,496 @@ function quantile(v: Float32Array, n: number, q: number) {
   return i + 1 < n ? v[i] + (v[i + 1] - v[i]) * (p - i) : v[i];
 }
 
-/** 1D Gaussian down each column of a row-major grid (ends clamped). */
-function gaussianColumns(g: Float32Array, rows: number, cols: number, sigma: number) {
-  const R = Math.ceil(sigma * 3);
-  const w = new Float32Array(R + 1);
-  for (let d = 0; d <= R; d++) w[d] = Math.exp(-(d * d) / (2 * sigma * sigma));
+interface FaceArms {
+  mode: 'barrel' | 'flange';
+  /** Photo radius (fraction of the half-width) where the spokes meet the lip: rho = 1. */
+  rLip: number;
+  /** Smallest radius at which traced arms take over from the cut-out. */
+  rStart: number;
+  /** Face value 0..1 at photo radius rr (fraction of the half-width) and angle t. */
+  value: (rr: number, t: number) => number;
+}
+
+/**
+ * Spoke arms across the barrel band of a front-on rim photo.
+ *
+ * Inside the see-through zone the cut-out is the face. Further out, most photos show the barrel
+ * (its rings, bolts and lettering) solid behind the outer half of the spokes. Treating that as
+ * solid face loses the arms; stretching the see-through part to the lip distorts every design.
+ * This follows each arm across the band instead:
+ *
+ * 1. Where each column's main window ends (later specks ignored), smoothed and bounded by a
+ *    robust off-centre fit: photos are rarely centred on the barrel.
+ * 2. Arm cross-sections a little inside that boundary, where the cut-out is clean.
+ * 3. Each arm edge: a straight line in the image plane fitted to its cut-out edge, then an
+ *    optimal smooth path (dynamic programming) through the brightness edges around that line,
+ *    out to the lip at LIP_FRACTION of the rim radius.
+ * 4. If most arms show real edges along their path, the band is barrel and only the arms are
+ *    solid; otherwise it is a solid face ring (a flange) out to the lip.
+ *
+ * Returns null when the photo can't be read this way (the caller then stretches as before).
+ */
+function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: number, rOut: number): FaceArms | null {
+  const NRp = 768, NT = 4096;
+  const c = (RES - 1) / 2, half = RES / 2;
+  const rowR = (i: number) => i / (NRp - 1);
+  const wrap = (j: number) => ((j % NT) + NT) % NT;
+  const iOut = Math.min(NRp - 1, Math.round(rOut * (NRp - 1)));
+  const ia = Math.max(1, Math.floor(0.4 * iOut)), ib = Math.floor(0.95 * iOut);
+  const iLip = Math.round(LIP_FRACTION * rowR(iOut) * (NRp - 1));
+  if (iLip <= ia + 20) return null;
+  const rows = iOut - ia + 1;
+  const cosT = new Float32Array(NT), sinT = new Float32Array(NT);
+  for (let j = 0; j < NT; j++) {
+    const t = (j / NT) * Math.PI * 2;
+    cosT[j] = Math.cos(t);
+    sinT[j] = Math.sin(t);
+  }
+  const bil = (img: Float32Array, x: number, y: number) => {
+    x = Math.min(Math.max(x, 0), RES - 1.001);
+    y = Math.min(Math.max(y, 0), RES - 1.001);
+    const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0, k = y0 * RES + x0;
+    return img[k] * (1 - fx) * (1 - fy) + img[k + 1] * fx * (1 - fy) + img[k + RES] * (1 - fx) * fy + img[k + RES + 1] * fx * fy;
+  };
+
+  // polar alpha (0..255) and luminance edges (between two solid samples only, so the cut-out's
+  // own boundary never counts as a spoke edge), smoothed +-3 rows along the radius
+  const A = new Uint8Array(rows * NT);
+  const E = new Float32Array(rows * NT);
+  {
+    const Lp = new Float32Array(rows * NT);
+    for (let i = 0; i < rows; i++) {
+      const rr = rowR(ia + i) * half;
+      for (let j = 0; j < NT; j++) {
+        const x = c + cosT[j] * rr, y = c + sinT[j] * rr;
+        A[i * NT + j] = Math.round(bil(a, x, y) * 255);
+        Lp[i * NT + j] = bil(lum, x, y);
+      }
+    }
+    for (let i = 0; i < rows; i++) {
+      const o = i * NT;
+      for (let j = 0; j < NT; j++) {
+        const jl = j === 0 ? NT - 1 : j - 1, jr = j === NT - 1 ? 0 : j + 1;
+        if (A[o + jl] > 127 && A[o + jr] > 127) E[o + j] = Math.abs(Lp[o + jr] - Lp[o + jl]) / 2;
+      }
+    }
+    const col = new Float32Array(rows);
+    for (let j = 0; j < NT; j++) {
+      for (let i = 0; i < rows; i++) col[i] = E[i * NT + j];
+      for (let i = 0; i < rows; i++) {
+        let sum = 0, n = 0;
+        for (let d = -3; d <= 3; d++) {
+          const k = i + d;
+          if (k >= 0 && k < rows) { sum += col[k]; n++; }
+        }
+        E[i * NT + j] = sum / n;
+      }
+    }
+  }
+  const solid = (i: number, j: number) => A[(i - ia) * NT + wrap(j)] > 127;
+  const noise = new Float32Array(rows);
+  {
+    const tmp = new Float32Array(NT >> 2);
+    for (let i = 0; i < rows; i++) {
+      for (let k = 0; k < tmp.length; k++) tmp[k] = E[i * NT + k * 4];
+      tmp.sort();
+      noise[i] = tmp[tmp.length >> 1];
+    }
+  }
+  const ealp = (i: number, j: number) => Math.abs(A[(i - ia) * NT + wrap(j + 1)] - A[(i - ia) * NT + wrap(j - 1)]) / 510;
+  const ecomb = (i: number, j: number) =>
+    Math.max(Math.min(E[(i - ia) * NT + wrap(j)] / (4 * noise[i - ia] + 0.004), 3), Math.min(ealp(i, j) * 10, 3));
+
+  // 1. where each column's main window ends
+  const len = ib - ia;
+  const W = new Float64Array(NT).fill(NaN);
+  for (let j = 0; j < NT; j++) {
+    let k = 0;
+    while (k < len && solid(ia + k, j)) k++;
+    if (k >= len) continue;
+    while (k < len) {
+      if (!solid(ia + k, j)) { k++; continue; }
+      let run = 0;
+      while (run < 20 && k + run < len && solid(ia + k + run, j)) run++;
+      if (run === 20) break;
+      k++;
+    }
+    W[j] = ia + k;
+  }
+  const okIdx: number[] = [];
+  for (let j = 0; j < NT; j++) if (!Number.isNaN(W[j])) okIdx.push(j);
+  if (okIdx.length < 16) return null;
+  // robust off-centre fit: W(t) = c0 + c1 cos t + c2 sin t + c3 cos 2t + c4 sin 2t
+  const B = new Float64Array(NT * 5);
+  for (let j = 0; j < NT; j++) {
+    const t = (j / NT) * Math.PI * 2;
+    B.set([1, Math.cos(t), Math.sin(t), Math.cos(2 * t), Math.sin(2 * t)], j * 5);
+  }
+  let coef = [0, 0, 0, 0, 0];
+  const Wfit = (j: number) => {
+    let sum = 0;
+    for (let p = 0; p < 5; p++) sum += B[j * 5 + p] * coef[p];
+    return sum;
+  };
+  const use = new Uint8Array(okIdx.length).fill(1);
+  const res = new Float64Array(okIdx.length);
+  for (let it = 0; it < 6; it++) {
+    const M5 = Array.from({ length: 5 }, () => new Float64Array(5));
+    const v5 = new Float64Array(5);
+    for (let n = 0; n < okIdx.length; n++) {
+      if (!use[n]) continue;
+      const j = okIdx[n];
+      for (let p = 0; p < 5; p++) {
+        v5[p] += B[j * 5 + p] * W[j];
+        for (let q2 = 0; q2 < 5; q2++) M5[p][q2] += B[j * 5 + p] * B[j * 5 + q2];
+      }
+    }
+    const sol = solveSmall(M5, v5);
+    if (!sol) break;
+    coef = sol;
+    const used: number[] = [];
+    for (let n = 0; n < okIdx.length; n++) {
+      res[n] = Math.abs(W[okIdx[n]] - Wfit(okIdx[n]));
+      if (use[n]) used.push(res[n]);
+    }
+    used.sort((x, y) => x - y);
+    const lim = 2.5 * ((used[used.length >> 1] ?? 0) + 1e-6) * 1.4826 + 2;
+    let kept = 0;
+    for (let n = 0; n < okIdx.length; n++) kept += use[n] = res[n] < lim ? 1 : 0;
+    if (kept < 8) break;
+  }
+  // measured ends, median over +-8 columns, arm columns interpolated between their windows
+  const Wm = new Map<number, number>();
+  for (const j of okIdx) {
+    const nb: number[] = [];
+    for (let d = -8; d <= 8; d++) {
+      const v = W[wrap(j + d)];
+      if (!Number.isNaN(v)) nb.push(v);
+    }
+    nb.sort((x, y) => x - y);
+    Wm.set(j, nb[nb.length >> 1]);
+  }
+  const Ws = new Float64Array(NT);
+  for (let n = 0; n < okIdx.length; n++) {
+    const p = okIdx[n], q2 = okIdx[(n + 1) % okIdx.length];
+    const span = wrap(q2 - p) || NT;
+    const vp = Wm.get(p)!, vq = Wm.get(q2)!;
+    for (let d = 0; d < span; d++) Ws[wrap(p + d)] = vp + ((vq - vp) * d) / span;
+  }
+  const rc = new Int32Array(NT), rcw = new Int32Array(NT);
+  const up = Math.floor(0.04 * NRp);
+  for (let j = 0; j < NT; j++) {
+    const fit = Wfit(j);
+    const w = Math.abs(Ws[j] - fit) > 0.06 * NRp ? fit : Ws[j];
+    rc[j] = Math.min(ib, Math.max(ia, Math.round(w - 10)));
+    rcw[j] = Math.min(ib, Math.max(ia, rc[j] - up));
+  }
+
+  // 2. arm cross-sections just inside the barrel edge
+  let start = -1;
+  for (let j = 0; j < NT; j++) if (!solid(rcw[j], j)) { start = j; break; }
+  if (start < 0) return null;
+  const spans: [number, number][] = [];
+  for (let n = 0; n < NT; ) {
+    const j = start + n;
+    if (solid(rcw[wrap(j)], j)) {
+      let m = n;
+      while (m < NT && solid(rcw[wrap(start + m)], start + m)) m++;
+      spans.push([j, start + m - 1]);
+      n = m;
+    } else n++;
+  }
+
+  // 3. each arm edge: image-plane line from the cut-out edge, then an optimal smooth path
+  const peak = (vals: number[]) => {
+    let k = 0;
+    for (let n = 1; n < vals.length; n++) if (vals[n] > vals[k]) k = n;
+    let off = 0;
+    if (k > 0 && k < vals.length - 1) {
+      const den = vals[k - 1] - 2 * vals[k] + vals[k + 1];
+      if (den !== 0) off = (0.5 * (vals[k - 1] - vals[k + 1])) / den;
+    }
+    return { k: k + off, v: vals[k] };
+  };
+  const fitEdge = (j0: number, iS: number) => {
+    let th = j0;
+    const P: [number, number][] = [];
+    const stop = Math.max(iS - Math.floor(0.07 * NRp), ia);
+    for (let i = iS; i > stop; i--) {
+      const r0 = Math.round(th);
+      const vals = [-2, -1, 0, 1, 2].map((d) => ealp(i, r0 + d));
+      const pk = peak(vals);
+      if (pk.v < 0.05) break;
+      th = r0 - 2 + pk.k;
+      const ang = (th / NT) * Math.PI * 2, rr = rowR(i);
+      P.push([rr * Math.cos(ang), rr * Math.sin(ang)]);
+    }
+    if (P.length < 8) {
+      const ang = (j0 / NT) * Math.PI * 2, rr = rowR(iS);
+      return { p0: [rr * Math.cos(ang), rr * Math.sin(ang)] as [number, number], d: [Math.cos(ang), Math.sin(ang)] as [number, number] };
+    }
+    let mx = 0, my = 0;
+    for (const [x, y] of P) { mx += x; my += y; }
+    mx /= P.length; my /= P.length;
+    let sxx = 0, sxy = 0, syy = 0;
+    for (const [x, y] of P) { sxx += (x - mx) ** 2; sxy += (x - mx) * (y - my); syy += (y - my) ** 2; }
+    const phi = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+    let d: [number, number] = [Math.cos(phi), Math.sin(phi)];
+    if (d[0] * mx + d[1] * my < 0) d = [-d[0], -d[1]];
+    return { p0: P[0], d };
+  };
+  const lineCol = (p0: [number, number], d: [number, number], rr: number) => {
+    const bq = 2 * (p0[0] * d[0] + p0[1] * d[1]);
+    const cq = p0[0] * p0[0] + p0[1] * p0[1] - rr * rr;
+    const disc = bq * bq - 4 * cq;
+    if (disc < 0) return null;
+    const sl = (-bq + Math.sqrt(disc)) / 2;
+    const x = p0[0] + sl * d[0], y = p0[1] + sl * d[1];
+    return (((Math.atan2(y, x) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * NT;
+  };
+  const WD = 24, NO = 2 * WD + 1, LAM = 0.35, MU = 0.004, MU_IN = 0.03;
+  // side: -1 for an arm's left edge (the arm lies at larger columns), +1 for its right edge
+  const trackEdge = (e: { p0: [number, number]; d: [number, number] }, iS: number, side: number) => {
+    const n = iLip - iS;
+    const th0 = wrap((Math.atan2(e.p0[1], e.p0[0]) / (Math.PI * 2)) * NT);
+    const path = new Float64Array(n + 1);
+    path[0] = th0;
+    if (n < 4) return { path, ev: 0 };
+    const prior = new Float64Array(n);
+    let last = th0;
+    for (let s2 = 0; s2 < n; s2++) {
+      let t = lineCol(e.p0, e.d, rowR(iS + 1 + s2));
+      if (t === null) t = last;
+      t = last + (wrap(t - last + NT / 2) - NT / 2);
+      prior[s2] = t;
+      last = t;
+    }
+    let score = new Float64Array(NO).fill(-1e9);
+    score[WD] = 0;
+    const back = new Int8Array(n * NO);
+    const evid = new Float32Array(n * NO);
+    const next = new Float64Array(NO);
+    for (let s2 = 0; s2 < n; s2++) {
+      const i = iS + 1 + s2;
+      for (let o = 0; o < NO; o++) {
+        const sc = ecomb(i, Math.round(prior[s2] + o - WD));
+        evid[s2 * NO + o] = sc;
+        let best = -1e18, arg = 0;
+        for (let dlt = -1; dlt <= 1; dlt++) {
+          const from = o - dlt;
+          if (from < 0 || from >= NO) continue;
+          const cand = score[from] - LAM * Math.abs(dlt);
+          if (cand > best) { best = cand; arg = dlt; }
+        }
+        // keep the outer silhouette (as in the cut-out) rather than an inner chamfer line
+        const inward = side < 0 ? o - WD : WD - o;
+        next[o] = best + sc - MU * Math.abs(o - WD) - MU_IN * Math.max(0, inward);
+        back[s2 * NO + o] = arg;
+      }
+      score = Float64Array.from(next);
+    }
+    let k = 0;
+    for (let o = 1; o < NO; o++) if (score[o] > score[k]) k = o;
+    let good = 0;
+    for (let s2 = n - 1; s2 >= 0; s2--) {
+      path[s2 + 1] = prior[s2] + k - WD;
+      if (evid[s2 * NO + k] >= 1) good++;
+      k -= back[s2 * NO + k];
+    }
+    // the path moves at most a column per row; smoothing it (sigma 6 rows) leaves a clean edge
+    const sm = new Float64Array(n + 1);
+    for (let i = 0; i <= n; i++) {
+      let sum = 0, sw = 0;
+      for (let d = -18; d <= 18; d++) {
+        const k2 = i + d;
+        if (k2 < 0 || k2 > n) continue;
+        const w = Math.exp(-(d * d) / 72);
+        sum += path[k2] * w;
+        sw += w;
+      }
+      sm[i] = sum / sw;
+    }
+    sm[0] = path[0];
+    return { path: sm, ev: good / n };
+  };
+  const sectorCols = NT / fold;
+  const arms: { iS: number; L: Float64Array; R: Float64Array; ev: number }[] = [];
+  for (const [sa, sb] of spans) {
+    if (sb - sa > 0.6 * sectorCols || sb - sa < 12) continue; // narrower than ~3 mm: a sliver, not an arm
+    const iS = Math.min(rcw[wrap(sa)], rcw[wrap(sb)]);
+    const tL = trackEdge(fitEdge(sa - 0.5, iS), iS, -1);
+    const tR = trackEdge(fitEdge(sb + 0.5, iS), iS, 1);
+    arms.push({ iS, L: tL.path, R: tR.path, ev: Math.min(tL.ev, tR.ev) });
+  }
+  if (arms.length < Math.max(fold, 3)) return null;
+  // 4. barrel (arms cross it) or flange (solid ring)
+  const crossing = arms.filter((x) => x.ev >= 0.4);
+  const barrel = crossing.length >= 0.5 * arms.length;
+
+  const MIN_ARM = (3 / (2 * Math.PI * 240)) * NT; // 3 mm at the 240 mm face radius, in columns
+  // 5. Symmetric arms as curves: the photo is off-centre, so one arm's copies in the other sectors
+  //    sit a few pixels apart and a per-pixel median would erase thin tips. Arms are grouped by
+  //    their place in the sector and each group's edge curves averaged into one canonical arm.
+  const S = sectorCols;
+  const mid = (x: { iS: number; L: Float64Array; R: Float64Array }) => {
+    const k = Math.floor((iLip - x.iS) / 2);
+    return (x.L[k] + x.R[k]) / 2;
+  };
+  // Slots: the arms of the sector with the most arms; every other arm joins the nearest slot,
+  // at most one per sector, so two close twin arms are never merged into one.
+  type Arm = (typeof crossing)[number];
+  const secOf = (x: Arm) => Math.floor(wrap(mid(x)) / S);
+  const bySector = new Map<number, Arm[]>();
+  for (const x of crossing) {
+    const k = secOf(x);
+    if (!bySector.has(k)) bySector.set(k, []);
+    bySector.get(k)!.push(x);
+  }
+  let template: Arm[] = [];
+  for (const list of bySector.values()) if (list.length > template.length) template = list;
+  const posIn = (x: Arm) => ((mid(x) % S) + S) % S;
+  const circ = (d: number) => Math.abs(((d % S) + S * 1.5) % S - S / 2);
+  const slots = template.map((x) => ({ ref: x, pos: posIn(x), members: new Map<number, { x: Arm; d: number }>() }));
+  let spacing = S;
+  for (let p1 = 0; p1 < slots.length; p1++)
+    for (let p2 = p1 + 1; p2 < slots.length; p2++) spacing = Math.min(spacing, circ(slots[p1].pos - slots[p2].pos));
+  for (const x of crossing) {
+    let best = -1, bd = Infinity;
+    for (let n = 0; n < slots.length; n++) {
+      const d = circ(posIn(x) - slots[n].pos);
+      if (d < bd) { bd = d; best = n; }
+    }
+    if (best < 0 || bd > Math.min(0.5 * spacing, 0.15 * S)) continue;
+    // sector of this arm relative to the slot's reference arm
+    const k = wrap(Math.round((mid(x) - mid(slots[best].ref)) / S) * S) / S;
+    const kk = Math.round(k) % fold;
+    const cur = slots[best].members.get(kk);
+    if (!cur || bd < cur.d) slots[best].members.set(kk, { x, d: bd });
+  }
+  const canon: { iS: number; L: Float64Array; R: Float64Array; own: Map<number, Arm> }[] = [];
+  for (const slot of slots) {
+    if (slot.members.size < Math.max(2, Math.ceil(0.4 * fold))) continue; // not repeated around the wheel
+    const ref = mid(slot.ref);
+    const members = [...slot.members.entries()];
+    const iS = Math.min(...members.map(([, m]) => m.x.iS));
+    const n = iLip - iS + 1;
+    const L = new Float64Array(n), R = new Float64Array(n), cnt = new Float64Array(n);
+    const own = new Map<number, Arm>();
+    for (const [k, m] of members) {
+      own.set(k, m.x);
+      // whole sectors between this copy and the reference arm (its residual offset is kept)
+      const dd = mid(m.x) - ref;
+      const shift = dd - ((((dd % S) + S * 1.5) % S) - S / 2);
+      for (let i = m.x.iS; i <= iLip; i++) {
+        L[i - iS] += m.x.L[i - m.x.iS] - shift;
+        R[i - iS] += m.x.R[i - m.x.iS] - shift;
+        cnt[i - iS]++;
+      }
+    }
+    for (let k = 0; k < n; k++) {
+      if (cnt[k]) { L[k] /= cnt[k]; R[k] /= cnt[k]; } else { L[k] = NaN; R[k] = NaN; }
+    }
+    // an arm that is only ever its minimum width is a crossed pair of edges, not an arm
+    let thin = 0, wn = 0;
+    for (let k = 0; k < n; k++) if (!Number.isNaN(L[k])) { wn++; if (R[k] - L[k] < MIN_ARM) thin++; }
+    if (wn && thin < 0.7 * wn) canon.push({ iS, L, R, own });
+  }
+  if (barrel && !canon.length) return null;
+  // Traced arms take over just after the rows they were fitted on, column by column: the photo is
+  // often off-centre, so a common row would fall inside the barrel on one side of the wheel, and
+  // the window corners' fillets near the barrel edge would leave steps on the arms.
+  const rcs = new Int32Array(NT);
+  for (let j = 0; j < NT; j++) rcs[j] = barrel ? rcw[j] + 8 : rc[j];
+  let rcMinS = ib;
+  for (let j = 0; j < NT; j++) rcMinS = Math.min(rcMinS, rcs[j]);
+
+  const mRows = iLip - ia + 1;
+  const M = new Uint8Array(mRows * NT);
+  for (let i = ia; i <= iLip; i++) {
+    const o = (i - ia) * NT;
+    for (let j = 0; j < NT; j++) M[o + j] = i >= rcs[j] ? (barrel ? 0 : 1) : solid(i, j) ? 1 : 0;
+    if (!barrel) continue;
+    for (const arm of canon) {
+      if (i < arm.iS) continue;
+      const cl = arm.L[i - arm.iS], cr = arm.R[i - arm.iS];
+      if (Number.isNaN(cl) || Number.isNaN(cr)) continue;
+      for (let k = 0; k < fold; k++) {
+        // Each sector's arm starts on its own traced edges (continuous with its own cut-out, even
+        // in a photo taken slightly off-axis) and eases into the symmetric shape.
+        let x0 = cl + k * S, x1 = cr + k * S;
+        const mine = arm.own.get(k);
+        if (mine && i >= mine.iS) {
+          const w = Math.min(1, (i - mine.iS) / 60);
+          const near = (v: number, ref: number) => ref + (wrap(v - ref + NT / 2) - NT / 2);
+          x0 = (1 - w) * near(mine.L[i - mine.iS], x0) + w * x0;
+          x1 = (1 - w) * near(mine.R[i - mine.iS], x1) + w * x1;
+        }
+        // an arm always meets the lip: tapered tips keep at least ~3 mm of width
+        if (x1 - x0 < MIN_ARM) {
+          const m2 = (x0 + x1) / 2;
+          x0 = m2 - MIN_ARM / 2;
+          x1 = m2 + MIN_ARM / 2;
+        }
+        for (let col = Math.floor(x0); col <= Math.ceil(x1); col++) {
+          const jj = wrap(col);
+          // drawn from 16 rows before the handover, so a small offset against the cut-out arm
+          // widens it slightly instead of leaving a step
+          if (i >= rcs[jj] - 16) M[o + jj] = 1;
+        }
+      }
+    }
+  }
+  const value = (rr: number, t: number) => {
+    const fi = rr * (NRp - 1);
+    if (fi >= iLip) return 1;
+    if (fi < ia) return bil(a, c + Math.cos(t) * rr * half, c + Math.sin(t) * rr * half);
+    const tc = wrap((t / (Math.PI * 2)) * NT);
+    const i0 = Math.min(mRows - 2, Math.floor(fi) - ia), fy = fi - ia - i0;
+    const j0 = Math.floor(tc) % NT, j1 = (j0 + 1) % NT, fx = tc - Math.floor(tc);
+    return (M[i0 * NT + j0] * (1 - fx) + M[i0 * NT + j1] * fx) * (1 - fy) + (M[(i0 + 1) * NT + j0] * (1 - fx) + M[(i0 + 1) * NT + j1] * fx) * fy;
+  };
+  return { mode: barrel ? 'barrel' : 'flange', rLip: rowR(iLip), rStart: rowR(rcMinS), value };
+}
+
+/** Solves a small dense linear system (Gaussian elimination, partial pivoting); null if singular. */
+function solveSmall(M: Float64Array[], v: Float64Array): number[] | null {
+  const n = v.length;
+  const A = M.map((row, i) => [...row, v[i]]);
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if (Math.abs(A[piv][col]) < 1e-9) return null;
+    [A[col], A[piv]] = [A[piv], A[col]];
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = A[r][col] / A[col][col];
+      for (let k = col; k <= n; k++) A[r][k] -= f * A[col][k];
+    }
+  }
+  return A.map((row, i) => row[n] / row[i]);
+}
+
+/** 1D Gaussian down each column of a row-major grid (ends clamped); sigma may vary by row. */
+function gaussianColumns(g: Float32Array, rows: number, cols: number, sigma: number | ((row: number) => number)) {
+  const sig = typeof sigma === 'number' ? () => sigma : sigma;
+  // weights depend only on the row: computed once, reused for every column
+  const taps: Float32Array[] = [];
+  for (let i = 0; i < rows; i++) {
+    const sg = sig(i);
+    if (sg < 0.3) { taps.push(new Float32Array(0)); continue; }
+    const R = Math.ceil(sg * 3);
+    const w = new Float32Array(R + 1);
+    for (let d = 0; d <= R; d++) w[d] = Math.exp(-(d * d) / (2 * sg * sg));
+    taps.push(w);
+  }
   const col = new Float32Array(rows);
   for (let j = 0; j < cols; j++) {
     for (let i = 0; i < rows; i++) col[i] = g[i * cols + j];
     for (let i = 0; i < rows; i++) {
+      const w = taps[i];
+      if (!w.length) { g[i * cols + j] = col[i]; continue; }
       let s = col[i] * w[0], sw = w[0];
-      for (let d = 1; d <= R; d++) {
+      for (let d = 1; d < w.length; d++) {
         if (i - d >= 0) { s += col[i - d] * w[d]; sw += w[d]; }
         if (i + d < rows) { s += col[i + d] * w[d]; sw += w[d]; }
       }

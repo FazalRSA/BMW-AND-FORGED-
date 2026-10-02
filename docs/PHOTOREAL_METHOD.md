@@ -127,35 +127,59 @@ Every part is generated in code, so it fits any design, size (19–22") and car.
 This is `processRimPhoto` → `traceMaskShapes` → `buildSpokeFace`:
 
 1. **Measure the photo.** Radial coverage gives the outer radius and the point where the spoke
-   windows end, about 0.66–0.72 of the radius in the FORGEDSA photos. Beyond that is the lip plus
-   the barrel wall, seen in perspective. It is **cut away**, and the spokes are stretched out to
-   meet the 3D lip. Before this fix, the ring was extruded as a flat disc: the old "disgusting
-   wheels".
-2. **Detect the rotational symmetry.** Angular correlation at four radii over folds 3–24. Take
+   windows end, about 0.66–0.72 of the radius in the FORGEDSA photos. Beyond that the photo shows
+   the barrel solid behind the outer half of the spokes, then the lip. The barrel ring used to be
+   extruded as a flat disc: the old "disgusting wheels".
+2. **Trace the arms across the barrel band** (`traceFaceArms`, mode `barrel`). The first fix
+   stretched the see-through spokes out to the lip. That distorts every design and turned FSA-01's
+   five slender split arms into five fat spokes on the car: the owner's "not correct" report.
+   Instead:
+   - **Where each angle's window ends:** the first 20-row solid run after the window; later specks
+     are ignored. Median-smoothed, and bounded by a robust off-centre fit, since photos are rarely
+     centred on the barrel.
+   - **Arm edges:** a straight line fitted to each arm's cut-out edge in the image plane. Then an
+     optimal smooth path (dynamic programming, ±24 columns, one column per row at most) through
+     the brightness edges to the lip, preferring the outer silhouette over the chamfer lines
+     (0.03 per column inward), and smoothed σ 6 rows. Following edges greedily, the tracks jumped
+     between parallel chamfer lines and died at the barrel's rings and bolts.
+   - **Barrel or flange:** if at least half the arms show real edges on ≥ 40% of their path, it's
+     `barrel` (arms only); otherwise `flange`, a solid ring to the lip (FSA-09).
+   - **One arm shape for all sectors:** each arm's copies around the wheel are slotted (at most one
+     per sector) and their edge curves averaged. A per-pixel median would erase thin tips, since
+     an off-centre photo puts the copies a few pixels apart. Each sector's arm starts on its own
+     traced edges and eases into the shared shape over 60 rows. The handover from cut-out to
+     traced arm is per column; a common row left "flags" on the arms.
+   - **Lip:** spokes end at **0.916** of the photo's rim radius, which is the 3D layout's
+     240 / 262 mm. Tips keep at least 3 mm of width, so every arm meets the lip.
+   - **Fallback:** `stretch` (the old behaviour) when arms can't be traced.
+   - Results: FSA-01 to 08 `barrel`, FSA-09 `flange`. FSA-02's Y-branches split inside the band,
+     so they read as wide arms. FSA-07 (an angled photo) still tears where its sectors disagree.
+3. **Detect the rotational symmetry.** Angular correlation at four radii over folds 3–24. Take
    the largest fold scoring within 85% of the best. It is applied only when the best score is
    ≥ 0.4.
-3. **Take the median across the symmetric sectors (not the mean).**
+4. **Take the median across the symmetric sectors (not the mean).**
    - A spoke is solid in nearly every sector, while the barrel or a reflection seen in only a
      few sectors is rejected. The mean left grey ghosts and jagged edges.
    - Read the photo at 1536 px (it was 768) and build one sector as a polar table, about one
      output pixel per cell, before drawing the mask.
    - A lower quantile (0.35) was tested: it thinned the spokes and let partly covered windows
      through, so the median stays.
-4. **Smooth along the radius** (Gaussian, σ 8 px on the 1024 px mask) in the polar table.
+5. **Smooth along the radius** (Gaussian, σ 8 px on the 1024 px mask) in the polar table.
    - The median still leaves small steps along spoke edges, wherever the photo's sectors
      disagree (perspective side walls, cut-out wobble). Up close they read as lumpy, hand-made
      spokes.
    - Radial smoothing turns the steps into straight runs and leaves each edge where it is.
    - The window corners get a fillet of a few millimetres, as real forged windows have.
-5. **Replace the centre** with a solid hub pad (0.3 of the face radius). Lug nuts and cap are 3D.
-6. **Trace:**
+   - It fades out where the traced arms start: they are smooth already and often slanted.
+6. **Replace the centre** with a solid hub pad (0.3 of the face radius). Lug nuts and cap are 3D.
+7. **Trace:**
    - blur the mask about 2 px (four passes), then trace it at 0.5 with marching squares;
    - **smooth each outline along its length** (σ 4 px, resampled every pixel). Corners, where
      the outline turns more than 50° within ±2σ, stay fixed and the filter stops at them;
    - simplify with a 0.4 px tolerance.
    - Contour smoothing alone can't remove the steps: a step is two sharp turns, so it counts as
-     corners and is kept. Steps 4 and 6 work together.
-7. **Extrude:**
+     corners and is kept. Steps 5 and 7 work together.
+8. **Extrude:**
    - 32 mm deep with a 3 mm, four-segment rounded bevel; the negative offset chamfers the windows
      too;
    - subdivide the caps to 11 mm;
@@ -167,11 +191,36 @@ This is `processRimPhoto` → `traceMaskShapes` → `buildSpokeFace`:
      the long cap triangles spread that tilt across the spoke. The tops shaded in blotches, like a
      hand-filed part. Cap triangles are tagged before the dish moves them (all three vertices in
      the extrude's top plane).
-8. **Material:** the finish only (no photo texture), DoubleSide, light arch occlusion.
+9. **Material:** the finish only (no photo texture), DoubleSide, light arch occlusion. How the
+   four finishes are built is below (Wheel finishes).
 
-Results (fold detected): FSA-01 5, 02 10, 03 15, 04 5, 05 5, 06 12, 07 5, 08 5, 09 10. FSA-01 and
-FSA-07 come from angled photos and keep some irregular edges; manufacturer CAD (the admin CAD
-route) is the real fix.
+Results (fold detected): FSA-01 5, 02 10, 03 15, 04 5, 05 5, 06 12, 07 5, 08 5, 09 10. FSA-07
+comes from an angled photo and keeps some torn arms; manufacturer CAD (the admin CAD route) is the
+real fix. The step-by-step for a new photo is the `forgedsa-rim-from-photo` skill.
+
+### Wheel finishes
+
+`services/wheelFinish.ts` reads the admin's four numbers per finish as a layered coating. The
+kind is picked from the numbers, so admin-made finishes work unchanged. Details and QA: the
+`forgedsa-rim-finishes` skill.
+
+| Finish | Kind | Rendered as |
+|---|---|---|
+| Liquid Metal | polished (metal ≥ 0.95, rough ≤ 0.16) | metal 1, roughness 0.05–0.1, mirror clear coat |
+| Black Gloss | gloss paint (dark, or metal < 0.3; rough ≤ 0.35) | **non-metal** black paint, base roughness 0.4, clear coat ≥ 0.9 at 0.03 |
+| Bronze Matte | satin metallic (rough ≥ 0.42) | metal ≥ 0.75, clear coat kept but **rough (0.6)**; flop 0.75, flake 0.05 |
+| Silver | metallic paint (the rest) | roughness ≥ 0.3, clear coat at 0.04; flop 0.7, flake 0.06 |
+
+- **Black Gloss was metal 0.7 with a near-black colour.** That reflects almost nothing from the
+  base, so the spokes rendered as flat black silhouettes. As paint, the base gives a soft 4%
+  sheen and the clear coat gives the crisp reflections.
+- **Bronze Matte had a smooth clear coat (0.1).** At grazing angles it added mirror reflections,
+  so the "matte" wheel read satin-gloss and orange.
+- **Flop and flake** come from `installFinishLayers`:
+  - flake cells are 1 mm in mesh space, so they turn with the wheel, and fade when sub-pixel;
+  - the clear coat keeps the smooth normal.
+- **Live data:** finish values in `wheel_finishes` are read by production and previews alike.
+  The engine reads them physically instead of the values being changed.
 
 ### Brakes
 

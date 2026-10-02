@@ -64,8 +64,10 @@ node scripts/render/shoot.cjs "$SCRATCH/out" shots.json "$SCRATCH/rims"   # ~1 m
 Never use the photo as the face texture, and never extrude the whole photo. Instead:
 
 1. **Photo → mask** (`processRimPhoto`):
-   - cut away the outer ring (lip + perspective barrel) at the radius where window coverage
-     reaches 0.9, and stretch the spokes to the lip;
+   - where the barrel shows solid behind the outer spokes, trace the arms across it to the lip
+     at 91.6% of the rim radius (`traceFaceArms`, mode `barrel`). Stretching the see-through
+     spokes to the lip (mode `stretch`, the fallback) turned FSA-01's slender split arms into
+     fat spokes. Full detail: `forgedsa-rim-from-photo`;
    - read the photo at 1536 px, detect symmetry, then take the **median** across sectors (in a
      polar table of one sector);
    - smooth along the radius (σ 8 px), which removes the small steps along spoke edges;
@@ -86,11 +88,14 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
    - inner parts at envMapIntensity 0.45–0.75;
    - `installWheelShading` arch shade on everything under the fender;
    - switched off in the showcase.
-5. **Rubber colour:** #302e2d–#333130 with `sheenColor` set. Below about #262626, ACES makes it a
+5. **Finishes** are layered coatings read from the admin numbers (`services/wheelFinish.ts`):
+   polished metal, gloss paint (Black Gloss is a non-metal), satin metallic (Bronze Matte's clear
+   coat is rough) and metallic paint (Silver), with flop and flake. See `forgedsa-rim-finishes`.
+6. **Rubber colour:** #302e2d–#333130 with `sheenColor` set. Below about #262626, ACES makes it a
    black hole.
-6. **Check the sidewall text orientation on a render:** it must read clockwise with the letter
+7. **Check the sidewall text orientation on a render:** it must read clockwise with the letter
    tops towards the tread. Use generic markings only (no Michelin, Pirelli, Brembo or BMW-M logos).
-7. **Clearance:** the caliper sits behind the concave spokes and inside the 19" drop centre. Move
+8. **Clearance:** the caliper sits behind the concave spokes and inside the 19" drop centre. Move
    the disc plane (`discX`), never the spokes.
 
 **Wheel QA:** close-ups of every design, alternating finishes. Look for:

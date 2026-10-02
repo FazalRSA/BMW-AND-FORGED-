@@ -158,9 +158,9 @@ webhook URL lives in Supabase Vault (`lead_webhook_url`), and the template is in
 
 ## Project skills (for Claude Code and developers)
 
-Fourteen task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
-and wheels, tuning paint, verifying renders, the PDF, lead emails, branding, docs, deploys and
-secrets. Claude Code loads them automatically; the index with when-to-use notes is
+Sixteen task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
+and wheels (including turning a rim photo into a swappable 3D rim, and the wheel finishes), tuning
+paint, verifying renders, the PDF, lead emails, branding, docs, deploys and secrets. Claude Code loads them automatically; the index with when-to-use notes is
 [`docs/SKILLS.md`](docs/SKILLS.md).
 
 **Photorealism.** How the cars, wheels, tyres and brakes are made to look like studio photos, with

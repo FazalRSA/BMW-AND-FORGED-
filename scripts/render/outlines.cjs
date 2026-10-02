@@ -36,12 +36,13 @@ const STORAGE = 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/publ
       img.src = url;
       await img.decode();
       const out = [];
-      let fold = 1;
+      let fold = 1, mode = '';
       for (const v of variants) {
         const t0 = performance.now();
         const m = kit.processRimPhoto(img, 1024, v);
         if (!m) { out.push({ name: v.name, error: 'not a usable cut-out' }); continue; }
         fold = m.symmetry;
+        mode = m.mode;
         const t1 = performance.now();
         const shapes = rx.traceMaskShapes(m.data, m.size, m.size, 0.5, v.tol ?? 0.4, v.smooth ?? 4) || [];
         const ms = `${Math.round(t1 - t0)}+${Math.round(performance.now() - t1)}ms`;
@@ -80,12 +81,12 @@ const STORAGE = 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/publ
         }
         out.push({ name: v.name, ms, verts, url: c.toDataURL('image/png') });
       }
-      return { fold, out };
+      return { fold, mode, out };
     }, { url: STORAGE + f, variants });
     for (const o of res.out) {
       if (o.url) fs.writeFileSync(path.join(OUT, `${path.basename(f, '.png')}-${o.name}.png`), Buffer.from(o.url.split(',')[1], 'base64'));
     }
-    console.log(f, 'fold', res.fold, res.out.map((o) => o.error ? `${o.name}: ${o.error}` : `${o.name}: ${o.verts} pts ${o.ms}`).join(' | '));
+    console.log(f, 'fold', res.fold, res.mode, res.out.map((o) => o.error ? `${o.name}: ${o.error}` : `${o.name}: ${o.verts} pts ${o.ms}`).join(' | '));
   }
   await b.close();
 })().catch((e) => { console.error(e); process.exit(1); });

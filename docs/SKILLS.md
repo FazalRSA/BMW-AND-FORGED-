@@ -11,6 +11,8 @@ exact files, commands, values and pitfalls for its task.
 | [`forgedsa-codebase-map`](../.claude/skills/forgedsa-codebase-map/SKILL.md) | starting any task; finding which file owns a behaviour |
 | [`forgedsa-add-car-model`](../.claude/skills/forgedsa-add-car-model/SKILL.md) | adding or replacing a car; unpainted panels, wrong wheels, scale or rotation |
 | [`forgedsa-wheel-pipeline`](../.claude/skills/forgedsa-wheel-pipeline/SKILL.md) | adding wheels from photos (sheet + n8n + ingest-wheel) or CAD files |
+| [`forgedsa-rim-from-photo`](../.claude/skills/forgedsa-rim-from-photo/SKILL.md) | turning one rim photo into a swappable 3D rim: photo rules, cut-out, QA, symptom → fix |
+| [`forgedsa-rim-finishes`](../.claude/skills/forgedsa-rim-finishes/SKILL.md) | how Liquid Metal, Black Gloss, Bronze Matte and Silver are built; adding or tuning a finish |
 | [`forgedsa-catalogue-admin`](../.claude/skills/forgedsa-catalogue-admin/SKILL.md) | prices, sizes, finishes, paints; admin accounts and sign-in problems |
 | [`forgedsa-paint-and-lighting`](../.claude/skills/forgedsa-paint-and-lighting/SKILL.md) | paint looks plastic, blotchy or washed out; tuning the studio |
 | [`forgedsa-photoreal-mode`](../.claude/skills/forgedsa-photoreal-mode/SKILL.md) | path-traced photorealism (proof branch `claude/photoreal-proof`) |
