@@ -152,8 +152,9 @@ This is `processRimPhoto` → `traceMaskShapes` → `buildSpokeFace`:
    - **Lip:** spokes end at **0.916** of the photo's rim radius, which is the 3D layout's
      240 / 262 mm. Tips keep at least 3 mm of width, so every arm meets the lip.
    - **Fallback:** `stretch` (the old behaviour) when arms can't be traced.
-   - Results: FSA-01 to 08 `barrel`, FSA-09 `flange`. FSA-02's Y-branches split inside the band,
-     so they read as wide arms. FSA-07 (an angled photo) still tears where its sectors disagree.
+   - **Branch slots** (Y-spokes): a see-through run enclosed by an arm is cut out. Its edges are followed to the lip, averaged across sectors (copies up to 0.15 sector apart), never narrowing and capped at ~18 mm. Clustering at different radii failed, because the slots slant.
+   - Results: FSA-01 to 08 `barrel`, FSA-09 `flange`. FSA-02's Y-branches now fork near the lip; the photo's
+     split starts further in. FSA-07 (an angled photo) still tears where its sectors disagree.
 3. **Detect the rotational symmetry.** Angular correlation at four radii over folds 3–24. Take
    the largest fold scoring within 85% of the best. It is applied only when the best score is
    ≥ 0.4.

@@ -128,7 +128,7 @@ What the app needs in the PNG:
 | Fat, stretched spokes; split arms merged | `stretch` mode on a photo whose barrel shows behind the arms | Check the mode in outlines.cjs. Front-on, larger photo, or cut the barrel out between the arms |
 | Spokes end at a solid ring | `flange` chosen: no arm edges found in the band | Real flange designs (FSA-09) are right. Otherwise the photo is too soft: a sharper photo |
 | Torn or broken arms, floating pieces | Angled photo: the sectors disagree (FSA-07) | Front-on photo or CAD |
-| Wide wedges instead of Y-branched arms | Branches split inside the barrel band (FSA-02) | Cut the barrel out between the branches |
+| Wide wedges instead of Y-branched arms | Branches split inside the barrel band (FSA-02). The app follows a see-through slot enclosed by an arm out to the lip (≤ ~18 mm wide, never narrowing), but only once the slot shows in the cut-out | Cut the barrel out between the branches, so the slot starts where the branches part |
 | Pin-holes in spokes | Holes in the cut-out over ~170 mm² | Clean the cut-out |
 | Jagged or lumpy edges | Low resolution, or a noisy cut-out edge | A larger photo; check `traceMaskShapes` smoothing is on (4 px) |
 | Flat disc with the photo printed on it | No transparency inside the rim, or *Build 3D spokes* off | Cut out the windows; tick the box |

@@ -1400,6 +1400,100 @@ function traceFaceArms(a: Float32Array, lum: Float32Array, RES: number, fold: nu
       }
     }
   }
+  // 6. Slots inside arms (Y-branched spokes, FSA-02): a see-through pocket beyond the main window,
+  //    inside a traced arm, is the start of the gap between two branches. The pocket itself is cut
+  //    from the arm, and its two edges are followed on to the lip like arm edges (the branches
+  //    then show the barrel between them, as in the photo).
+  if (barrel) {
+    const top = new Int32Array(NT).fill(-1);
+    const bot = new Int32Array(NT).fill(-1);
+    // a pocket row: a run of see-through pixels inside the painted arm, with solid arm on both sides
+    for (let i = ia; i <= iLip; i++) {
+      const o = (i - ia) * NT;
+      for (let j = 0; j < NT; ) {
+        if (!M[o + j] || solid(i, j)) { j++; continue; }
+        let e = j;
+        while (e < NT && M[o + e] && !solid(i, e)) e++;
+        const left = wrap(j - 1), right = wrap(e);
+        if (e - j >= 2 && e - j < 0.3 * S && M[o + left] && solid(i, left) && M[o + right] && solid(i, right)) {
+          for (let k = j; k < e; k++) {
+            M[o + k] = 0;
+            if (bot[k] < 0) bot[k] = i;
+            top[k] = i;
+          }
+        }
+        j = e;
+      }
+    }
+    const slotTracks: { iS: number; L: Float64Array; R: Float64Array }[] = [];
+    let j = 0;
+    while (j < NT && top[j] >= 0) j++; // start the scan outside a pocket
+    for (let n = 0; n < NT; n++) {
+      const j0 = wrap(j + n);
+      if (top[j0] < 0 || (n > 0 && top[wrap(j0 - 1)] >= 0)) continue;
+      let w = 0, iTop = -1;
+      while (w < NT && top[wrap(j0 + w)] >= 0) { iTop = Math.max(iTop, top[wrap(j0 + w)]); w++; }
+      if (w < 6 || iTop - 30 < ia || iLip - iTop < 8) continue;
+      const iS = iTop - 4;
+      let jl = -1, jr = -1;
+      for (let d = 0; d < w; d++) {
+        if (!solid(iS, j0 + d)) { if (jl < 0) jl = j0 + d; jr = j0 + d; }
+      }
+      if (jl < 0 || jr - jl < 3) continue;
+      const eL = trackEdge(fitEdge(jl - 0.5, iS), iS, 1);
+      const eR = trackEdge(fitEdge(jr + 0.5, iS), iS, -1);
+      if (Math.min(eL.ev, eR.ev) < 0.35) continue;
+      const L = new Float64Array(iLip - iS + 1), R = new Float64Array(iLip - iS + 1);
+      for (let i = iS; i <= iLip; i++) {
+        L[i - iS] = eL.path[i - iS];
+        R[i - iS] = L[i - iS] + (wrap(eR.path[i - iS] - L[i - iS] + NT / 2) - NT / 2);
+      }
+      // edges that cross before the lip are not a slot
+      if (R[R.length - 1] - L[L.length - 1] >= 4) slotTracks.push({ iS, L, R });
+    }
+    // Slots are averaged across the sectors like the arms and cut in every sector. Branches only
+    // diverge, so a slot never narrows towards the lip.
+    const used = new Uint8Array(slotTracks.length);
+    // compared where every track ends (the lip): slots slant, and tracks start at different rows
+    const midOf = (t: { iS: number; L: Float64Array; R: Float64Array }) => (t.L[t.L.length - 1] + t.R[t.R.length - 1]) / 2;
+    for (let a = 0; a < slotTracks.length; a++) {
+      if (used[a]) continue;
+      const ref = slotTracks[a];
+      const members: { t: typeof ref; shift: number }[] = [];
+      for (let b = a; b < slotTracks.length; b++) {
+        if (used[b]) continue;
+        const dd = midOf(slotTracks[b]) - midOf(ref);
+        const res = (((dd % S) + S * 1.5) % S) - S / 2;
+        // an off-centre photo puts copies of one slot up to ~0.1 sector apart
+        if (Math.abs(res) > Math.max(16, 0.15 * S)) continue;
+        used[b] = 1;
+        members.push({ t: slotTracks[b], shift: dd - res });
+      }
+      if (members.length < Math.max(2, Math.ceil(0.4 * fold))) continue;
+      const iS = Math.round(members.reduce((acc, m) => acc + m.t.iS, 0) / members.length);
+      let width = 0;
+      for (let i = iS; i <= iLip; i++) {
+        let cl = 0, cr = 0, n = 0;
+        for (const m of members) {
+          const k = i - m.t.iS;
+          if (k < 0 || k >= m.t.L.length) continue;
+          cl += m.t.L[k] - m.shift;
+          cr += m.t.R[k] - m.shift;
+          n++;
+        }
+        if (!n) continue;
+        cl /= n; cr /= n;
+        // never narrower towards the lip, and never wider than a branch gap (~18 mm at the lip)
+        width = Math.min(Math.max(width, cr - cl), 0.12 * S);
+        if (width < 1) continue;
+        const mid = (cl + cr) / 2;
+        const o = (i - ia) * NT;
+        for (let k = 0; k < fold; k++) {
+          for (let col = Math.ceil(mid - width / 2 + k * S); col <= Math.floor(mid + width / 2 + k * S); col++) M[o + wrap(col)] = 0;
+        }
+      }
+    }
+  }
   const value = (rr: number, t: number) => {
     const fi = rr * (NRp - 1);
     if (fi >= iLip) return 1;
