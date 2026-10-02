@@ -2,6 +2,36 @@
 
 **Written:** 1 Oct 2026. **Owner:** Nova Havens for FORGEDSA.
 
+## Progress (2 Oct 2026)
+
+The method and its numbers are in [`PHOTOREAL_METHOD.md`](PHOTOREAL_METHOD.md); the skill is
+`3d-car-perfect`.
+
+- **Line-up:** the five good models stay (M4, M3, M3 Touring, M5, M8). The 2 Series, the SUVs and
+  the two cars without models are set inactive. *(The owner widened the scope from 3 cars to every
+  good model.)*
+- **Done, Sprint 1 (studio and paint):**
+  - feathered softbox studio;
+  - world-space metallic flake and flop;
+  - tone-mapping comparison (ACES kept).
+- **Done, Sprint 2 (material pass on every car):**
+  - tinted glass with a reflection overlay, clear lenses, red tail lenses;
+  - neutral chrome, gloss carbon and black trim;
+  - shadowed interior.
+- **Done, Sprint 3 (wheels, tyres, brakes in code):**
+  - real tyre profile with tread and sidewall markings, plus a loaded contact patch;
+  - rim lip and barrel, with polished bolted lips on two- and three-piece designs;
+  - cross-drilled vented discs with radial anisotropy;
+  - 6-piston gloss calipers, lug nuts and the FSA centre cap;
+  - rim photos become clean, symmetric, concave 3D spokes;
+  - fake arch and barrel occlusion.
+- **Still open:**
+  - a real-GPU and phone check (NOV-56);
+  - manufacturer CAD for the wheels (NOV-57), above all FSA-01 and FSA-07;
+  - licensed premium car files (NOV-64/65);
+  - real AO, rest-frame TAA and a shadowing key light (next levers in the method doc);
+  - client sign-off (Sprint 4).
+
 ## Goal
 
 A BMW M owner who opens the configurator on a phone or laptop should believe they're looking at a

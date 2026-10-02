@@ -15,12 +15,15 @@ import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { applyPaintLayers, installPaintLayers } from './paintShader';
 import { buildSoftboxStudio } from './studioSoftbox';
+import { glassReflectionMaterial, passMaterial } from './carMaterials';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 import { traceRimShapes, traceMaskShapes, buildRimFaceGeometry } from './rimExtrusion';
 import {
   FACE_FRACTION,
   barrelAoMap,
+  installWheelShading,
+  wheelShadingUniforms,
   SPOKE_BEVEL,
   LipStyle,
   WheelDims,
@@ -344,11 +347,14 @@ export class CarConfiguratorEngine {
       roughness: 0.22,
       clearcoat: 0.5,
       side: THREE.DoubleSide,
-      envMapIntensity: 0.6, // deep inside the wheel: far less of the studio reaches it
+      envMapIntensity: 0.45, // deep inside the wheel: far less of the studio reaches it
       aoMap: barrelAoMap(),
       aoMapIntensity: 1
     });
     this.wheelMaterial.side = THREE.DoubleSide;
+    // under the wheel arch, the spokes' top and the barrel are in the fender's shade
+    installWheelShading(this.wheelMaterial, { arch: 0.3 });
+    installWheelShading(this.barrelMaterial, { arch: 0.5 });
 
     // Tyres, discs, calipers, lip, nuts and cap
     this.kit = createWheelKitMaterials();
@@ -1014,38 +1020,6 @@ export class CarConfiguratorEngine {
     }
   }
 
-  /**
-   * Some free/scraped GLBs omit metallicFactor/roughnessFactor on trim materials (window
-   * pillars, chrome, engine bay, lens covers). Per the glTF spec that defaults to fully
-   * metallic *and* fully rough, which under real environment lighting reads as flat, matte,
-   * "unfinished" plastic instead of the gloss it was clearly meant to have. Nudge only the
-   * exact-default combination (metalness 0, roughness ~1) down to a plausible gloss; anything
-   * with an authored value (a real matte fabric at 0.72, say) is left alone.
-   */
-  private static fixDefaultedMaterial(material: THREE.Material | null | undefined) {
-    const m = material as THREE.MeshStandardMaterial;
-    if (!m || !(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) return;
-    // See-through glass exported without a roughness value renders frosted (rough), which makes
-    // the whole cabin read as a milky, washed-out block. Real glazing is a near-perfect mirror.
-    // Near-clear cabin glass also shows the light-grey interior of these uploads straight through,
-    // so the glasshouse reads milky; production BMW glazing is tinted, so give it a floor of tint.
-    if ((m.transparent || m.opacity < 1) && /glass|window|windscreen|windshield/i.test(m.name) && !/head|tail|lamp|light|lens/i.test(m.name)) {
-      if (m.roughness > 0.08) m.roughness = 0.04;
-      m.metalness = 0;
-      if (m.opacity < 0.7) m.opacity = 0.7;
-      const hsl = { h: 0, s: 0, l: 0 };
-      m.color.getHSL(hsl);
-      if (hsl.l > 0.03) m.color.setHSL(hsl.h, hsl.s, 0.03);
-      m.needsUpdate = true;
-      return;
-    }
-    if (m.metalness === 0 && m.roughness >= 0.98) {
-      m.roughness = 0.45;
-      m.envMapIntensity = 1;
-      m.needsUpdate = true;
-    }
-  }
-
   private mountCarModel(model: THREE.Object3D, car: CarModel) {
     // Orient: this scene drives along Z, so turn models authored along X first.
     model.updateMatrixWorld(true);
@@ -1090,7 +1064,7 @@ export class CarConfiguratorEngine {
         return;
       }
       const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh) return;
+      if (!mesh.isMesh || mesh.userData.isOverlay) return;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
 
@@ -1119,20 +1093,41 @@ export class CarConfiguratorEngine {
           : this.paintMaterialFor(mesh.material);
       } else {
         unmatched.push(mesh.name || '(unnamed)');
-        materials.forEach(CarConfiguratorEngine.fixDefaultedMaterial);
+        // Studio-plausible values for glass, lenses, chrome, carbon, trim, interior (services/carMaterials.ts)
+        mesh.material = Array.isArray(mesh.material)
+          ? mesh.material.map((m) => passMaterial(m, partNames))
+          : passMaterial(mesh.material, partNames);
+        // Full-strength Fresnel reflections on single-material glazing (see glassReflectionMaterial)
+        const glass = !Array.isArray(mesh.material) && mesh.material.userData.partKind === 'glass';
+        if (glass && !mesh.userData.glassOverlay) {
+          const overlay = new THREE.Mesh(mesh.geometry, glassReflectionMaterial());
+          overlay.name = 'glass_reflection';
+          overlay.renderOrder = mesh.renderOrder + 1;
+          overlay.userData.isOverlay = true;
+          overlay.castShadow = false;
+          mesh.add(overlay);
+          mesh.userData.glassOverlay = true;
+        }
       }
     });
+
+    // Leftover pieces of the model's own wheels filed under other materials (the M3's hub discs
+    // are part of a body-paint mesh): triangles inside a tyre cylinder are cut away, and parts
+    // made only of such triangles are hidden. A cylinder, not the wheel's box: fender lips sit
+    // inside the box corners but outside the tyre. (Same space as the wheel boxes: before the
+    // model joins the scene.)
+    // All four wheels merged into one mesh: split its vertices by side of the car instead.
+    if (corners.size < 4 && wheelMeshes.length) {
+      const byVertex = CarConfiguratorEngine.cornersFromVertices(wheelMeshes);
+      if (byVertex.size === 4) byVertex.forEach((box, key) => corners.set(key, box));
+    }
+    if (corners.size === 4) CarConfiguratorEngine.stripLeftoverWheelParts(model, [...corners.values()]);
 
     this.disposeBody();
     this.bodyMeshGroup.add(model);
     this.paintVariants = usedVariants;
     this.markShadowDirty();
 
-    // All four wheels merged into one mesh: split its vertices by side of the car instead.
-    if (corners.size < 4 && wheelMeshes.length) {
-      const byVertex = CarConfiguratorEngine.cornersFromVertices(wheelMeshes);
-      if (byVertex.size === 4) byVertex.forEach((box, key) => corners.set(key, box));
-    }
 
     if (corners.size === 4) {
       this.wheelAssemblies.forEach((a) => {
@@ -1150,6 +1145,48 @@ export class CarConfiguratorEngine {
         'Adjust "Hide mesh names" in the admin. Unpainted meshes:', unmatched.slice(0, 40)
       );
     }
+  }
+
+  private static stripLeftoverWheelParts(model: THREE.Object3D, wheelBoxes: THREE.Box3[]) {
+    const wheels = wheelBoxes.map((b) => {
+      const size = b.getSize(new THREE.Vector3());
+      return { c: b.getCenter(new THREE.Vector3()), r2: (size.y * 0.485) ** 2, hx: size.x / 2 + 0.01 };
+    });
+    const inWheel = (v: THREE.Vector3) =>
+      wheels.some((w) => Math.abs(v.x - w.c.x) <= w.hx && (v.y - w.c.y) ** 2 + (v.z - w.c.z) ** 2 <= w.r2);
+    const v = new THREE.Vector3();
+    model.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay || mesh.userData.wheelStripped) return;
+      const geo = mesh.geometry;
+      const pos = geo.attributes.position;
+      if (!pos) return;
+      const inside = new Uint8Array(pos.count);
+      let any = 0;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrixWorld);
+        if (inWheel(v)) { inside[i] = 1; any++; }
+      }
+      mesh.userData.wheelStripped = true; // cached models are mounted again: do this once
+      if (!any) return;
+      if (any === pos.count) {
+        mesh.visible = false;
+        return;
+      }
+      if (geo.groups.length > 1) return; // multi-material: leave the index (and its groups) alone
+      const index = geo.index;
+      const tri = index ? index.count : pos.count;
+      const keep: number[] = [];
+      for (let t = 0; t < tri; t += 3) {
+        const a = index ? index.getX(t) : t, b = index ? index.getX(t + 1) : t + 1, c = index ? index.getX(t + 2) : t + 2;
+        if (inside[a] && inside[b] && inside[c]) continue;
+        keep.push(a, b, c);
+      }
+      if (keep.length < tri) {
+        geo.setIndex(keep);
+        geo.clearGroups();
+      }
+    });
   }
 
   private static cornersFromVertices(meshes: THREE.Mesh[]): Map<string, THREE.Box3> {
@@ -1707,8 +1744,9 @@ export class CarConfiguratorEngine {
     this.wheelMaterial.needsUpdate = true;
 
     // The barrel's inside: same finish, a little darker and less polished (it is also in shadow)
-    this.barrelMaterial.color.set(finish.hex).multiplyScalar(0.7);
-    this.barrelMaterial.roughness = Math.min(1, finish.roughness + 0.1);
+    // (direct studio lights reach it unshadowed, so it is darkened well below the face colour)
+    this.barrelMaterial.color.set(finish.hex).multiplyScalar(0.4);
+    this.barrelMaterial.roughness = Math.min(1, finish.roughness + 0.15);
     this.barrelMaterial.metalness = finish.metalness;
     this.barrelMaterial.clearcoat = finish.clearcoat * 0.5;
     this.barrelMaterial.needsUpdate = true;
@@ -2029,6 +2067,11 @@ export class CarConfiguratorEngine {
         assembly.spinGroup.rotation.x += this.spinSpeed * delta * (assembly.isRight ? -1 : 1);
       });
     }
+
+    // Wheel shading uniforms are shared by every engine; set them for the one rendering now
+    // (the rim showcase has no car: no wheel arch, no floor under the tyre)
+    wheelShadingUniforms.uArchStrength.value = this.isShowcase ? 0 : 1;
+    wheelShadingUniforms.uFloorY.value = this.isShowcase ? -10 : 0;
 
     // Render frame through Post-Processing Bloom composer or direct WebGL fallback
     if (this.isBloomEnabled && this.composer) {

@@ -7,6 +7,7 @@ exact files, commands, values and pitfalls for its task.
 
 | Skill | Use it when… |
 |---|---|
+| [`3d-car-perfect`](../.claude/skills/3d-car-perfect/SKILL.md) | making cars, wheels, tyres, brakes, paint or the studio look photoreal; anything that "looks fake" |
 | [`forgedsa-codebase-map`](../.claude/skills/forgedsa-codebase-map/SKILL.md) | starting any task; finding which file owns a behaviour |
 | [`forgedsa-add-car-model`](../.claude/skills/forgedsa-add-car-model/SKILL.md) | adding or replacing a car; unpainted panels, wrong wheels, scale or rotation |
 | [`forgedsa-wheel-pipeline`](../.claude/skills/forgedsa-wheel-pipeline/SKILL.md) | adding wheels from photos (sheet + n8n + ingest-wheel) or CAD files |

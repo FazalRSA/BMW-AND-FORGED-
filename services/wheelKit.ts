@@ -217,12 +217,11 @@ export function sidewallMaps(sizeLabel: string): { normal: THREE.Texture; rough:
   ctx.fillStyle = '#fff';
   ctx.textBaseline = 'middle';
   const font = (px: number, weight = 800) => `${weight} ${px}px "Arial Narrow", Arial, Helvetica, sans-serif`;
-  // Canvas row 0 is texture v = 0 (flipY off) = bead side, so letters are drawn upside down
-  // (their tops point to v = 1, the tread), as on a real tyre.
+  // Orientation checked on the rendered tyre: drawn as-is, the markings read clockwise round the
+  // outer sidewall with the letter tops towards the tread, as on a real tyre.
   const write = (text: string, x: number, y: number, px: number, spacing = 0.06, weight = 800) => {
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(1, -1);
     ctx.font = font(px, weight);
     let cx = 0;
     const widths = [...text].map((ch) => ctx.measureText(ch).width + px * spacing);
@@ -383,6 +382,68 @@ export function capTexture(): THREE.Texture {
 }
 
 // ---------------------------------------------------------------------------
+// Wheel-arch occlusion and loaded tyre
+// ---------------------------------------------------------------------------
+
+/**
+ * Shared by every wheel material. `uArchStrength` is 1 on a car and 0 in the stand-alone rim
+ * showcase (no car, so no wheel arch); `uFloorY` is the floor the tyres stand on.
+ */
+export const wheelShadingUniforms = {
+  uArchStrength: { value: 1 },
+  uFloorY: { value: 0 }
+};
+
+/**
+ * Environment and studio light in three.js aren't blocked by geometry, so the top of the tyre and
+ * whatever sits under the fender is lit as if the car weren't there. This darkens wheel parts
+ * towards the top of the wheel (world height), the way the wheel arch shades them in a photo.
+ * Tyres can also flatten where they meet the floor (a loaded tyre, not a toy on a line contact);
+ * done on the GPU in world space, so it stays at the bottom while the wheel spins.
+ */
+export function installWheelShading(material: THREE.Material, opts: { arch: number; flatten?: boolean }) {
+  const m = material as THREE.MeshStandardMaterial;
+  const key = `forgedsa-wheel-${opts.arch}-${opts.flatten ? 1 : 0}`;
+  m.customProgramCacheKey = () => key;
+  m.onBeforeCompile = (shader) => {
+    shader.uniforms.uArchStrength = wheelShadingUniforms.uArchStrength;
+    shader.uniforms.uFloorY = wheelShadingUniforms.uFloorY;
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uFloorY;\nvarying float vArchY;')
+      .replace(
+        '#include <project_vertex>',
+        (opts.flatten
+          ? `{
+  // loaded tyre: the bottom 9 mm flattens onto the floor
+  vec4 wpF = modelMatrix * vec4(transformed, 1.0);
+  float flatY = uFloorY + 0.009;
+  if (wpF.y < flatY) {
+    wpF.y = flatY + (wpF.y - flatY) * 0.08;
+    transformed = (inverse(modelMatrix) * wpF).xyz;
+  }
+}
+`
+          : '') + '#include <project_vertex>\nvArchY = (modelMatrix * vec4(transformed, 1.0)).y - uFloorY;'
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float uArchStrength;\nvarying float vArchY;')
+      .replace(
+        '#include <aomap_fragment>',
+        `#include <aomap_fragment>
+{
+  // shade of the wheel arch over the top of the wheel (tyre top at ~0.7 m)
+  float archOcc = 1.0 - uArchStrength * ${opts.arch.toFixed(2)} * smoothstep(0.38, 0.68, vArchY);
+  reflectedLight.indirectDiffuse *= archOcc;
+  reflectedLight.indirectSpecular *= archOcc;
+  reflectedLight.directDiffuse *= mix(1.0, archOcc, 0.8);
+  reflectedLight.directSpecular *= mix(1.0, archOcc, 0.8);
+}`
+      );
+  };
+  m.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------------------
 // Materials
 // ---------------------------------------------------------------------------
 
@@ -404,7 +465,7 @@ export function createWheelKitMaterials(): WheelKitMaterials {
   const disc = discMaps();
   const tread = treadNormalMap();
   tread.repeat.set(12, 1);
-  return {
+  const kit: WheelKitMaterials = {
     // Rubber: dark charcoal rather than black, a soft sheen at grazing angles
     tread: new THREE.MeshPhysicalMaterial({
       name: 'tyre_tread', side: THREE.DoubleSide,
@@ -482,6 +543,14 @@ export function createWheelKitMaterials(): WheelKitMaterials {
     }),
     pad: new THREE.MeshStandardMaterial({ name: 'brake_pad', color: 0x1b1b1c, metalness: 0.2, roughness: 0.85 })
   };
+  installWheelShading(kit.tread, { arch: 0.62, flatten: true });
+  installWheelShading(kit.sidewall, { arch: 0.62, flatten: true });
+  installWheelShading(kit.discFace, { arch: 0.45 });
+  installWheelShading(kit.discEdge, { arch: 0.45 });
+  installWheelShading(kit.hat, { arch: 0.45 });
+  installWheelShading(kit.caliper, { arch: 0.4 });
+  installWheelShading(kit.pad, { arch: 0.45 });
+  return kit;
 }
 
 // ---------------------------------------------------------------------------
@@ -575,6 +644,8 @@ export function buildTyre(d: WheelDims, mats: WheelKitMaterials): THREE.Group {
   const innerMat = mats.sidewall.clone();
   innerMat.roughness = 0.72;
   innerMat.envMapIntensity = 0.45; // faces the car: in the wheel arch's shadow
+  installWheelShading(sideMat, { arch: 0.62, flatten: true });
+  installWheelShading(innerMat, { arch: 0.62, flatten: true });
 
   const g = new THREE.Group();
   g.name = 'tyre';
@@ -809,6 +880,9 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
       data[y * out + x] = v;
     }
   }
+  // Soften the cut-out edges (Gaussian-like, about 2 px) so the traced outline follows the
+  // spoke's real edge instead of every pixel step and speck of the photo's alpha.
+  blur(data, out, out, 4, false);
   return { data, size: out, symmetry: fold };
 }
 
