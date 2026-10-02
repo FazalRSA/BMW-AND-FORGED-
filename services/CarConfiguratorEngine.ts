@@ -13,6 +13,8 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { applyPaintLayers, installPaintLayers } from './paintShader';
+import { buildSoftboxStudio } from './studioSoftbox';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 import { traceRimShapes, buildRimFaceGeometry } from './rimExtrusion';
@@ -144,6 +146,12 @@ export class CarConfiguratorEngine {
 
   // Studio extras
   static HDRI_URL = '/env/studio_small_09_1k.hdr';
+  /**
+   * Reflections for the car body: 'softbox' (generated car-photography studio: big overhead
+   * softbox and long side strips) or 'hdri' (the original Poly Haven studio). ?studio=hdri compares.
+   */
+  static STUDIO: 'softbox' | 'hdri' =
+    typeof window !== 'undefined' && /[?&]studio=hdri/.test(window.location.search) ? 'hdri' : 'softbox';
   static DEFAULT_HIDE = '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)';
   private isDisposed = false;
   private contactShadow: {
@@ -287,6 +295,7 @@ export class CarConfiguratorEngine {
       clearcoatRoughness: 0.08,
       reflectivity: 0.9
     });
+    installPaintLayers(this.carBodyMaterial);
 
     // Wheel Forged Material (default Liquid Metal)
     this.wheelMaterial = new THREE.MeshPhysicalMaterial({
@@ -592,6 +601,23 @@ export class CarConfiguratorEngine {
     this.wheelMaterial.needsUpdate = true;
     this.scene.environmentIntensity = 0.9;
     room.dispose?.();
+
+    if (CarConfiguratorEngine.STUDIO === 'softbox') {
+      const studio = buildSoftboxStudio();
+      const studioTarget = pmrem.fromScene(studio, 0.02);
+      studio.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh) {
+          m.geometry.dispose();
+          (m.material as THREE.Material).dispose();
+        }
+      });
+      this.scene.environment = studioTarget.texture;
+      this.scene.environmentIntensity = CarConfiguratorEngine.SOFTBOX_INTENSITY;
+      this.scene.environmentRotation.set(0, 0, 0);
+      pmrem.dispose();
+      return;
+    }
 
     new HDRLoader()
       .loadAsync(CarConfiguratorEngine.HDRI_URL)
@@ -1648,9 +1674,15 @@ export class CarConfiguratorEngine {
    * through, which is how BMW's own studio renders read.
    */
   static BODY_ENV_INTENSITY = 0.45;
+  /** Overall strength of the generated softbox studio (scene.environmentIntensity). */
+  static SOFTBOX_INTENSITY = 1.0;
+
+  private currentPaint: PaintColor | null = null;
 
   public applyPaintColor(paint: PaintColor) {
+    this.currentPaint = paint;
     for (const m of [this.carBodyMaterial, ...this.paintVariants]) {
+      applyPaintLayers(m, paint);
       m.envMapIntensity = CarConfiguratorEngine.BODY_ENV_INTENSITY;
       m.color.set(paint.hex);
       m.roughness = paint.roughness;
@@ -1676,6 +1708,8 @@ export class CarConfiguratorEngine {
     if (!own.normalMap && !own.aoMap) return this.carBodyMaterial;
     const m = this.carBodyMaterial.clone();
     m.userData = { paintVariant: true };
+    installPaintLayers(m);
+    if (this.currentPaint) applyPaintLayers(m, this.currentPaint);
     if (own.normalMap) {
       m.normalMap = own.normalMap;
       m.normalMapType = own.normalMapType;
