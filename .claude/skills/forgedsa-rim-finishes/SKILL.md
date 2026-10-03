@@ -24,7 +24,7 @@ The kind is picked from the numbers, so a finish made in the admin works without
 |---|---|---|---|
 | Liquid Metal (`liquid_metal`) | #dfe4e8, metal 0.98, rough 0.12, clear 1.0 | **polished** (metal ≥ 0.95, rough ≤ 0.16) | bare polished metal: metal 1, roughness 0.05–0.1, mirror clear coat (0.02) |
 | Black Gloss (`black`) | #141618, metal 0.7, rough 0.15, clear 0.95 | **gloss paint** (linear luminance < 0.03 or metal < 0.3; rough ≤ 0.35) | black **paint** (metal 0, base roughness 0.4) under a gloss clear coat (≥ 0.9, roughness 0.03) |
-| Bronze Matte (`bronze`) | #8f6738, metal 0.8, rough 0.55, clear 0.1 | **satin metallic** (rough ≥ 0.42; metal < 0.3 = matte solid paint) | metallic paint (metal ≥ 0.75, rough 0.42–0.7) under a **matte** clear coat (roughness 0.6); flop 0.75, flake 0.05 |
+| Bronze Matte (`bronze`) | #8f6738, metal 0.8, rough 0.55, clear 0.1 | **satin metallic** (rough ≥ 0.42; metal < 0.3 = matte solid paint) | metallic paint (metal ≥ 0.75, rough 0.42–0.7) under a satin clear coat (roughness 0.5); strong flop 0.5, flake 0.09 |
 | Silver (`silver`) | #c3c8cd, metal 0.9, rough 0.28, clear 0.7 | **metallic paint** (everything else) | metallic paint (rough ≥ 0.3) under a gloss clear coat (0.04); flop 0.7, flake 0.06 |
 
 Why each recipe:
@@ -42,8 +42,10 @@ Why each recipe:
 - **Bronze Matte.** Matte means **no sharp reflection anywhere**. A smooth clear coat, even at
   0.1, adds a mirror reflection at grazing angles and the wheel reads satin-gloss. The engine
   keeps the clear coat amount but makes it rough (0.6).
-  - Flop darkens surfaces that turn away, like metallic paint.
-  - Fine flake gives the metallic grain.
+  - **Form comes from flop, not reflections.** Under the soft studio a matte metallic averages to
+    one flat colour; strong flop (0.5) makes the spoke sides go dark as they turn away, so the
+    3D shape reads. Flake 0.09 gives the metallic grain. Lowering the roughness alone did nothing.
+  - The clear coat keeps a faint satin sheen (roughness 0.5): real matte powder coat isn't dead.
 - **Silver (aluminium).** Wheel silver is a metallic paint ("hyper silver"), not bare metal:
   - flakes under a gloss clear coat;
   - face/flop: bright face-on, darker where the spoke sides turn away;

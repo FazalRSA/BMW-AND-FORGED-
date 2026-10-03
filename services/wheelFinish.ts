@@ -69,7 +69,10 @@ export function finishLook(f: FinishInput): FinishLook {
     case 'satin-metallic': {
       // a matte solid paint (metalness < 0.3, e.g. satin black) has no flake or flop
       const metal = f.metalness >= 0.3;
-      return { kind, color, metalness: metal ? Math.max(f.metalness, 0.75) : 0, roughness: clamp(f.roughness, 0.42, 0.7), clearcoat: f.clearcoat, clearcoatRoughness: 0.6, flake: metal ? 0.05 : 0, flop: metal ? 0.75 : 1 };
+      // A matte metallic under a soft studio reads as one flat colour unless its form is drawn
+      // another way: strong flop (sides turning away go dark), coarser flake grain, and a faint
+      // satin sheen on the clear coat (real matte powder coat is not perfectly dead)
+      return { kind, color, metalness: metal ? Math.max(f.metalness, 0.75) : 0, roughness: clamp(f.roughness, 0.42, 0.7), clearcoat: f.clearcoat, clearcoatRoughness: 0.5, flake: metal ? 0.09 : 0, flop: metal ? 0.5 : 1 };
     }
     case 'metallic-paint':
     default:
