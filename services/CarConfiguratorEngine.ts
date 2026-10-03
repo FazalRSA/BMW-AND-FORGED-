@@ -40,6 +40,7 @@ import {
   processRimPhoto,
   rimLayout
 } from './wheelKit';
+import { processRimPhotoAsync } from './rimFaceAsync';
 import { finishLook, installFinishLayers, applyFinishLook } from './wheelFinish';
 import { RIM_FACE_MASKS, RIM_FACE_OPTIONS } from './rimFaces';
 import { proceduralRimShapes } from './proceduralRims';
@@ -107,8 +108,10 @@ export class CarConfiguratorEngine {
   private paintVariants = new Set<THREE.MeshPhysicalMaterial>();
   private pendingVariants = new Set<THREE.MeshPhysicalMaterial>();
   private wheelMaterial!: THREE.MeshPhysicalMaterial;
-  /** Bright neutral room reflections for the rims only; the studio HDRI is too dark behind the camera for chrome. */
-  private wheelEnvMap: THREE.Texture | null = null;
+  /** Frames still to draw after a change (render on demand: an idle scene is not redrawn). */
+  private renderFrames = 2;
+  private lastRenderAt = 0;
+  private environmentTarget: THREE.WebGLRenderTarget | null = null;
   private carbonMaterial!: THREE.MeshPhysicalMaterial;
   private glassMaterial!: THREE.MeshPhysicalMaterial;
   private chromeMaterial!: THREE.MeshStandardMaterial;
@@ -240,7 +243,8 @@ export class CarConfiguratorEngine {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Phones: 1.5x is still sharp on a ~400 px wide canvas and renders half the pixels of 2x
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, w < 700 ? 1.5 : 2));
     const tone = CarConfiguratorEngine.TONE;
     this.renderer.toneMapping = tone === 'agx' ? THREE.AgXToneMapping : tone === 'neutral' ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = CarConfiguratorEngine.EXPOSURE ?? (tone === 'agx' ? 1.25 : tone === 'neutral' ? 0.95 : 1.08);
@@ -473,6 +477,12 @@ export class CarConfiguratorEngine {
   /** Re-render the contact shadow for the next few frames (async wheel/model loads settle in that time). */
   private markShadowDirty(frames = 45) {
     this.shadowFrames = Math.max(this.shadowFrames, frames);
+    this.requestRender();
+  }
+
+  /** Something in the scene changed: draw the next few frames (the loop skips an idle scene). */
+  public requestRender(frames = 2) {
+    this.renderFrames = Math.max(this.renderFrames, frames);
   }
 
   private renderContactShadow() {
@@ -633,7 +643,6 @@ export class CarConfiguratorEngine {
     const room = new RoomEnvironment();
     const roomTarget = pmrem.fromScene(room, 0.04);
     this.scene.environment = roomTarget.texture;
-    this.wheelEnvMap = roomTarget.texture;
     this.scene.environmentIntensity = 0.9;
     room.dispose?.();
 
@@ -650,7 +659,10 @@ export class CarConfiguratorEngine {
       this.scene.environment = studioTarget.texture;
       this.scene.environmentIntensity = CarConfiguratorEngine.SOFTBOX_INTENSITY;
       this.scene.environmentRotation.set(0, 0, 0);
+      this.environmentTarget = studioTarget;
+      roomTarget.dispose(); // replaced before the first frame
       pmrem.dispose();
+      this.requestRender();
       return;
     }
 
@@ -661,6 +673,9 @@ export class CarConfiguratorEngine {
         const envTarget = pmrem.fromEquirectangular(hdr);
         hdr.dispose();
         this.scene.environment = envTarget.texture;
+        roomTarget.dispose();
+        this.environmentTarget = envTarget;
+        this.requestRender();
         this.scene.environmentIntensity = 1.0;
         this.scene.environmentRotation.set(0, Math.PI * 0.35, 0);
         pmrem.dispose();
@@ -1103,15 +1118,15 @@ export class CarConfiguratorEngine {
           ? mesh.material.map((m) => passMaterial(m, partNames))
           : passMaterial(mesh.material, partNames);
         // Full-strength Fresnel reflections on single-material glazing (see glassReflectionMaterial)
+        // (a cached model mounted again arrives with the overlay child cloned along: never twice)
         const glass = !Array.isArray(mesh.material) && mesh.material.userData.partKind === 'glass';
-        if (glass && !mesh.userData.glassOverlay) {
+        if (glass && !mesh.children.some((c) => c.userData.isOverlay)) {
           const overlay = new THREE.Mesh(mesh.geometry, glassReflectionMaterial());
           overlay.name = 'glass_reflection';
           overlay.renderOrder = mesh.renderOrder + 1;
           overlay.userData.isOverlay = true;
           overlay.castShadow = false;
           mesh.add(overlay);
-          mesh.userData.glassOverlay = true;
         }
       }
     });
@@ -1162,8 +1177,15 @@ export class CarConfiguratorEngine {
     const v = new THREE.Vector3();
     model.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay || mesh.userData.wheelStripped) return;
+      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay) return;
       const geo = mesh.geometry;
+      // Decided once per geometry: a cached model is mounted as a clone whose userData is a copy,
+      // but whose geometry is shared, so the decision lives on the geometry
+      const done = geo.userData.wheelStripped as 'hidden' | 'kept' | undefined;
+      if (done) {
+        if (done === 'hidden') mesh.visible = false;
+        return;
+      }
       const pos = geo.attributes.position;
       if (!pos) return;
       const inside = new Uint8Array(pos.count);
@@ -1172,7 +1194,7 @@ export class CarConfiguratorEngine {
         v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrixWorld);
         if (inWheel(v)) { inside[i] = 1; any++; }
       }
-      mesh.userData.wheelStripped = true; // cached models are mounted again: do this once
+      geo.userData.wheelStripped = any === pos.count ? 'hidden' : 'kept';
       if (!any) return;
       if (any === pos.count) {
         mesh.visible = false;
@@ -1244,6 +1266,7 @@ export class CarConfiguratorEngine {
   /** Stops rendering while the canvas is hidden (e.g. another page is on top). */
   public setPaused(paused: boolean) {
     this.isPaused = paused;
+    if (!paused) this.requestRender();
   }
 
   /** Removes the current body; GLB geometry is disposed, shared studio materials are kept. */
@@ -1357,7 +1380,10 @@ export class CarConfiguratorEngine {
   /** Resizes the rim inside a fixed tyre, e.g. '21"'. Bigger rim = thinner sidewall, like a real upgrade. */
   public setRimSize(size: string) {
     const inches = parseFloat(size);
-    this.rimScale = THREE.MathUtils.clamp(Number.isFinite(inches) ? inches / 20 : 1, 0.8, 1.2);
+    const scale = THREE.MathUtils.clamp(Number.isFinite(inches) ? inches / 20 : 1, 0.8, 1.2);
+    // Called on every wheel choice; only a real size change is worth rebuilding four tyres and rims
+    if (Math.abs(scale - this.rimScale) < 1e-6 && this.wheelAssemblies.every((a) => a.tyre)) return;
+    this.rimScale = scale;
     this.applyRimScale();
     this.markShadowDirty(10);
   }
@@ -1408,6 +1434,7 @@ export class CarConfiguratorEngine {
         (template) => {
           if (token !== this.wheelDesignToken) return;
           this.wheelAssemblies.forEach((a) => this.mountRimModel(a.spokeMeshGroup, template, !!wheel.modelFlip));
+          this.markShadowDirty(30);
         },
         (err) => {
           console.warn(`Failed to load 3D rim for ${wheel.name}; falling back.`, err);
@@ -1455,12 +1482,15 @@ export class CarConfiguratorEngine {
   private loadRimFace(photoUrl: string, faceMaskUrl?: string, options: RimPhotoOptions = {}) {
     // a prepared face mask (rimFaces.ts) replaces the photo for the 3D spokes
     const url = faceMaskUrl ?? photoUrl;
-    let p = this.rimFaceCache.get(url);
+    const opts: RimPhotoOptions = { ...options, cleanFace: !!faceMaskUrl };
+    const key = `${url}|${JSON.stringify(opts)}`;
+    let p = this.rimFaceCache.get(key);
     if (!p) {
-      p = this.loadWheelTexture(url).then((texture) => {
+      p = this.loadWheelTexture(url).then(async (texture) => {
         let mask: ReturnType<typeof processRimPhoto> = null;
         try {
-          mask = processRimPhoto(texture.image as HTMLImageElement, 1024, { ...options, cleanFace: !!faceMaskUrl });
+          // about a second of work: off the main thread, so the page keeps responding
+          mask = await processRimPhotoAsync(texture.image as HTMLImageElement, 1024, opts);
         } catch (err) {
           console.warn('Could not read rim image pixels (CORS?); showing it flat.', err);
         }
@@ -1487,8 +1517,8 @@ export class CarConfiguratorEngine {
         };
         return { front: build(true), rear: build(false) };
       });
-      p.catch(() => this.rimFaceCache.delete(url));
-      this.rimFaceCache.set(url, p);
+      p.catch(() => this.rimFaceCache.delete(key));
+      this.rimFaceCache.set(key, p);
     }
     return p;
   }
@@ -1721,6 +1751,7 @@ export class CarConfiguratorEngine {
       m.clearcoatRoughness = paint.clearcoatRoughness;
       m.needsUpdate = true;
     }
+    this.requestRender();
   }
 
   /**
@@ -1951,6 +1982,7 @@ export class CarConfiguratorEngine {
 
   public setAutoRotate(enabled: boolean) {
     this.isAutoRotate = enabled;
+    this.requestRender();
   }
 
   public setSpinningWheels(enabled: boolean, kmh: number = 50) {
@@ -2035,6 +2067,7 @@ export class CarConfiguratorEngine {
     if (this.bloomPass) {
       this.bloomPass.resolution.set(w, h);
     }
+    this.requestRender();
   }
 
   // ----------------------------------------------------
@@ -2064,6 +2097,24 @@ export class CarConfiguratorEngine {
     this.currentLookAt.lerp(this.targetLookAt, k);
     this.updateCameraTransform();
     this.applyViewInset(Math.min(delta, 0.1));
+
+    // Render on demand. A still scene (camera settled, nothing animating, nothing changed) is not
+    // redrawn: on a phone a full-screen frame every 16 ms left nothing for the UI. A heartbeat frame
+    // each second covers any change that forgot to ask.
+    const settled =
+      Math.abs(this.targetSpherical.radius - this.spherical.radius) < 1e-3 * this.spherical.radius &&
+      Math.abs(this.targetSpherical.theta - this.spherical.theta) < 5e-4 &&
+      Math.abs(this.targetSpherical.phi - this.spherical.phi) < 5e-4 &&
+      this.currentLookAt.distanceToSquared(this.targetLookAt) < 1e-7 &&
+      Math.abs(this.viewInset.right - this.currentInset.right) < 0.5 &&
+      Math.abs(this.viewInset.bottom - this.currentInset.bottom) < 0.5;
+    const now = performance.now();
+    const busy =
+      !settled || this.isUserInteracting || (this.isAutoRotate && !this.isUserInteracting) || !!this.drive ||
+      this.shadowFrames > 0 || this.isSpinningWheels || this.renderFrames > 0 || now - this.lastRenderAt > 1000;
+    if (!busy) return;
+    if (this.renderFrames > 0) this.renderFrames--;
+    this.lastRenderAt = now;
 
     this.stepDrive(Math.min(delta, 0.1));
     if (this.shadowFrames > 0) {
@@ -2138,6 +2189,17 @@ export class CarConfiguratorEngine {
     this.wheelTextureCache.clear();
     this.rimFaceGeometryCache.forEach((g) => g.dispose());
     this.rimFaceGeometryCache.clear();
+    // Per-engine wheel resources (the rim page makes a new engine per visit): spoke faces, tyres and
+    // rim shells, the kit's materials and the paint copies
+    this.rimFaceCache.forEach((p) => p.then((f) => { f?.front.dispose(); f?.rear.dispose(); }).catch(() => {}));
+    this.rimFaceCache.clear();
+    this.wheelAssemblies.forEach((a) => this.disposeWheelShell(a));
+    for (const m of Object.values(this.kit ?? {})) (m as THREE.Material | undefined)?.dispose?.();
+    this.barrelMaterial?.dispose();
+    this.wheelMaterial?.dispose();
+    this.carBodyMaterial?.dispose();
+    this.paintVariants.forEach((m) => m.dispose());
+    this.environmentTarget?.dispose();
     this.dracoLoader?.dispose();
   }
 

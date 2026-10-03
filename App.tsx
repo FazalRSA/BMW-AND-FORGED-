@@ -138,7 +138,9 @@ export const App: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [summaryImages, setSummaryImages] = useState<string[]>([]);
-  const [configCode, setConfigCode] = useState<{ key: string; code: string } | null>(null);
+  // shared: undefined while the copy every device can open is being written, false if it could not be
+  const [configCode, setConfigCode] = useState<{ key: string; code: string; shared?: boolean } | null>(null);
+  const saveToken = useRef(0);
 
   const carIndex = Math.max(0, cars.findIndex((c) => c.id === selectedCar.id));
 
@@ -457,8 +459,14 @@ export const App: React.FC = () => {
     const cfg = currentConfig();
     const key = configKey(cfg);
     if (configCode?.key !== key) {
-      setConfigCode(null);
-      saveConfiguration(cfg).then((code) => setConfigCode({ key, code }));
+      // The code is usable at once; only the shared copy is awaited, and a save started for an
+      // earlier configuration can no longer overwrite this one
+      const token = ++saveToken.current;
+      const saved = saveConfiguration(cfg);
+      setConfigCode({ key, code: saved.code });
+      saved.shared.then((shared) => {
+        if (token === saveToken.current) setConfigCode((c) => (c && c.code === saved.code ? { ...c, shared } : c));
+      });
     }
   }, [navigateTo, configCode, selectedCar, selectedPaint, selectedWheel, selectedFinish, selectedSize, region]);
 
@@ -562,11 +570,13 @@ export const App: React.FC = () => {
           region={region}
           images={summaryImages}
           code={configCode?.code ?? null}
+          codeShared={configCode?.shared}
           onBack={() => navigateTo({ name: 'configure' })}
           onEnquire={() => setEnquiryOpen(true)}
           onDownloadPdf={async (contact) => {
-            // Saved as a lead first (never blocks the PDF: submitEnquiry keeps a local copy if offline)
-            await submitEnquiry({
+            // Saved as a lead first (never blocks the PDF: submitEnquiry keeps a local copy if offline;
+            // only a refusal from the server, e.g. the rate limit, stops it and is shown)
+            const lead = await submitEnquiry({
               ...contact,
               consultation: false,
               source: 'pdf',
@@ -584,6 +594,7 @@ export const App: React.FC = () => {
               },
               region: region.id
             });
+            if (lead.status === 'rejected') throw new Error(lead.message);
             await downloadBrochurePdf({
               car: selectedCar,
               paint: selectedPaint,

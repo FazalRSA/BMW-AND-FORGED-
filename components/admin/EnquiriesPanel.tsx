@@ -21,11 +21,12 @@ interface Lead {
   created_at: string;
 }
 
-/** Quotes a CSV cell; visitor text starting with = + - @ (or tab/CR) is prefixed with ' so Excel
- * and Sheets don't run it as a formula (CSV injection). */
+/** Quotes a CSV cell; visitor text that a spreadsheet would run as a formula (= @ tab CR, or + -
+ * not followed by a digit) is prefixed with ' (CSV injection). Phone numbers like +27 82… stay as
+ * they are. */
 const csvCell = (v: unknown) => {
   let s = String(v ?? '');
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  if (/^[=@\t\r]/.test(s) || /^[+-](?![\d\s(])/.test(s)) s = `'${s}`;
   return `"${s.replace(/"/g, '""')}"`;
 };
 

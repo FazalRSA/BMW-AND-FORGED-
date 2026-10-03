@@ -49,8 +49,10 @@ type FinishInput = Pick<WheelFinish, 'hex' | 'metalness' | 'roughness' | 'clearc
 export function finishKind(f: FinishInput): FinishKind {
   const c = new THREE.Color(f.hex); // sRGB hex -> linear working colour
   const lum = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-  if (f.metalness >= 0.95 && f.roughness <= 0.16) return 'polished';
-  if ((lum < 0.03 || f.metalness < 0.3) && f.roughness <= 0.35) return 'gloss-paint';
+  // near-black is always paint: a near-black metal reflects nothing and renders as a hole
+  const dark = lum < 0.03;
+  if (f.metalness >= 0.95 && f.roughness <= 0.16 && !dark) return 'polished';
+  if ((dark || f.metalness < 0.3) && f.roughness < 0.42) return 'gloss-paint';
   if (f.roughness >= 0.42) return 'satin-metallic';
   return 'metallic-paint';
 }
@@ -67,8 +69,9 @@ export function finishLook(f: FinishInput): FinishLook {
       // the paint film under the clear coat is a little rough; the clear coat is not
       return { kind, color, metalness: 0, roughness: 0.4, clearcoat: Math.max(f.clearcoat, 0.9), clearcoatRoughness: 0.03, flake: 0, flop: 1 };
     case 'satin-metallic': {
-      // a matte solid paint (metalness < 0.3, e.g. satin black) has no flake or flop
-      const metal = f.metalness >= 0.3;
+      // a matte solid paint (metalness < 0.3, or near-black, e.g. satin black) has no flake or flop
+      const lum = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+      const metal = f.metalness >= 0.3 && lum >= 0.03;
       // A matte metallic under a soft studio reads as one flat colour unless its form is drawn
       // another way: strong flop (sides turning away go dark), coarser flake grain, and a faint
       // satin sheen on the clear coat (real matte powder coat is not perfectly dead)

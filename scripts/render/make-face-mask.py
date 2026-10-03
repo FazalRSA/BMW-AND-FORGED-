@@ -96,7 +96,10 @@ def main():
         return F[y, x]
     cov = [(F[(r >= b / 200) & (r < (b + 1) / 200)] > 0.5).mean() for b in range(120, 192)]
     # the outermost radius below the lip where spokes are still clearly separate
-    r_tip = 0.6 + 0.005 * max(i for i, v in enumerate(cov) if 0.12 < v < 0.6)
+    separate = [i for i, v in enumerate(cov) if 0.12 < v < 0.6]
+    if not separate:
+        sys.exit('the silhouette has no band where the spokes are separate (lip ring filled solid?); use CAD or a front-on photo')
+    r_tip = 0.6 + 0.005 * max(separate)
     spokes = np.maximum(ring(r_tip - 0.01), ring(r_tip - 0.03))
     ti = ((t + np.pi) / (2 * np.pi) * NT).astype(int) % NT
     band = (r >= r_tip - 0.01) & (r < 0.965)

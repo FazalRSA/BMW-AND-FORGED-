@@ -568,7 +568,7 @@ export function createWheelKitMaterials(): WheelKitMaterials {
 
 export function tyreSizeLabel(d: WheelDims): string {
   const inches = Math.round(20 * d.rimScale);
-  const width = Math.round((d.tyreWidth * 1000) / 5) * 5 + (d.isFront ? 0 : 0);
+  const width = Math.round((d.tyreWidth * 1000) / 5) * 5;
   const sidewall = d.tyreRadius - 0.254 * d.rimScale; // metres
   const aspect = Math.round(((sidewall * 1000) / width) * 20) * 5;
   return `${width}/${aspect} ZR${inches} ${d.isFront ? '98' : '102'}Y XL`;
@@ -820,9 +820,10 @@ export function processRimPhoto(image: CanvasImageSource & { width: number; heig
   const RES = Math.round(Math.min(opts.res ?? 1536, Math.max(256, image.width, image.height)));
   const q = opts.quantile ?? 0.5;
   const radialSigma = opts.radialSigma ?? 8;
-  const canvas = document.createElement('canvas');
+  // runs in a worker too (rimFaceWorker.ts), where there is no document
+  const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : new OffscreenCanvas(RES, RES);
   canvas.width = canvas.height = RES;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
   if (!ctx) return null;
   ctx.drawImage(image, 0, 0, RES, RES);
   const px = ctx.getImageData(0, 0, RES, RES).data; // throws on a tainted image

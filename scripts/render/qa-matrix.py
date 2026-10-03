@@ -44,14 +44,17 @@ if not QUICK:
             shots.append({'name': f'C_w{w}_{s[:2]}', 'car': 0, 'paint': 17, 'wheel': w, 'finish': 'silver', 'size': s, 'view': 'frontWheel', 'wait': 6000})
 
 todo = [s for s in shots if not os.path.exists(os.path.join(OUT, s['name'] + '.png'))]
+log_path = os.path.join(OUT, 'shoot.log')
 if todo:
     spec = os.path.join(OUT, 'shots.json')
     json.dump(todo, open(spec, 'w'))
-    with open(os.path.join(OUT, 'shoot.log'), 'a') as log:
+    # this run's log only: an error logged for a shot that was since deleted and re-rendered cleanly
+    # must not fail it again
+    with open(log_path, 'w') as log:
         subprocess.run(['node', os.path.join(HERE, 'shoot.cjs'), OUT, spec, RIMS], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
 
 errors = {}
-for line in open(os.path.join(OUT, 'shoot.log')):
+for line in (open(log_path) if os.path.exists(log_path) else []):
     parts = line.strip().split(' ', 2)
     if len(parts) == 3 and parts[2].startswith('['):
         errs = [e for e in json.loads(parts[2]) if 'ERR_CERT' not in e and 'Failed to load resource' not in e]
