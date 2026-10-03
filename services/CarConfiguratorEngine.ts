@@ -1948,12 +1948,15 @@ export class CarConfiguratorEngine {
     if (this.shadowFrames > 0) this.renderContactShadow();
 
     const src = this.renderer.domElement;
+    // Stills are shown at most ~1200 px wide (summary page, PDF): encoding a 2x phone canvas or a
+    // 4K monitor's would cost seconds for nothing
+    const scale = Math.min(1, 1600 / Math.max(1, src.width));
     const shots = views.map((view) => {
       this.setCameraPreset(view, { instant: true });
       this.renderer.render(this.scene, this.camera);
       const out = document.createElement('canvas');
-      out.width = src.width;
-      out.height = src.height;
+      out.width = Math.round(src.width * scale);
+      out.height = Math.round(src.height * scale);
       const ctx = out.getContext('2d')!;
       const g = ctx.createRadialGradient(
         out.width / 2, out.height * 0.6, 0,
@@ -1963,7 +1966,7 @@ export class CarConfiguratorEngine {
       g.addColorStop(1, background[1]);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, out.width, out.height);
-      ctx.drawImage(src, 0, 0);
+      ctx.drawImage(src, 0, 0, out.width, out.height);
       return out.toDataURL('image/jpeg', 0.9);
     });
 

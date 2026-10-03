@@ -100,7 +100,8 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     });
     await step('summary', async () => {
       await p.getByRole('button', { name: /^summary$/i }).first().click();
-      await p.getByRole('button', { name: /download pdf/i }).waitFor({ timeout: 60000 });
+      // the summary page: its price card has Enquire / Share / PDF
+      await p.getByRole('button', { name: /^pdf$|download pdf/i }).first().waitFor({ timeout: 60000 });
       await p.waitForTimeout(6000);
     });
     const finalLongs = await p.evaluate(() => window.__long);

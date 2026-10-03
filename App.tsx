@@ -453,9 +453,12 @@ export const App: React.FC = () => {
   }, [booted, catalogLoaded, loadCode]);
 
   const openSummary = useCallback(() => {
-    const engine = engineRef.current;
-    if (engine) setSummaryImages(engine.captureViews(['frontThreeQuarter', 'side', 'frontWheel']));
     navigateTo({ name: 'summary' });
+    // The three stills are a few hundred ms of rendering and JPEG encoding on a phone: taken on the
+    // next frame, after the summary page has painted, so the tap responds at once and the images
+    // drop in (the page shows their frames meanwhile)
+    const engine = engineRef.current;
+    if (engine) requestAnimationFrame(() => setSummaryImages(engine.captureViews(['frontThreeQuarter', 'side', 'frontWheel'])));
     const cfg = currentConfig();
     const key = configKey(cfg);
     if (configCode?.key !== key) {
