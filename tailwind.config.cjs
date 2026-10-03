@@ -8,6 +8,13 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      // Layout modes (see services/layout.ts, the same query drives the 3D camera):
+      //   sheet: controls are a bottom sheet (narrower than 900 px and at least 520 px tall)
+      //   short: a phone on its side (under 520 px tall): everything compacts
+      screens: {
+        sheet: { raw: '(max-width: 899px) and (min-height: 520px)' },
+        short: { raw: '(max-height: 519px)' }
+      },
       colors: {
         ink: '#F2EEE6',
         mute: '#9C978E',

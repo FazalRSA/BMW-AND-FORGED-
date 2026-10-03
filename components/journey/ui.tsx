@@ -36,7 +36,7 @@ export const Button: React.FC<
     {...rest}
     className={cx(
       'group inline-flex items-center justify-center gap-2.5 rounded-full font-semibold uppercase tracking-[0.14em] transition-all duration-300 ease-lux disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98]',
-      size === 'sm' && 'h-9 px-4 text-[10.5px]',
+      size === 'sm' && 'h-10 px-4 text-[10.5px]',
       size === 'md' && 'h-11 px-6 text-[11px]',
       size === 'lg' && 'h-14 px-8 text-[12px]',
       variant === 'primary' && 'bg-ember text-carbon hover:bg-ember-light shadow-ember font-bold',
@@ -96,7 +96,7 @@ export const Modal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] animate-fade" onClick={onClose} />
       <div
         className={cx(
-          'relative w-full bg-surface shadow-panel animate-rise rounded-t-[28px] sm:rounded-[28px] max-h-[88vh] overflow-y-auto',
+          'relative w-full bg-surface shadow-panel animate-rise rounded-t-[28px] sm:rounded-[28px] max-h-[88dvh] overflow-y-auto overscroll-contain',
           width
         )}
       >

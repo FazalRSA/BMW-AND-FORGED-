@@ -7,6 +7,10 @@
 
 :root {
   --color-neon-orange: #FF5500;
+  /* Configurator controls: a side panel (28% of the screen, 340-460 px) or a bottom sheet (about half
+     the screen, 280-560 px). The same clamps are in services/layout.ts for the 3D camera. */
+  --panel-w: clamp(340px, 28vw, 460px);
+  --sheet-h: clamp(280px, 52dvh, 560px);
 }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }

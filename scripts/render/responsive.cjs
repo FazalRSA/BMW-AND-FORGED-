@@ -82,7 +82,7 @@ const PAGES = ['welcome', 'showroom', 'configure', 'wheels', 'size', 'finish', '
           // only report when actually on screen
           if (r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw) issues.tap.push(`${tag} "${label(el)}" ${Math.round(r.width)}x${Math.round(r.height)}`);
         }
-        if (/^(h1|h2|h3|button|a|span|p|div)$/.test(tag) && el.children.length === 0 && el.textContent.trim()) {
+        if (/^(h1|h2|h3|button|a|span|p|div)$/.test(tag) && el.children.length === 0 && el.textContent.trim() && el.clientWidth > 2) {
           const cs = getComputedStyle(el);
           if ((cs.overflow === 'hidden' || cs.textOverflow === 'ellipsis') && cs.textOverflow !== 'ellipsis' && el.scrollWidth > el.clientWidth + 2) issues.clipped.push(`${tag} "${label(el)}" cut off`);
           if (parseFloat(cs.fontSize) < 11 && el.textContent.trim().length > 3 && !/uppercase/.test(cs.textTransform)) issues.text.push(`${tag} "${label(el)}" ${cs.fontSize}`);
@@ -118,7 +118,11 @@ const PAGES = ['welcome', 'showroom', 'configure', 'wheels', 'size', 'finish', '
     };
 
     const go = (route) => p.goto('http://127.0.0.1:5173' + route, { waitUntil: 'domcontentloaded', timeout: 240000 });
-    const ready = (re) => p.getByRole('button', { name: re }).first().waitFor({ timeout: 240000 });
+    // the page is ready when its button exists and the loading screen has faded away
+    const ready = async (re) => {
+      await p.getByRole('button', { name: re }).first().waitFor({ timeout: 240000 });
+      await p.waitForFunction(() => { const l = document.querySelector('[aria-label="Loading"]'); return !l || getComputedStyle(l).opacity === '0'; }, null, { timeout: 240000 });
+    };
     await record('welcome', async () => { await go('/'); await ready(/^enter/i); });
     await record('showroom', async () => { await go('/models'); await ready(/^build$/i); });
     await record('configure', async () => { await go('/configure'); await ready(/^front$/i); });

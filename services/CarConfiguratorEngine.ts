@@ -1818,11 +1818,12 @@ export class CarConfiguratorEngine {
   // ----------------------------------------------------
   // CAMERA VIEW PRESETS (Aston Martin style)
   // ----------------------------------------------------
-  public setCameraPreset(view: CameraViewPreset, opts: { instant?: boolean } = {}) {
+  public setCameraPreset(view: CameraViewPreset, opts: { instant?: boolean; aspect?: number } = {}) {
     // Whole-car views back off on narrow screens (or when UI covers part of it) so the car always fits.
+    // `aspect` frames for a fixed picture (the summary stills) instead of the screen.
     const w = this.container.clientWidth || 1;
     const h = this.container.clientHeight || 1;
-    const visibleAspect = Math.max(w - Math.abs(this.viewInset.right), 1) / Math.max(h - this.viewInset.bottom, 1);
+    const visibleAspect = opts.aspect ?? Math.max(w - Math.abs(this.viewInset.right), 1) / Math.max(h - this.viewInset.bottom, 1);
     const fit = THREE.MathUtils.clamp(1.78 / Math.max(visibleAspect, 0.3), 1, 2.6);
     switch (view) {
       case 'showroom':
@@ -1933,6 +1934,9 @@ export class CarConfiguratorEngine {
    * The live view is restored afterwards.
    */
   public captureViews(views: CameraViewPreset[], background: [string, string] = ['#2e2e2e', '#101010']): string[] {
+    // The stills are always 16:9 (the summary page and the PDF lay them out that way), whatever the
+    // screen: a phone's portrait canvas used to be cropped into a 16:9 frame, cutting the car off.
+    const outW = 1600, outH = 900;
     const saved = {
       spherical: { ...this.spherical },
       target: { ...this.targetSpherical },
@@ -1940,36 +1944,41 @@ export class CarConfiguratorEngine {
       targetLook: this.targetLookAt.clone(),
       targetPos: this.targetCameraPos.clone(),
       damping: this.cameraDamping,
-      zoom: { ...this.zoomRange }
+      zoom: { ...this.zoomRange },
+      size: this.renderer.getSize(new THREE.Vector2()),
+      pixelRatio: this.renderer.getPixelRatio(),
+      aspect: this.camera.aspect
     };
     const savedInset = { ...this.viewInset };
     this.viewInset = { right: 0, bottom: 0 }; // stills are framed for the full image, not around the UI
     if (this.camera.view?.enabled) this.camera.clearViewOffset();
+    this.renderer.setPixelRatio(1);
+    this.renderer.setSize(outW, outH, false); // the canvas on screen keeps its CSS size
+    this.camera.aspect = outW / outH;
+    this.camera.updateProjectionMatrix();
     if (this.shadowFrames > 0) this.renderContactShadow();
 
     const src = this.renderer.domElement;
-    // Stills are shown at most ~1200 px wide (summary page, PDF): encoding a 2x phone canvas or a
-    // 4K monitor's would cost seconds for nothing
-    const scale = Math.min(1, 1600 / Math.max(1, src.width));
     const shots = views.map((view) => {
-      this.setCameraPreset(view, { instant: true });
+      this.setCameraPreset(view, { instant: true, aspect: outW / outH });
       this.renderer.render(this.scene, this.camera);
       const out = document.createElement('canvas');
-      out.width = Math.round(src.width * scale);
-      out.height = Math.round(src.height * scale);
+      out.width = outW;
+      out.height = outH;
       const ctx = out.getContext('2d')!;
-      const g = ctx.createRadialGradient(
-        out.width / 2, out.height * 0.6, 0,
-        out.width / 2, out.height * 0.6, Math.max(out.width, out.height) * 0.75
-      );
+      const g = ctx.createRadialGradient(outW / 2, outH * 0.6, 0, outW / 2, outH * 0.6, Math.max(outW, outH) * 0.75);
       g.addColorStop(0, background[0]);
       g.addColorStop(1, background[1]);
       ctx.fillStyle = g;
-      ctx.fillRect(0, 0, out.width, out.height);
-      ctx.drawImage(src, 0, 0, out.width, out.height);
+      ctx.fillRect(0, 0, outW, outH);
+      ctx.drawImage(src, 0, 0, outW, outH);
       return out.toDataURL('image/jpeg', 0.9);
     });
 
+    this.renderer.setPixelRatio(saved.pixelRatio);
+    this.renderer.setSize(saved.size.x, saved.size.y, false);
+    this.camera.aspect = saved.aspect;
+    this.camera.updateProjectionMatrix();
     this.spherical = saved.spherical;
     this.targetSpherical = saved.target;
     this.currentLookAt.copy(saved.look);
@@ -1980,6 +1989,7 @@ export class CarConfiguratorEngine {
     this.viewInset = savedInset;
     this.currentInset = { right: 0, bottom: 0 }; // re-applied smoothly on the next frame
     this.updateCameraTransform();
+    this.requestRender();
     return shots;
   }
 
