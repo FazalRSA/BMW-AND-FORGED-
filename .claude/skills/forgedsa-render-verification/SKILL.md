@@ -28,9 +28,10 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
     fallback) and waits for `window.done`.
   - Waits use `domcontentloaded` with long timeouts.
   - About a minute per shot. See `scripts/render/README.md` and the `3d-car-perfect` skill.
-- **App routes** (`/rims/<id>`, `/`): route `https://cdn.tailwindcss.com/**` to a local copy of the
-  Tailwind play script, and Google Fonts to an empty response. Otherwise the page renders
-  unstyled. Only `ERR_CERT_AUTHORITY_INVALID` (sandbox network) errors are acceptable.
+- **App routes** (`/rims/<id>`, `/`): the CSS is built by Vite (Tailwind via PostCSS, `index.css`),
+  so the page is styled offline. Only `ERR_CERT_AUTHORITY_INVALID` (sandbox network) errors are
+  acceptable. (It used to need the Tailwind Play CDN routed to a local copy: that CDN is gone, and
+  must stay gone: it compiled the CSS in every visitor's browser.)
 - **Screenshot timeout:** pass `timeout: 180000` to `page.screenshot`. Continuous SwiftShader
   frames on big pages can exceed the default 30 s.
 
@@ -59,7 +60,7 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
     r.fulfill({ body, contentType: u.endsWith('.png') ? 'image/png' : 'application/octet-stream',
                 headers: { 'access-control-allow-origin': '*' } }); });
   ```
-- Tailwind CDN: serve a local copy via `ctx.route('https://cdn.tailwindcss.com/**', ...)`.
+- Whole journey, both sizes: `node scripts/render/journey.cjs <out> <rimCache> both` (`visual-qa`).
 
 ## Reviewing output
 

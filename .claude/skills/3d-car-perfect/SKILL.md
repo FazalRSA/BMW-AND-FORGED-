@@ -24,8 +24,8 @@ node scripts/render/shoot.cjs "$SCRATCH/out" shots.json "$SCRATCH/rims"   # ~1 m
   `frontWheel`, `side` and `hero`.
 - **Rim photos:** cache them locally first, e.g. `curl` every `imageUrl` into `$SCRATCH/rims`.
   The sandbox browser can't reach Supabase storage.
-- **App pages:** for `/rims/<id>` and other app routes, route `https://cdn.tailwindcss.com/**` to a
-  local copy, or the page renders unstyled.
+- **App pages:** `/rims/<id>` and the other app routes are styled offline (Tailwind is built by
+  Vite); a page that renders unstyled means `index.css` isn't imported, not a network problem.
 - **Slow first loads:** use `waitUntil: 'domcontentloaded'` and a 240 s goto timeout. The dev server
   re-optimises dependencies on first load, and that used to hang `load`.
 - **Edits mid-run:** the dev server serves new code on the next navigation, so stop a batch

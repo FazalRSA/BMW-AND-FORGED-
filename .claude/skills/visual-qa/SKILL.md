@@ -1,6 +1,6 @@
 ---
 name: visual-qa
-description: The general quality check for any visual 3D change in the configurator (wheels, finishes, calipers, paint, studio, a new car) - measure what can be measured, render every combination the change touches, judge each shot with metrics and contact sheets, look at full size, and calibrate every threshold against a known-bad version. Covers the two harnesses (scripts/render/wheel-qa.cjs for spoke faces, scripts/render/qa-matrix.py for the car matrix), their checks and thresholds, how to extend them to a new kind of change, and the pitfalls (hot reload mid-run, a metric that passes a visibly bad result). Use before telling anyone a visual change is done, when asked to "check every combination", "make sure it looks right everywhere", or to build a QA for something new.
+description: The general quality check for any visual 3D change in the configurator (wheels, finishes, calipers, paint, studio, a new car) - measure what can be measured, render every combination the change touches, judge each shot with metrics and contact sheets, look at full size, and calibrate every threshold against a known-bad version. Covers the three harnesses (scripts/render/journey.cjs for the customer journey and responsiveness, scripts/render/wheel-qa.cjs for spoke faces, scripts/render/qa-matrix.py for the car matrix), their checks and thresholds, how to extend them to a new kind of change, and the pitfalls (hot reload mid-run, a metric that passes a visibly bad result). Use before telling anyone a visual change is done, when asked to "check every combination", "make sure it looks right everywhere", or to build a QA for something new.
 ---
 
 # Visual QA: prove it, everywhere it shows
@@ -33,6 +33,28 @@ setsid nohup npx vite --host 127.0.0.1 --port 5173 > /tmp/vite.log 2>&1 &
 - **Run renders in the background,** and **don't edit engine files while one runs:** Vite
   hot-reloads, so the shots after an edit use the new code, or a half-written file.
 - Shell `sleep` chains are blocked. Use a background command and wait for its notification.
+
+## Layer 0: the journey still works (`scripts/render/journey.cjs`)
+
+```bash
+node scripts/render/journey.cjs $OUT $RIMS both      # phone (390x844, touch) and desktop (1440x900)
+```
+
+Any change to the app shell, the engine or the catalogue runs this first. It drives the real app
+(welcome → showroom → build → wheels, size, finish → summary) and writes a log and a screenshot per
+step. Read the log for:
+- **FAILED steps:** a button not found or not clickable within the timeout (a broken step, an
+  overlay in the way, a modal that didn't close);
+- **PAGEERROR / console.error** lines (network noise is filtered out);
+- **long tasks ≥ 100 ms** after a step: main-thread work that freezes the UI (the rim photo read
+  was ~1 s before it moved to a worker);
+- **overflow:** elements wider than the viewport on the phone (horizontal scroll).
+Then look at the screenshots at phone size: the bottom sheet, the camera bar above it, the
+summary page.
+
+Found this way (Oct 2026): the engine redrew a still scene every frame, the photo read froze the
+main thread for a second per wheel, every wheel click rebuilt all four tyres, and rim thumbnails
+loaded 2 MB PNGs twice per row.
 
 ## Layer 1: spoke faces (`scripts/render/wheel-qa.cjs`)
 
@@ -118,6 +140,8 @@ gloss and colour on a real screen as well.
 
 ## Before saying "done"
 
+- Layer 0 passes at both sizes with no FAILED step, no page errors and no long task ≥ 100 ms
+  after a click.
 - Layer 1 passes on **every** wheel (one engine change touches all photo wheels).
 - The matrix passes. Every sheet has been looked at, and the doubtful shots at full size.
 - `bun run lint` and `bun run build` pass.
