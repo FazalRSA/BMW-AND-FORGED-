@@ -88,8 +88,8 @@ Per close-up, on the rim face ring (0.2–0.78 of the crop):
 | tonal range p98 − p5 ≥ 0.35 | a flat silhouette (plastic, a black hole, no reflections) |
 | Liquid Metal p98 ≥ 0.8 | polished metal without bright reflections |
 | Black Gloss p98 ≥ 0.45 | gloss black without highlights (a flat black cut-out) |
-| Bronze hue 15–50°, saturation > 0.12 | orange, grey or green bronze |
-| Silver saturation ≤ 0.25 | tinted silver |
+| Bronze: warm-pixel fraction ≥ 0.25 (red > green > blue, saturation > 0.3) | grey, green or washed-out bronze. Calibrated: bronze 0.38–0.70, every other finish 0.00. A mean hue over the ring failed all the bronzes: the grey disc and blue caliper behind the spokes pollute it |
+| Silver, Liquid Metal, Black Gloss: warm-pixel fraction ≤ 0.05, matrix A only | a tinted finish. Not on coloured cars: a big polished face reflects the paint (22" silver on the red M4 scores 0.07–0.10) |
 | no page errors | shader compile errors, missing textures, exceptions (cert and blocked-request noise is ignored) |
 
 **Then look at every sheet:**

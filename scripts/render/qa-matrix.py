@@ -76,7 +76,11 @@ def measure(img, s):
     hi = float((lum > 0.85).mean())
     rgb = px[lum > np.percentile(lum, 40)].mean(axis=0)
     hue, light, sat = colorsys.rgb_to_hls(*rgb)
-    return {'p5': p5, 'p50': p50, 'p98': p98, 'range': p98 - p5, 'highlights': hi, 'hue': hue * 360, 'sat': sat}
+    # bronze: fraction of warm, saturated pixels (red > green > blue). A mean hue over the ring is
+    # polluted by the grey brake disc and blue caliper seen through the spokes; this isn't.
+    mx, mn = px.max(1), px.min(1)
+    warm = float(((px[:, 0] > px[:, 1]) & (px[:, 1] > px[:, 2]) & ((mx - mn) / np.maximum(mx, 1e-6) > 0.3) & (mx > 0.12)).mean())
+    return {'p5': p5, 'p50': p50, 'p98': p98, 'range': p98 - p5, 'highlights': hi, 'hue': hue * 360, 'sat': sat, 'warm': warm}
 
 def judge(m, s):
     fails = []
@@ -89,10 +93,13 @@ def judge(m, s):
         fails.append(f"liquid metal without bright reflections (p98 {m['p98']:.2f})")
     if f == 'black' and m['p98'] < 0.45:
         fails.append(f"black gloss without highlights (p98 {m['p98']:.2f})")
-    if f == 'bronze' and not (15 <= m['hue'] <= 50 and m['sat'] > 0.12):
-        fails.append(f"bronze off-colour (hue {m['hue']:.0f}, sat {m['sat']:.2f})")
-    if f == 'silver' and m['sat'] > 0.25:
-        fails.append(f"silver tinted (sat {m['sat']:.2f})")
+    # calibrated on the 9 designs: bronze 0.38-0.70 warm pixels, every other finish 0.00
+    if f == 'bronze' and m['warm'] < 0.25:
+        fails.append(f"bronze not warm enough ({m['warm']:.2f} warm pixels, need >= 0.25)")
+    # matrix A only (white car): on a coloured car a big polished face reflects the paint (22" silver
+    # on the red M4 scores 0.07-0.10)
+    if s['name'].startswith('A_') and f in ('silver', 'liquid_metal', 'black') and m['warm'] > 0.05:
+        fails.append(f"{f} tinted warm ({m['warm']:.2f} warm pixels)")
     return fails
 
 rows = []
