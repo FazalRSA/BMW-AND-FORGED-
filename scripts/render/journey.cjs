@@ -43,6 +43,7 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       const big = L.filter(([, d]) => d >= 100);
       if (big.length) note(`${tag}: long tasks ${big.map(([, d]) => d + 'ms').join(', ')}`);
     };
+    const overflowCheck = (tag) => overflowCheckOn(p, note, tag);
     const step = async (tag, fn) => {
       const s = performance.now();
       try { await fn(); } catch (e) { note(`${tag}: FAILED ${e.message.split('\n')[0]}`); await shot(tag + '-FAIL'); return false; }
@@ -72,9 +73,11 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       await p.getByRole('button', { name: /step 2: wheels|^wheels$/i }).first().click();
       await p.waitForTimeout(1500);
     });
+    await overflowCheck('configure');
     for (let i = 0; i < 3; i++) {
       await step(`pick-wheel-${i}`, async () => {
-        const btns = p.locator('button[title], button:has(img)');
+        // the wheel list in the panel (each design is an <li><button>)
+        const btns = p.locator('aside ul li > button');
         const n = await btns.count();
         if (n < 2) throw new Error(`only ${n} wheel buttons found`);
         await btns.nth(Math.min(n - 1, 1 + i * 2)).click();
@@ -84,15 +87,15 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     await step('size-step', async () => {
       await p.getByRole('button', { name: /step 3|wheel size|^size$/i }).first().click();
       await p.waitForTimeout(800);
-      const sizes = p.getByRole('button', { name: /^\d\d"$/ });
+      const sizes = p.locator('aside button', { hasText: /^\d\d"/ });
       if (await sizes.count()) await sizes.last().click();
       await p.waitForTimeout(2500);
     });
     await step('finish-step', async () => {
       await p.getByRole('button', { name: /step 4|wheel finish|^finish$/i }).first().click();
       await p.waitForTimeout(800);
-      const fin = p.getByRole('button', { name: /black|bronze|silver|liquid/i });
-      if (await fin.count()) await fin.nth(1).click();
+      const fin = p.locator('aside ul li > button');
+      if (await fin.count() > 1) await fin.nth(1).click();
       await p.waitForTimeout(2500);
     });
     await step('summary', async () => {
@@ -102,7 +105,15 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     });
     const finalLongs = await p.evaluate(() => window.__long);
     note(`remaining long tasks: ${finalLongs.filter(([, d]) => d >= 100).map(([, d]) => d + 'ms').join(', ') || 'none'}`);
-    // layout checks: anything overflowing the viewport horizontally?
+    await overflowCheck('end');
+    fs.writeFileSync(path.join(OUT, `${name}.log`), log.join('\n'));
+    await ctx.close();
+  }
+  await b.close();
+})().catch((e) => { console.error(e); process.exit(2); });
+
+// layout check: anything overflowing the viewport horizontally? (run before clicks that may scroll)
+async function overflowCheckOn(p, note, tag) {
     const overflow = await p.evaluate(() => {
       const out = [];
       for (const el of document.querySelectorAll('body *')) {
@@ -115,9 +126,5 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       }
       return { scrollW: document.documentElement.scrollWidth, innerW: window.innerWidth, out };
     });
-    note(`overflow: scrollWidth ${overflow.scrollW} vs ${overflow.innerW}; ${overflow.out.join(' | ')}`);
-    fs.writeFileSync(path.join(OUT, `${name}.log`), log.join('\n'));
-    await ctx.close();
-  }
-  await b.close();
-})().catch((e) => { console.error(e); process.exit(2); });
+    note(`overflow (${tag}): scrollWidth ${overflow.scrollW} vs ${overflow.innerW}; ${overflow.out.join(' | ') || 'none'}`);
+}

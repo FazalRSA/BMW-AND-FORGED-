@@ -79,26 +79,29 @@ button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   scrollbar-width: none;
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.985); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; scale: 0.985; }
+  to { opacity: 1; scale: 1; }
 }
 .animate-fadeIn {
   animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+/* Motion uses the independent `translate` / `scale` properties, never `transform`: an animation
+   with fill-mode `both` pins `transform` for good, which silently cancelled Tailwind's
+   -translate-x-1/2 centring (the camera bar ran off the phone screen) and hover lifts. */
 @keyframes riseIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; translate: 0 14px; }
+  to { opacity: 1; translate: 0 0; }
 }
 .animate-rise { animation: riseIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes fadeSoft { from { opacity: 0; } to { opacity: 1; } }
-@keyframes stepIn { from { opacity: 0.001; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes stepIn { from { opacity: 0.001; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 .animate-step { animation: stepIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-fade { animation: fadeSoft 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-@keyframes slideInRight { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideInRight { from { translate: 24px 0; opacity: 0; } to { translate: 0 0; opacity: 1; } }
 .animate-slide-in { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes drawLine { from { stroke-dashoffset: var(--len, 1000); } to { stroke-dashoffset: 0; } }
 .animate-draw { stroke-dasharray: var(--len, 1000); animation: drawLine 1.8s cubic-bezier(0.65, 0, 0.35, 1) both; }
-@keyframes giantIn { from { opacity: 0; transform: translateY(4%) scale(0.98); letter-spacing: -0.02em; } to { opacity: 1; transform: none; letter-spacing: -0.045em; } }
+@keyframes giantIn { from { opacity: 0; translate: 0 4%; scale: 0.98; letter-spacing: -0.02em; } to { opacity: 1; translate: 0 0; scale: 1; letter-spacing: -0.045em; } }
 .animate-giant { animation: giantIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .delay-100 { animation-delay: 100ms; } .delay-200 { animation-delay: 200ms; } .delay-300 { animation-delay: 300ms; }
 .delay-500 { animation-delay: 500ms; } .delay-700 { animation-delay: 700ms; }
