@@ -10,8 +10,8 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { applyPaintLayers, installPaintLayers } from './paintShader';
-import { buildSoftboxStudio } from './studioSoftbox';
-import { glassReflectionMaterial, passMaterial } from './carMaterials';
+import { buildSoftboxStudio, ROOM_DARK, ROOM_LIGHT, ROOM_WALLS, ROOM_WHITE } from './studioSoftbox';
+import { bindEnvironment, blackenGrilleChrome, glassReflectionMaterial, passMaterial } from './carMaterials';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 import { traceRimShapes, traceMaskShapes, buildRimFaceGeometry } from './rimExtrusion';
@@ -174,6 +174,11 @@ export class CarConfiguratorEngine {
    */
   static STUDIO: 'softbox' | 'hdri' =
     typeof window !== 'undefined' && /[?&]studio=hdri/.test(window.location.search) ? 'hdri' : 'softbox';
+  /** The reflected studio room: 'walls' (default: dark room with tall side panels), 'dark' or 'light'; ?room= compares. */
+  static ROOM: 'dark' | 'light' | 'walls' | 'white' = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]room=(light|walls|dark|white)/.exec(window.location.search) : null;
+    return (m?.[1] as 'dark' | 'light' | 'walls' | 'white') ?? 'white';
+  })();
   /** Tone mapping: 'aces' (default), 'agx' or 'neutral'; ?tone=agx compares. */
   static TONE: 'aces' | 'agx' | 'neutral' = (() => {
     const m = typeof window !== 'undefined' ? /[?&]tone=(agx|neutral|aces)/.exec(window.location.search) : null;
@@ -618,7 +623,7 @@ export class CarConfiguratorEngine {
     room.dispose?.();
 
     if (CarConfiguratorEngine.STUDIO === 'softbox') {
-      const studio = buildSoftboxStudio();
+      const studio = buildSoftboxStudio(CarConfiguratorEngine.ROOM === 'white' ? ROOM_WHITE : CarConfiguratorEngine.ROOM === 'light' ? ROOM_LIGHT : CarConfiguratorEngine.ROOM === 'walls' ? ROOM_WALLS : ROOM_DARK);
       const studioTarget = pmrem.fromScene(studio, 0.02, 0.1, 100, { size: 512 });
       studio.traverse((o) => {
         const m = o as THREE.Mesh;
@@ -1095,6 +1100,7 @@ export class CarConfiguratorEngine {
     model.position.y -= box.min.y;
     model.updateMatrixWorld(true);
 
+    const carBox = new THREE.Box3().setFromObject(model);
     const paintRe = CarConfiguratorEngine.safeRegex(car.paintMeshMatch, 'paint|body|carpaint|exterior');
     // Whole words only by default, so "trim" or "brim" never count as a rim.
     const legacyHide = 'wheel|rim|tyre|tire|brake|caliper|rotor';
@@ -1108,6 +1114,7 @@ export class CarConfiguratorEngine {
     const corners = new Map<string, THREE.Box3>();
     const unmatched: string[] = [];
     const wheelMeshes: THREE.Mesh[] = [];
+    let modelCalipers = false;
 
     const usedVariants = new Set<THREE.MeshPhysicalMaterial>();
     this.pendingVariants = usedVariants;
@@ -1142,6 +1149,14 @@ export class CarConfiguratorEngine {
       }
 
       const ownNames = `${mesh.name} ${materialNames}`;
+      // A car whose hide pattern leaves its own calipers visible keeps them: the painted body of the
+      // caliper takes the caliper colour (like ours), its hardware keeps a metal look
+      if (/caliper|calliper/i.test(materialNames)) {
+        mesh.material = this.kit.caliper;
+        mesh.userData.modelCaliper = true;
+        modelCalipers = true;
+        return;
+      }
       if (paintRe.test(ownNames) && !notPaintRe.test(ownNames)) {
         mesh.material = Array.isArray(mesh.material)
           ? mesh.material.map((m) => this.paintMaterialFor(m))
@@ -1152,11 +1167,18 @@ export class CarConfiguratorEngine {
         mesh.material = Array.isArray(mesh.material)
           ? mesh.material.map((m) => passMaterial(m, partNames))
           : passMaterial(mesh.material, partNames);
+        if (!Array.isArray(mesh.material)) {
+          const c = new THREE.Box3().setFromObject(mesh).getCenter(new THREE.Vector3());
+          mesh.material = blackenGrilleChrome(mesh.material, c, carBox);
+        }
+        bindEnvironment(mesh.material, this.scene.environment, this.scene.environmentIntensity);
         // Full-strength Fresnel reflections on single-material glazing (see glassReflectionMaterial)
         // (a cached model mounted again arrives with the overlay child cloned along: never twice)
         const glass = !Array.isArray(mesh.material) && mesh.material.userData.partKind === 'glass';
         if (glass && !mesh.children.some((c) => c.userData.isOverlay)) {
-          const overlay = new THREE.Mesh(mesh.geometry, glassReflectionMaterial());
+          const glassMat = glassReflectionMaterial();
+          bindEnvironment(glassMat, this.scene.environment, this.scene.environmentIntensity);
+          const overlay = new THREE.Mesh(mesh.geometry, glassMat);
           overlay.name = 'glass_reflection';
           overlay.renderOrder = mesh.renderOrder + 1;
           overlay.userData.isOverlay = true;
@@ -1177,6 +1199,9 @@ export class CarConfiguratorEngine {
       if (byVertex.size === 4) byVertex.forEach((box, key) => corners.set(key, box));
     }
     if (corners.size === 4) CarConfiguratorEngine.stripLeftoverWheelParts(model, [...corners.values()]);
+
+    // The model's own calipers replace ours (they match its brakes and arches)
+    this.wheelAssemblies.forEach((a) => (a.caliper.visible = !modelCalipers));
 
     this.disposeBody();
     this.bodyMeshGroup.add(model);
@@ -1212,7 +1237,7 @@ export class CarConfiguratorEngine {
     const v = new THREE.Vector3();
     model.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay) return;
+      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay || mesh.userData.modelCaliper) return;
       const geo = mesh.geometry;
       // Decided once per geometry: a cached model is mounted as a clone whose userData is a copy,
       // but whose geometry is shared, so the decision lives on the geometry
@@ -1769,9 +1794,20 @@ export class CarConfiguratorEngine {
    * and roof out to flat white; ~0.45 keeps a crisp softbox reflection with the paint colour showing
    * through, which is how BMW's own studio renders read.
    */
-  static BODY_ENV_INTENSITY = 0.45;
+  static BODY_ENV_INTENSITY: number = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]bodyenv=([0-9.]+)/.exec(window.location.search) : null;
+    return m ? +m[1] : 0.45;
+  })();
   /** Overall strength of the generated softbox studio (scene.environmentIntensity). */
-  static SOFTBOX_INTENSITY = 1.0;
+  static SOFTBOX_INTENSITY: number = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]envi=([0-9.]+)/.exec(window.location.search) : null;
+    return m ? +m[1] : 0.55;
+  })();
+  /** Paint gloss: the base coat's roughness is scaled and the clear coat made sharper (?gloss= compares). */
+  static GLOSS: number = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]gloss=([0-9.]+)/.exec(window.location.search) : null;
+    return m ? +m[1] : 0.65;
+  })();
 
   private currentPaint: PaintColor | null = null;
 
@@ -1781,10 +1817,13 @@ export class CarConfiguratorEngine {
       applyPaintLayers(m, paint);
       m.envMapIntensity = CarConfiguratorEngine.BODY_ENV_INTENSITY;
       m.color.set(paint.hex);
-      m.roughness = paint.roughness;
+      // Gloss: a sharper clear coat and a smoother base coat for glossy paints; Frozen stays matte
+      const glossy = paint.type !== 'Frozen';
+      const g = glossy ? CarConfiguratorEngine.GLOSS : 1;
+      m.roughness = paint.roughness * g;
       m.metalness = paint.metalness;
       m.clearcoat = paint.clearcoat;
-      m.clearcoatRoughness = paint.clearcoatRoughness;
+      m.clearcoatRoughness = glossy ? Math.min(paint.clearcoatRoughness, 0.025) : paint.clearcoatRoughness;
       m.needsUpdate = true;
     }
     this.requestRender();
