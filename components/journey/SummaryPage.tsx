@@ -127,15 +127,15 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
           </div>
         )}
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_360px]">
+        <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
-            <div className="flex gap-8 border-b border-line">
+            <div className="flex gap-6 sm:gap-8 border-b border-line">
               {(['selected', 'standard'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={cx(
-                    'relative pb-4 text-[11px] font-semibold uppercase tracking-[0.2em] transition',
+                    'relative pt-2 pb-4 text-left text-[11px] font-semibold uppercase tracking-[0.14em] sm:tracking-[0.2em] transition',
                     tab === t ? 'text-ink' : 'text-mute hover:text-ink'
                   )}
                 >
@@ -229,7 +229,7 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
         <div className="mt-5 rounded-2xl bg-ink/[0.04] py-6 text-center">
           <Eyebrow>Configuration code</Eyebrow>
           <div className="mt-2 font-mono text-[26px] font-semibold tracking-[0.22em]">{p.code ?? '··········'}</div>
-          {p.code && p.codeShared === undefined && <p className="mt-2 text-[11px] text-mute">Saving to your account…</p>}
+          {p.code && p.codeShared === undefined && <p className="mt-2 text-[11px] text-mute">Saving your build…</p>}
           {p.codeShared === false && (
             <p className="mx-6 mt-2 text-[11px] leading-relaxed text-mute">
               Saved on this device only: the connection didn't allow a shared copy, so the link may not open elsewhere yet.
