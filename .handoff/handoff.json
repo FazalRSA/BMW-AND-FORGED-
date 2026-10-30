@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-30T11:12:08.135Z",
+  "project": "BMW-AND-FORGED-",
+  "session": "5af18e35",
+  "headline": "Goal: 16:9 ~90s HyperFrames walkthrough of FORGEDSA wheel configurator (https://forged-configurator.vercel.app), British",
+  "summary": "Video task not started; blocked. Asked: /hyperframes walkthrough. Blockers: hyperframes skill not loaded (plugin unmet dependency); hosted compose disabled for CLI agents; no TTS key. Done: PR #18 (.claude/settings.json allow rules) merged to main as e16ca83. Narration draft in session scratchpad (may not persist); scene list in nextSteps. Site scrape returns SPA shell only; feature content from docs/CLIENT_HANDOVER.md.",
+  "taskDescription": "Goal: 16:9 ~90s HyperFrames walkthrough of FORGEDSA wheel configurator (https://forged-configurator.vercel.app), British female VO (natural, not robotic), for BMW pitch Monday. Intent: show how app works and purpose of each feature, customer journey to lead capture. Repo: Novahavens/BMW-AND-FORGED-.",
+  "currentStatus": "Done: PR #18 merged to main (e16ca83); .claude/settings.json allow rules live on main. Remaining: HyperFrames plugin load, TTS key, build 16:9 video, render, send file. Blocked because plugin unloaded here and hosted compose refuses CLI clients, so only the local skill path works.",
+  "keyDecisions": [
+    "Decision: allow rules in .claude/settings.json for git, bun/npm, node, ffmpeg and basic file commands only — Reason: cut prompts without pre-approving credential lookups or external installs",
+    "Decision: build video with local /hyperframes skill, not hosted MCP — Reason: user chose skill; hosted compose disabled for CLI",
+    "Decision: 16:9, about 90s, British female VO with best voice model — Reason: user spec for BMW pitch"
+  ],
+  "userContribution": "Specified: use the /hyperframes skill; British female voice-over using the best voice model; 16:9; feature-and-purpose tutorial for the BMW pitch on Monday. Asked for permission rules to be written to the repo and PR #18 to be merged.",
+  "userDecisions": [
+    {
+      "decision": "Build the video with the HyperFrames skill",
+      "reason": "They already have it and asked for it",
+      "alternativesRejected": "Hosted HyperFrames MCP compose"
+    },
+    {
+      "decision": "Write permission allow rules to the repo and merge PR #18",
+      "reason": "Repeated permission prompts were frustrating",
+      "alternativesRejected": "Session-only rules or changing the permission mode"
+    },
+    {
+      "decision": "British female voice-over, 16:9",
+      "reason": "Natural, professional voice and widescreen layout for a BMW pitch",
+      "alternativesRejected": "Robotic voice styles; 9:16 vertical"
+    }
+  ],
+  "failedApproaches": [
+    "Approach: npx skills add heygen-com/hyperframes (global) → Result: classifier denied external code install → Lesson: add install to environment setup script instead",
+    "Approach: check gcloud auth and TTS endpoint → Result: classifier denied credential exploration → Lesson: get TTS key via environment settings as env var; never probe credentials",
+    "Approach: firecrawl scrape of forged-configurator.vercel.app → Result: SPA shell only; first attempt timed out → Lesson: use docs/CLIENT_HANDOVER.md or a browser tool",
+    "Approach: hosted HyperFrames compose from Claude Code → Result: disabled for local CLI agents → Lesson: use local skill only"
+  ],
+  "blockers": "[\"1) /hyperframes skill unloaded (plugin unmet dependency). Fix: add `npx skills add heygen-com/hyperframes` to environment setup script, cd into repo first, then start new session.\", \"2) No TTS key. Fix: add read-only key as env var or Network secret (Google Cloud TTS Chirp 3 HD en-GB female preferred, or ElevenLabs); tell me the variable name in new session.\"]",
+  "modifiedFiles": [
+    ".claude/settings.json: new; permissions.allow for git, bun/npm, node, ffmpeg, ls, pwd, mkdir; merged to main via PR #18 (e16ca83)"
+  ],
+  "implicitRules": [
+    "Stack: React 19, Vite 6, Three.js, bun, Supabase, Vercel, n8n; typecheck with bun run lint",
+    "PR flow: draft PR after push, subscribe PR activity, attribution footer on PR and commits",
+    "Brand and copy in config/brand.ts; catalogue source of truth is Supabase, data/configuratorData.ts is fallback",
+    "Permission mode is set in the UI dropdown; settings.json only sets allow rules",
+    "Scratchpad is session-scoped; do not rely on it persisting"
+  ],
+  "nextSteps": [
+    "Open a new session on repo BMW-AND-FORGED- (main or claude/optimistic-euler-y7o7a0). Confirm /hyperframes is listed and the TTS variable name.",
+    "Recreate narration, 12 scenes, about 90s, British female VO: 1 intro (forged wheels for BMW M, real-time 3D); 2 welcome (region/currency, ZAR default, enter studio); 3 showroom (11 BMW M models, Explore or Build); 4 paint (factory colour recolours live); 5 wheels (design pick, close-up camera); 6 size (live price); 7 finish (Liquid Metal, Bronze Matte, Black Gloss, Silver); 8 360 wheel view; 9 summary (3 studio stills, options, price); 10 share link and branded PDF (email and mobile gate = lead); 11 enquiry (full build emailed to team); 12 close (admin panel manages catalogue, no developer needed).",
+    "Verify feature facts against docs/CLIENT_HANDOVER.md section 2 before rendering.",
+    "Build 16:9 composition with /hyperframes, add VO from TTS, lint, preview, render MP4, and send the file to the user."
+  ],
+  "keywords": [
+    "hyperframes",
+    "wheel configurator",
+    "walkthrough video",
+    "voice-over",
+    "setup script",
+    "permissions allowlist"
+  ]
+}
