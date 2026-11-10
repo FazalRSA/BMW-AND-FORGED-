@@ -31,3 +31,7 @@ __pycache__/
 
 # ingest check shots: only the contact sheets (*.jpg) are committed
 docs/ingest/**/*.png
+.token-optimizer/decisions.log
+.token-optimizer/state/
+.token-optimizer/probe/
+!.token-optimizer/optimize.sh
