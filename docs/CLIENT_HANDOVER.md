@@ -26,8 +26,7 @@ to-do list, in order:
 
 1. **Apply the database updates.** Whoever manages your Supabase account runs the November update files
    (`supabase/migrations/20261110*.sql`) in file-name order in the SQL Editor, ending with
-   `20261110170000_admin_requires_confirmed_email.sql`, `20261110171000_car_specs_m2cs_m5touring.sql` and
-   `20261110180000_stock_rims_default.sql`.
+   `20261110170000_admin_requires_confirmed_email.sql` and `20261110171000_car_specs_m2cs_m5touring.sql`.
    The exact steps, including the one check to make first (every admin's email must be confirmed, or
    `/admin` locks them out), are in `HANDOVER.md` section 5 and `ACCOUNTS.md`. Until this is done the live
    site shows the old catalogue; the preview already shows the new one.

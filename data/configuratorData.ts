@@ -169,7 +169,6 @@ export const BMW_MODELS: CarModel[] = [
     modelUrl: '/models/m2_g87.glb',
     modelRotationDeg: 0,
     modelLengthM: 4.58,
-    stockRimsFinished: true, // the viewer's satin-bronze M2 CS: its own rim mesh takes the bronze look
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
@@ -537,32 +536,6 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
 // FORGED's own designs, mirrored from the live catalogue (Supabase is the source of truth; this is the
 // offline fallback). Images live in the rim-images bucket and are extruded into 3D spokes on the car.
 export const WHEEL_DESIGNS: WheelDesign[] = [
-  // The car's own rims: the owner's viewer look (the M2 CS reference renders). No rim file is mounted: the engine
-  // shows the car's own rim meshes (stockRims), and on the M2 CS (stockRimsFinished) they take the satin bronze. First in
-  // the list, so it is the default. Name, size and price are placeholders the owner has not set yet.
-  {
-    id: 'stock_bronze',
-    code: 'STOCK',
-    name: 'Bronze Mesh',
-    subtitle: "The car's own rims",
-    style: 'Factory',
-    spokeType: 'mesh',
-    spokeCount: 5,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"'],
-    pricePerSet: 3846.15, // placeholder: the FSA004 price (R 70 000 / 18.2) until the owner sets one
-    priceBySize: { '19"': 3846.15 },
-    description: "The car's own rims, in satin bronze.",
-    highlights: ["The car's own rims", 'Satin bronze finish'],
-    availableVariants: ['bronze'],
-    defaultVariant: 'bronze',
-    imageUrl: null,
-    imageExtrude: false,
-    modelUrl: null,
-    stockRims: true,
-  },
   // The Nov 2026 stock sheet (BMW M / M Performance wheel inventory, docs/WHEEL_INVENTORY.md) is the source of
   // the names, sizes, finishes and prices of the six wheels at the end of this list. The photo-traced designs
   // above them stay in the catalogue but hidden (active: false) until they are stocked again.

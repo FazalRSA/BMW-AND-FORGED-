@@ -125,8 +125,6 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
   const groups = useMemo(() => PAINT_GROUPS.map((g) => ({ ...g, paints: p.paints.filter((x) => x.type === g.type) })).filter((g) => g.paints.length), [p.paints]);
   const sizes = rimSizes(p.wheel);
   const finishes = p.wheel.availableVariants.map((id) => p.finishes[id]).filter(Boolean);
-  // The car's own rims come in one finish (satin bronze on the M2 CS, their own colour elsewhere): no finish row.
-  const finishFixed = p.wheel.stockRims === true;
   const sections = useRef<Partial<Record<ConfigStep, HTMLElement | null>>>({});
   // A deep link or a "Change wheels" action lands on that section
   useEffect(() => {
@@ -239,7 +237,6 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </div>
           </section>
 
-          {!finishFixed && (
           <section ref={(el) => (sections.current.finish = el)}>
             <H2 step="finish" onStep={p.onStep} aside={p.finish.name}>
               Finish
@@ -261,7 +258,6 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
               })}
             </ul>
           </section>
-          )}
 
           <section>
             <H2>View</H2>

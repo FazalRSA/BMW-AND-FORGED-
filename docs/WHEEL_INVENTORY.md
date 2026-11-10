@@ -10,17 +10,6 @@ Source of truth: Supabase `public.wheels` and `public.wheel_finishes` (migration
 `supabase/migrations/20261110153000_wheel_inventory_stock_sheet.sql`), mirrored in
 `data/configuratorData.ts` (`WHEEL_DESIGNS`, `WHEEL_FINISHES`) for the offline fallback.
 
-## The default: the car's own rims
-
-`Bronze Mesh` (`stock_bronze`, migration `20261110180000_stock_rims_default.sql`) is first in the list, so every car
-opens with it. It is not on the stock sheet and no rim file is mounted: the car's own rims show. On the M2 CS (flagged
-`cars.stock_rims_finished`) the car's own rim takes the satin bronze of the owner's viewer, which is how the bronze mesh
-wheels in the reference renders look. The other cars keep their own rim colour, and the finish row is hidden for this
-design.
-
-Placeholders the owner has not set: the name, the 19" size (the car's own rims do not change size) and the price, which
-is the FSA004 price (R 70 000) for now. Change them in `/admin > Wheels`.
-
 ## The six stocked designs
 
 | Sheet name | Catalogue id | Sizes | Finishes (sheet → finish id) | Set price (ZAR → USD stored) | 3D files | Fitment (sheet) |
