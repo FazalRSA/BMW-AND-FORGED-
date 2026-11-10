@@ -1,5 +1,9 @@
 # Photoreal programme: 3 cars + the wheels
 
+> **Superseded in part (2026-11-11).** The line-up below (M4, M3, M3 Touring, M5, M8) is the October plan. Since
+> 2026-11-10 the active cars are the four prepared ones (M2 CS, M4 CS, M5, M5 Touring) and the legacy cars are
+> hidden. Current process: [`PRODUCT_SPEC_CARS_AND_WHEELS.md`](PRODUCT_SPEC_CARS_AND_WHEELS.md).
+
 **Written:** 1 Oct 2026. **Owner:** Nova Havens for FORGEDSA.
 
 ## Progress (2 Oct 2026)
