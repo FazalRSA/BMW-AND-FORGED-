@@ -848,8 +848,8 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     highlights: ['Fifteen straight spokes', 'Silver or Hyper Black', 'PCD 5×112 · ET8/15 · CB 66.6'],
     availableVariants: ['silver', 'hyper_black'],
     defaultVariant: 'silver',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_03-1790526482896.png',
-    imageExtrude: true,
+    imageUrl: '/rim-images/forged_fsa_03.webp', // cut-out of the website's FSA003 photo (thumbnail only; the car uses the GLB)
+    imageExtrude: false,
     modelUrl: '/models/rims/forged_fsa_03.glb',
     modelFlip: false
   },

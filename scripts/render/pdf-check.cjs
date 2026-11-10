@@ -4,7 +4,7 @@
  * looked at page by page (`pdftoppm -png -r 80 out/brochure.pdf out/page`).
  *
  *   bunx vite --host 127.0.0.1 --port 5173            # dev server, in another shell
- *   node scripts/render/pdf-check.cjs <outDir> [desktop|phone]
+ *   node scripts/render/pdf-check.cjs <outDir> [desktop|phone]        # BASE=https://… runs it against a deployed site
  *
  * Nothing real is written: the lead insert and the saved configuration that the gate triggers are
  * answered here (every real lead emails the owner). Exit 0 with <outDir>/brochure.pdf, 2 on failure.
@@ -12,6 +12,7 @@
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'); const path = require('path');
 const [,, OUT, which = 'desktop'] = process.argv;
+const BASE = (process.env.BASE || 'http://127.0.0.1:5173').replace(/\/$/, '');
 const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }, desktop: { width: 1440, height: 900 } };
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -34,7 +35,7 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
   });
   const shot = (tag) => p.screenshot({ path: path.join(OUT, `${which}-${tag}.png`), timeout: 120000 });
   try {
-    await p.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded', timeout: 240000 });
+    await p.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 240000 });
     await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().waitFor({ timeout: 240000 });
     note('welcome loaded');
     await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click();

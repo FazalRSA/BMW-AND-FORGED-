@@ -47,7 +47,7 @@ values
    '{"20\"": 4120.88, "21\"": 4120.88}'::jsonb, '{}'::jsonb,
    'Fifteen straight, evenly spaced spokes from a five-lug hub to a slim outer lip, in Silver or Hyper Black. In stock for the M3 Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
    array['Fifteen straight spokes', 'Silver or Hyper Black', 'PCD 5×112 · ET8/15 · CB 66.6'],
-   array['silver', 'hyper_black'], 'silver', 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_03-1790526482896.png', true,
+   array['silver', 'hyper_black'], 'silver', '/rim-images/forged_fsa_03.webp', false,
    '/models/rims/forged_fsa_03.glb', false, null, 2, true),
   ('forged_fsa004', 'FSA004', 'FSA004', 'Twelve-spoke monoblock', 'Monoblock Forged', 'multi', 12, array['20"', '21"'], 3846.15,
    '{"20\"": 3846.15, "21\"": 3846.15}'::jsonb, '{}'::jsonb,
