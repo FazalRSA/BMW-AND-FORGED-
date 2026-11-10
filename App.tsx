@@ -309,7 +309,8 @@ export const App: React.FC = () => {
   // backdrop is painted over the whole screen, sized to the stage, so it carries on past the stage's edges
   // (4:3 and portrait tablets) instead of stopping in a line above and below the car (backdropCss); the car
   // itself (the wheel close-up fills its frame) fades out at the edges that stop short (stageEdgeFade)
-  const rendered = route.name === 'configure' && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
+  // The frames are fixed views, so the turntable (Auto-rotate) shows the live model; a view chip goes back to its frame
+  const rendered = route.name === 'configure' && !autoRotate && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
   const renderedRef = useRef(rendered);
   renderedRef.current = rendered;
   const computeStage = useCallback(() => {
@@ -339,6 +340,7 @@ export const App: React.FC = () => {
     // showroom keeps its own backdrop (the giant model name sits behind the transparent canvas)
     engine.setLook(route.name === 'configure' && !rendered ? 'viewer' : 'studio');
     engine.setRenderedBody(rendered);
+    if (route.name === 'configure') engine.setAutoRotate(autoRotate); // the engine refuses to turn while a frame is showing
     engine.handleResize();
     applyInsetRef.current();
     if (route.name === 'configure') engine.setCameraPreset(cameraView, { instant: rendered });
@@ -659,7 +661,20 @@ export const App: React.FC = () => {
       />
 
       {booted && route.name === 'welcome' && (
-        <WelcomeGate region={region} onRegionChange={changeRegion} onEnter={() => navigateTo({ name: 'showroom' })} onOpenForged={() => navigateTo({ name: 'forged' })} />
+        <WelcomeGate
+          region={region}
+          onRegionChange={changeRegion}
+          onEnter={(carId) => {
+            navigateTo({ name: 'showroom' });
+            // Open the showroom on the car that was on stage, when it is in the line-up
+            const i = cars.findIndex((c) => c.id === carId);
+            if (i >= 0 && i !== carIndex) {
+              // A failed drive leaves the showroom on the current car; it must not surface as an unhandled rejection
+              stepCar(i > carIndex ? 1 : -1, i).catch((e) => console.warn('Could not open the showroom on that car:', e));
+            }
+          }}
+          onOpenForged={() => navigateTo({ name: 'forged' })}
+        />
       )}
 
       {booted && route.name === 'showroom' && (
@@ -713,7 +728,14 @@ export const App: React.FC = () => {
           onStep={changeStep}
           cameraView={cameraView}
           autoRotate={autoRotate}
-          onCamera={selectView}
+          onCamera={(view) => {
+            // a view with a pre-rendered frame stops the turntable, so the frame shows
+            if (autoRotate && renderedCars[selectedCar.id]?.includes(view)) {
+              setAutoRotate(false);
+              engineRef.current?.setAutoRotate(false);
+            }
+            selectView(view);
+          }}
           onToggleRotate={toggleRotate}
           onPaint={choosePaint}
           onWheel={chooseWheel}

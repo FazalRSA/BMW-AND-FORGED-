@@ -27,6 +27,14 @@
   "side",
   "top"
  ],
+ "m5_g90": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m8_f92": [
   "frontThreeQuarter",
   "frontWheel",
