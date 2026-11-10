@@ -8,6 +8,7 @@ import { CarModel, PaintColor, WheelDesign, WheelFinish, CaliperColor, FinishVar
 export const BMW_MODELS: CarModel[] = [
   {
     id: 'm4_g82',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M4 Competition',
     badge: 'M4 G82',
     generation: 'G82',
@@ -63,6 +64,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm4_convertible_g83',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M4 Competition Convertible',
     badge: 'M4 Convertible G83',
     generation: 'G83',
@@ -83,6 +85,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm3_g80',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M3 Competition',
     badge: 'M3 G80',
     generation: 'G80',
@@ -115,6 +118,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm3_touring_g81',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M3 Competition Touring',
     badge: 'M3 Touring G81',
     generation: 'G81',
@@ -168,6 +172,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm235_f74',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M235 xDrive Gran Coupé',
     badge: 'M235 F74',
     generation: 'F74',
@@ -244,6 +249,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm8_f92',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M8 Competition Coupé',
     badge: 'M8 F92',
     generation: 'F92',
@@ -267,6 +273,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'x3m50_g45',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW X3 M50 xDrive',
     badge: 'X3 M50 G45',
     generation: 'G45',
@@ -290,6 +297,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'x5m_f95',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW X5 M Competition',
     badge: 'X5 M F95',
     generation: 'F95 LCI',
@@ -725,6 +733,52 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     // (services/rimFaces.ts, docs/rim-template/fsa_14-spec.json). The rim page uses the rendered spin.
     imageUrl: '/rim-images/forged_fsa_14.png',
     imageExtrude: true
+  },
+  {
+    id: 'forged_fsa002',
+    code: 'FSA002',
+    name: 'FSA002',
+    subtitle: 'Fifteen-spoke monoblock',
+    style: 'Monoblock Forged',
+    spokeType: 'multi',
+    spokeCount: 15,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 4120,
+    priceBySize: { '20"': 4120, '21"': 4490 },
+    description: 'PLACEHOLDER description: set the real copy in /admin.',
+    highlights: [],
+    availableVariants: ['satin_gold', 'gunmetal', 'silver'],
+    defaultVariant: 'satin_gold',
+    imageUrl: '/rim-images/forged_fsa002.webp',
+    imageExtrude: false,
+    modelUrl: '/models/rims/forged_fsa002.glb',
+    modelFlip: false
+  },
+  {
+    id: 'forged_fsa004',
+    code: 'FSA004',
+    name: 'FSA004',
+    subtitle: 'Twelve-spoke monoblock',
+    style: 'Monoblock Forged',
+    spokeType: 'multi',
+    spokeCount: 12,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 3850,
+    priceBySize: { '20"': 3850, '21"': 4200 },
+    description: 'PLACEHOLDER description: set the real copy in /admin.',
+    highlights: [],
+    availableVariants: ['silver', 'gunmetal', 'black'],
+    defaultVariant: 'silver',
+    imageUrl: '/rim-images/forged_fsa004.webp',
+    imageExtrude: false,
+    modelUrl: '/models/rims/forged_fsa004.glb',
+    modelFlip: false
   }
 ];
 

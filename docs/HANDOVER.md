@@ -38,6 +38,8 @@ Follow the sections in order. Each step has a **Check** line; do not move on unt
 | `/terms` | Terms & conditions (copy in `config/pages.ts`) |
 | `/admin` | Admin sign-in (with emailed set-password link), then edit cars, wheels, finishes and paints, upload GLBs, rim PNGs or CAD, and read Enquiries |
 
+Since 2026-11-10 the `/configure` screen is the owner's vehicle spec viewer: the car sits in its studio (dome, floor, reflection coves) and the right-hand glass panel holds Car chips, paint swatch groups, rims, sizes, finishes, views and the price; the prepared cars (M2 CS, M4 CS, M5, M5 Touring) are the showroom and the older Sketchfab cars are hidden until their packages arrive (`ADD_PREPARED_CAR.md`).
+
 **Only cars with a 3D file appear in the showroom.** Nine of the 11 cars have one; the M4 Convertible
 and M5 Touring appear automatically as soon as you upload a GLB for them in `/admin`. Model credits
 and licences: `public/models/CREDITS.md`.

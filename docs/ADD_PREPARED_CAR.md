@@ -106,10 +106,29 @@ wheel on two cars into `docs/ingest/rims/`. On the car the 3D rim replaces the w
 page keeps its pre-rendered spin. Spokes facing into the car: add `--flip`. Back to the photo face:
 remove `modelUrl` (or clear "Rim 3D model" in `/admin`).
 
-Website rims that match configurator wheels by design: `fsa003.glb` = FSA-03 Kyalami 15 (done).
-`fsa004.glb` (12 straight spokes) looks like FSA-06 Aldo Fork 15 but is not confirmed; `fsa002.glb` is
-another 15-spoke, not the configurator's FSA-02; `ff-1` / `ff-3` are SIXNINE wheels, not in the
-configurator.
+A wheel that is not in the catalogue yet is created on the way in:
+
+```bash
+node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa002.glb --wheel forged_fsa002 --new \
+  --name "FSA002" --code FSA002 --spokes 15 --sizes 20,21 --price-zar 75000 \
+  --finishes satin_gold,gunmetal,silver --default-finish satin_gold --image /rim-images/forged_fsa002.webp --check
+```
+
+`--new` appends a row (PLACEHOLDER copy, prices in USD from the ZAR figure at the ZA rate, +9 % per inch
+above the smallest size) to the bundled catalogue and writes an `insert … on conflict` migration; the owner
+sets the real names, copy and prices in `/admin`. `--rear <rear.glb>` packs a second file for a staggered
+set (`rearModelUrl`; engine support for the rear file is the next step).
+
+Thumbnails: `RimThumb` masks the photo by its alpha, so a website `front.webp` on white must be cut out
+first (`rembg`, as the photo pipeline does), squared on a transparent canvas and saved as WebP with alpha
+into `public/rim-images/<id>.webp`.
+
+Website rims in the configurator on 2026-11-10: `fsa003.glb` → `forged_fsa_03` (Kyalami 15), `fsa002.glb` →
+`forged_fsa002`, `fsa004.glb` → `forged_fsa004`, `ff-1.glb` → `sixnine_ff1`, `ff-3.glb` → `sixnine_ff3`
+(names, copy and prices are placeholders from the website). Still to do: STF399 front/rear (needs the rear
+file support) and the rim-page spins (`turntable.py`; the live engine is the fallback meanwhile).
+`fsa004.glb` (12 straight spokes) may be the same design as FSA-06 Aldo Fork 15: if the owner confirms,
+re-run `ingest-rim … --wheel forged_fsa_06` and hide `forged_fsa004`.
 
 ## Licence
 

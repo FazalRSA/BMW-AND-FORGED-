@@ -14,7 +14,7 @@ description: Orientation for the FORGEDSA BMW M forged-wheel configurator (React
 |---|---|
 | `/` welcome (region picker, Enter) | `components/journey/WelcomeGate.tsx`, `BootLoader.tsx` |
 | `/models` showroom (drive-out/in between cars) | `components/journey/Showroom.tsx` |
-| `/configure` Paint → Wheels → Size → Finish | `components/journey/Configurator.tsx` |
+| `/configure` the vehicle-spec-viewer screen: paint swatch groups, rims, size, finish, views (`?panel=steps` = the old stepped panel) | `components/journey/ViewerPanel.tsx` (rendered by `Configurator.tsx`, which keeps the wheel-info and more-options modals) |
 | `/summary` stills, share code, PDF gate, enquiry | `components/journey/SummaryPage.tsx`, `EnquiryModal.tsx` |
 | `/forged`, `/rims/<id>` collection, 360° rim | `components/ForgedPage.tsx`, `RimDetailPage.tsx` |
 | `/terms`, `/delivery` | `components/InfoPage.tsx` + `config/pages.ts` (`LEGAL_DRAFT`) |
@@ -28,7 +28,9 @@ Shared UI lives in `components/journey/ui.tsx` (Button, Modal, PaintChip, RimThu
 
 - `services/CarConfiguratorEngine.ts`: scene, studio lights, HDRI, contact shadow, the camera
   presets (`setCameraPreset`), `loadCar`/`mountCarModel` (paint and hide regexes, wheel
-  placement), `applyWheelDesign`, `setRimSize`, `captureViews` (stills for the summary and PDF).
+  placement), `applyWheelDesign`, `setRimSize`, `captureViews` (stills for the summary and PDF),
+  `setLook('viewer'|'studio')`: the four-car viewer's studio (`services/viewerStudio.ts`: dome, fogged floor,
+  pool shadow, gloss/soft coves, exposure and finish table by paint) used on `/configure` for live cars.
 - Wheels: `services/wheelKit.ts` builds the tyre, rim lip and barrel, brake disc, caliper, lug
   nuts and centre cap, and turns rim photos into clean 3D spokes (`processRimPhoto` →
   `traceMaskShapes` in `services/rimExtrusion.ts` → `buildSpokeFace`).
@@ -41,7 +43,8 @@ Shared UI lives in `components/journey/ui.tsx` (Button, Modal, PaintChip, RimThu
     models.
   - The method is in `docs/PHOTOREAL_METHOD.md` and the `3d-car-perfect` skill.
 - Render checks: `scripts/render/` (headless engine page + batch screenshot script).
-- Car models are in `public/models/*.glb` (credits in `CREDITS.md`), plus the `car-models` bucket.
+- Car models are in `public/models/*.glb` (credits in `CREDITS.md`), plus the `car-models` bucket. Prepared
+  packages go in with `scripts/ingest-car.mjs`, rim GLBs with `scripts/ingest-rim.mjs` (`docs/ADD_PREPARED_CAR.md`).
 
 ## Data
 

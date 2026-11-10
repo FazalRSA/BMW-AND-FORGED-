@@ -46,16 +46,23 @@ const log = (msg) => console.log(msg);
 process.on('uncaughtException', (e) => die(e?.message || String(e)));
 process.on('unhandledRejection', (e) => die(e?.message || String(e)));
 
-const opts = { flip: false, check: false, dryRun: false, budget: '40000', port: '5173' };
+const opts = { flip: false, check: false, dryRun: false, budget: '40000', port: '5173', isNew: false };
 const positional = [];
 const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
-  const valued = { '--wheel': 'wheel', '--budget': 'budget', '--port': 'port' };
+  const valued = {
+    '--wheel': 'wheel', '--budget': 'budget', '--port': 'port',
+    // --new: the wheel is not in the catalogue yet; these describe it (prices in ZAR are converted at the ZA region rate)
+    '--name': 'name', '--code': 'code', '--subtitle': 'subtitle', '--style': 'style', '--spokes': 'spokes', '--sizes': 'sizes',
+    '--price-zar': 'priceZar', '--price-usd': 'priceUsd', '--finishes': 'finishes', '--default-finish': 'defaultFinish',
+    '--image': 'image', '--description': 'description', '--rear': 'rear'
+  };
   if (valued[a]) {
     if (argv[i + 1] === undefined) die(`${a} needs a value`);
     opts[valued[a]] = argv[++i];
-  } else if (a === '--flip') opts.flip = true;
+  } else if (a === '--new') opts.isNew = true;
+  else if (a === '--flip') opts.flip = true;
   else if (a === '--check') opts.check = true;
   else if (a === '--dry-run') opts.dryRun = true;
   else if (a === '-h' || a === '--help') { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('*/')[0]); process.exit(0); }
@@ -68,6 +75,12 @@ if (!fs.existsSync(input)) die(`${input} does not exist`);
 if (!/\.glb$/i.test(input)) die('the input must be a .glb (STEP/IGES/STL/OBJ: `bun run rim:convert` first, or upload in /admin)');
 if (!opts.wheel || !/^[a-z0-9_]+$/.test(opts.wheel)) die('--wheel <id> is required, e.g. forged_fsa_03');
 if (!(+opts.budget > 1000)) die('--budget is a triangle count, e.g. 40000');
+if (opts.rear && (!fs.existsSync(opts.rear) || !/\.glb$/i.test(opts.rear))) die('--rear must be the rear rim .glb of a staggered set');
+if (opts.isNew) {
+  if (!opts.name) die('--new needs --name "Wheel name"');
+  if (!opts.finishes) die('--new needs --finishes liquid_metal,bronze,... (finish ids from WHEEL_FINISHES)');
+  if (!opts.priceZar && !opts.priceUsd) die('--new needs --price-zar 75000 or --price-usd 4120 (set of four)');
+}
 
 // ---------------------------------------------------------------------------------------------------
 // 1. Read and check
@@ -139,18 +152,82 @@ if (problems.length) {
 // ---------------------------------------------------------------------------------------------------
 // 2. Catalogue lookup
 // ---------------------------------------------------------------------------------------------------
-const source = fs.readFileSync(CATALOGUE, 'utf8');
+let source = fs.readFileSync(CATALOGUE, 'utf8');
 const wheelsStart = source.indexOf('export const WHEEL_DESIGNS');
 const wheelsEnd = source.indexOf('\n];', wheelsStart);
 if (wheelsStart < 0 || wheelsEnd < 0) die('data/configuratorData.ts: WHEEL_DESIGNS not found');
 const wheelIds = [...source.slice(wheelsStart, wheelsEnd).matchAll(/^    id: '([^']+)'/gm)].map((m) => m[1]);
-if (!wheelIds.includes(opts.wheel)) die(`${opts.wheel} is not a wheel in the catalogue: ${wheelIds.join(', ')}`);
+const finishIds = [...source.slice(source.indexOf('export const WHEEL_FINISHES'), wheelsStart).matchAll(/^    id: '([^']+)'/gm)].map((m) => m[1]);
+const exists = wheelIds.includes(opts.wheel);
+if (!exists && !opts.isNew) die(`${opts.wheel} is not a wheel in the catalogue (${wheelIds.join(', ')}); add --new --name ... --finishes ... --price-zar ... to create it`);
 const modelUrl = `/models/rims/${opts.wheel}.glb`;
 const target = path.join(RIMS, `${opts.wheel}.glb`);
-log(`\nPlan for ${opts.wheel}: model_url ${modelUrl}, model_flip ${opts.flip}, packed to <= ${(+opts.budget).toLocaleString()} triangles`);
+const rearModelUrl = opts.rear ? `/models/rims/${opts.wheel}-rear.glb` : null;
+const rearTarget = opts.rear ? path.join(RIMS, `${opts.wheel}-rear.glb`) : null;
+
+// A new wheel row (the same shape as the rows in WHEEL_DESIGNS; PLACEHOLDER copy the owner edits in /admin)
+const ZA_RATE = 18.2; // config/brand.ts: ZAR per USD; the catalogue prices in USD
+const round10 = (n) => Math.round(n / 10) * 10;
+const newRow = opts.isNew ? (() => {
+  const finishes = opts.finishes.split(',').map((s) => s.trim()).filter(Boolean);
+  const unknown = finishes.filter((f) => !finishIds.includes(f));
+  if (unknown.length) die(`unknown finish id(s) ${unknown.join(', ')}; known: ${finishIds.join(', ')}`);
+  const sizes = (opts.sizes || '20,21').split(',').map((s) => `${s.trim().replace(/"$/, '')}"`);
+  const base = opts.priceUsd ? +opts.priceUsd : round10(+opts.priceZar / ZA_RATE);
+  if (!(base > 0)) die('the price must be a number');
+  // Bigger sizes cost more: +9 % per inch above the smallest, as the placeholder ladder in /admin does
+  const smallest = Math.min(...sizes.map((s) => parseInt(s, 10)));
+  const priceBySize = Object.fromEntries(sizes.map((s) => [s, round10(base * (1 + 0.09 * (parseInt(s, 10) - smallest)))]));
+  return {
+    id: opts.wheel, code: opts.code || opts.name.toUpperCase(), name: opts.name, subtitle: opts.subtitle || 'PLACEHOLDER subtitle', style: opts.style || 'Monoblock Forged',
+    spokeType: 'multi', spokeCount: +(opts.spokes || 10), standardSizes: sizes, pricePerSet: priceBySize[sizes[0]], priceBySize,
+    description: opts.description || 'PLACEHOLDER description: set the real copy in /admin.', highlights: [],
+    availableVariants: finishes, defaultVariant: opts.defaultFinish && finishes.includes(opts.defaultFinish) ? opts.defaultFinish : finishes[0],
+    imageUrl: opts.image ? (opts.image.startsWith('/') ? opts.image : `/rim-images/${path.basename(opts.image)}`) : null, imageExtrude: false
+  };
+})() : null;
+if (newRow && opts.image && !opts.image.startsWith('/') && !fs.existsSync(path.join(ROOT, 'public', newRow.imageUrl))) {
+  fs.mkdirSync(path.join(ROOT, 'public/rim-images'), { recursive: true });
+  fs.copyFileSync(opts.image, path.join(ROOT, 'public', newRow.imageUrl));
+}
+
+log(`\nPlan for ${opts.wheel}${newRow ? ` (new wheel "${newRow.name}", ${newRow.standardSizes.join(' ')}, $${newRow.pricePerSet} per set, finishes ${newRow.availableVariants.join('/')})` : ''}: model_url ${modelUrl}${rearModelUrl ? `, rear_model_url ${rearModelUrl}` : ''}, model_flip ${opts.flip}, packed to <= ${(+opts.budget).toLocaleString()} triangles`);
 if (opts.dryRun) {
   log('--dry-run: nothing changed.');
   process.exit(0);
+}
+
+if (newRow) {
+  // Append the row before the closing "];" of WHEEL_DESIGNS
+  const q = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  const arr = (a) => `[${a.map(q).join(', ')}]`;
+  const entry = [
+    '  {',
+    `    id: ${q(newRow.id)},`,
+    `    code: ${q(newRow.code)},`,
+    `    name: ${q(newRow.name)},`,
+    `    subtitle: ${q(newRow.subtitle)},`,
+    `    style: ${q(newRow.style)},`,
+    `    spokeType: ${q(newRow.spokeType)},`,
+    `    spokeCount: ${newRow.spokeCount},`,
+    '    weightFrontKg: 0,',
+    '    weightRearKg: 0,',
+    '    weightSavingsKg: 0,',
+    `    standardSizes: ${arr(newRow.standardSizes)},`,
+    `    pricePerSet: ${newRow.pricePerSet},`,
+    `    priceBySize: { ${Object.entries(newRow.priceBySize).map(([k, v]) => `${q(k)}: ${v}`).join(', ')} },`,
+    `    description: ${q(newRow.description)},`,
+    '    highlights: [],',
+    `    availableVariants: ${arr(newRow.availableVariants)},`,
+    `    defaultVariant: ${q(newRow.defaultVariant)},`,
+    `    imageUrl: ${newRow.imageUrl ? q(newRow.imageUrl) : 'null'},`,
+    '    imageExtrude: false',
+    '  }'
+  ];
+  const before = source.slice(0, wheelsEnd).replace(/\s*$/, '');
+  source = `${before}${before.endsWith(',') || before.endsWith('[') ? '' : ','}\n${entry.join('\n')}${source.slice(wheelsEnd)}`;
+  fs.writeFileSync(CATALOGUE, source);
+  log(`Added ${opts.wheel} to data/configuratorData.ts`);
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -161,6 +238,12 @@ const pack = spawnSync('node', [path.join(ROOT, 'scripts/rim3d/pack.mjs'), path.
 process.stdout.write(pack.stdout || '');
 if (pack.status !== 0) die(`pack.mjs failed: ${pack.stderr}`);
 log(`Wrote ${path.relative(ROOT, target)} (${(fs.statSync(target).size / 1024).toFixed(0)} kB)`);
+if (opts.rear) {
+  const packRear = spawnSync('node', [path.join(ROOT, 'scripts/rim3d/pack.mjs'), path.resolve(opts.rear), rearTarget, opts.budget], { encoding: 'utf8' });
+  process.stdout.write(packRear.stdout || '');
+  if (packRear.status !== 0) die(`pack.mjs failed on the rear rim: ${packRear.stderr}`);
+  log(`Wrote ${path.relative(ROOT, rearTarget)} (${(fs.statSync(rearTarget).size / 1024).toFixed(0)} kB)`);
+}
 
 // ---------------------------------------------------------------------------------------------------
 // 4. Bundled catalogue + migration
@@ -170,7 +253,7 @@ const start = lines.findIndex((l) => l === `    id: '${opts.wheel}',`);
 let end = start;
 while (end < lines.length && !/^  },?\s*(\/\/.*)?$/.test(lines[end])) end++;   // "  }," with or without a trailing comment
 if (start < 0 || end >= lines.length) die('could not find the wheel entry');
-const kept = lines.slice(start, end).filter((l) => !/^    (modelUrl|modelFlip):/.test(l));
+const kept = lines.slice(start, end).filter((l) => !/^    (modelUrl|rearModelUrl|modelFlip):/.test(l));
 { // a trailing comma on the last line that holds code (not on a trailing full-line comment), in front of any "// comment"
   let last = kept.length - 1;
   while (last > 0 && /^\s*(\/\/.*)?$/.test(kept[last])) last--;
@@ -178,17 +261,32 @@ const kept = lines.slice(start, end).filter((l) => !/^    (modelUrl|modelFlip):/
   const code = m[1].trimEnd(), comment = m[2] || '';
   if (code && !code.endsWith(',')) kept[last] = `${code},${comment}`;
 }
-kept.push(`    modelUrl: '${modelUrl}',`, `    modelFlip: ${opts.flip}`);
+kept.push(`    modelUrl: '${modelUrl}',`);
+if (rearModelUrl) kept.push(`    rearModelUrl: '${rearModelUrl}',`);
+kept.push(`    modelFlip: ${opts.flip}`);
 lines.splice(start, end - start, ...kept);
 fs.writeFileSync(CATALOGUE, lines.join('\n'));
 log(`Updated ${path.relative(ROOT, CATALOGUE)}`);
 
+const sql = (s) => `'${String(s).replace(/'/g, "''")}'`;
+const sqlArr = (a) => `array[${a.map(sql).join(', ')}]::text[]`;
 const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 const migration = path.join(MIGRATIONS, (fs.existsSync(MIGRATIONS) && fs.readdirSync(MIGRATIONS).find((f) => f.endsWith(`_wheel_${opts.wheel}_rim_model.sql`))) || `${stamp}_wheel_${opts.wheel}_rim_model.sql`);
-fs.writeFileSync(migration, `-- ${opts.wheel}: 3D rim ${path.basename(input)} packed by scripts/ingest-rim.mjs on ${new Date().toISOString().slice(0, 10)}.
+const rearSql = rearModelUrl ? `, rear_model_url = '${rearModelUrl}'` : '';
+fs.writeFileSync(migration, `-- ${opts.wheel}: 3D rim ${path.basename(input)}${opts.rear ? ` + rear ${path.basename(opts.rear)}` : ''} packed by scripts/ingest-rim.mjs on ${new Date().toISOString().slice(0, 10)}.
 -- Served from the repo at ${modelUrl}; on the car it replaces the wheel's photo face (the rim page keeps its spin).
-update public.wheels set model_url = '${modelUrl}', model_flip = ${opts.flip}, updated_at = now() where id = '${opts.wheel}';
-`);
+${newRow ? `-- New wheel with PLACEHOLDER copy; set the real name, sizes, prices and description in /admin.
+insert into public.wheels (id, code, name, subtitle, style, spoke_type, spoke_count, standard_sizes, price_per_set, price_by_size,
+  description, highlights, available_variants, default_variant, image_url, image_extrude, model_url, model_flip, active)
+values (${sql(newRow.id)}, ${sql(newRow.code)}, ${sql(newRow.name)}, ${sql(newRow.subtitle)}, ${sql(newRow.style)}, ${sql(newRow.spokeType)}, ${newRow.spokeCount},
+  ${sqlArr(newRow.standardSizes)}, ${newRow.pricePerSet}, ${sql(JSON.stringify(newRow.priceBySize))}::jsonb,
+  ${sql(newRow.description)}, '{}'::text[], ${sqlArr(newRow.availableVariants)}, ${sql(newRow.defaultVariant)}, ${newRow.imageUrl ? sql(newRow.imageUrl) : 'null'}, false, '${modelUrl}', ${opts.flip}, true)
+on conflict (id) do update set model_url = excluded.model_url, model_flip = excluded.model_flip, image_url = coalesce(public.wheels.image_url, excluded.image_url),
+  image_extrude = false, active = true, updated_at = now();
+` : `update public.wheels set model_url = '${modelUrl}', model_flip = ${opts.flip}, updated_at = now() where id = '${opts.wheel}';
+`}${rearModelUrl ? `-- Staggered set: the rear rim file (needs the rear_model_url column from the staggered-rims migration).
+update public.wheels set rear_model_url = '${rearModelUrl}', updated_at = now() where id = '${opts.wheel}';
+` : ''}`);
 log(`Wrote ${path.relative(ROOT, migration)} (apply it to Supabase, or upload the same file in /admin > Wheels > ${opts.wheel} > Rim 3D model)`);
 
 // ---------------------------------------------------------------------------------------------------
@@ -199,7 +297,7 @@ if (opts.check) {
   if (!(up.status === 0 && up.stdout.toString() === '200')) {
     log(`\n--check skipped: start the dev server first (bunx vite --host 127.0.0.1 --port ${opts.port}).`);
   } else {
-    const idx = wheelIds.indexOf(opts.wheel);
+    const idx = exists ? wheelIds.indexOf(opts.wheel) : wheelIds.length; // a new wheel was appended at the end
     const outDir = path.join(ROOT, 'docs/ingest/rims', opts.wheel);
     fs.rmSync(outDir, { recursive: true, force: true });
     fs.mkdirSync(outDir, { recursive: true });
