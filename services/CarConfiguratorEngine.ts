@@ -1960,8 +1960,9 @@ export class CarConfiguratorEngine {
     });
     this.modelWheelMeshes.forEach((m) => {
       if (!m.userData.stockOriginal) m.userData.stockOriginal = m.material; // the car's own material, kept once
-      const own: THREE.Material | THREE.Material[] = m.userData.stockOriginal;
+      const own: THREE.Material | THREE.Material[] | undefined = m.userData.stockOriginal;
       m.visible = on;
+      if (!own) return; // a mesh with no material: nothing to swap
       const isRim = !Array.isArray(own) && /rim/i.test(own.name) && !/tyre|tire|disc|brake/i.test(own.name);
       if (!on || !this.stockFinished || !isRim) {
         m.material = own;
