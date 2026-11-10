@@ -4,16 +4,18 @@
  */
 
 /**
- * Copy for the Terms & Conditions and Delivery & Fitment pages. Edit the text here; the pages
- * (components/InfoPage.tsx) lay it out.
+ * Copy for the Terms & Conditions, Delivery & Fitment and Model credits pages. Edit the text here;
+ * the pages (components/InfoPage.tsx) lay it out.
  *
  * DRAFT: written as a sensible South African starting point (Consumer Protection Act, POPIA), not
  * legal advice. Have an attorney review it, fill in the [bracketed] details, then set
- * `LEGAL_DRAFT` to false to remove the draft notice from both pages.
+ * `LEGAL_DRAFT` to false to remove the draft notice from the pages.
+ *
+ * CREDITS mirrors public/models/CREDITS.md (the file of record): change both together.
  */
 
 export const LEGAL_DRAFT = true;
-export const PAGES_UPDATED = '27 September 2026';
+export const PAGES_UPDATED = '10 November 2026';
 
 export interface InfoSection {
   title: string;
@@ -24,7 +26,7 @@ export interface InfoSection {
 }
 
 export interface InfoPageContent {
-  path: '/terms' | '/delivery';
+  path: '/terms' | '/delivery' | '/credits';
   eyebrow: string;
   title: string;
   intro: string;
@@ -184,6 +186,89 @@ export const DELIVERY: InfoPageContent = {
       title: 'Before you fit',
       body: [
         'Test-fit one wheel on each axle before tyres are mounted, especially if your car has upgraded brakes. Forged wheels should be fitted by a qualified technician and the bolts torqued to BMW specification, then re-checked after the first 50–100 km.'
+      ]
+    }
+  ]
+};
+
+const CC_BY = 'CC BY 4.0 (creativecommons.org/licenses/by/4.0)';
+const SKETCHFAB = 'sketchfab.com/3d-models/';
+
+/** One CC BY 4.0 car credit: title, author, source, licence and the changes we made. */
+const ccByCar = (title: string, author: string, slug: string, changes: string) =>
+  `"${title}" by ${author}. Source: ${SKETCHFAB}${slug}. Licence: ${CC_BY}. Changes: ${changes}`;
+
+/**
+ * Model credits page (/credits). Satisfies the attribution the CC BY 4.0 car models require and
+ * records the source of everything else drawn in the configurator. Mirror of public/models/CREDITS.md.
+ */
+export const CREDITS: InfoPageContent = {
+  path: '/credits',
+  eyebrow: 'Legal',
+  title: 'Model credits',
+  intro:
+    'The cars and wheels in the configurator are 3D visualisations. This page credits the people whose work they are built on and records the licence each model is used under. BMW, M and the model names are trademarks of BMW AG; FORGEDSA is an independent brand and is not affiliated with or endorsed by BMW AG.',
+  sections: [
+    {
+      title: 'FORGEDSA wheels',
+      body: [
+        'The wheel designs are FORGEDSA’s own. The 3D rim files were supplied by FORGEDSA from its website and prepared for the configurator (web compression; the brake parts in the source files are not shown). The 3D artist who modelled them is not recorded in the files; creator credit to be confirmed.'
+      ],
+      points: [
+        'FSA001 (2-piece, staggered 19×9.5 front / 20×11 rear): supplied by FORGEDSA; creator credit to be confirmed.',
+        'FSA002: supplied by FORGEDSA; creator credit to be confirmed.',
+        'FSA003: supplied by FORGEDSA; creator credit to be confirmed.',
+        'FSA004: supplied by FORGEDSA; creator credit to be confirmed.',
+        'FF-1: supplied by FORGEDSA; creator credit to be confirmed.',
+        'FF-3: supplied by FORGEDSA; creator credit to be confirmed.',
+        'Wheel thumbnails: cut-outs of FORGEDSA’s own product photographs; the FSA001 thumbnail is a render of its 3D rim file.'
+      ]
+    },
+    {
+      title: 'BMW cars prepared for FORGEDSA',
+      body: [
+        'The M2 CS (G87), M4 CS (G82), M5 (G90) and M5 Touring (G99) bodies were supplied by FORGEDSA as prepared 3D packages. Their author is not recorded in the files; licence to be confirmed. Original wheels replaced in the configurator.'
+      ],
+      points: [
+        'BMW M2 CS (G87): supplied by FORGEDSA, licence to be confirmed.',
+        'BMW M4 CS (G82): supplied by FORGEDSA, licence to be confirmed.',
+        'BMW M5 (G90): supplied by FORGEDSA, licence to be confirmed.',
+        'BMW M5 Touring (G99): supplied by FORGEDSA, licence to be confirmed.'
+      ]
+    },
+    {
+      title: 'BMW cars from Sketchfab (Creative Commons Attribution 4.0)',
+      body: [
+        'These models are used under the Creative Commons Attribution 4.0 International licence, which allows commercial use provided the author is credited and changes are indicated. In every case we replaced the original wheels with FORGEDSA wheels and compressed the file for the web. Some of these cars are not currently offered in the configurator; the credit stands while the file is part of the site.'
+      ],
+      points: [
+        ccByCar('BMW M4 Competition M Package', 'SRT Performance', 'bmw-m4-competition-m-package-5c0a2dafb1ad408d9fc9eeef9aee531b', 'livery hidden, wheels replaced.'),
+        ccByCar('2025 BMW M4 CS VR46 Edition', "BMW'S Lost Proxy", '2025-bmw-m4-cs-vr46-edition-3d111a7ed0f544bc9215e3038db4c8dc', 'compressed, wheels replaced, calipers recoloured.'),
+        ccByCar('BMW M2 g87 [Free]', 'Black Snow', 'bmw-m2-g87-free-125412579b244790b27b2a7839527c6e', 'wheels replaced.'),
+        ccByCar('2021 BMW M3 Competition (G80)', 'DisneyCars', '2021-bmw-m3-competition-g80-a9027a26b7ee4da4b564d939b6c27559', 'wheels replaced.'),
+        ccByCar('BMW m3 Competition Tourning [g81]', 'Black Snow', 'bmw-m3-competition-tourning-g81-e2a4d608b2034e639c7eb6a2ef8dbfa1', 'wheels replaced.'),
+        ccByCar('BMW M8 F92 Coupé Competition', 'kevin (ケビン)', 'bmw-m8-f92-coupe-competition-25d5b4f6d13e4217afa09bbf89f8d993', 'wheels replaced.'),
+        ccByCar('BMW X5M F95 + Facelifted Versions', 'ZapupaNekra', 'bmw-x5m-f95-facelifted-versions-2f4b104aae8f4b59b05683a2a144902d', 'only the facelift X5 M Competition parts kept, materials rebuilt, plates and engine bay removed, wheels replaced.'),
+        ccByCar('BMW G90 M5', 'JUSTGAME', 'bmw-g90-m5-9dc9e5c88bec4faa94552fdd0b76ed21', 'body panels given their own paint material, wheels replaced.'),
+        ccByCar('2026 BMW X3', 'tonielpro520', '2026-bmw-x3-73212a0045524ca0804b82b813847a94', 'tyres separated from the trim mesh, wheels replaced.')
+      ]
+    },
+    {
+      title: 'BMW M235i Gran Coupé (Sketchfab Standard licence)',
+      body: [
+        `"BMW M235i Gran Coupé" by KOElkast1007 (sketchfab.com/koelkastasbers). Source: ${SKETCHFAB}bmw-m235i-gran-coupe-23aea45df6da44fab8785df6c3b09ecd. Licence: Sketchfab Standard (sketchfab.com/licenses), which permits use within this project but not redistribution of the model file. This car is not offered in the configurator and stays off unless re-licensed. Changes: skeleton baked out, wheels replaced.`
+      ]
+    },
+    {
+      title: 'Studio lighting',
+      body: [
+        '"Studio Small 09" HDRI by Poly Haven (polyhaven.com/a/studio_small_09), CC0 (public domain). Used for reflections.'
+      ]
+    },
+    {
+      title: 'Corrections',
+      body: [
+        'If you are the author of one of these models and the credit or licence shown is wrong, or you would like it displayed differently, email [info@forgedsa.com] and we will correct it promptly.'
       ]
     }
   ]

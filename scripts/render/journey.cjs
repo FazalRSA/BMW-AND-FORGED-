@@ -59,7 +59,9 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       await p.getByRole('button', { name: /enter|start|begin|explore|discover/i }).first().waitFor({ timeout: 240000 });
     });
     await step('welcome-enter', async () => {
-      await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click();
+      // The boot screen can still cover the page under load: wait for it to fade before clicking
+      await p.locator('[aria-label="Loading"]').waitFor({ state: 'hidden', timeout: 120000 }).catch(() => {});
+      await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click({ timeout: 60000 });
       await p.getByRole('button', { name: /^build$/i }).waitFor({ timeout: 60000 });
     });
     await step('showroom-next', async () => {
@@ -68,7 +70,9 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     });
     await step('showroom-build', async () => {
       await p.getByRole('button', { name: /^build$/i }).click();
-      await p.getByRole('button', { name: /^confirm$/i }).click();
+      // The notice closes as it is confirmed; a click whose target vanishes mid-way is fine, and the notice is not shown for every car
+      const confirm = p.getByRole('button', { name: /^confirm$/i });
+      if (await confirm.waitFor({ timeout: 8000 }).then(() => true, () => false)) await confirm.click({ timeout: 45000, noWaitAfter: true }).catch(() => {});
       await p.getByRole('button', { name: /step 2|wheels/i }).first().waitFor({ timeout: 60000 });
     });
     await step('configure-wheels-step', async () => {
@@ -105,8 +109,8 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     await step('summary', async () => {
       // Desktop: the "Summary" icon button; phones: the footer CTA "View your <car>" (the icon is hidden there)
       const summaryBtn = p.getByRole('button', { name: /^summary$/i }).first();
-      if (await summaryBtn.isVisible().catch(() => false)) await summaryBtn.click();
-      else await p.getByRole('button', { name: /^view your /i }).first().click();
+      if (await summaryBtn.isVisible().catch(() => false)) await summaryBtn.click({ timeout: 60000 });
+      else await p.getByRole('button', { name: /^view your /i }).first().click({ timeout: 60000 });
       // the summary page: its price card has Enquire / Share / PDF
       await p.getByRole('button', { name: /^pdf$|download pdf/i }).first().waitFor({ timeout: 60000 });
       await p.waitForTimeout(6000);

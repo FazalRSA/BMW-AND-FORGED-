@@ -81,7 +81,7 @@ export const ENTITIES: EntitySpec[] = [
       { key: 'spoke_count', label: 'Spoke count', type: 'number', step: 1 },
       { key: 'price_by_size', label: 'Sizes & set prices (USD, 4 wheels)', type: 'sizePrices', hint: 'Only sizes listed here are offered. The size visibly changes the rim on the car.' },
       { key: 'available_variants', label: 'Available finishes', type: 'finishes' },
-      { key: 'price_by_finish', label: 'Dearer finishes (USD set price)', type: 'finishPrices', hint: 'Only for finishes that cost more than the size price (e.g. Polished Face, Liquid Metal). Blank = same price as the other finishes.' },
+      { key: 'price_by_finish', label: 'Dearer finishes (USD set price)', type: 'finishPrices', hint: 'Only for finishes that cost more (e.g. Polished Face, Liquid Metal): the set price becomes this figure when it is above the size price, and never drops below the size price. Blank = same price as the other finishes.' },
       { key: 'default_variant', label: 'Default finish ID', type: 'text' },
       { key: 'weight_front_kg', label: 'Front weight (kg)', type: 'number', step: 0.1 },
       { key: 'weight_rear_kg', label: 'Rear weight (kg)', type: 'number', step: 0.1 },

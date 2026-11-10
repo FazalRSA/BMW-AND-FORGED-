@@ -136,12 +136,19 @@ create policy "owners delete own configurations" on public.saved_configurations
 
 grant update, delete on public.saved_configurations to authenticated;
 
--- Claiming a build saved before sign-in ("Save to garage" on the summary). A row-level policy cannot
--- say "only the row whose code the caller typed": `using (user_id is null)` would let one UPDATE
--- without a WHERE claim every anonymous build at once. So the claim is a function that takes the
--- exact code (the code is the secret, as for share links) and only touches that one row when it is
--- still unowned or already the caller's. Returns true when a row was updated.
-create or replace function public.claim_configuration(p_code text, p_name text default null)
+-- Ownership of a saved build is never transferred. A share code is a secret that opens the build
+-- (get_configuration), not proof of who made it: anyone holding a /?config=CODE link could otherwise
+-- sign in, take an anonymous build over and later delete it, killing the sharer's link. So "Save to
+-- garage" on the summary saves a NEW copy owned by the customer (a plain insert, stamped with their
+-- id by the client), and the only server-side change to an existing row is renaming one the caller
+-- already owns. The earlier claim function is removed where it was applied.
+drop function if exists public.claim_configuration(text, text);
+
+-- Renames one of the caller's own builds (the garage's "Rename", and the name given on "Save to
+-- garage"). The exact code is required, the row must carry the caller's id, and nothing else on the
+-- row changes. An empty name clears it (the garage then shows the code). Returns true when a row was
+-- updated: false for an unknown code, an anonymous build or someone else's.
+create or replace function public.rename_configuration(p_code text, p_name text default null)
 returns boolean
 language plpgsql
 security definer
@@ -155,17 +162,16 @@ begin
     return false;
   end if;
   update public.saved_configurations
-     set user_id = uid,
-         name = coalesce(nullif(left(btrim(p_name), 80), ''), name),
+     set name = nullif(left(btrim(p_name), 80), ''),
          updated_at = now()
    where code = upper(p_code)
-     and (user_id is null or user_id = uid);
+     and user_id = uid;
   get diagnostics n = row_count;
   return n > 0;
 end;
 $$;
-revoke all on function public.claim_configuration(text, text) from public, anon;
-grant execute on function public.claim_configuration(text, text) to authenticated;
+revoke all on function public.rename_configuration(text, text) from public, anon;
+grant execute on function public.rename_configuration(text, text) to authenticated;
 
 -- ----------------------------------------------------------------------------------------------
 -- 3. leads: enquiries and PDF downloads remember who sent them

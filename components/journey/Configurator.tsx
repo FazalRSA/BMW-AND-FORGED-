@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { BRAND, Region, formatMoney } from '../../config/brand';
 import { CameraViewPreset, CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
-import { rimFromPrice, rimPrice, rimSizes } from '../../services/pricing';
+import { finishSurcharge, rimFromPrice, rimPrice, rimSizes } from '../../services/pricing';
 import { PAINT_FAMILIES, PaintFamily, paintFamily } from '../../services/journeyService';
 import { Button, Eyebrow, FinishChip, IconButton, Modal, PaintChip, RimThumb, cx } from './ui';
 import { RimFaceSvg } from './RimFaceSvg';
@@ -80,16 +80,33 @@ export const Configurator: React.FC<ConfiguratorProps> = (p) => {
   const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
   const legacy = typeof window !== 'undefined' && /[?&]panel=steps/.test(window.location.search);
   if (legacy) return <LegacyConfigurator {...p} />;
+  const infoFinish = sheetFinish(infoWheel, p.wheel, p.finish);
   return (
     <>
       <ViewerPanel {...p} onInfo={setInfoWheel} />
-      <WheelInfoModal wheel={infoWheel} region={p.region} finishes={p.finishes} onClose={() => setInfoWheel(null)} onOpen360={p.onOpen360} />
+      <WheelInfoModal
+        wheel={infoWheel}
+        region={p.region}
+        finishes={p.finishes}
+        finishId={infoFinish?.id}
+        finishName={infoFinish?.name}
+        onClose={() => setInfoWheel(null)}
+        onOpen360={p.onOpen360}
+      />
     </>
   );
 };
 
+/**
+ * The finish the wheel detail sheet prices its sizes in: the selected finish, so the sheet agrees with the
+ * panel's price. A sheet opened for another wheel only takes that finish when the wheel offers it.
+ */
+const sheetFinish = (wheel: WheelDesign | null, selected: WheelDesign, finish: WheelFinish): WheelFinish | undefined =>
+  wheel && (wheel.id === selected.id || wheel.availableVariants.includes(finish.id)) ? finish : undefined;
+
 const LegacyConfigurator: React.FC<ConfiguratorProps> = (p) => {
   const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
+  const infoFinish = sheetFinish(infoWheel, p.wheel, p.finish);
   const price = rimPrice(p.wheel, p.size, p.finish.id);
   const stepIndex = STEPS.findIndex((s) => s.id === p.step);
 
@@ -211,7 +228,15 @@ const LegacyConfigurator: React.FC<ConfiguratorProps> = (p) => {
         </div>
       </aside>
 
-      <WheelInfoModal wheel={infoWheel} region={p.region} finishes={p.finishes} onClose={() => setInfoWheel(null)} onOpen360={p.onOpen360} />
+      <WheelInfoModal
+        wheel={infoWheel}
+        region={p.region}
+        finishes={p.finishes}
+        finishId={infoFinish?.id}
+        finishName={infoFinish?.name}
+        onClose={() => setInfoWheel(null)}
+        onOpen360={p.onOpen360}
+      />
     </>
   );
 };
@@ -481,68 +506,84 @@ export const WheelInfoModal: React.FC<{
   wheel: WheelDesign | null;
   region: Region;
   finishes: Record<string, WheelFinish>;
+  /** The finish the sizes are priced in (the selected one, so the sheet matches the panel); omitted = base finish. */
+  finishId?: string;
+  finishName?: string;
   onClose: () => void;
   onOpen360: (wheel: WheelDesign) => void;
-}> = ({ wheel, region, finishes, onClose, onOpen360 }) => (
-  <Modal open={!!wheel} onClose={onClose} title={wheel ? `${wheel.code}` : ''} width="max-w-xl">
-    {wheel && (
-      <div>
-        <div className="flex items-center gap-5">
-          <RimThumb wheel={wheel} finish={finishes[wheel.defaultVariant]} size={110} />
-          <div className="min-w-0">
-            <div className="font-display text-[20px] font-extrabold tracking-[-0.015em]">{wheel.name}</div>
-            <div className="mt-1 text-[13px] text-mute">{wheel.subtitle}</div>
-            <div className="mt-2 text-[12px] font-semibold text-bronze">From {formatMoney(rimFromPrice(wheel), region)} per set</div>
-          </div>
-        </div>
-        <p className="mt-6 text-[14px] leading-relaxed text-mute">{wheel.description}</p>
-        <ul className="mt-5 space-y-2">
-          {wheel.highlights.map((h) => (
-            <li key={h} className="flex gap-3 text-[13px] text-ink">
-              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-bronze" />
-              {h}
-            </li>
-          ))}
-        </ul>
-        {(wheel.weightFrontKg > 0 || wheel.weightRearKg > 0) && (
-        <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-line ring-1 ring-line text-center">
-          {[
-            ['Front', `${wheel.weightFrontKg} kg`],
-            ['Rear', `${wheel.weightRearKg} kg`],
-            ['Saving', wheel.weightSavingsKg > 0 ? `${wheel.weightSavingsKg} kg` : '—']
-          ].map(([k, v]) => (
-            <div key={k} className="bg-surface p-4">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-mute">{k}</div>
-              <div className="mt-1 font-display text-[16px] font-extrabold">{v}</div>
+}> = ({ wheel, region, finishes, finishId, finishName, onClose, onOpen360 }) => {
+  // What the finish adds over the base finish, per size; one figure when it is the same at every size
+  const extras = wheel && finishId ? rimSizes(wheel).map((s) => finishSurcharge(wheel, s, finishId)).filter((x) => x > 0) : [];
+  const lo = Math.min(...extras);
+  const hi = Math.max(...extras);
+  const extra = extras.length ? (lo === hi ? formatMoney(hi, region) : `${formatMoney(lo, region)} to ${formatMoney(hi, region)}`) : '';
+  const extraFinish = finishName ?? (finishId ? finishes[finishId]?.name : undefined);
+  return (
+    <Modal open={!!wheel} onClose={onClose} title={wheel ? `${wheel.code}` : ''} width="max-w-xl">
+      {wheel && (
+        <div>
+          <div className="flex items-center gap-5">
+            <RimThumb wheel={wheel} finish={finishes[wheel.defaultVariant]} size={110} />
+            <div className="min-w-0">
+              <div className="font-display text-[20px] font-extrabold tracking-[-0.015em]">{wheel.name}</div>
+              <div className="mt-1 text-[13px] text-mute">{wheel.subtitle}</div>
+              <div className="mt-2 text-[12px] font-semibold text-bronze">From {formatMoney(rimFromPrice(wheel), region)} per set</div>
             </div>
-          ))}
-        </div>
-        )}
-        <div className="mt-6">
-          <Eyebrow className="mb-2">Sizes and prices (set of four)</Eyebrow>
-          <div className="flex flex-wrap gap-2">
-            {rimSizes(wheel).map((s) => (
-              <span key={s} className="rounded-full bg-ink/[0.04] px-3 py-1.5 text-[12px]">
-                <b className="font-semibold">{s}</b> <span className="text-mute">{formatMoney(rimPrice(wheel, s), region)}</span>
-              </span>
+          </div>
+          <p className="mt-6 text-[14px] leading-relaxed text-mute">{wheel.description}</p>
+          <ul className="mt-5 space-y-2">
+            {wheel.highlights.map((h) => (
+              <li key={h} className="flex gap-3 text-[13px] text-ink">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-bronze" />
+                {h}
+              </li>
+            ))}
+          </ul>
+          {(wheel.weightFrontKg > 0 || wheel.weightRearKg > 0) && (
+          <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-line ring-1 ring-line text-center">
+            {[
+              ['Front', `${wheel.weightFrontKg} kg`],
+              ['Rear', `${wheel.weightRearKg} kg`],
+              ['Saving', wheel.weightSavingsKg > 0 ? `${wheel.weightSavingsKg} kg` : '—']
+            ].map(([k, v]) => (
+              <div key={k} className="bg-surface p-4">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-mute">{k}</div>
+                <div className="mt-1 font-display text-[16px] font-extrabold">{v}</div>
+              </div>
             ))}
           </div>
+          )}
+          <div className="mt-6">
+            <Eyebrow className="mb-2">Sizes and prices (set of four)</Eyebrow>
+            <div className="flex flex-wrap gap-2">
+              {rimSizes(wheel).map((s) => (
+                <span key={s} className="rounded-full bg-ink/[0.04] px-3 py-1.5 text-[12px]">
+                  <b className="font-semibold">{s}</b> <span className="text-mute">{formatMoney(rimPrice(wheel, s, finishId), region)}</span>
+                </span>
+              ))}
+            </div>
+            {extra && extraFinish && (
+              <p className="mt-2 text-[11px] text-mute">
+                Prices shown in {extraFinish} (+{extra})
+              </p>
+            )}
+          </div>
+          <Button
+            className="mt-7 w-full"
+            variant="secondary"
+            onClick={() => {
+              onClose();
+              onOpen360(wheel);
+            }}
+            icon={<Rotate3d className="h-4 w-4" strokeWidth={1.7} />}
+          >
+            View in 360°
+          </Button>
         </div>
-        <Button
-          className="mt-7 w-full"
-          variant="secondary"
-          onClick={() => {
-            onClose();
-            onOpen360(wheel);
-          }}
-          icon={<Rotate3d className="h-4 w-4" strokeWidth={1.7} />}
-        >
-          View in 360°
-        </Button>
-      </div>
-    )}
-  </Modal>
-);
+      )}
+    </Modal>
+  );
+};
 
 // ----------------------------------------------------
 // ··· More options

@@ -75,9 +75,13 @@ The configurator can draw a car two ways (`App.tsx`, `services/renderedBody.ts`)
 
   Nothing else changes: the same GLB stays in the showroom, and the wheels stay live.
 
-Going back to the old frames: `git checkout <commit> -- public/renders/<carId>` and rebuild the manifest
-(`node scripts/ingest-car.mjs … --dry-run` does not; run `scripts/prerender/render-all.sh` with no
-index, or delete `public/renders/manifest.json` entries by hand).
+Going back to the old frames: `git checkout <commit> -- public/renders/<carId>` restores the frames but not
+their entry in `public/renders/manifest.json` (the ingest removed it; `--dry-run` rebuilds nothing). Either
+add the entry by hand (`"<carId>": [<view folders that hold gloss_w.webp>]`, the shape of the other entries),
+or run `scripts/prerender/render-all.sh <carIndex>` for that one car (its index in `BMW_MODELS`, hidden cars
+included: `scripts/prerender/render-all.sh 7` for m5_g90) — it re-renders that car (about 15 minutes) and then
+rebuilds the manifest from everything on disk. Do not run it with no index: that re-renders every car for hours
+and overwrites the frames just restored.
 
 ## The configurator screen looks like the viewer
 
@@ -100,24 +104,35 @@ no tyre; see `public/models/wheels/README.md` in the Forgedwebsite repo) goes on
 node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa003.glb --wheel forged_fsa_03 --check
 ```
 
-It packs the file (`scripts/rim3d/pack.mjs`), writes `public/models/rims/<wheelId>.glb`, sets
-`modelUrl` on the wheel in the bundled catalogue plus a migration for `public.wheels`, and shoots the
-wheel on two cars into `docs/ingest/rims/`. On the car the 3D rim replaces the wheel's photo face; the rim
-page keeps its pre-rendered spin. Spokes facing into the car: add `--flip`. Back to the photo face:
-remove `modelUrl` (or clear "Rim 3D model" in `/admin`).
+It packs the file (`scripts/rim3d/pack.mjs`, to `--budget` triangles, default 40 000), writes
+`public/models/rims/<wheelId>.glb`, sets `modelUrl` on the wheel in the bundled catalogue plus a migration
+for `public.wheels`, and with `--check` shoots the wheel on the two prepared cars the engine page indexes as
+`1` (M4 CS, `m4_cs_g82`: close-up in Liquid Metal and Black Gloss, front three-quarter in Silver) and `7`
+(M5, `m5_g90`: 21" in Bronze) into `docs/ingest/rims/<wheelId>/` with a contact sheet
+`docs/ingest/rims/<wheelId>.jpg`. On the car the 3D rim replaces the wheel's photo face; the rim page keeps
+its pre-rendered spin. Spokes facing into the car: run again with `--flip`. Back to the photo face: remove
+`modelUrl` (or clear "Rim 3D model" in `/admin`). `--dry-run` prints the rim check and the plan and changes
+nothing (no pack, no catalogue edit, no migration, no thumbnail copy); `--port` points at a dev server on
+another port; `node scripts/ingest-rim.mjs --help` lists every option.
 
-A wheel that is not in the catalogue yet is created on the way in:
+A wheel that is not in the catalogue yet is created on the way in with `--new` and a **new** id:
 
 ```bash
-node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa002.glb --wheel forged_fsa002 --new \
-  --name "FSA002" --code FSA002 --spokes 15 --sizes 20,21 --price-zar 75000 \
-  --finishes satin_gold,gunmetal,silver --default-finish satin_gold --image /rim-images/forged_fsa002.webp --check
+node scripts/ingest-rim.mjs fsa005.glb --wheel forged_fsa005 --new \
+  --name "FSA005" --code FSA005 --spokes 10 --sizes 20,21 --price-zar 75000 \
+  --finishes gold,hyper_black,polished_face --default-finish gold --image ./fsa005.webp --check
 ```
 
-`--new` appends a row (PLACEHOLDER copy, prices in USD from the ZAR figure at the ZA rate, +9 % per inch
-above the smallest size) to the bundled catalogue and writes an `insert … on conflict` migration; the owner
-sets the real names, copy and prices in `/admin`. `--rear <rear.glb>` packs a second file for a staggered
-set (`rearModelUrl`; engine support for the rear file is the next step).
+`--new` appends a row (PLACEHOLDER copy; the ZAR price is stored in USD to the cent at the ZA rate, the same
+for every size, as on the stock sheet; `--price-usd` takes a dollar price instead) to the bundled catalogue
+and writes an `insert … on conflict` migration; the owner sets the real copy, and any per-size or per-finish
+price, in `/admin`. `--image` copies a file into `public/rim-images/` (or takes a `/rim-images/…` path already
+there). The script refuses `--new` for an id that already exists (the six wheels above included), because it
+would add a second row with the same id and reactivate a wheel hidden in `/admin`: to put a rim on an existing
+wheel, or to re-run with `--flip`, leave `--new` and the describing options out. `--rear <rear.glb>` packs a
+second file for a staggered set (`rearModelUrl`; the engine mounts it on the rear corners). Brake parts and
+tyres inside the file are dropped when packing (`--drop ''` keeps them, `--drop '<regex>'` changes the rule).
+Every run writes a new, later-stamped migration file.
 
 Thumbnails: `RimThumb` masks the photo by its alpha, so a website `front.webp` on white must be cut out
 first (`rembg`, as the photo pipeline does), squared on a transparent canvas and saved as WebP with alpha

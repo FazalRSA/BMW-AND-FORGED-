@@ -56,8 +56,8 @@ values
    array['silver', 'hyper_black', 'black'], 'silver', '/rim-images/forged_fsa004.webp', false, '/models/rims/forged_fsa004.glb', false, null, 3, true),
   ('sixnine_ff1', 'FF-1', 'FF-1', 'Split five-spoke, two-piece', 'Two-Piece Forged', 'multi', 10, array['20"', '21"'], 4395.60,
    '{"20\"": 4395.60, "21\"": 4395.60}'::jsonb, '{"liquid_metal": 5219.78}'::jsonb,
-   'Split five-spoke two-piece forged wheel in Silver or Liquid Metal. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET15/20 · CB 66.6.',
-   array['Two-piece construction', 'Silver or Liquid Metal', 'PCD 5×112 · ET15/20 · CB 66.6'],
+   'Split five-spoke two-piece forged wheel in Silver or Liquid Metal. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET15/20 (Silver) · ET15/17 (Liquid Metal) · CB 66.6.',
+   array['Two-piece construction', 'Silver or Liquid Metal', 'PCD 5×112 · ET15/20 (Silver) · ET15/17 (Liquid Metal) · CB 66.6'],
    array['silver', 'liquid_metal'], 'silver', '/rim-images/sixnine_ff1.webp', false, '/models/rims/sixnine_ff1.glb', false, null, 4, true),
   ('sixnine_ff3', 'FF-3', 'FF-3', 'Twin five-spoke, three-piece', 'Three-Piece Forged', 'multi', 10, array['20"', '21"'], 4395.60,
    '{"20\"": 4395.60, "21\"": 4395.60}'::jsonb, '{"liquid_metal": 5219.78}'::jsonb,
@@ -77,7 +77,9 @@ update public.wheels set active = false, updated_at = now()
 where id not in ('forged_fsa001', 'forged_fsa002', 'forged_fsa_03', 'forged_fsa004', 'sixnine_ff1', 'sixnine_ff3');
 
 -- 5. The lead email shows the wheel price: a dearer finish now counts (same function as
---    20261001090000_lead_hardening.sql, with price_by_finish added to the price lookup).
+--    20261001090000_lead_hardening.sql, with price_by_finish added to the price lookup). Same rule as
+--    services/pricing.ts rimPrice: the finish price only ever raises the price, never lowers it, so
+--    the owner's email and the customer's summary / PDF quote the same figure.
 create or replace function private.notify_lead_webhook()
 returns trigger
 language plpgsql
@@ -102,6 +104,9 @@ begin
   end if;
 
   -- The lead stores display names; look the rest up so the email can show swatches, the wheel image and price.
+  -- The stocked wheels have site-relative image_url values (/rim-images/*.webp), which an email client
+  -- cannot resolve, so they are sent as absolute URLs on the production origin. Leads from previews or
+  -- other hosts still get the production image, which is fine (same file).
   payload := jsonb_build_object(
     'id', new.id,
     'created_at', new.created_at,
@@ -124,9 +129,10 @@ begin
          order by p.active desc limit 1),
       jsonb_build_object('name', cfg ->> 'paint')),
     'wheel', coalesce(
-      (select jsonb_build_object('name', w.name, 'code', w.code, 'style', w.style, 'image_url', w.image_url,
-                                 'price_usd', coalesce(nullif((w.price_by_finish ->> (cfg ->> 'finishId'))::numeric, 0),
-                                                       (w.price_by_size ->> (cfg ->> 'size'))::numeric, w.price_per_set))
+      (select jsonb_build_object('name', w.name, 'code', w.code, 'style', w.style,
+                                 'image_url', case when w.image_url like '/%' then 'https://forged-configurator.vercel.app' || w.image_url else w.image_url end,
+                                 'price_usd', greatest(coalesce((w.price_by_finish ->> (cfg ->> 'finishId'))::numeric, 0),
+                                                       coalesce((w.price_by_size ->> (cfg ->> 'size'))::numeric, w.price_per_set)))
          from public.wheels w where w.id = cfg ->> 'wheelId' or (cfg ->> 'wheelId' is null and w.name = cfg ->> 'wheel')
          order by w.active desc limit 1),
       jsonb_build_object('name', cfg ->> 'wheel')),

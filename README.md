@@ -143,7 +143,11 @@ node scripts/ingest-rim.mjs rim.glb --wheel forged_fsa005 --new --name FSA005 --
 # staggered set: add --rear rear.glb
 ```
 
-It checks and packs the file, writes the catalogue row and a migration, and shoots a check sheet.
+It checks and packs the file, writes the catalogue row and a migration, and shoots a check sheet on the
+prepared M4 CS and M5. `--new` is for an id that does not exist yet (the script refuses an existing one);
+to put a rim on a wheel already in the catalogue, leave `--new` and the describing options out
+(`node scripts/ingest-rim.mjs rim.glb --wheel forged_fsa_03 --check`). `--dry-run` prints the plan and
+changes nothing; `node scripts/ingest-rim.mjs --help` lists every option.
 
 **By hand:** Wheels tab → **New** → fill in code/name/subtitle/style/spoke type/spoke count/weights/description
 → upload either a transparent front-on rim **PNG** (the app extrudes it into 3D automatically) or a
@@ -164,7 +168,7 @@ in the FORGED Drive folder; edit it like any spreadsheet.
 | `code` | `FSA-02` | optional; becomes the wheel id (`forged_fsa_02`), keep it stable |
 | `sizes` | `19\|20\|21\|22` | separate values with `\|` |
 | `prices_zar` or `prices_usd` | `68000\|74000\|82000\|92000` | set of four, one per size |
-| `finishes` | `Liquid Metal\|Silver` | Liquid Metal, Bronze Matte, Black Gloss, Silver |
+| `finishes` | `Liquid Metal\|Silver` | any finish in the `wheel_finishes` table: Liquid Metal, Bronze Matte, Black Gloss, Silver, Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte (and Satin Gold, Gunmetal Matte) |
 | optional | `subtitle`, `description`, `highlights` (split on `\|`), `style`, `skip` (`yes` = leave alone), `notes` | AI writes the copy if blank |
 
 Each photo is cut out (rim only, transparent gaps), then posted to the Supabase function
@@ -194,9 +198,9 @@ Two fields need a bit of care, because every 3D model names its own parts differ
 - **Paint mesh match** — a regex matched against the model's own mesh/material names to decide what
   gets recoloured. The default (`paint|body|carpaint|exterior`) is only a starting point. Real
   exports are inconsistent: the M3's paint is one flat-colour material covering every body panel
-  (`merged_materials`), while the M4 needed **three** separate materials named `zx1mtl`,
-  `body151mtl` and (confusingly) `pillars1mtl` — the last one, despite its name, covers most of the
-  rear bodywork, not window pillars. **Inspect the model's real material names** (open the browser
+  (`merged_materials`), while the M4 needed **four** separate materials named `zx1mtl`,
+  `body151mtl`, `livery1mtl` and (confusingly) `pillars1mtl` — the last one, despite its name, covers
+  most of the rear bodywork, not window pillars. **Inspect the model's real material names** (open the browser
   console on `/configure` with the car loaded, or a glTF viewer) rather than assuming the default
   regex is enough — an incomplete match is exactly what causes a car to look "two-tone" or have
   unpainted panels.
@@ -233,7 +237,7 @@ leads and share codes also carry their `user_id`, so the garage and the admin ca
 
 ## Project skills (for Claude Code and developers)
 
-Eighteen task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
+Twenty task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
 and wheels (including turning a rim photo into a swappable 3D rim, and the wheel finishes), tuning
 paint, verifying renders, the PDF, lead emails, branding, docs, deploys and secrets. Claude Code loads them automatically; the index with when-to-use notes is
 [`docs/SKILLS.md`](docs/SKILLS.md).

@@ -1,9 +1,9 @@
 ---
 name: forgedsa-rim-finishes
-description: How FORGEDSA wheel finishes (Liquid Metal, Black Gloss, Bronze Matte, Silver aluminium, and any finish made in /admin) are built so they look like the real coatings. Covers the four finish kinds and their values, the code (services/wheelFinish.ts), what else follows the finish (barrel, lip, GLB rims), adding or tuning a finish, QA renders and pitfalls. Use when a finish looks wrong (plastic, flat, orange, a black hole, chrome-like matte), when adding or editing a finish, or when someone asks how the wheel colours work.
+description: How FORGEDSA wheel finishes (the stock sheet's Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte, Silver, Gloss Black and Liquid Metal, the older Bronze Matte, and any finish made in /admin) are built so they look like the real coatings. Covers the four finish kinds and their values, the code (services/wheelFinish.ts), what else follows the finish (barrel, lip, GLB rims), adding or tuning a finish, QA renders and pitfalls. Use when a finish looks wrong (plastic, flat, orange, a black hole, chrome-like matte), when adding or editing a finish, or when someone asks how the wheel colours work.
 ---
 
-# Rim finishes: Liquid Metal, Black Gloss, Bronze Matte, Silver
+# Rim finishes: the four kinds, and the stock-sheet finishes built from them
 
 A finish is **one colour plus four numbers** in the `wheel_finishes` table (admin → Finishes). It
 is never a texture. `services/wheelFinish.ts` reads the numbers as a layered coating, the way
@@ -18,7 +18,10 @@ admin numbers (hex, metalness, roughness, clearcoat)
 
 The kind is picked from the numbers, so a finish made in the admin works without code changes.
 
-## The four finishes
+## The four base finishes (one per kind)
+
+Customers now see nine finishes (the stock-sheet table at the end); these four are the reference
+recipe for each kind. `bronze` (Bronze Matte) is offered on hidden wheels only.
 
 | Finish (id) | Admin values | Kind (rule) | What the engine renders |
 |---|---|---|---|
@@ -102,18 +105,25 @@ an edit in Finishes changes the live site at once.
 
 ## QA
 
-1. **Shot list:** the same design, car and view in all four finishes; no other change between
-   shots:
+1. **Shot list:** the same stocked design (by id), live car and view in every stock-sheet finish;
+   no other change between shots. `car` 1 is the M4 CS (live cars: 1, 5, 7, 8; `3` is the hidden
+   M3), `"q": "&look=viewer"` is what /configure draws:
 
    ```json
-   [{"name":"liquid","car":3,"paint":16,"wheel":4,"finish":"liquid_metal","view":"frontWheel"},
-    {"name":"black","car":3,"paint":16,"wheel":4,"finish":"black","view":"frontWheel"},
-    {"name":"bronze","car":3,"paint":16,"wheel":4,"finish":"bronze","view":"frontWheel"},
-    {"name":"silver","car":3,"paint":16,"wheel":4,"finish":"silver","view":"frontWheel"}]
+   [{"name":"gold","car":1,"paint":16,"wheel":"forged_fsa004","finish":"gold","view":"frontWheel","q":"&look=viewer"},
+    {"name":"hyper_black","car":1,"paint":16,"wheel":"forged_fsa004","finish":"hyper_black","view":"frontWheel","q":"&look=viewer"},
+    {"name":"polished_face","car":1,"paint":16,"wheel":"forged_fsa004","finish":"polished_face","view":"frontWheel","q":"&look=viewer"},
+    {"name":"silver","car":1,"paint":16,"wheel":"forged_fsa004","finish":"silver","view":"frontWheel","q":"&look=viewer"},
+    {"name":"black","car":1,"paint":16,"wheel":"forged_fsa004","finish":"black","view":"frontWheel","q":"&look=viewer"},
+    {"name":"pure_bronze","car":1,"paint":16,"wheel":"forged_fsa004","finish":"pure_bronze","view":"frontWheel","q":"&look=viewer"},
+    {"name":"liquid","car":1,"paint":16,"wheel":"forged_fsa004","finish":"liquid_metal","view":"frontWheel","q":"&look=viewer"},
+    {"name":"black_matte","car":1,"paint":16,"wheel":"forged_fsa004","finish":"black_matte","view":"frontWheel","q":"&look=viewer"}]
    ```
 
-   Run with `node scripts/render/shoot.cjs <out> shots.json <rimCacheDir>` (see
-   `forgedsa-render-verification` and the `3d-car-perfect` skill). Crop the wheels side by side.
+   Then the same list on each stocked wheel in the finishes it offers (`docs/WHEEL_INVENTORY.md`);
+   add `bronze` only when a wheel offers it. Run with `node scripts/render/shoot.cjs <out> shots.json`
+   (GLB rims need no rim cache; see `forgedsa-render-verification` and the `3d-car-perfect` skill).
+   Crop the wheels side by side.
 2. **Look for, per finish:**
    - **Liquid Metal:** crisp reflections of the softbox panels on the spoke faces; no sparkle
      on the edges.
@@ -122,6 +132,14 @@ an edit in Finishes changes the live site at once.
    - **Bronze Matte:** no mirror highlight anywhere, even on the lip and at grazing angles;
      darker sides; brown-gold, not orange.
    - **Silver:** brighter faces, darker sides; not chrome-like.
+   - **Gold / Pure Bronze:** warm metallic paint with flop and sharp clear-coat reflections; gold
+     reads gold, not yellow or brass-orange; bronze brown-gold, not orange.
+   - **Hyper Black:** dark gloss metallic whose faces flash bright as they turn (flop); pockets
+     near-black; never a flat black cut-out, never as light as Silver.
+   - **Polished Face:** bare polished aluminium, mirror-sharp panel reflections like Liquid Metal but
+     a touch whiter; on a GLB rim the whole rim reads polished (one material covers every mesh).
+   - **Black Matte:** satin solid black with no flake, no flop and no sharp highlight anywhere; not a
+     black hole (the base must still show form).
 3. **Close-up:** check `/rims/<id>` in each finish (the showcase has no arch shading).
 4. **Colour and gloss:** judge on a real screen as well; the headless renderer has no
    anti-aliasing.

@@ -15,15 +15,16 @@ export function rimSizes(wheel: WheelDesign): string[] {
 }
 
 /**
- * Set price (4 wheels) for a size and, when given, a finish. A finish with its own price (the stock
- * sheet prices Polished Face and Liquid Metal above the base finishes) wins over the size price; the
- * size price falls back to the single set price.
+ * Set price (4 wheels) for a size and, when given, a finish. The size price falls back to the single
+ * set price. A finish with its own price (the stock sheet prices Polished Face and Liquid Metal above
+ * the base finishes) raises the price to that figure: it never lowers a size price that is already
+ * higher, so a dearer finish is always at least the size price.
  */
 export function rimPrice(wheel: WheelDesign, size: string, finishId?: string): number {
-  const f = finishId ? wheel.priceByFinish?.[finishId] : undefined;
-  if (typeof f === 'number' && f > 0) return f;
   const p = wheel.priceBySize?.[size];
-  return typeof p === 'number' ? p : wheel.pricePerSet;
+  const base = typeof p === 'number' ? p : wheel.pricePerSet;
+  const f = finishId ? wheel.priceByFinish?.[finishId] : undefined;
+  return typeof f === 'number' && f > base ? f : base;
 }
 
 /** How much more a finish costs than the base price at this size (0 for the base finishes). */

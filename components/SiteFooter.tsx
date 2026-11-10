@@ -13,7 +13,8 @@ const LINKS = [
   { label: 'The wheels', path: '/forged' },
   { label: 'Configure', path: '/models' },
   { label: 'Delivery & fitment', path: '/delivery' },
-  { label: 'Terms & conditions', path: '/terms' }
+  { label: 'Terms & conditions', path: '/terms' },
+  { label: 'Credits', path: '/credits' }
 ];
 
 /** Footer for the scrolling pages: brand, social channels, info links and contact. */

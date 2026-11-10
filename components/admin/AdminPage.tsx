@@ -30,6 +30,27 @@ interface AdminPageProps {
 const inputCls =
   'w-full bg-[#0d0d0d] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-[#CF9F52]';
 
+/** Who is signed in, as far as the admin allowlist cares. A refreshed token keeps the same identity. */
+const identityOf = (s: Session | null) => (s ? `${s.user.id}\n${s.user.email ?? ''}` : null);
+
+/**
+ * Turns a thrown PostgREST/Postgres error into one readable line. A "schema cache" / PGRST204 error means the
+ * database lacks a column this form writes, i.e. a migration in supabase/migrations has not been applied yet.
+ */
+const describeDbError = (e: unknown): string => {
+  const err = (e ?? {}) as { message?: string; details?: string | null; hint?: string | null; code?: string };
+  const parts = [err.message || String(e)];
+  if (err.details) parts.push(err.details);
+  if (err.hint) parts.push(err.hint);
+  if (err.code === 'PGRST204' || /schema cache/i.test(err.message ?? '')) {
+    parts.push(
+      'The database does not have a column this form saves yet: apply the pending migration in supabase/migrations ' +
+        '(or reload the schema cache in Supabase), then save again. Nothing was changed.'
+    );
+  }
+  return parts.join(' ');
+};
+
 export const AdminPage: React.FC<AdminPageProps> = ({ onBack, onCatalogChanged }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -38,21 +59,37 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack, onCatalogChanged }
   const [recovering, setRecovering] = useState(authFlags.passwordRecovery);
 
   useEffect(() => {
+    // Keep the current session object unless WHO is signed in changed. A new object would re-run the admin
+    // check below and swap the editor (open draft, uploaded-but-unsaved .glb URLs) for a spinner.
+    const adopt = (s: Session | null) => setSession((prev) => (identityOf(prev) === identityOf(s) ? prev : s));
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+      adopt(data.session);
       setAuthChecked(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      setSession(s);
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
+      // supabase-js also emits TOKEN_REFRESHED (hourly), USER_UPDATED and a repeat SIGNED_IN whenever the tab
+      // regains focus; none of those change who the admin is, so they must not touch the session here.
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY') {
+        adopt(s);
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Re-check the allowlist only when the signed-in identity changes, never on a token refresh.
+  const identity = identityOf(session);
+  const email = session?.user.email;
   useEffect(() => {
+    let cancelled = false;
     setIsAdmin(null);
-    if (session) isCurrentUserAdmin(session.user.email).then(setIsAdmin);
-  }, [session]);
+    if (identity) {
+      isCurrentUserAdmin(email).then((ok) => {
+        if (!cancelled) setIsAdmin(ok);
+      });
+    }
+    return () => { cancelled = true; };
+  }, [identity, email]);
 
   return (
     <div className="absolute inset-0 overflow-y-auto bg-black text-neutral-200 select-text">
@@ -304,7 +341,7 @@ const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogCh
       await load(entity);
       onCatalogChanged();
     } catch (e) {
-      setMessage({ kind: 'error', text: (e as Error).message });
+      setMessage({ kind: 'error', text: `Save failed: ${describeDbError(e)}` });
     }
     setSaving(false);
   };
@@ -319,7 +356,7 @@ const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogCh
       await load(entity);
       onCatalogChanged();
     } catch (e) {
-      setMessage({ kind: 'error', text: (e as Error).message });
+      setMessage({ kind: 'error', text: `Delete failed: ${describeDbError(e)}` });
     }
   };
 

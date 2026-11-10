@@ -5,10 +5,24 @@
  *   node scripts/render/shoot.cjs <outDir> <specs.json> [rimCacheDir]
  *
  * specs.json is a list of shots:
- *   { "name": "m4-wheel", "car": 0, "paint": 17, "wheel": 2, "finish": "black", "size": "20\"",
- *     "view": "frontWheel", "q": "&tone=agx", "w": 1280, "h": 800, "wait": 6000,
+ *   { "name": "m4cs-wheel", "car": 1, "paint": 17, "wheel": "forged_fsa_03", "finish": "black", "size": "20\"",
+ *     "view": "frontWheel", "q": "&look=viewer&tone=agx", "w": 1280, "h": 800, "wait": 6000,
  *     "cam": { "pos": [x, y, z], "look": [x, y, z] } }
- * car / paint / wheel are indexes into the bundled catalogue (data/configuratorData.ts).
+ * These are engine.html's query parameters (data/configuratorData.ts is the source of every list):
+ *   car    an index into the full BMW_MODELS list, hidden cars included (not the filtered list the app
+ *          shows). Live cars on 2026-11-10: 1 m4_cs_g82, 5 m2_g87 (M2 CS), 7 m5_g90, 8 m5_touring_g99;
+ *          0 is the retired Sketchfab M4 and 2-4, 6, 9-11 the other hidden legacy cars.
+ *   paint  an index into the paints list (STATIC_CATALOG.paints = BMW_PAINTS).
+ *   wheel  a wheel id (preferred: "forged_fsa001", "forged_fsa002", "forged_fsa_03", "forged_fsa004",
+ *          "sixnine_ff1", "sixnine_ff3", the same ids ingest-rim.mjs takes) or an index into the full
+ *          WHEEL_DESIGNS list, hidden designs included: 0-10 are the hidden legacy designs
+ *          (forged_fsa_01 .. forged_fsa_14), 11-16 the six stocked wheels above in that order.
+ *   finish a finish id (liquid_metal, black, silver, bronze, gold, hyper_black, ...); size e.g. "21\"";
+ *          view a camera preset (frontThreeQuarter, frontWheel, side, ...).
+ *   q      appended to the URL as is, for the engine switches: &look=viewer (the /configure studio),
+ *          &plates=0, &studio=hdri, &tone=agx|neutral, &exposure=1.2, &rimModel=/models/rims/x.glb&rimFlip=1
+ *          (a rim file on the chosen wheel), &rendered=1 (Blender body frames), &model=/x.glb&rot=&len=
+ *          &paintMatch=&hideMatch= (an ad-hoc car GLB instead of car).
  *
  * Uses the sandbox Chromium with SwiftShader (no GPU): about a minute per shot. Rim photos from
  * Supabase storage are served from [rimCacheDir] when present (curl otherwise), because the

@@ -37,8 +37,8 @@ export interface Profile {
   updatedAt: string;
 }
 
-/** The editable part of a profile. */
-export type ProfilePatch = Partial<Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>>;
+/** The editable part of a profile (the email comes from the Google account and is not the customer's to change: the column grant excludes it). */
+export type ProfilePatch = Partial<Omit<Profile, 'id' | 'email' | 'createdAt' | 'updatedAt'>>;
 
 /** A build in the garage. */
 export interface GarageBuild {
@@ -79,6 +79,31 @@ if (typeof window !== 'undefined') {
 }
 
 /**
+ * The session tokens a Google sign-in brings back in the URL fragment (implicit flow), taken out of the
+ * address at once. supabase-js clears that fragment itself with `window.location.hash = ''`, but the
+ * browser treats this as a navigation: it adds a history entry and leaves the arrival entry, tokens and
+ * all, one Back press away (checked against auth-js 2.117: the arrival URL stays in history and a
+ * Back shows it in the address bar). Replacing the arrival entry here, before that happens, keeps the
+ * tokens out of the history; what the fragment carried is kept for handOverUrlSession below.
+ *
+ * Email links (#access_token=…&type=recovery / invite / magiclink) and error returns are left alone:
+ * the admin page relies on supabase-js's own handling of them.
+ */
+const urlSession = (() => {
+  if (typeof window === 'undefined') return null;
+  const h = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const access_token = h.get('access_token');
+  const refresh_token = h.get('refresh_token');
+  if (!access_token || !refresh_token || h.has('type') || h.has('error') || h.has('error_description') || h.has('error_code')) return null;
+  try {
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+  } catch {
+    return null; // the fragment stays and supabase-js handles it as before
+  }
+  return { access_token, refresh_token };
+})();
+
+/**
  * After supabase-js has read the session from the URL (it empties the hash, leaving a trailing "#",
  * or removes ?code= itself in the PKCE flow), the address is set back to the page the visitor left
  * from: path and the app's own query (e.g. ?config=CODE) without the token fragment, so
@@ -111,11 +136,35 @@ supabase.auth.onAuthStateChange((event, session) => {
 // A failed OAuth return never fires SIGNED_IN: tidy the address once the client has initialised.
 if (arrivedFromOAuth && oauthError) supabase.auth.getSession().then(() => tidyOAuthReturnUrl());
 
+/**
+ * Makes sure the session that arrived in the fragment is the client's. auth-js 2.117 parses the URL
+ * synchronously while the client is created (services/supabaseClient.ts runs before this module), so
+ * it normally holds the session already and only its history entry needed fixing above; a client that
+ * reads the URL later finds the address clean and is handed the tokens here instead (setSession
+ * validates them with the server and fires SIGNED_IN like a URL sign-in does).
+ */
+async function handOverUrlSession(tokens: { access_token: string; refresh_token: string }) {
+  await supabase.auth.initialize();
+  const { data } = await supabase.auth.getSession();
+  if (data.session?.access_token === tokens.access_token) return;
+  const { error } = await supabase.auth.setSession(tokens);
+  if (error) {
+    console.warn('Sign in:', error.message);
+    oauthError = error.message;
+  }
+}
+if (urlSession) handOverUrlSession(urlSession);
+
 /** The cached session (null when signed out or not yet known). */
 export const getSession = (): Session | null => cached;
 
 /** The signed-in customer's id, synchronously, for stamping writes. */
 export const currentUserId = (): string | null => cached?.user.id ?? null;
+
+/** The message of a sign-in that came back with an error in the URL, if any, left in place for takeOAuthError. */
+export function peekOAuthError(): string | null {
+  return oauthError;
+}
 
 /** The message of a sign-in that came back with an error in the URL, if any (read once). */
 export function takeOAuthError(): string | null {
@@ -150,8 +199,9 @@ export function useAuthUser(): User | null {
 /**
  * Sends the visitor to Google. Supabase brings them back to `returnTo` (default: the page they are
  * on, path and query, so a `/?config=CODE` link survives) with the session in the URL fragment,
- * which supabase-js reads and tidyOAuthReturnUrl removes. Resolves with an error message, or null
- * once the redirect has started.
+ * which supabase-js reads; urlSession takes it out of the arrival address and tidyOAuthReturnUrl
+ * cleans the entry supabase-js adds. Resolves with an error message, or null once the redirect has
+ * started.
  */
 export async function signInWithGoogle(returnTo?: string): Promise<string | null> {
   const path = returnTo ?? window.location.pathname + window.location.search;
@@ -163,8 +213,9 @@ export async function signInWithGoogle(returnTo?: string): Promise<string | null
   return error ? error.message : null;
 }
 
+/** Signs this browser out (not the customer's other devices: supabase-js's default scope is global). */
 export async function signOut(): Promise<void> {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error) console.warn('Sign out:', error.message);
   publish(null);
 }
@@ -208,7 +259,6 @@ const fromRow = (r: ProfileRow): Profile => ({
 });
 
 const PATCH_COLUMNS: Record<keyof ProfilePatch, keyof ProfileRow> = {
-  email: 'email',
   displayName: 'display_name',
   avatarUrl: 'avatar_url',
   phone: 'phone',
@@ -235,6 +285,8 @@ const toRow = (patch: ProfilePatch) => {
 /** What the Google account tells us, used when the profile row is missing a value. */
 const metaName = (u: User) => (u.user_metadata?.full_name || u.user_metadata?.name || null) as string | null;
 const metaAvatar = (u: User) => (u.user_metadata?.avatar_url || u.user_metadata?.picture || null) as string | null;
+/** A profile row made from the account alone (a user created before the trigger existed). */
+const accountRow = (u: User) => ({ id: u.id, email: u.email ?? null, display_name: metaName(u), avatar_url: metaAvatar(u) });
 
 /** The signed-in customer's profile (created from the Google account when the row is missing). */
 export async function getMyProfile(): Promise<Profile | null> {
@@ -249,9 +301,10 @@ export async function getMyProfile(): Promise<Profile | null> {
     const p = fromRow(data as ProfileRow);
     return { ...p, email: p.email ?? user.email ?? null, displayName: p.displayName ?? metaName(user), avatarUrl: p.avatarUrl ?? metaAvatar(user) };
   }
-  // No row (user created before the trigger existed): make it from the account
-  const fresh = { id: user.id, email: user.email ?? null, display_name: metaName(user), avatar_url: metaAvatar(user) };
-  const { data: created, error: insertError } = await supabase.from('profiles').upsert(fresh, { onConflict: 'id' }).select('*').single();
+  // No row (user created before the trigger existed): make it from the account. A plain insert, not an
+  // upsert: PostgREST's upsert is INSERT … ON CONFLICT DO UPDATE SET id, email, …, which needs UPDATE on
+  // those columns, and customers may only update their details (migration 20261110170000).
+  const { data: created, error: insertError } = await supabase.from('profiles').insert(accountRow(user)).select('*').single();
   if (insertError || !created) {
     console.warn('Profile:', insertError?.message);
     return null;
@@ -263,9 +316,13 @@ export async function getMyProfile(): Promise<Profile | null> {
 export async function updateMyProfile(patch: ProfilePatch): Promise<Profile> {
   const user = cached?.user;
   if (!user) throw new Error('Not signed in');
-  const { data, error } = await supabase.from('profiles').update(toRow(patch)).eq('id', user.id).select('*').single();
+  const { data, error } = await supabase.from('profiles').update(toRow(patch)).eq('id', user.id).select('*').maybeSingle();
   if (error) throw new Error(error.message);
-  return fromRow(data as ProfileRow);
+  if (data) return fromRow(data as ProfileRow);
+  // No row to update (an account without a profile whose creation failed earlier): make it with these values
+  const { data: created, error: insertError } = await supabase.from('profiles').insert({ ...accountRow(user), ...toRow(patch) }).select('*').single();
+  if (insertError) throw new Error(insertError.message);
+  return fromRow(created as ProfileRow);
 }
 
 // ----------------------------------------------------
@@ -292,26 +349,39 @@ export async function listMyConfigurations(): Promise<GarageBuild[]> {
   }));
 }
 
-export async function renameConfiguration(code: string, name: string): Promise<void> {
-  const clean = name.trim().slice(0, 80);
-  const { error } = await supabase.from('saved_configurations').update({ name: clean || null }).eq('code', code);
-  if (error) throw new Error(error.message);
-}
-
-/** Deletes the shared copy (the row); a copy kept in this browser is the caller's to forget. */
-export async function deleteConfiguration(code: string): Promise<void> {
-  const { error } = await supabase.from('saved_configurations').delete().eq('code', code);
-  if (error) throw new Error(error.message);
+/**
+ * A rename or delete that changed nothing: the build was deleted elsewhere (another device), was never
+ * the caller's, or the session has lapsed (the request went out anonymously). The garage shows the
+ * message and reloads the list.
+ */
+export class BuildMissingError extends Error {
+  constructor() {
+    super('This build is no longer in your garage.');
+    this.name = 'BuildMissingError';
+  }
 }
 
 /**
- * Puts a build saved anonymously (before sign-in) into the garage and names it; also renames a build
- * that is already the customer's. False when the code is unknown on the server or belongs to someone
- * else (see claim_configuration in the migration).
+ * Renames one of the customer's own builds through `rename_configuration` (the migration): the exact
+ * code is required and only a row carrying the caller's id changes, so no ownership ever moves. A
+ * blank name clears it (the garage shows the code). Ownership is never transferred: a build opened
+ * from someone else's share link cannot be renamed or taken over; "Save to garage" saves a copy.
+ * The function returns false (no error) when no row was changed: that is a BuildMissingError here.
  */
-export async function claimConfiguration(code: string, name?: string): Promise<boolean> {
-  if (!cached?.user) return false;
-  const { data, error } = await supabase.rpc('claim_configuration', { p_code: code, p_name: name?.trim() || null });
+export async function renameConfiguration(code: string, name: string): Promise<void> {
+  const clean = name.trim().slice(0, 80);
+  const { data, error } = await supabase.rpc('rename_configuration', { p_code: code, p_name: clean || null });
   if (error) throw new Error(error.message);
-  return data === true;
+  if (data !== true) throw new BuildMissingError();
+}
+
+/**
+ * Deletes the shared copy (the row); a copy kept in this browser is the caller's to forget. Row-level
+ * security turns a row that is not the caller's (or an anonymous request) into a silent zero-row
+ * delete, so the deleted codes are returned and none is a BuildMissingError.
+ */
+export async function deleteConfiguration(code: string): Promise<void> {
+  const { data, error } = await supabase.from('saved_configurations').delete().eq('code', code).select('code');
+  if (error) throw new Error(error.message);
+  if (!data?.length) throw new BuildMissingError();
 }

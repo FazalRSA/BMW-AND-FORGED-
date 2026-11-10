@@ -24,8 +24,15 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
 
 - **`scripts/render/shoot.cjs <outDir> shots.json [rimCacheDir]`:** batch screenshots from a JSON
   shot list (`car`, `paint`, `wheel`, `finish`, `size`, `view`, `q`, `cam`).
+  - `wheel` is a **wheel id** (`"forged_fsa002"`, preferred) or an index into the full bundled
+    `WHEEL_DESIGNS` list, hidden designs included (`0` is the hidden photo wheel FSA-01; the six
+    stocked wheels `forged_fsa001`, `forged_fsa002`, `forged_fsa_03`, `forged_fsa004`, `sixnine_ff1`,
+    `sixnine_ff3` are indexes 11-16). Use ids in shot lists. `car` is an index into `BMW_MODELS`
+    including hidden cars: live cars are `1` (M4 CS), `5` (M2 CS), `7` (M5), `8` (M5 Touring); `0` is
+    the hidden M4 G82. `q` appends raw params, e.g. `"&look=viewer"` for what /configure shows.
   - It loads `scripts/render/engine.html`, routes Supabase storage to a local rim cache (curl
-    fallback) and waits for `window.done`.
+    fallback) and waits for `window.done`. Stock wheels are GLBs under `public/models/rims/` served
+    by Vite, so they need no rim cache; the cache only matters for the hidden photo wheels.
   - Waits use `domcontentloaded` with long timeouts.
   - About a minute per shot. See `scripts/render/README.md` and the `3d-car-perfect` skill.
 - **App routes** (`/rims/<id>`, `/`): the CSS is built by Vite (Tailwind via PostCSS, `index.css`),
@@ -37,10 +44,15 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
 
 ## Older harness pages (`.scratch/`, gitignored)
 
-- **`.scratch/engine.html?car=N&paint=N&wheel=N&finish=id&size=20"&view=frontThreeQuarter`**:
-  the bare engine (same as `scripts/render/engine.html`). The page sets `window.done` when the car has loaded, and exposes `window.e`.
-  Extra params: `model=`, `rot=`, `len=`, `paintMatch=`, `hideMatch=` for ad-hoc GLBs, and
-  `photoreal=1`.
+- **`scripts/render/engine.html?car=N&paint=N&wheel=<id|N>&finish=id&size=20"&view=frontThreeQuarter`**
+  (the `.scratch/` copy is the same page): the bare engine. `car=N` indexes `STATIC_CATALOG.cars`,
+  all 12 including hidden (live: 1, 5, 7, 8; `car=0` is the hidden M4 G82). `wheel=` takes a wheel id
+  (preferred) or an index into the full `WHEEL_DESIGNS` list, hidden ones included (`wheel=0` is the
+  hidden FSA-01, not a stock wheel). The page sets `window.done` when the car has loaded, and exposes `window.e`.
+  Extra params: `rimModel=/path.glb` (+ `rimFlip=1` if the face points inward) puts a 3D rim file on
+  the chosen wheel; `look=viewer` draws the viewer look that /configure uses for the live cars;
+  `plates=0` hides the "FORGED" plates; `model=`, `rot=`, `len=`, `paintMatch=`, `hideMatch=` for
+  ad-hoc car GLBs; `tone=agx|neutral`, `studio=hdri`, `exposure=`, `photoreal=1`.
 - **`.scratch/pdf-test.html`:** builds a brochure with `downloadBrochurePdf`. Load it through a
   route that maps `https://forged-configurator.vercel.app/**` to the dev server, so the PDF prints
   live URLs, not 127.0.0.1.
@@ -53,7 +65,8 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
   `executablePath: '/opt/pw-browsers/chromium'`. Never run `playwright install`.
 - WebGL flags: `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`.
 - The sandbox browser **cannot fetch Supabase storage** (rim PNGs fail as "Failed to load custom 2D
-  wheel texture"). Route those requests through curl:
+  wheel texture"). This only matters for the hidden photo wheels; the six stocked wheels are GLB
+  rims (`modelUrl`) served by the dev server. Route storage requests through curl:
   ```js
   await p.route(/supabase\.co\/storage\//, r => { const u = r.request().url();
     const body = require('child_process').execFileSync('curl', ['-sSL', u], { maxBuffer: 64 << 20 });
@@ -61,6 +74,10 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
                 headers: { 'access-control-allow-origin': '*' } }); });
   ```
 - Whole journey, both sizes: `node scripts/render/journey.cjs <out> <rimCache> both` (`visual-qa`).
+- **The current gate before claiming a visual change is done:** `journey.cjs` at both sizes,
+  `node scripts/render/pdf-check.cjs <out>` (brochure, writes stubbed), and `shoot.cjs` sheets of
+  the six stocked wheels (by id) on the live cars with `"q": "&look=viewer"`. `qa-matrix.py` and
+  `wheel-qa.cjs` cover the hidden photo wheels only.
 
 ## Reviewing output
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { Check, FolderOpen, LogOut, Pencil, Trash2, UserRound } from 'lucide-react';
 import { BRAND } from '../../config/brand';
@@ -11,6 +11,7 @@ import { CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import {
   BRAKE_SYSTEMS,
   BrakeSystem,
+  BuildMissingError,
   GarageBuild,
   Profile,
   deleteConfiguration,
@@ -21,7 +22,7 @@ import {
   updateMyProfile
 } from '../../services/authService';
 import { forgetLocalConfiguration } from '../../services/journeyService';
-import { Button, Divider, Eyebrow, Modal, cx } from './ui';
+import { Alert, Button, Divider, Eyebrow, Modal, Status, cx } from './ui';
 import { shortModelName } from './Showroom';
 
 export interface AccountSheetProps {
@@ -42,6 +43,8 @@ export interface AccountSheetProps {
   finishes: Record<string, WheelFinish>;
   /** Bumped when a build was saved to the garage elsewhere (the summary), so the list refreshes. */
   garageVersion?: number;
+  /** Called once a build has been deleted from the garage (the app stops showing its code as saved). */
+  onDeleted?: (code: string) => void;
 }
 
 const fieldCls = 'mt-1.5 h-12 w-full rounded-xl bg-ink/[0.04] px-4 text-[14px] text-ink outline-none ring-1 ring-line focus:ring-gold/60 transition placeholder:text-mute/50';
@@ -79,6 +82,8 @@ const formFrom = (p: Profile | null, u: User | null): ProfileForm => ({
   brakeSystem: p?.brakeSystem ?? ''
 });
 
+const carLabel = (c: CarModel) => `${c.name}${c.generation ? ` (${c.generation})` : ''}`;
+
 /**
  * The customer's account: Google sign-in, profile and garage of saved builds, in the viewer panel's glass
  * idiom. A full-height sheet on phones, a centred column on larger screens.
@@ -87,20 +92,53 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
   const signedIn = !!p.user;
   const [signInBusy, setSignInBusy] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
+  // A sign-in that came back with an error in the URL is read (once) when the sheet opens and shown in
+  // either state; closing the sheet forgets it, so it does not come back after a later sign-out.
   useEffect(() => {
-    if (p.open) setSignInError((e) => e ?? takeOAuthError());
+    if (!p.open) {
+      setSignInError(null);
+      setSignInBusy(false);
+      return;
+    }
+    const e = takeOAuthError();
+    if (e) setSignInError(e);
   }, [p.open]);
+  // Back from Google without a reload (the page restored from the back/forward cache keeps its state):
+  // the button must offer the sign-in again.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => e.persisted && setSignInBusy(false);
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
 
   // Profile form
   const [form, setForm] = useState<ProfileForm>(() => formFrom(p.profile, p.user));
   const [profileState, setProfileState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [profileError, setProfileError] = useState<string | null>(null);
+  /** Fields the customer has typed in since the sheet opened: a profile arriving late must not overwrite them. */
+  const touched = useRef(new Set<keyof ProfileForm>());
+  // The save status lasts until the customer edits a field (setField), closes the sheet or the account changes.
+  // (Before the form effect below: it must start from a clean set of touched fields.)
   useEffect(() => {
-    setForm(formFrom(p.profile, p.user));
+    touched.current.clear();
     setProfileState('idle');
+    setProfileError(null);
+  }, [p.open, p.user?.id]);
+  // The fields follow the profile prop (it changes right after our own save too, when the app stores the saved
+  // row, and when the app's fetch completes after the sheet was opened), so this effect refreshes the values
+  // only: it must not touch the save status, or "Profile saved" would be wiped the moment it appears.
+  useEffect(() => {
+    setForm((f) => {
+      const fresh = formFrom(p.profile, p.user);
+      touched.current.forEach((k) => {
+        fresh[k] = f[k];
+      });
+      return fresh;
+    });
     // (the user's id, not the object: a token refresh must not wipe what is being typed)
   }, [p.profile, p.user?.id, p.open]);
   const setField = (k: keyof ProfileForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    touched.current.add(k);
     setForm((f) => ({ ...f, [k]: e.target.value }));
     setProfileState('idle');
   };
@@ -116,6 +154,7 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
         primaryCarId: form.primaryCarId || null,
         brakeSystem: (form.brakeSystem || null) as BrakeSystem | null
       });
+      touched.current.clear(); // the stored row is the truth again
       p.onProfile(saved);
       setProfileState('saved');
     } catch (err) {
@@ -126,24 +165,38 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
 
   // Garage
   const [builds, setBuilds] = useState<GarageBuild[] | null>(null);
+  /** Why the list could not be loaded, or that a build acted on is gone (the list is then reloaded). */
   const [garageError, setGarageError] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
+  /** True for the one reload a "no longer in your garage" message caused: that message stays above the fresh list. */
+  const keepGarageError = useRef(false);
   const [renaming, setRenaming] = useState<{ code: string; name: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [busyCode, setBusyCode] = useState<string | null>(null);
+  /** The build being reopened in the configurator (its "Open" button waits). */
+  const [openingCode, setOpeningCode] = useState<string | null>(null);
+  /** Why the last open, rename or delete of a build failed, shown under that build. */
+  const [rowError, setRowError] = useState<{ code: string; message: string } | null>(null);
   useEffect(() => {
+    // A reload (open, account change, a save elsewhere, a build found gone) starts from a quiet list:
+    // no editor open, no delete armed, no stale message. Closing the sheet clears them too.
+    setRowError(null);
+    setRenaming(null);
+    setConfirmDelete(null);
     if (!p.open || !signedIn) {
       setBuilds(null);
       return;
     }
     let live = true;
-    setGarageError(null);
+    if (keepGarageError.current) keepGarageError.current = false;
+    else setGarageError(null);
     listMyConfigurations()
       .then((b) => live && setBuilds(b))
       .catch((err) => live && setGarageError(err instanceof Error ? err.message : 'Your garage could not be loaded.'));
     return () => {
       live = false;
     };
-  }, [p.open, signedIn, p.user?.id, p.garageVersion]);
+  }, [p.open, signedIn, p.user?.id, p.garageVersion, refreshTick]);
 
   const describe = (b: GarageBuild) => {
     const car = p.cars.find((c) => c.id === b.payload.carId);
@@ -154,39 +207,72 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
       .filter(Boolean)
       .join(' · ');
   };
+  /** A build that is gone (deleted elsewhere, or the session lapsed): say so above the list and reload it. */
+  const buildGone = (err: unknown) => {
+    if (!(err instanceof BuildMissingError)) return false;
+    setGarageError(err.message);
+    keepGarageError.current = true;
+    setRefreshTick((t) => t + 1);
+    return true;
+  };
   const rename = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!renaming) return;
     const { code, name } = renaming;
     setBusyCode(code);
+    setGarageError(null);
+    setRowError(null);
     try {
       await renameConfiguration(code, name);
       setBuilds((bs) => bs?.map((b) => (b.code === code ? { ...b, name: name.trim() || null } : b)) ?? null);
       setRenaming(null);
     } catch (err) {
-      setGarageError(err instanceof Error ? err.message : 'The build could not be renamed.');
+      if (!buildGone(err)) setRowError({ code, message: err instanceof Error ? err.message : 'The build could not be renamed.' });
     } finally {
       setBusyCode(null);
     }
   };
   const remove = async (code: string) => {
     setBusyCode(code);
+    setGarageError(null);
+    setRowError(null);
     try {
       await deleteConfiguration(code);
       forgetLocalConfiguration(code);
       setBuilds((bs) => bs?.filter((b) => b.code !== code) ?? null);
       setConfirmDelete(null);
+      p.onDeleted?.(code);
     } catch (err) {
-      setGarageError(err instanceof Error ? err.message : 'The build could not be deleted.');
+      // Nothing was deleted (the row is gone already, or not this session's): the local copy and the summary's code stay
+      if (!buildGone(err)) setRowError({ code, message: err instanceof Error ? err.message : 'The build could not be deleted.' });
     } finally {
       setBusyCode(null);
+    }
+  };
+  /** Reopens a build; when the app declines (its car or wheel is no longer offered, or the code is gone) the build says so. */
+  const openBuild = async (code: string) => {
+    setRowError(null);
+    setOpeningCode(code);
+    try {
+      const opened = await p.onOpenBuild(code);
+      if (!opened) setRowError({ code, message: 'This build can’t be opened: its car or wheel is no longer offered.' });
+    } catch (err) {
+      setRowError({ code, message: err instanceof Error ? err.message : 'This build could not be opened.' });
+    } finally {
+      setOpeningCode(null);
     }
   };
 
   const avatar = p.profile?.avatarUrl ?? (p.user?.user_metadata?.avatar_url as string | undefined) ?? (p.user?.user_metadata?.picture as string | undefined) ?? null;
   const name = p.profile?.displayName ?? (p.user?.user_metadata?.full_name as string | undefined) ?? '';
   const email = p.profile?.email ?? p.user?.email ?? '';
-  const activeCars = p.cars.filter((c) => c.active !== false);
+  // The cars on offer, plus the customer's stored car when it has since been hidden: a controlled select whose
+  // value matches no option would show "Not set" while the form still holds (and would save) the old id.
+  const carOptions = p.cars.filter((c) => c.active !== false).map((c) => ({ id: c.id, label: carLabel(c) }));
+  if (form.primaryCarId && !carOptions.some((o) => o.id === form.primaryCarId)) {
+    const stored = p.cars.find((c) => c.id === form.primaryCarId);
+    carOptions.push({ id: form.primaryCarId, label: stored ? `${carLabel(stored)} (no longer offered)` : 'A car no longer offered' });
+  }
 
   return (
     <Modal
@@ -219,7 +305,7 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
           >
             {signInBusy ? 'Opening Google…' : 'Continue with Google'}
           </Button>
-          {signInError && <p className="mt-3 text-[12.5px] text-red-400">{signInError}</p>}
+          {signInError && <Alert className="mt-3">{signInError}</Alert>}
           <p className="mt-5 text-[11px] leading-relaxed text-mute">
             We store your name, email and saved builds to run your garage. Delete your account any time via{' '}
             <a href={`mailto:${BRAND.contact.email}`} className="underline decoration-line underline-offset-2 hover:text-gold">
@@ -244,6 +330,7 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
               <div className="truncate text-[12.5px] text-mute">{email}</div>
             </div>
           </div>
+          {signInError && <Alert className="mt-3">{signInError}</Alert>}
 
           {/* Profile */}
           <form onSubmit={saveProfile} className="mt-7 space-y-4">
@@ -263,9 +350,9 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
               <Field label="Your car">
                 <select value={form.primaryCarId} onChange={setField('primaryCarId')} className={fieldCls}>
                   <option value="">Not set</option>
-                  {activeCars.map((c) => (
+                  {carOptions.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} {c.generation ? `(${c.generation})` : ''}
+                      {c.label}
                     </option>
                   ))}
                 </select>
@@ -281,10 +368,12 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
                 </select>
               </Field>
             </div>
-            {profileError && <p className="text-[12.5px] text-red-400">{profileError}</p>}
+            {profileError && <Alert>{profileError}</Alert>}
             <Button type="submit" variant="secondary" className="w-full" disabled={profileState === 'saving'} icon={profileState === 'saved' ? <Check className="h-4 w-4" /> : undefined}>
               {profileState === 'saving' ? 'Saving…' : profileState === 'saved' ? 'Profile saved' : 'Save profile'}
             </Button>
+            {/* The button's label swap is not read out by every screen reader; this live region is */}
+            <Status className="sr-only">{profileState === 'saving' ? 'Saving your profile…' : profileState === 'saved' ? 'Profile saved' : ''}</Status>
           </form>
 
           <Divider className="my-7" />
@@ -294,8 +383,11 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
             <Eyebrow>Garage</Eyebrow>
             {builds && builds.length > 0 && <span className="text-[11px] text-mute">{builds.length} saved</span>}
           </div>
-          {garageError && <p className="mt-3 text-[12.5px] text-red-400">{garageError}</p>}
-          {!builds && !garageError && <p className="mt-3 text-[13px] text-mute">Loading your builds…</p>}
+          {garageError && <Alert className="mt-3">{garageError}</Alert>}
+          {/* Mounted throughout, as a live region should be (a plain <p>: the Status wrapper's 12.5px would change this 13px line) */}
+          <p role="status" aria-live="polite" aria-atomic="true" className={cx('text-[13px] text-mute', !builds && !garageError && 'mt-3')}>
+            {!builds && !garageError ? 'Loading your builds…' : ''}
+          </p>
           {builds && builds.length === 0 && (
             <p className="mt-3 text-[13px] leading-relaxed text-mute">
               Nothing saved yet. Configure a car, open the summary and use “Save to garage” next to your configuration code.
@@ -306,6 +398,7 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
               {builds.map((b) => {
                 const label = b.name || b.code;
                 const busy = busyCode === b.code;
+                const opening = openingCode === b.code;
                 return (
                   <li key={b.code} className="rounded-[14px] bg-ink/[0.035] ring-1 ring-line p-4">
                     {renaming?.code === b.code ? (
@@ -316,6 +409,12 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
                           value={renaming.name}
                           maxLength={80}
                           onChange={(e) => setRenaming({ code: b.code, name: e.target.value })}
+                          onKeyDown={(e) => {
+                            // Escape cancels the rename only (the sheet's own Escape handler listens on window)
+                            if (e.key !== 'Escape') return;
+                            e.stopPropagation();
+                            setRenaming(null);
+                          }}
                           className="h-10 min-w-0 flex-1 rounded-xl bg-ink/[0.04] px-3 text-[13.5px] text-ink outline-none ring-1 ring-line focus:ring-gold/60"
                         />
                         <Button type="submit" variant="secondary" size="sm" disabled={busy}>
@@ -335,11 +434,12 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
                             {b.name && <span className="font-mono tracking-[0.1em]"> · {b.code}</span>}
                           </div>
                         </div>
-                        <Button variant="secondary" size="sm" className="shrink-0" aria-label={`Open ${label}`} disabled={busy} onClick={() => p.onOpenBuild(b.code)} icon={<FolderOpen className="h-3.5 w-3.5" strokeWidth={1.8} />}>
-                          Open
+                        <Button variant="secondary" size="sm" className="shrink-0" aria-label={`Open ${label}`} disabled={busy || opening} onClick={() => openBuild(b.code)} icon={<FolderOpen className="h-3.5 w-3.5" strokeWidth={1.8} />}>
+                          {opening ? 'Opening…' : 'Open'}
                         </Button>
                       </div>
                     )}
+                    {rowError?.code === b.code && <Alert className="mt-2">{rowError.message}</Alert>}
                     {confirmDelete === b.code ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-[12.5px]">
                         <span className="text-mute">Delete this build from your garage?</span>

@@ -9,9 +9,9 @@ import { Catalog, STATIC_CATALOG, fetchCatalog, paintsForCar, pickPaintForCar } 
 import { nearestRimSize, rimPrice, rimSizes } from './services/pricing';
 import { CarModel, PaintColor, WheelDesign, WheelFinish, CameraViewPreset } from './types';
 import { BRAND, DEFAULT_REGION, Region } from './config/brand';
-import { DELIVERY, TERMS } from './config/pages';
-import { SavedConfiguration, configKey, loadConfiguration, saveConfiguration, submitEnquiry } from './services/journeyService';
-import { Profile, claimConfiguration, getMyProfile, signInWithGoogle, useAuthUser } from './services/authService';
+import { CREDITS, DELIVERY, TERMS } from './config/pages';
+import { SavedConfiguration, accountColumnsMissing, configKey, findConfiguration, isConfigurationShared, saveConfiguration, submitEnquiry } from './services/journeyService';
+import { Profile, getMyProfile, peekOAuthError, signInWithGoogle, useAuthUser } from './services/authService';
 import { downloadBrochurePdf } from './services/brochurePdf';
 import { IN_APP_STATE, cameFromApp } from './services/nav';
 import { controlsInset, layoutMode } from './services/layout';
@@ -45,6 +45,7 @@ type Route =
   | { name: 'forged' }
   | { name: 'admin' }
   | { name: 'terms' }
+  | { name: 'credits' }
   | { name: 'delivery' }
   | { name: 'rim'; rimId: string };
 
@@ -59,6 +60,7 @@ const routeFromLocation = (): Route => {
   if (path === '/admin' || hash === 'admin') return { name: 'admin' };
   if (path === '/terms') return { name: 'terms' };
   if (path === '/delivery') return { name: 'delivery' };
+  if (path === '/credits') return { name: 'credits' };
   const rim = path.match(/^\/rims\/([^/]+)$/);
   if (rim) return { name: 'rim', rimId: decodeURIComponent(rim[1]) };
   return { name: 'welcome' };
@@ -74,6 +76,7 @@ const routePath = (route: Route) =>
     admin: '/admin',
     terms: '/terms',
     delivery: '/delivery',
+    credits: '/credits',
     rim: route.name === 'rim' ? `/rims/${encodeURIComponent(route.rimId)}` : '/'
   })[route.name];
 
@@ -178,6 +181,12 @@ export const App: React.FC = () => {
     };
   }, [user?.id]);
   const [accountOpen, setAccountOpen] = useState(false);
+  // A sign-in that came back with an error (the visitor cancelled on Google's consent screen) opens the
+  // account sheet, which reads and shows the message itself (takeOAuthError). Not on /admin: an expired
+  // "set your password" link lands there with the same error parameters, and that is the admin's business
+  useEffect(() => {
+    if (routeFromLocation().name !== 'admin' && peekOAuthError() !== null) setAccountOpen(true);
+  }, []);
   const [garageVersion, setGarageVersion] = useState(0);
   const contactPrefill = useMemo(
     () => (user ? { name: profile?.displayName ?? (user.user_metadata?.full_name as string | undefined) ?? '', email: profile?.email ?? user.email ?? '', phone: profile?.phone ?? '' } : undefined),
@@ -556,7 +565,14 @@ export const App: React.FC = () => {
 
   const applyConfig = useCallback(
     (cfg: SavedConfiguration) => {
-      const car = catalog.cars.find((c) => c.id === cfg.carId);
+      // Cars are looked up in the showroom list (active, with a body), the same with the bundled catalogue
+      // (whose cars are not filtered) and Supabase's (which are): a saved car that was hidden falls back to
+      // the first car on offer, like a retired wheel, so the car drawn is always one the panel can show
+      let car = cars.find((c) => c.id === cfg.carId);
+      if (!car && cars.length) {
+        console.warn(`Configuration for car ${cfg.carId}, which is no longer offered: showing ${cars[0].id} instead`);
+        car = cars[0];
+      }
       // A saved paint the car no longer offers (or that was retired) falls back to its first factory paint
       const paint = car && pickPaintForCar(catalog.paints, car, cfg.paintId);
       // A saved wheel that was retired falls back to the first wheel in the collection
@@ -575,14 +591,26 @@ export const App: React.FC = () => {
       if (r) changeRegion(r);
       return true;
     },
-    [catalog, choosePaint, applyRim, changeRegion]
+    [catalog, cars, choosePaint, applyRim, changeRegion]
   );
 
   const loadCode = useCallback(
     async (code: string) => {
-      const cfg = await loadConfiguration(code);
-      if (!cfg || !applyConfig(cfg)) return false;
-      setConfigCode({ key: configKey(cfg), code: code.toUpperCase().replace(/[^A-Z0-9]/g, '') });
+      const found = await findConfiguration(code);
+      if (!found || !applyConfig(found.config)) return false;
+      const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const key = configKey(found.config);
+      if (found.source === 'server') {
+        setConfigCode({ key, code: clean, shared: true }); // the shared copy is where it came from
+      } else {
+        // Made in this browser: its save may still be running (pendingShared) or may have failed in an
+        // earlier visit, so the server is asked (meanwhile the summary says the build is being saved)
+        setConfigCode({ key, code: clean });
+        const pending = pendingShared.current;
+        (pending?.code === clean ? pending.shared : isConfigurationShared(clean)).then((shared) =>
+          setConfigCode((c) => (c && c.code === clean ? { ...c, shared } : c))
+        );
+      }
       setStep('overview');
       navigateTo({ name: 'configure' });
       return true;
@@ -599,9 +627,37 @@ export const App: React.FC = () => {
     if (code) loadCode(code);
   }, [booted, catalogLoaded, loadCode]);
 
+  /**
+   * Saves the current build under a fresh code and shows it at once; only the shared copy is awaited
+   * (configCode.shared follows), and a save started for an earlier configuration can no longer overwrite this one.
+   */
+  const saveCurrent = (cfg: SavedConfiguration, key: string) => {
+    const token = ++saveToken.current;
+    const saved = saveConfiguration(cfg);
+    pendingShared.current = { code: saved.code, shared: saved.shared };
+    setConfigCode({ key, code: saved.code });
+    saved.shared.then((shared) => {
+      if (token === saveToken.current) setConfigCode((c) => (c && c.code === saved.code ? { ...c, shared } : c));
+    });
+    return saved;
+  };
+
+  /**
+   * Resolves once nothing is in flight in the studio (a drive between cars, a wheel swap or a size change
+   * still being prepared), when the engine can say so (settle); capped so the stills always land.
+   */
+  const settled = (engine: CarConfiguratorEngine): Promise<void> => {
+    const settle = (engine as unknown as { settle?: () => Promise<void> }).settle;
+    if (typeof settle !== 'function') return Promise.resolve();
+    return Promise.race([settle.call(engine).catch(() => undefined), new Promise<void>((r) => setTimeout(r, 4000))]);
+  };
+
   /** The summary's stills and configuration code, taken whenever the summary opens. */
   const stillsToken = useRef(0); // the latest request wins when stills finish out of order
+  const stillsKey = useRef<string | null>(null); // the build the stills on screen were taken of
   const enterSummary = useCallback(() => {
+    const cfg = currentConfig();
+    const key = configKey(cfg);
     // The three stills are a few hundred ms of rendering and JPEG encoding on a phone: taken on the
     // next frame, after the summary page has painted, so the tap responds at once and the images
     // drop in (the page shows their frames meanwhile)
@@ -609,29 +665,25 @@ export const App: React.FC = () => {
     if (engine) {
       const views: CameraViewPreset[] = ['frontThreeQuarter', 'side', 'frontWheel'];
       const token = ++stillsToken.current;
+      // Another build than the one in the stills on screen: show the empty frames, not the last build's
+      // photos under this build's title (and never in its PDF)
+      if (stillsKey.current !== key) setSummaryImages([]);
+      stillsKey.current = key;
       const live = () => token === stillsToken.current && setSummaryImages(engine.captureViews(views));
-      requestAnimationFrame(() => {
+      const take = () => {
+        if (token !== stillsToken.current) return;
         // Cars with pre-rendered bodies get stills made the way the configurator draws them (same body, tone curve and
         // backdrop, live wheels on top); the others, or if that fails, the live 3D car
         if (!hasBodies(renderedCars, selectedCar.id, views)) return live();
         renderedStills(engine, selectedCar.id, selectedPaint, views)
           .then((imgs) => (imgs.length === views.length ? token === stillsToken.current && setSummaryImages(imgs) : live()))
           .catch(live);
-      });
+      };
+      // A drive, wheel swap or size change the visitor just started finishes first, else the stills show a
+      // half-way car or the previous wheel next to the new wheel's name and price
+      settled(engine).then(() => requestAnimationFrame(take));
     }
-    const cfg = currentConfig();
-    const key = configKey(cfg);
-    if (configCode?.key !== key) {
-      // The code is usable at once; only the shared copy is awaited, and a save started for an
-      // earlier configuration can no longer overwrite this one
-      const token = ++saveToken.current;
-      const saved = saveConfiguration(cfg);
-      pendingShared.current = { code: saved.code, shared: saved.shared };
-      setConfigCode({ key, code: saved.code });
-      saved.shared.then((shared) => {
-        if (token === saveToken.current) setConfigCode((c) => (c && c.code === saved.code ? { ...c, shared } : c));
-      });
-    }
+    if (configCode?.key !== key) saveCurrent(cfg, key);
   }, [configCode, renderedCars, selectedCar, selectedPaint, selectedWheel, selectedFinish, selectedSize, region]);
   // (popstate: only once the studio is up, else the configurator opens as on a direct visit)
   const reenterSummaryRef = useRef<() => boolean>(() => false);
@@ -665,26 +717,34 @@ export const App: React.FC = () => {
     if (route.name === 'showroom' || route.name === 'configure' || route.name === 'summary') {
       const cfg = currentConfig();
       const key = configKey(cfg);
-      let code = configCode?.key === key ? configCode.code : null;
-      if (!code) {
-        const saved = saveConfiguration(cfg);
-        pendingShared.current = { code: saved.code, shared: saved.shared };
-        setConfigCode({ key, code: saved.code });
-        code = saved.code;
-      }
+      const code = configCode?.key === key ? configCode.code : saveCurrent(cfg, key).code;
       await awaitShared(code, 4000); // give the shared copy a moment; the local copy opens it here regardless
       returnTo = `/?config=${code}`;
     }
     return signInWithGoogle(returnTo);
   };
-  /** "Save to garage" on the summary: names the current code and puts it under the signed-in customer. */
-  const saveToGarage = async (name: string) => {
-    const code = configCode?.code;
-    if (!code) return false;
-    if (!(await awaitShared(code))) return false;
-    const ok = await claimConfiguration(code, name);
-    if (ok) setGarageVersion((v) => v + 1);
-    return ok;
+  /**
+   * "Save to garage" on the summary: always saves a NEW copy of the build under a fresh code owned by
+   * the signed-in customer (saveConfiguration stamps the id and the name itself), which the summary
+   * then shows. The code already on screen is never taken over: a share code opens a build, it is not
+   * proof of authorship, so a build reached through someone else's link stays theirs (and their link
+   * keeps working). True when it is in the garage; otherwise the message for the customer: the shared
+   * copy could not be written, or it was written without the owner (the live database has not had the
+   * accounts migration, so the row would never show in the garage).
+   */
+  const NOT_SHARED = 'This build is not on the server yet (saved on this device only). Check your connection and try again.';
+  const NO_GARAGE = 'Saving to a garage is not switched on for this site yet. Your build is kept under its code: copy the link to come back to it.';
+  const saveToGarage = async (name: string): Promise<true | string> => {
+    if (accountColumnsMissing()) return NO_GARAGE; // an earlier write already found the columns missing: no row to waste
+    const cfg = currentConfig();
+    const token = ++saveToken.current;
+    const { code, shared, stamped } = saveConfiguration(cfg, name);
+    pendingShared.current = { code, shared };
+    if (!(await shared)) return NOT_SHARED;
+    if (!(await stamped)) return NO_GARAGE;
+    if (token === saveToken.current) setConfigCode({ key: configKey(cfg), code, shared: true });
+    setGarageVersion((v) => v + 1);
+    return true;
   };
 
   const price = rimPrice(selectedWheel, selectedSize, selectedFinish.id);
@@ -697,7 +757,8 @@ export const App: React.FC = () => {
     { label: 'The wheels', onClick: () => navigateTo({ name: 'forged' }) },
     { label: 'Enquire', onClick: () => setEnquiryOpen(true) },
     { label: 'Delivery & fitment', onClick: () => navigateTo({ name: 'delivery' }) },
-    { label: 'Terms & conditions', onClick: () => navigateTo({ name: 'terms' }) }
+    { label: 'Terms & conditions', onClick: () => navigateTo({ name: 'terms' }) },
+    { label: 'Credits', onClick: () => navigateTo({ name: 'credits' }) }
   ];
 
   const enquirySummary = `${selectedCar.name} · ${selectedPaint.name} · ${selectedWheel.name} ${selectedSize} in ${selectedFinish.name}`;
@@ -891,6 +952,15 @@ export const App: React.FC = () => {
           if (ok) setAccountOpen(false);
           return ok;
         }}
+        onDeleted={(code) => {
+          // The summary must not keep showing a code whose shared copy is gone: while it is open, the build on
+          // screen gets a fresh code as on the way in (Share, PDF and Save to garage keep working); elsewhere the
+          // code is dropped and the summary makes one when it opens
+          if (configCode?.code !== code) return;
+          if (route.name !== 'summary') return setConfigCode(null);
+          const cfg = currentConfig();
+          saveCurrent(cfg, configKey(cfg));
+        }}
         cars={catalog.cars}
         paints={catalog.paints}
         wheels={catalog.wheels}
@@ -964,11 +1034,11 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {(route.name === 'terms' || route.name === 'delivery') && (
+      {(route.name === 'terms' || route.name === 'delivery' || route.name === 'credits') && (
         <div className="absolute inset-0 z-50 animate-fadeIn">
           <InfoPage
             key={route.name}
-            content={route.name === 'terms' ? TERMS : DELIVERY}
+            content={route.name === 'terms' ? TERMS : route.name === 'delivery' ? DELIVERY : CREDITS}
             onBack={goBack}
             onEnquire={() => setEnquiryOpen(true)}
           />

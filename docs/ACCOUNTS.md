@@ -3,13 +3,15 @@
 Customers can sign in with Google and keep a **garage** of saved builds. Everything still works
 without an account exactly as before: share codes, PDF downloads and enquiries from anonymous
 visitors are unchanged, and the admin at `/admin` (email + password, allowlist `public.admin_users`)
-is untouched.
+keeps working as it did, with one extra lock: because sign-ups are now open, an admin's email must
+be **confirmed** in Supabase Auth (see *Owner steps* and *How RLS keeps customers out of /admin*).
 
 ## What was built
 
 | Piece | Where |
 |---|---|
-| Schema, policies, trigger and the claim function | `supabase/migrations/20261110150000_customer_accounts.sql` |
+| Schema, policies, trigger and the rename function | `supabase/migrations/20261110150000_customer_accounts.sql` |
+| `private.is_admin()` requires a confirmed email; customers may update only their profile fields | `supabase/migrations/20261110170000_admin_requires_confirmed_email.sql` |
 | Auth service: sign in / out, cached session, profile, garage | `services/authService.ts` |
 | `user_id` on saved builds and leads | `services/journeyService.ts` (`saveConfiguration`, `submitEnquiry`) |
 | The account sheet (sign-in, profile, garage) | `components/journey/AccountSheet.tsx` |
@@ -26,8 +28,12 @@ wheel · size · finish, date) with **Open** (reopens it in the configurator thr
 **Data flow**
 
 - `saved_configurations.user_id` is set on insert when a session exists (read synchronously from the
-  cached session, never awaited). A build saved before sign-in is put in the garage with
-  `claim_configuration(code, name)` (the **Save to garage** button).
+  cached session, never awaited). **Save to garage** saves a *new copy* of the build under a fresh
+  code owned by the customer (with the name they typed); the summary then shows that code. Ownership
+  of an existing row is never transferred: a share code opens a build, it is not proof of authorship,
+  so a build reached through someone else's `/?config=CODE` link stays theirs and their link keeps
+  working. Renaming a build in the garage goes through `rename_configuration(code, name)`, which only
+  touches a row the caller already owns.
 - `leads.user_id` is set the same way for enquiries and PDF downloads. The `configuration` object the
   lead email (n8n) reads is unchanged.
 - The Google round trip reloads the page. From the showroom, configurator or summary the build in
@@ -56,40 +62,74 @@ Project `qxlfkfhzpqbxffuqqewg` (*Apex Forged Configurator*).
    - Redirect URLs: the production URL with `/**`, the Vercel preview pattern
      (`https://*-<team>.vercel.app/**`) and `http://localhost:5173/**`. The app asks to come back to
      `/?config=CODE` or to the page the visitor was on, so the `/**` glob is needed.
-4. **Supabase → Authentication → Sign In / Providers → Email (and general settings):** "Allow new
-   users to sign up" must be **on** (it is the default). Customers are created on their first Google
-   sign-in. Leave email confirmations as they are: Google accounts arrive verified.
-5. **Apply the migration.** SQL Editor → paste `supabase/migrations/20261110150000_customer_accounts.sql`
-   → Run (it is idempotent; running it twice is safe). Then, **as a separate run on its own**, build the
-   two indexes. They are not in the migration because `CONCURRENTLY` cannot run inside the
-   transaction a pasted script runs in:
+4. **Supabase → Authentication → Sign In / Providers → Email:** "Allow new users to sign up" must be
+   **on** (it is the default); customers are created on their first Google sign-in. **"Confirm email"
+   must stay on** (also the default) and must never be switched off. The sign-up switch also opens
+   email + password sign-up on the Auth API to anyone, so with confirmations off a stranger could
+   register an allowlisted admin address before that admin has an account and get a session carrying
+   it. Google accounts arrive verified, so customers never see a confirmation email and are not
+   affected. The migration in step 5c makes `private.is_admin()` insist on a confirmed email as well,
+   so the setting is a second lock, not the only one.
+5. **Apply the migrations, in this order,** each as its own run in the SQL Editor (both files are
+   idempotent; running them twice is safe):
 
-   ```sql
-   create index concurrently if not exists saved_configurations_user_idx on public.saved_configurations (user_id, created_at desc);
-   ```
-   ```sql
-   create index concurrently if not exists leads_user_idx on public.leads (user_id, created_at desc);
-   ```
+   a. `supabase/migrations/20261110150000_customer_accounts.sql` (profiles, garage, `leads.user_id`).
+
+   b. **As a separate run on its own**, the two indexes. They are not in the migration because
+      `CONCURRENTLY` cannot run inside the transaction a pasted script runs in:
+
+      ```sql
+      create index concurrently if not exists saved_configurations_user_idx on public.saved_configurations (user_id, created_at desc);
+      ```
+      ```sql
+      create index concurrently if not exists leads_user_idx on public.leads (user_id, created_at desc);
+      ```
+
+   c. `supabase/migrations/20261110170000_admin_requires_confirmed_email.sql` (needs the `profiles`
+      table from a): `private.is_admin()` now also requires the admin's `auth.users.email_confirmed_at`,
+      and customers may update only their own profile fields, never `email`. **First check that every
+      admin is confirmed**, or `/admin` will tell them "not on the admin allowlist" afterwards:
+
+      ```sql
+      select u.email, u.email_confirmed_at
+      from auth.users u join public.admin_users a on a.email = lower(u.email);
+      ```
+
+      A null `email_confirmed_at` means the user was created in the dashboard without **Auto Confirm
+      User** and has not yet set a password through the emailed link (doing so confirms the address).
+      Either send them a recovery link (Authentication → Users → … → Send password recovery) or confirm
+      the row directly: `update auth.users set email_confirmed_at = now() where id = '<uuid>';`
+      Create future admins with **Auto Confirm User** ticked (docs/HANDOVER.md, section 1).
 6. Deploy the app as usual (`.claude/skills/forgedsa-deploy-and-release`).
 
 ## How RLS keeps customers out of /admin
 
 A customer is an ordinary `authenticated` user. Every admin policy is
-`using ((select private.is_admin()))`, which checks the JWT's email against `public.admin_users`;
-a Google account that is not on that allowlist gets `false`, so it cannot read or write the
-catalogue, leads (other than its own) or storage. The admin page itself also checks the allowlist
-(`isCurrentUserAdmin`) before showing the editor. Customers never see `/admin` in the app.
+`using ((select private.is_admin()))`. Since `20261110170000_admin_requires_confirmed_email.sql` that
+function looks up the caller's own `auth.users` row by `auth.uid()` and says yes only when its email
+is on `public.admin_users` **and** `email_confirmed_at` is set. A Google account that is not on the
+allowlist gets `false`, and so does an unconfirmed email + password sign-up that used an admin's
+address, so neither can read or write the catalogue, leads (other than its own) or storage. This is
+why **"Confirm email" stays on** and why every admin's email must be confirmed (owner step 5c). The
+admin page itself also checks the allowlist (`isCurrentUserAdmin`) before showing the editor; that
+read goes through the same function. Customers never see `/admin` in the app.
 
 What a customer *can* do, and nothing more:
 
 | Table | Customer (authenticated, not admin) | Anonymous |
 |---|---|---|
-| `profiles` | read / update / create **own row** only | nothing |
-| `saved_configurations` | insert with `user_id` null or own id; read / rename / delete **own rows**; `claim_configuration(code)` for a code they hold | insert with `user_id` null; `get_configuration(code)` |
+| `profiles` | read / create **own row** only; update **own row**, and only the profile columns (`display_name`, `avatar_url`, `phone`, `city`, `primary_car_id`, `chassis_code`, `exterior_paint_id`, `brake_system`, `preferred_finish_id`, `marketing_opt_in`), never `email`, `id` or `created_at` (column-level grant) | nothing |
+| `saved_configurations` | insert with `user_id` null or own id; read / rename / delete **own rows**; **Save to garage** saves a copy owned by the customer; `rename_configuration(code, name)` renames own builds | insert with `user_id` null; `get_configuration(code)` |
 | `leads` | insert with `user_id` null or own id; read **own rows** | insert with `user_id` null |
 
-The claim is a function, not an update policy: a policy `using (user_id is null)` would let one
-`UPDATE` without a `WHERE` claim every anonymous build at once. The function takes the exact code.
+There is no "claim": no function or policy moves an anonymous (or anyone else's) build into a
+customer's garage. The code in a share link is a secret that opens the build, not proof of who made
+it; letting the holder take it over would let them delete it later and kill the sharer's link.
+**Save to garage** therefore inserts a fresh row owned by the customer. The one server-side change to
+an existing row, `rename_configuration(code, name)`, is a `security definer` function that takes the
+exact code and updates only a row whose `user_id` is the caller's (so a stray `UPDATE` without a
+`WHERE` cannot touch other rows either); it returns `false` for an unknown code, an anonymous build
+or someone else's.
 
 ## Data stored (POPIA)
 
@@ -136,26 +176,34 @@ In the SQL Editor (runs as `postgres`), impersonate the roles. Replace the UUIDs
 from **Authentication → Users**.
 
 ```sql
--- anonymous: may insert an unowned build, may not read, may not claim
+-- anonymous: may insert an unowned build, may not read, may not rename
 set local role anon;
 insert into public.saved_configurations (code, payload) values ('TESTANON01', '{"carId":"m2_g87"}');          -- ok
 insert into public.saved_configurations (code, payload, user_id) values ('TESTANON02', '{}', gen_random_uuid()); -- fails (policy)
 select count(*) from public.saved_configurations;                                                              -- 0 rows visible
-select public.claim_configuration('TESTANON01', 'x');                                                           -- permission denied
+select public.rename_configuration('TESTANON01', 'x');                                                          -- permission denied
 reset role;
 
--- a customer: sees and edits only their own rows
+-- a customer: sees and edits only their own rows; an anonymous build cannot be renamed or taken over
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"<customer-uuid>","role":"authenticated","email":"customer@example.com"}', true);
 select * from public.profiles;                                   -- exactly one row, theirs
-select public.claim_configuration('TESTANON01', 'My M2');        -- true
-select code, name, user_id from public.saved_configurations;    -- TESTANON01 now theirs
-select public.claim_configuration('TESTANON01', 'again');        -- true (own row)
+update public.profiles set phone = '+27 82 000 0000' where id = '<customer-uuid>';           -- 1 row
+update public.profiles set email = 'someone.else@example.com' where id = '<customer-uuid>';  -- permission denied for table profiles
+select public.rename_configuration('TESTANON01', 'Mine now');    -- false (not theirs; row untouched)
+insert into public.saved_configurations (code, payload, user_id) values ('TESTANON03', '{"carId":"m2_g87"}', '<customer-uuid>'); -- ok (own id)
+select public.rename_configuration('TESTANON03', 'My M2');       -- true (own row)
+select code, name, user_id from public.saved_configurations;    -- only TESTANON03, named "My M2"; TESTANON01 not visible
+update public.saved_configurations set user_id = '<customer-uuid>' where code = 'TESTANON01'; -- 0 rows (policy)
 update public.cars set active = false where id = 'm2_g87';       -- 0 rows (not an admin)
 select count(*) from public.leads;                               -- only their own
 reset role;
 
--- an admin: everything the admin page needs, still
+-- back as postgres: the anonymous build is still unowned
+select code, name, user_id from public.saved_configurations where code = 'TESTANON01'; -- name null, user_id null
+
+-- an admin: everything the admin page needs, still (the admin's auth.users row must have
+-- email_confirmed_at set, otherwise is_admin() is false and every count below is 0)
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"<admin-uuid>","role":"authenticated","email":"<admin email>"}', true);
 select count(*) from public.saved_configurations;                -- every row

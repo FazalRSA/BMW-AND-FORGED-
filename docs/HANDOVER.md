@@ -41,9 +41,13 @@ Follow the sections in order. Each step has a **Check** line; do not move on unt
 
 Since 2026-11-10 the `/configure` screen is the owner's vehicle spec viewer: the car sits in its studio (dome, floor, reflection coves) and the right-hand glass panel holds Car chips, paint swatch groups, rims, sizes, finishes, views and the price; the prepared cars (M2 CS, M4 CS, M5, M5 Touring) are the showroom and the older Sketchfab cars are hidden until their packages arrive (`ADD_PREPARED_CAR.md`).
 
-**Only cars with a 3D file appear in the showroom.** Nine of the 11 cars have one; the M4 Convertible
-and M5 Touring appear automatically as soon as you upload a GLB for them in `/admin`. Model credits
-and licences: `public/models/CREDITS.md`.
+**Four cars are in the showroom:** the prepared M2 CS, M4 CS, M5 and M5 Touring (all with a GLB in
+`public/models/`). The other eight rows (M4 Competition, M4 Convertible, M3, M3 Touring, M235, M8, X3 M50,
+X5 M) stay in the catalogue but are hidden (`active = false`, migration `20261110141000_legacy_cars_hidden.sql`)
+until their prepared packages arrive. Uploading a GLB alone does not bring a hidden car back: tick *Visible in
+configurator* as well (the M4 Convertible has no 3D file at all). Model credits and licences:
+`public/models/CREDITS.md`; the four prepared bodies are recorded there as **"Licence not confirmed"**
+(prototype use until a licence covering web use is in hand, `ADD_PREPARED_CAR.md`, "Licence").
 
 **Customer choices (only these five):** car, paint colour, rim design, rim size, rim colour (finish).
 Rim size visibly changes the rim on the car (bigger rim, thinner tyre sidewall) and has its own price.
@@ -61,8 +65,14 @@ If Supabase is ever unreachable, the app falls back to the bundled catalogue in
 1. Open <https://supabase.com/dashboard/project/qxlfkfhzpqbxffuqqewg/auth/users>.
 2. **Add user → Create new user**: email `fazal@novahavens.com` (already on the admin allowlist),
    choose a strong password, tick **Auto Confirm User**.
-3. **Turn off public sign-ups**: Authentication → Sign In / Providers → Email → untick
-   *Allow new users to sign up* → Save. (Nobody can sign up via the app anyway, but this closes the door.)
+3. **Leave sign-ups and email confirmation on**: Authentication → Sign In / Providers → Email → *Allow
+   new users to sign up* stays **on** (customers are created on their first Google sign-in, section 5b) and
+   *Confirm email* stays **on**. The admin lock is the allowlist plus a **confirmed email**: since
+   `supabase/migrations/20261110170000_admin_requires_confirmed_email.sql`, `private.is_admin()` says yes
+   only for an `admin_users` address whose `auth.users.email_confirmed_at` is set, so an unconfirmed
+   sign-up with an admin's address is just a customer. Create every admin with **Auto Confirm User**
+   ticked (or have them set a password through the emailed link, which confirms the address); the check
+   query is in `ACCOUNTS.md`, owner step 5c.
 4. To make the **client** an admin too: create their user the same way, then in
    **SQL Editor** run:
    ```sql
@@ -71,7 +81,8 @@ If Supabase is ever unreachable, the app falls back to the bundled catalogue in
    To remove someone: `delete from public.admin_users where email = '...';`
 
 **Check:** go to `/admin`, sign in, and you should see the Cars / Wheels / Finishes / Paints tabs.
-If it says *"not on the admin allowlist"*, the email in `admin_users` doesn't match the login email.
+If it says *"not on the admin allowlist"*, the email in `admin_users` doesn't match the login email, or
+(after migration `20261110170000`) the admin's email is not confirmed (`ACCOUNTS.md`, owner step 5c).
 
 ---
 
@@ -141,8 +152,9 @@ the file are dropped automatically.
 - It's turned, sized to the rim diameter and centred automatically, and takes the finish colour.
   If the face points into the car, tick **Flip 3D rim** → Save.
 
-**Check:** Studio → wheel drawer → select the wheel → **Zoom to Wheel**, and open **Rim detail**
-(the 3D turntable page).
+**Check:** `/configure` → **Wheels** → select the wheel (the camera cuts to the wheel close-up; the
+**Wheel** chip in the **View** row returns to it), then the **360°** chip next to the wheel, which opens
+the rim page (`/rims/<rim-id>`, the 3D turntable with finish, size and price).
 
 ### 2c. Prices, names, finishes, paints
 
@@ -172,7 +184,7 @@ One 3D studio stays alive behind every step; the camera glides between stages ra
 | Browser tab title, link-preview text | `index.html` |
 | Welcome screen layout | `components/journey/WelcomeGate.tsx` |
 | Showroom | `components/journey/Showroom.tsx` |
-| Configurator panel and steps | `components/journey/Configurator.tsx` |
+| Configurator panel (Car, Paint, Wheels, Size, Finish, View, Auto-rotate) | `components/journey/ViewerPanel.tsx`; the older four-step panel (`?panel=steps`) is `components/journey/Configurator.tsx` |
 | Summary page | `components/journey/SummaryPage.tsx` |
 | PDF layout | `services/brochurePdf.ts` |
 | Enquiry form | `components/journey/EnquiryModal.tsx` |
@@ -211,9 +223,20 @@ Vercel builds a **preview URL** for every pushed branch. Check it there before m
 ## 5. Deploy (Vercel)
 
 A Vercel project **forged-configurator** (team *Nova Havens*) is connected to this repo. Every push
-builds a preview URL; the production URL is <https://forged-configurator-nova-havens.vercel.app>.
+builds a preview URL; the production URL is <https://forged-configurator.vercel.app> (the same URL the
+client handover, the OAuth client and the Supabase redirect list use).
 Build settings: framework **Vite**, build `vite build`, output `dist`. No environment variables are needed.
 `vercel.json` makes every page work on refresh. Optional: Settings → Domains → add the client's domain.
+
+**Production reads the Supabase catalogue, so a deploy alone does not change what customers see.** The
+2026-11-10 work (the four prepared cars, the hidden legacy cars, the six stock-sheet wheels and finishes,
+customer accounts, the confirmed-email admin lock, the M2 CS / M5 Touring specs) is written as migrations
+but **not applied** (there is no Supabase access from the sandbox). Until every
+`supabase/migrations/20261110*.sql` has been run in file-name order in the SQL Editor (the two
+`CONCURRENTLY` indexes from `ACCOUNTS.md` step 5b as their own run after `20261110150000`, and
+`20261110170000_admin_requires_confirmed_email.sql` then `20261110171000_car_specs_m2cs_m5touring.sql`
+last), the live site still shows the old Sketchfab cars and photo-traced wheels, and **Continue with
+Google** fails until the Google provider and redirect URLs are set up (`ACCOUNTS.md`, owner steps 1 to 4).
 
 ---
 
@@ -225,7 +248,10 @@ push with `npm install --no-audit --no-fund && npm run build && cp dist/index.ht
 `dist`, env `NODE_VERSION=22` and `VITE_CATALOG_SOURCE=static` (the bundled catalogue, so the preview shows
 the new cars and wheels before the migrations are applied). Point it at another branch in the Render
 dashboard → Settings → Branch. Everything else (share codes, leads, PDF, admin) uses the live Supabase
-project, so test leads from the preview email the team like real ones.
+project, so test leads from the preview email the team like real ones. **Google sign-in only works on a
+URL in the Supabase redirect list** (`ACCOUNTS.md`, owner step 3): add `https://forgedsa-configurator.onrender.com/**`
+before testing accounts on the preview, and `http://localhost:3000/**` for `bun run dev` (Vite is set to
+port 3000 in `vite.config.ts`; the list as written names `localhost:5173`, the port the harness scripts use).
 
 ## 5a. New-lead email automation
 
@@ -267,15 +293,24 @@ Customers can sign in with Google (Supabase Auth) to keep a garage of saved buil
 leads they create carry their account id, and the PDF gate and enquiry form pre-fill from their
 profile. Anonymous use is unchanged. The one-time dashboard setup (Google provider, redirect URLs),
 the schema and policies (`supabase/migrations/20261110150000_customer_accounts.sql`), what is stored
-(POPIA) and the test script are in [`ACCOUNTS.md`](ACCOUNTS.md). Admins are unaffected: `/admin` keeps
-its password sign-in and the `admin_users` allowlist, so a Google customer gains nothing there.
+(POPIA) and the test script are in [`ACCOUNTS.md`](ACCOUNTS.md). Admins keep their password sign-in and
+the `admin_users` allowlist, so a Google customer gains nothing at `/admin`; the one change for admins is
+that their email must be **confirmed** (step 1.3, migration `20261110170000`). Sign-in only works from a
+URL in the redirect list: production, the Vercel preview pattern, localhost, and the Render preview if
+you add it (section 5, "Branch preview on Render").
 
 ---
 
 ## 6. Pre-handover checklist (do it on the live URL, on a laptop **and** a phone)
 
+**Before you start (otherwise the car, wheel and account items below cannot pass):** every
+`supabase/migrations/20261110*.sql` applied in order, ending with `20261110170000` and `20261110171000`
+(section 5); the Google provider, redirect URLs and the confirmed-admin check done (`ACCOUNTS.md`, owner
+steps 1 to 5); the URL you test on is in the redirect list. Until then, use the Render preview for the
+car and wheel items (it ships the bundled catalogue) and skip the account item.
+
 - [ ] Loader → welcome in a few seconds; the car turns slowly on the welcome screen
-- [ ] Showroom arrows switch cars (drive-out / drive-in); Explore shows specs
+- [ ] Showroom arrows switch between the four cars (M2 CS, M4 CS, M5, M5 Touring; drive-out / drive-in); Explore shows specs; no Sketchfab-era car appears
 - [ ] Build → notice → Confirm opens the configurator; every paint, wheel, size and finish applies
 - [ ] Choosing a wheel, size or finish cuts to the wheel close-up
 - [ ] Prices and currency match the region chosen on the welcome screen
@@ -284,8 +319,8 @@ its password sign-in and the `admin_users` allowlist, so a Google customer gains
 - [ ] PDF asks for email + mobile first; the lead appears in `/admin` → Enquiries as "PDF download"
 - [ ] An enquiry appears in `/admin` → Enquiries
 - [ ] Both send a branded email to forgedsa1@gmail.com within a few seconds (n8n → Executions shows green)
-- [ ] `/admin` sign-in works for you **and** the client; sign-ups disabled (step 1.3)
-- [ ] Account → **Continue with Google** signs a customer in; **Save to garage** on the summary lists the build in the garage; **Open** restores it; sign out
+- [ ] `/admin` sign-in works for you **and** the client; *Allow new users to sign up* **and** *Confirm email* are both still **on**, and every admin's email is confirmed (step 1.3; a Google customer visiting `/admin` sees "not on the admin allowlist")
+- [ ] Account → **Continue with Google** signs a customer in (needs the `ACCOUNTS.md` owner steps and the test URL in the redirect list); **Save to garage** on the summary lists the build in the garage; **Open** restores it; sign out
 - [ ] Every wheel in the panel is one of the six on the stock sheet, with its finishes and ZAR prices (`docs/WHEEL_INVENTORY.md`); FSA001 shows different front and rear rims
 
 ---

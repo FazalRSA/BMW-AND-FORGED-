@@ -34,21 +34,26 @@ are hidden (`active: false`; `WheelDesign.active`, `STATIC_CATALOG` filters). `p
 README → Hosting). Verified: tsc, vite build, `journey.cjs` phone + desktop, `pdf-check.cjs` (brochure 2 pages, lead +
 share-code writes stubbed), accounts sheet check at both sizes.
 
-## Goal of this phase (owner's words, condensed)
-Two cars and at least two wheels each **perfectly done**: **M4 Competition** and **M5 (G90)**, with
-**Twin-Y (FSA-12), Star 6 (FSA-13), Kyalami 15 (FSA-03), Turbine 25 (FSA-14)**. Everything else waits
-here for later.
+## Goal of this phase (since 2026-11-10)
+The owner's **four prepared cars** (M2 CS, M4 CS, M5, M5 Touring) drawn live from their GLBs in the viewer look, with the
+**six stock-sheet wheels** (FSA001-004, FF-1, FF-3) as GLB rims, in the sheet's sizes, finishes and prices, verified with
+the harness (`journey.cjs` both sizes, `pdf-check.cjs`, `shoot.cjs` sheets of the six wheels). Next: apply the migrations,
+Google sign-in, spins for the six wheels (queue below).
+
+*Superseded (Oct 2026 goal, kept for the history below):* M4 Competition and M5 G90 with Twin-Y (FSA-12), Star 6 (FSA-13),
+Kyalami 15 (FSA-03), Turbine 25 (FSA-14). FSA-12/13/14 are hidden (`active: false`); the `forged_fsa_03` id now carries
+the stock FSA003 GLB, not the photo-traced Kyalami 15.
 
 ## How it works now (decided, keep)
 | Surface | What renders it |
 |---|---|
 | Car body (configurator) | **Prepared cars (M5, M5 Touring, M4 CS, M2 CS since 2026-11-10): the GLB live** (`docs/ADD_PREPARED_CAR.md`). Others: Blender Cycles images per car × view, recoloured per paint in the browser (`scripts/prerender/`, `components/journey/RenderedCarView.tsx`). Since 2026-10-07: darker reflection panels in the `STUDIO=dark` studio (no milky haze), a third `flake_w` frame (metallic base) blended in for Metallic/Pearl paints (`flakeLook` in `services/renderedBody.ts`), `BODY_EXPOSURE` 1.25 |
-| Wheels on the car | live engine, **2D photo/bar face** (`imageUrl`, `services/rimFaces.ts`), lit by the Blender studio HDR (`public/env/forgedsa_studio.hdr`) |
-| Rim detail page | **Blender 360° spin**, 36 frames × 5 finishes (`scripts/rim3d/turntable.py` → `public/renders/rims/<id>/`, `RimSpinView.tsx`); live 3D only as a fallback |
+| Wheels on the car | live engine. **The six stocked wheels are 3D rim GLBs** (`modelUrl`, `rearModelUrl` for the staggered FSA001; `scripts/ingest-rim.mjs`; a GLB wins whenever `modelUrl` is set in `applyWheelDesign`), lit by the viewer studio on the live cars. The **2D photo/bar face** (`imageUrl`, `services/rimFaces.ts`, Blender studio HDR `public/env/forgedsa_studio.hdr`) applies only to the hidden legacy wheels |
+| Rim detail page | **Blender 360° spin** for the hidden legacy wheels, 36 frames × 5 finishes (`scripts/rim3d/turntable.py` → `public/renders/rims/<id>/`, `RimSpinView.tsx`). None of the six stocked wheels has a spin yet (queue): their page draws the live GLB |
 | Finishes (spins) | `scripts/rim3d/finishes.json` + `materials.py`: Liquid Metal, Satin Bronze, Satin Gold, Gloss Black, Silver = brushed aluminium |
 | Finishes (car) | `services/wheelFinish.ts` (Satin Gold live in Supabase on every wheel since 2026-10-04) |
 
-## Status of the target set
+## Status of the Oct 2026 target set (history: these wheels are hidden since 2026-11-10, the M4 Competition too)
 | Item | M4 Competition | M5 G90 | Rim page spin |
 |---|---|---|---|
 | Body (Blender) | done | done | n/a |
@@ -58,12 +63,15 @@ here for later.
 | FSA-14 Turbine 25 | done after fold fix | done after fold fix | ✓ complete; brighter chrome, flat barrel |
 
 **Live since 2026-10-05:** FSA-12/13/14 are active in Supabase (migration `20261004180000_wheels_fsa_12_13_14_live.sql`)
-with PLACEHOLDER names/sizes/prices from FSA-05. **Every active wheel (12) has a rim page spin**; FSA-01, 02, 04,
+with PLACEHOLDER names/sizes/prices from FSA-05. **Every one of the twelve spun wheels has a rim page spin, but all twelve
+are hidden since 2026-11-10 (`active: false`); the six active stock wheels have no spin yet** (queue). FSA-01, 02, 04,
 05, 06, 07, 08, 09 were added on 2026-10-05 (FSA-07 built from `public/rim-faces/forged_fsa_07.png`; FSA-09 rendered
 with `turntable.py --resmooth`). Weakest matches: FSA-07 Dezzi Star, then FSA-04 Scribante 3P.
 
-On-car check sheets for all five active cars: `docs/rim-template/oncar/{m4_g82,m3_g80,m3_touring_g81,m5_g90,m8_f92}.jpg`
-(made with `scripts/render/oncar.cjs`; `PORT=` picks the dev server). Car body fixes in `scripts/prerender/render_car.py`
+On-car check sheets for the five cars that were active in Oct 2026 (legacy bodies; M4 G82, M3, M3 Touring and M8 are hidden
+now, the M5 G90 is a new prepared GLB): `docs/rim-template/oncar/{m4_g82,m3_g80,m3_touring_g81,m5_g90,m8_f92}.jpg`
+(made with `scripts/render/oncar.cjs`; `PORT=` picks the dev server). The four live cars' sheets are `docs/ingest/<carId>.jpg`
+and the stock wheels' `docs/ingest/stock-wheels.jpg`. Car body fixes in `scripts/prerender/render_car.py`
 `CAR_FIXES`: M8 keeps only the Competition fender (four stacked variants z-fought), M3 has thin windscreen glass and
 renders without subdivision (it needs >12.7 GB subdivided). Both re-rendered and live.
 
@@ -121,16 +129,22 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 
 ## Later (parked)
 - **Photo 7** (champagne, forked spokes) may be a different design from the catalogue's 12-spoke Aldo Fork 15: ask.
-- Cars: M4 Convertible and M5 Touring have no real 3D model (placeholder body); X3 M50's model has filled
-  wheel arches. Paid models need the owner's OK.
+- Cars: the M4 Convertible has no real 3D model (placeholder body; hidden); X3 M50's model has filled
+  wheel arches (hidden). The M5 Touring is one of the four prepared GLBs and live. Paid models need the owner's OK.
 - Summary page and PDF stills still come from the live WebGL car, not the Blender renders.
 - Spin frames are in git (~12 MB per wheel, 137 MB for 12). Before the full catalogue, move them to Supabase storage
   (and consider 720×540 or lazy preloading in `RimSpinView`).
 - Not modelled on 3D rims: lip engraving, logos, milled channels on traced faces.
 
 ## Decisions log (so they aren't asked twice)
-- Pre-rendered bodies instead of live WebGL cars (the GLB panels were dented; shader tweaks couldn't fix it).
+- Pre-rendered bodies instead of live WebGL cars **for the Sketchfab-era cars** (their GLB panels were dented; shader tweaks
+  couldn't fix it). Superseded on 2026-11-10 for the four prepared cars: clean packages, drawn live from the GLB in the
+  viewer look (`--render` can bring Blender frames back for them if the owner prefers).
 - Free only: render on this CPU; no GPU rental, no paid APIs.
 - Template rim: "High poly Rims" (CC-BY-4.0, credit in `docs/rim-template/PROFILE.md`), benchmark only.
 - Silver in spins = brushed aluminium; Satin Gold measured from the client's photo (#c4aa7f).
-- New wheels go live only after the owner approves their spin.
+- New wheels went live only after the owner approved their spin (Oct 2026, photo-traced wheels). Superseded on 2026-11-10:
+  **the stock sheet is the catalogue** (`docs/WHEEL_INVENTORY.md`); stocked wheels are live as GLB rims without a spin,
+  legacy wheels and cars are hidden (`active: false`), never deleted.
+- 2026-11-10: live GLB for the prepared cars; viewer look and viewer panel on /configure; customer accounts via Google on
+  Supabase Auth; admin allowlist untouched.

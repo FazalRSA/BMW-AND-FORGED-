@@ -148,10 +148,12 @@ export const BMW_MODELS: CarModel[] = [
     badge: 'M2 CS G87',
     generation: 'G87',
     chassisCode: 'G87 M2',
+    // BMW M2 CS (G87, 2025) published figures: S58, 530 PS (390 kW) / 523 hp, 650 Nm, 0-100 km/h 3.8 s.
+    // Owner to confirm. Fitment kept from the M2 (19"/20" staggered forged wheels, as on the CS).
     engine: '3.0L S58 Twin-Turbo Inline-6',
-    power: '453 HP / 460 PS',
-    torque: '550 Nm (406 lb-ft)',
-    acceleration: '0-100 km/h in 3.9s',
+    power: '523 HP / 530 PS',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.8s',
     recommendedWheelFitment: {
       front: '19 x 9.5J ET12',
       rear: '20 x 10.5J ET14',
@@ -229,12 +231,18 @@ export const BMW_MODELS: CarModel[] = [
     badge: 'M5 Touring G99',
     generation: 'G99',
     chassisCode: 'G99 M5 Touring',
-    // Specs intentionally blank (not needed by the client); blank rows are hidden in the UI.
-    engine: '',
-    power: '',
-    torque: '',
-    acceleration: '',
-    recommendedWheelFitment: { front: '', rear: '', pcd: '5x112', cb: '66.6mm' },
+    // BMW M5 Touring (G99) published figures: S68 V8 plug-in hybrid, 727 PS (535 kW), 1000 Nm, 0-100 km/h 3.6 s;
+    // same chassis family as the M5 G90, so the same factory fitment. Owner to confirm.
+    engine: '4.4L S68 Twin-Turbo V8 M Hybrid',
+    power: '727 HP / 535 kW',
+    torque: '1,000 Nm (738 lb-ft)',
+    acceleration: '0-100 km/h in 3.6s',
+    recommendedWheelFitment: {
+      front: '20 x 9.5J',
+      rear: '21 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
     bodyStyle: 'touring',
     paintIds: [
       'carbon_black', 'fire_red', 'marina_bay_blue', 'brooklyn_grey', 'sophisto_grey_brilliant_effect',
@@ -891,8 +899,8 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     pricePerSet: 4395.60,
     priceBySize: { '20"': 4395.60, '21"': 4395.60 },
     priceByFinish: { liquid_metal: 5219.78 },
-    description: 'Split five-spoke two-piece forged wheel in Silver or Liquid Metal. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET15/20 · CB 66.6.',
-    highlights: ['Two-piece construction', 'Silver or Liquid Metal', 'PCD 5×112 · ET15/20 · CB 66.6'],
+    description: 'Split five-spoke two-piece forged wheel in Silver or Liquid Metal. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET15/20 (Silver) · ET15/17 (Liquid Metal) · CB 66.6.',
+    highlights: ['Two-piece construction', 'Silver or Liquid Metal', 'PCD 5×112 · ET15/20 (Silver) · ET15/17 (Liquid Metal) · CB 66.6'],
     availableVariants: ['silver', 'liquid_metal'],
     defaultVariant: 'silver',
     imageUrl: '/rim-images/sixnine_ff1.webp',

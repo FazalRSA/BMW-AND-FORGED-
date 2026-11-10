@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { useRimThumb } from '../../services/rimThumbs';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -76,7 +76,67 @@ export const Eyebrow: React.FC<{ children: React.ReactNode; className?: string }
   <div className={cx('text-[10.5px] font-semibold uppercase tracking-[0.28em] text-mute', className)}>{children}</div>
 );
 
-/** Centered dialog on desktop, bottom sheet on phones. */
+/** Polite live region for progress and success text ("Saving your build…", "Link copied"). Keep it mounted and swap
+ *  its children: a live region announces changes, not its own arrival. Takes no space while empty. */
+export const Status: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({ className, children, ...rest }) => (
+  <p {...rest} role="status" aria-live="polite" aria-atomic="true" className={cx('text-[12.5px] leading-relaxed text-mute', className)}>
+    {children}
+  </p>
+);
+
+/** Error text announced as soon as it renders (role=alert is assertive). Render it only while there is an error. */
+export const Alert: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({ className, children, ...rest }) => (
+  <p {...rest} role="alert" className={cx('text-[12.5px] leading-relaxed text-red-400', className)}>
+    {children}
+  </p>
+);
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable]:not([contenteditable="false"])';
+
+/** Tab stops inside `root` in DOM order; anything display:none is skipped. */
+const focusablesIn = (root: HTMLElement) =>
+  Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.getClientRects().length > 0);
+
+const TEXT_ENTRY = 'textarea, [contenteditable], input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]):not([type="file"])';
+
+/**
+ * While a modal is open everything else under <body> (the app root, other portals) is made inert: unfocusable,
+ * unclickable and hidden from assistive tech. Ref-counted per element so stacked modals can release in any order,
+ * and an `inert` somebody else set is left alone.
+ */
+const inertHolds = new WeakMap<Element, { count: number; ours: boolean }>();
+const holdInertExcept = (keep: Element) => {
+  const held: Element[] = [];
+  for (const el of Array.from(document.body.children)) {
+    if (el === keep || /^(SCRIPT|STYLE|LINK|TEMPLATE)$/.test(el.tagName)) continue;
+    const h = inertHolds.get(el) ?? { count: 0, ours: !el.hasAttribute('inert') };
+    h.count++;
+    inertHolds.set(el, h);
+    if (h.ours) el.setAttribute('inert', '');
+    held.push(el);
+  }
+  return () => {
+    for (const el of held) {
+      const h = inertHolds.get(el);
+      if (!h || --h.count > 0) continue;
+      inertHolds.delete(el);
+      if (h.ours) el.removeAttribute('inert');
+    }
+  };
+};
+
+/** The modal rendered last is the one on top; only it answers Escape and Tab. */
+const isTopDialog = (el: Element) => {
+  const dialogs = document.body.querySelectorAll(':scope > [role="dialog"]');
+  return dialogs[dialogs.length - 1] === el;
+};
+
+/**
+ * Centered dialog on desktop, bottom sheet on phones. A real modal: focus moves inside on open (an autoFocus child,
+ * else the first control of the body, else the panel), Tab and Shift+Tab stay inside, the rest of the page is inert,
+ * Escape and the backdrop close it, and focus goes back to whatever opened it.
+ */
 export const Modal: React.FC<{
   open: boolean;
   onClose: () => void;
@@ -86,17 +146,84 @@ export const Modal: React.FC<{
   /** Replaces the panel's surface, radius and height classes (e.g. the account sheet's glass column). */
   panelClassName?: string;
 }> = ({ open, onClose, title, children, width = 'max-w-lg', panelClassName }) => {
+  const titleId = useId();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  // Where focus returns on close: whatever had it as the dialog opened. Read during the render that opens it, because
+  // a child with autoFocus (the showroom notice's Confirm) takes focus before any effect of this component runs.
+  const openerRef = useRef<Element | null>(null);
+  const wasOpenRef = useRef(false);
+  if (open && !wasOpenRef.current) openerRef.current = document.activeElement;
+  wasOpenRef.current = open;
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+    const wrap = wrapRef.current;
+    const panel = panelRef.current;
+    if (!wrap || !panel) return;
+    const releaseInert = holdInertExcept(wrap);
+
+    if (!panel.contains(document.activeElement)) {
+      const first = bodyRef.current ? focusablesIn(bodyRef.current)[0] : undefined;
+      // On a touch screen a text field would raise the keyboard over the sheet before anything was read
+      const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+      if (first && !(coarse && first.matches(TEXT_ENTRY))) first.focus();
+      else panel.focus({ preventScroll: true });
+    }
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.isComposing || !isTopDialog(wrap)) return;
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const stops = focusablesIn(panel);
+      if (!stops.length) {
+        e.preventDefault();
+        panel.focus({ preventScroll: true });
+        return;
+      }
+      const i = stops.indexOf(document.activeElement as HTMLElement);
+      let next: HTMLElement | undefined;
+      // focus on the panel, on something inside that is not a stop, or lost to <body>: start again from the edge
+      if (i === -1) next = e.shiftKey ? stops[stops.length - 1] : stops[0];
+      else if (e.shiftKey && i === 0) next = stops[stops.length - 1];
+      else if (!e.shiftKey && i === stops.length - 1) next = stops[0];
+      if (next) {
+        e.preventDefault();
+        next.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      releaseInert();
+      const opener = openerRef.current;
+      if (opener instanceof HTMLElement && document.contains(opener) && !opener.closest('[inert]')) opener.focus();
+    };
+  }, [open]);
+
   if (!open) return null;
   return createPortal(
-    <div className="stage-dark fixed inset-0 z-[80] flex items-end sm:items-center justify-center pointer-events-auto select-text" role="dialog" aria-modal="true">
+    <div
+      ref={wrapRef}
+      className="stage-dark fixed inset-0 z-[80] flex items-end sm:items-center justify-center pointer-events-auto select-text"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
+    >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] animate-fade" onClick={onClose} />
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className={cx(
           'relative w-full shadow-panel animate-rise overflow-y-auto overscroll-contain',
           panelClassName ?? 'bg-surface rounded-t-[28px] sm:rounded-[28px] max-h-[88dvh]',
@@ -104,12 +231,16 @@ export const Modal: React.FC<{
         )}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-surface/90 backdrop-blur px-7 pt-6 pb-3">
-          <div className="font-display text-[15px] font-bold uppercase tracking-[0.08em]">{title}</div>
+          <h2 id={titleId} className="font-display text-[15px] font-bold uppercase tracking-[0.08em]">
+            {title}
+          </h2>
           <IconButton label="Close" onClick={onClose} className="-mr-2">
             <X className="h-5 w-5" strokeWidth={1.6} />
           </IconButton>
         </div>
-        <div className="px-7 pb-7">{children}</div>
+        <div ref={bodyRef} className="px-7 pb-7">
+          {children}
+        </div>
       </div>
     </div>,
     document.body
@@ -166,7 +297,9 @@ const thumbTint = (hex?: string) => {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex ?? '');
   if (!m) return null;
   const n = parseInt(m[1], 16);
-  const ch = [n >> 16, (n >> 8) & 255, n & 255].map((c) => Math.max(c, 0x48));
+  // Lift dark finishes so the spokes still read on the dark panel, but keep them apart: Black Gloss,
+  // Black Matte and Hyper Black map to three different greys instead of one clamped value
+  const ch = [n >> 16, (n >> 8) & 255, n & 255].map((c) => Math.round(0x30 + c * 0.8));
   return `rgb(${ch.join(',')})`;
 };
 

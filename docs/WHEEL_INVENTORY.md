@@ -30,7 +30,11 @@ Notes
 - **A dearer finish** (Polished Face on FSA002, Liquid Metal on FF-1 and FF-3) is a per-wheel override:
   `price_by_finish` (`WheelDesign.priceByFinish`), read by `services/pricing.ts rimPrice(wheel, size, finishId)`.
   The panel, the rim page, the summary, the PDF and the lead email all use it. In `/admin > Wheels` it is the
-  "Dearer finishes" field; leave a finish blank when it costs the same as the others.
+  "Dearer finishes" field; leave a finish blank when it costs the same as the others. The finish price raises the
+  set price to that figure and never lowers it: if a size is priced above the finish figure, the size price stands.
+- **Old share links and lead codes** that point at a hidden design (the photo-traced wheels, now off) reopen with
+  the first stocked wheel instead; the summary and the PDF always show the wheel actually loaded, so no stale price
+  is quoted. Switch the design back on in `/admin` if an old build must open as it was.
 - **The fitment and the car the sheet lists** are in each wheel's description and highlights. The
   configurator still lets a customer put any wheel on any of the four prepared cars: the sheet says what
   is in stock, the configurator is for seeing it.
@@ -38,6 +42,9 @@ Notes
   mounts it on the rear corners (`applyWheelDesign`) and falls back to the front file if it fails to load.
   The website's brake caliper and rotor meshes inside the STF399 files are dropped when packing
   (`scripts/rim3d/pack.mjs`), because the engine draws its own.
+- **FSA003's old spin frames were removed** (`public/renders/rims/forged_fsa_03/` and its `manifest.json` entry, 2026-11-10):
+  they showed the earlier photo-traced design under the reused id, so the rim page now draws the live GLB for every finish
+  until a spin of the stocked wheel is rendered (`scripts/rim3d/turntable.py`).
 - **Stock quantity and status** are not shown in the configurator (the sheet says one or two sets each).
   Hide a design when it sells out: `/admin > Wheels > Visible in configurator`.
 

@@ -11,6 +11,9 @@
  * devices: comma list of phone,ipad,desktop (default all). sections: comma list of journey, forged,
  * rims, info, deeplinks (default all). RIMS=<dir> serves Supabase storage files from a local cache
  * (optional; the browser fetches them itself once the proxy CA is trusted, see docs/CHECKPOINT.md).
+ * The configurator checks drive whichever panel is rendered: the viewer panel (one scrolling aside with a
+ * section per step) or the stepped panel (?panel=steps); the checks only the stepped panel has (overview
+ * rows, Exterior, Next links) are SKIPped on the viewer.
  *
  * Nothing real is written: inserts into `leads` (every one emails the owner) and
  * `saved_configurations` are fulfilled here with a 201 and their payloads checked; any other write to
@@ -86,6 +89,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
     const unexpected = []; // other writes, aborted
     const frames = new Map(); // `${wheel}/${finish}` -> Map(frame -> {status, ct})
     const frameFails = [];
+    const hmr = []; // the dev server's hot updates and reloads (an edit landing mid-run resets the app's state)
 
     // ---- network: intercept writes, optional storage cache, external pages stubbed ----
     await ctx.route(/supabase\.co\//, async (r) => {
@@ -139,8 +143,9 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
     const watchPage = (pg) => {
       pg.on('pageerror', (e) => problems.push({ kind: 'pageerror', detail: e.message.slice(0, 300), during: current }));
       pg.on('console', (msg) => {
-        if (msg.type() !== 'error') return;
         const t = msg.text();
+        if (/^\[vite\] (hot updated|page reload|server connection lost|connected)/.test(t)) hmr.push(`${t.replace(/\s+/g, ' ').slice(0, 100)} [${current}]`);
+        if (msg.type() !== 'error') return;
         // HTTP errors are recorded from the response itself (with their URL)
         if (/^Failed to load resource: the server responded with a status of/.test(t)) return;
         // the page being left mid-load (a car's GLB textures are blob: URLs revoked with it)
@@ -195,7 +200,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
     };
     const dialog = (title) => p.locator('[role="dialog"]').filter({ has: p.locator('.sticky .font-display', { hasText: title }) });
     const anyDialogs = () => p.locator('[role="dialog"]').count();
-    const gone = async (loc, what) => { await loc.waitFor({ state: 'detached', timeout: 20000 }).catch(() => { throw new Error(`${what} still open`); }); };
+    const gone = async (loc, what, timeout = 20000) => { await loc.waitFor({ state: 'detached', timeout }).catch(() => { throw new Error(`${what} still open`); }); };
     const waitWrite = async (table, from, timeout = 30000) => {
       const end = Date.now() + timeout;
       while (Date.now() < end) {
@@ -274,10 +279,44 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         for (const s of SOCIALS) assert((await f.locator(`a[aria-label*=" on ${s.label} "]`).getAttribute('href')) === s.url, `${s.label} icon href`);
       });
     };
-    // configurator
-    const stepTitle = () => text(p.locator('aside h3'));
-    const heroName = () => text(p.locator('aside .text-\\[16px\\]'));
+    // configurator: the viewer panel (components/journey/ViewerPanel.tsx: one scrolling aside with a
+    // section per step) or the stepped panel (?panel=steps: an overview and one step at a time). Both have
+    // "Change model", the "Step N: X" buttons, the price line and the Summary / More options buttons.
+    const STEP_LABEL = { paint: 'Step 1: Paint', wheels: 'Step 2: Wheels', size: 'Step 3: Size', finish: 'Step 4: Finish' };
+    const STEP_TITLE = { paint: 'Paint', wheels: 'Wheels', size: 'Wheel size', finish: 'Wheel finish' };
+    const panelReady = (timeout = 60000) => btn(STEP_LABEL.wheels).waitFor({ timeout });
+    const isViewer = async () => (await p.locator('aside [data-section="wheels"]').count()) > 0;
     const overviewShown = () => p.getByText('Choose the paint, then design', { exact: false }).waitFor({ timeout: 30000 });
+    /**
+     * the step is on: the stepped panel's h3 title, or the viewer's section scrolled into the upper half of
+     * the panel (its smooth scroll can stop short on SwiftShader), or as far down as the panel goes
+     */
+    const stepShown = (step, timeout = 30000) =>
+      p.waitForFunction(({ label, title }) => {
+        const h3 = document.querySelector('aside h3');
+        if (h3) return h3.textContent.trim() === title;
+        const b = document.querySelector(`aside [aria-label="${label}"]`);
+        const s = b && b.closest('section');
+        let box = s && s.parentElement;
+        while (box && !/auto|scroll/.test(getComputedStyle(box).overflowY)) box = box.parentElement;
+        if (!s || !box) return false;
+        const r = s.getBoundingClientRect(), c = box.getBoundingClientRect();
+        const atEnd = box.scrollTop >= box.scrollHeight - box.clientHeight - 2;
+        return (r.top >= c.top - 24 && r.top < c.top + box.clientHeight / 2) || (atEnd && r.top < c.bottom - 8);
+      }, { label: STEP_LABEL[step], title: STEP_TITLE[step] }, { timeout }).catch(() => { throw new Error(`step "${STEP_TITLE[step]}" not shown`); });
+    /** the selected wheel's name: next to the viewer's Wheels heading, or the stepped panel's hero */
+    const HERO_SEL = 'aside [aria-label="Step 2: Wheels"] + span, aside .text-\\[16px\\]';
+    const heroName = () => text(p.locator(HERO_SEL));
+    /** "<size> · <finish>" (the stepped hero) or "<wheel> · <size> · <finish>" (the price line, both panels) */
+    const wheelLine = () => text(p.locator('aside .text-\\[16px\\] + div, aside .border-t .truncate.text-\\[12px\\]'));
+    /** the selected wheel's code (shown by the stepped panel; the viewer shows the name) */
+    const wheelCode = async () => {
+      if (await p.locator('aside .text-bronze').count()) return text(p.locator('aside .text-bronze').first());
+      const name = await heroName();
+      return WHEELS.find((w) => w.name === name)?.code || name;
+    };
+    /** the panel's text plus the stage header (the viewer names the car over the stage, not in the panel) */
+    const panelText = async () => [...(await p.locator('aside').allTextContents()), ...(await p.locator('h1').allTextContents())].join(' ').replace(/\s+/g, ' ');
     const toConfigureVia = async () => {
       // from wherever the journey is: the showroom menu's Configure
       if (pathname() === '/') { await act(btn(/^enter/i, false)); await waitPath('/models'); }
@@ -311,19 +350,29 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         const carName = () => text(p.locator('h2'));
         const notBusy = () => p.waitForFunction(() => { const b = document.querySelector('[aria-label="Next model"]'); return b && !b.disabled; }, null, { timeout: 180000 });
         const name0 = await carName().catch(() => '');
+        // A car change can hold the main thread for a while on SwiftShader (the neighbours' downloads are
+        // parsed as the new car is built), which delays the click and the DOM alike: the same patience as notBusy
+        const carShown = (name, timeout = 180000) =>
+          p.waitForFunction((n) => document.querySelector('h2')?.textContent.trim() === n, name, { timeout }).catch(async () => { throw new Error(`"${name}" not shown (h2: "${await carName().catch(() => '?')}")`); });
         await check(R, 'next model', async () => { await act(btn('Next model')); await p.waitForFunction((n) => document.querySelector('h2')?.textContent.trim() !== n, name0, { timeout: 60000 }); await notBusy(); return await carName(); });
         await check(R, 'previous model', async () => { await act(btn('Previous model')); await p.waitForFunction((n) => document.querySelector('h2')?.textContent.trim() === n, name0, { timeout: 60000 }); await notBusy(); });
         await check(R, 'position dots', async () => {
           const dots = p.locator('[data-allow-small] button');
           const n = await dots.count();
           assert(n === CARS.length, `${n} dots for ${CARS.length} cars`);
-          const target = await dots.nth(2).getAttribute('aria-label');
-          await act(dots.nth(2));
-          await p.waitForFunction((n) => document.querySelector('h2')?.textContent.trim() === n, target, { timeout: 60000 });
+          // The showroom need not open on the first dot (it opens on the bundled catalogue's first active
+          // car, which the live catalogue may list later): two dots away and back to the starting car's dot
+          const labels = await dots.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+          const at = labels.indexOf(name0);
+          assert(at >= 0, `no dot for "${name0}" among ${labels.join(', ')}`);
+          const other = (at + 2) % n;
+          await act(dots.nth(other));
+          await carShown(labels[other]);
           await notBusy();
-          await act(dots.nth(0));
-          await p.waitForFunction((n) => document.querySelector('h2')?.textContent.trim() === n, name0, { timeout: 60000 });
+          await act(dots.nth(at));
+          await carShown(name0);
           await notBusy();
+          return `dot ${other + 1} (${labels[other]}) and back to dot ${at + 1}`;
         });
         await check(R, 'swipe left/right changes model', async () => {
           if (!d.hasTouch) return { skip: 'no touch on desktop' };
@@ -424,45 +473,65 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         await closeTriple(R, 'Build notice modal', () => act(btn(/^build$/i, false)), 'Pre-curated vehicle');
         await check(R, 'Build -> Confirm -> /configure', async () => {
           await act(btn(/^build$/i, false));
-          await act(dialog('Pre-curated vehicle').getByRole('button', { name: 'Confirm' }));
+          // the notice is not shown for every car, and its Confirm unmounts with it: neither is waited on
+          const notice = dialog('Pre-curated vehicle');
+          if (await notice.waitFor({ timeout: 30000 }).then(() => true, () => false)) await act(notice.getByRole('button', { name: 'Confirm' }), { timeout: 30000, noWaitAfter: true }).catch(() => {});
           await waitPath('/configure');
           await btn('Change model').waitFor();
-          await overviewShown();
+          await panelReady();
         });
 
         // ---- configurator ----
         const C = 'configure';
         if (pathname() !== '/configure') await toConfigureVia().catch(() => {});
+        const viewer = await isViewer();
+        const STEPPED_ONLY = { skip: 'stepped panel only (?panel=steps)' };
         await check(C, 'camera chips Front/Side/Rear/Wheel/Top', async () => {
-          for (const v of ['Side', 'Rear', 'Wheel', 'Top', 'Front']) {
+          // the viewer's six views (ends on its default, Front ¾) or the stepped panel's five
+          const views = viewer ? ['Side', 'Rear ¾', 'Front', 'Wheel', 'Top', 'Front ¾'] : ['Side', 'Rear', 'Wheel', 'Top', 'Front'];
+          for (const v of views) {
             await act(btn(v));
             await p.waitForFunction((v) => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === v && b.className.includes('bg-gold')), v, { timeout: 30000 }).catch(() => { throw new Error(`${v} not active`); });
           }
+          return views.join(', ');
         });
-        await check(C, 'turntable on/off', async () => { await act(btn('Turntable')); await btn('Stop turntable').waitFor(); await act(btn('Stop turntable')); await btn('Turntable').waitFor(); });
-        for (const [row, title] of [['Paint', 'Paint'], ['Wheels', 'Wheels'], ['Wheel size', 'Wheel size'], ['Wheel finish', 'Wheel finish']]) {
+        await check(C, 'turntable on/off', async () => {
+          if (!viewer) { await act(btn('Turntable')); await btn('Stop turntable').waitFor(); await act(btn('Stop turntable')); await btn('Turntable').waitFor(); return; }
+          const ar = btn('Auto-rotate');
+          const pressed = async (want) => {
+            const end = Date.now() + 15000;
+            while (Date.now() < end) { if ((await ar.getAttribute('aria-pressed')) === want) return; await sleep(200); }
+            throw new Error(`Auto-rotate aria-pressed != ${want}`);
+          };
+          await act(ar); await pressed('true');
+          await act(ar); await pressed('false');
+        });
+        for (const [row, step] of [['Paint', 'paint'], ['Wheels', 'wheels'], ['Wheel size', 'size'], ['Wheel finish', 'finish']]) {
           await check(C, `overview row "${row}" -> step; "Exterior" back`, async () => {
+            if (viewer) return STEPPED_ONLY;
             await act(p.locator('aside ul li > button').filter({ has: p.getByText(row, { exact: true }) }).first());
-            await p.waitForFunction((t) => document.querySelector('aside h3')?.textContent.trim() === t, title, { timeout: 30000 });
+            await stepShown(step);
             await act(btn('Exterior').nth(1));
             await overviewShown();
           });
         }
-        for (const [i, [label, title]] of [['Paint', 'Paint'], ['Wheels', 'Wheels'], ['Size', 'Wheel size'], ['Finish', 'Wheel finish']].entries()) {
-          await check(C, `step button ${i + 1} "${label}"`, async () => {
-            await act(btn(`Step ${i + 1}: ${label}`));
-            await p.waitForFunction((t) => document.querySelector('aside h3')?.textContent.trim() === t, title, { timeout: 30000 });
+        for (const [i, step] of ['paint', 'wheels', 'size', 'finish'].entries()) {
+          await check(C, `step button ${i + 1} "${STEP_LABEL[step].split(': ')[1]}"`, async () => {
+            await act(btn(STEP_LABEL[step]));
+            await stepShown(step);
           });
         }
-        await check(C, 'stepper "Exterior" -> overview', async () => { await act(btn('Exterior').first()); await overviewShown(); });
+        await check(C, 'stepper "Exterior" -> overview', async () => { if (viewer) return STEPPED_ONLY; await act(btn('Exterior').first()); await overviewShown(); });
         await check(C, 'Next links Paint -> Wheels -> Size -> Finish', async () => {
+          if (viewer) return STEPPED_ONLY;
           await act(btn('Step 1: Paint'));
-          for (const [next, title] of [['Wheels', 'Wheels'], ['Wheel size', 'Wheel size'], ['Wheel finish', 'Wheel finish']]) {
+          for (const [next, step] of [['Wheels', 'wheels'], ['Wheel size', 'size'], ['Wheel finish', 'finish']]) {
             await act(p.locator('aside button', { hasText: new RegExp(`^\\s*Next\\s*${next}\\s*$`) }));
-            await p.waitForFunction((t) => document.querySelector('aside h3')?.textContent.trim() === t, title, { timeout: 30000 });
+            await stepShown(step);
           }
         });
         await check(C, 'finish step Next "Summary" -> /summary; Back', async () => {
+          if (viewer) return STEPPED_ONLY;
           await act(p.locator('aside button', { hasText: /^\s*Next\s*Summary\s*$/ }));
           await waitPath('/summary');
           await btn(/^pdf$/i, false).waitFor({ timeout: 180000 });
@@ -472,44 +541,62 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         });
         await check(C, 'paint swatches (every paint)', async () => {
           await act(btn('Step 1: Paint'));
-          const sw = p.locator('aside section button[title]');
+          // the viewer's swatches are titled "Name (CODE)" and pressed; the stepped panel's "Name", echoed under the h3
+          const sel = viewer ? 'aside section:has([aria-label="Step 1: Paint"]) button[title]' : 'aside section button[title]';
+          const sw = p.locator(sel);
           const n = await sw.count();
           assert(n > 1, `${n} paints`);
           for (let i = n - 1; i >= 0; i--) {
-            const name = await sw.nth(i).getAttribute('title');
+            const title = await sw.nth(i).getAttribute('title');
             await act(sw.nth(i));
-            await p.waitForFunction((nm) => (document.querySelector('aside h3 + p')?.textContent || '').startsWith(nm + ' ·'), name, { timeout: 30000 }).catch(() => { throw new Error(`paint ${name} not selected`); });
+            if (viewer) {
+              const m = /^(.*) \(([^)]+)\)$/.exec(title);
+              await p.waitForFunction(({ sel, i, want }) => {
+                const b = document.querySelectorAll(sel)[i];
+                const named = (document.querySelector('aside [aria-label="Step 1: Paint"] + span')?.textContent || '').trim();
+                return !!b && b.getAttribute('aria-pressed') === 'true' && (!want || named === want);
+              }, { sel, i, want: m ? `${m[1]} · ${m[2]}` : '' }, { timeout: 30000 }).catch(() => { throw new Error(`paint ${title} not selected`); });
+            } else {
+              await p.waitForFunction((nm) => (document.querySelector('aside h3 + p')?.textContent || '').startsWith(nm + ' ·'), title, { timeout: 30000 }).catch(() => { throw new Error(`paint ${title} not selected`); });
+            }
           }
           return `${n} paints`;
         });
         await check(C, 'wheel list (every wheel)', async () => {
           await act(btn('Step 2: Wheels'));
-          const rows = p.locator('aside ul li > button');
+          const sel = viewer ? 'aside [data-section="wheels"] li > button' : 'aside ul li > button';
+          const rows = p.locator(sel);
           const n = await rows.count();
           assert(n === WHEELS.length, `${n} rows for ${WHEELS.length} wheels`);
           for (let i = 0; i < n; i++) {
             const name = await text(rows.nth(i).locator('span.truncate').first());
             await act(rows.nth(i));
-            await p.waitForFunction((nm) => document.querySelector('aside .text-\\[16px\\]')?.textContent.trim() === nm, name, { timeout: 60000 }).catch(() => { throw new Error(`wheel ${name} not selected`); });
-            assert((await rows.nth(i).locator('span.rounded-full').last().getAttribute('class')).includes('bg-gold'), `${name} row not ticked`);
+            // picked (pressed, or the stepped row's gold tick) and named as the current wheel
+            await p.waitForFunction(({ sel, i, nm, hero }) => {
+              const b = document.querySelectorAll(sel)[i];
+              const on = !!b && (b.getAttribute('aria-pressed') === 'true' || !!b.querySelector('span.rounded-full.bg-gold'));
+              return on && document.querySelector(hero)?.textContent.trim() === nm;
+            }, { sel, i, nm: name, hero: HERO_SEL }, { timeout: 60000 }).catch(() => { throw new Error(`wheel ${name} not selected`); });
           }
           return `${n} wheels`;
         });
-        await closeTriple(C, 'Wheel details modal', () => act(btn('Wheel details')), (await text(p.locator('aside .text-bronze').first()).catch(() => 'FSA')));
+        await closeTriple(C, 'Wheel details modal', () => act(btn('Wheel details')), await wheelCode().catch(() => 'FSA'));
         await check(C, 'Wheel details "View in 360°" -> /rims/id; Back to your build', async () => {
-          const code = await text(p.locator('aside .text-bronze').first());
+          const code = await wheelCode();
           const w = WHEELS.find((x) => x.code === code);
+          assert(w, `no wheel with code ${code}`);
           await act(btn('Wheel details'));
           await act(dialog(code).getByRole('button', { name: 'View in 360°' }));
           await waitPath(`/rims/${w.id}`);
           assert(!(await anyDialogs()), 'modal left open');
           await act(btn('Back to your build'));
           await waitPath('/configure');
-          await p.waitForFunction(() => document.querySelector('aside h3')?.textContent.trim() === 'Wheels', null, { timeout: 30000 });
+          await stepShown('wheels', 60000);
         });
         await check(C, '"View in 360°" icon -> /rims/id; Back to your build', async () => {
-          const code = await text(p.locator('aside .text-bronze').first());
+          const code = await wheelCode();
           const w = WHEELS.find((x) => x.code === code);
+          assert(w, `no wheel with code ${code}`);
           await act(btn('View in 360°'));
           await waitPath(`/rims/${w.id}`);
           await p.locator('h1', { hasText: w.name }).waitFor();
@@ -518,29 +605,36 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         });
         await check(C, 'sizes (every size)', async () => {
           await act(btn('Step 3: Size'));
-          const sz = p.locator('aside .grid > button');
+          const sel = viewer ? 'aside section:has([aria-label="Step 3: Size"]) button[aria-pressed]' : 'aside .grid > button';
+          const sz = p.locator(sel);
           const n = await sz.count();
           assert(n >= 2, `${n} sizes`);
           for (let i = 0; i < n; i++) {
             await act(sz.nth(i));
-            await p.waitForFunction((i) => document.querySelectorAll('aside .grid > button')[i]?.className.includes('bg-gold'), i, { timeout: 30000 }).catch(() => { throw new Error(`size ${i} not active`); });
+            await p.waitForFunction(({ sel, i }) => document.querySelectorAll(sel)[i]?.className.includes('bg-gold'), { sel, i }, { timeout: 30000 }).catch(() => { throw new Error(`size ${i} not active`); });
           }
           return `${n} sizes`;
         });
         await check(C, 'finishes (every finish)', async () => {
           await act(btn('Step 4: Finish'));
-          const fl = p.locator('aside ul li > button');
+          const sel = viewer ? 'aside [data-section="finish"] li > button' : 'aside ul li > button';
+          const fl = p.locator(sel);
           const n = await fl.count();
           assert(n >= 2, `${n} finishes`);
           for (let i = 0; i < n; i++) {
             await act(fl.nth(i));
-            await p.waitForFunction((i) => document.querySelectorAll('aside ul li > button')[i]?.querySelector('span.rounded-full:last-child')?.className.includes('bg-gold'), i, { timeout: 30000 }).catch(() => { throw new Error(`finish ${i} not ticked`); });
+            await p.waitForFunction(({ sel, i }) => {
+              const b = document.querySelectorAll(sel)[i];
+              return !!b && (b.getAttribute('aria-pressed') === 'true' || !!b.querySelector('span.rounded-full.bg-gold'));
+            }, { sel, i }, { timeout: 30000 }).catch(() => { throw new Error(`finish ${i} not picked`); });
           }
           return `${n} finishes`;
         });
         await check(C, 'Summary icon -> /summary (saved_configurations payload); Back', async () => {
           const from = writes.length;
-          await act(btn('Summary'));
+          // the icon steps aside on a phone, where the main button is the summary
+          const icon = btn('Summary');
+          await act((await icon.isVisible()) ? icon : btn(/^view your/i, false));
           await waitPath('/summary');
           await btn(/^pdf$/i, false).waitFor({ timeout: 180000 });
           const w = await waitWrite('saved_configurations', from);
@@ -581,9 +675,10 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
           const mo = dialog('More options');
           await mo.locator('input').fill(FAKE_CODE);
           await act(mo.getByRole('button', { name: 'Load' }));
-          await gone(mo, 'More options');
-          await overviewShown();
-          const panel = await text(p.locator('aside'));
+          // the modal closes once the build is applied, which loads another car (slow on SwiftShader)
+          await gone(mo, 'More options', 180000);
+          await panelReady();
+          const panel = await panelText();
           for (const want of [FAKE_CAR.name, FAKE_WHEEL.name, '21"', FINISHES.bronze]) assert(panel.includes(want), `panel lacks ${want}`);
         });
         await check(C, 'More options: Start again -> /', async () => {
@@ -748,7 +843,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         await check(F, `${w.code} "Configure" -> wheels step with it`, async () => {
           await act(card().getByRole('button', { name: 'Configure' }));
           await waitPath('/configure');
-          await p.waitForFunction(() => document.querySelector('aside h3')?.textContent.trim() === 'Wheels', null, { timeout: 120000 });
+          await stepShown('wheels', 120000);
           const hero = await heroName();
           assert(hero === w.name, `hero ${hero}`);
           await p.goBack();
@@ -857,10 +952,10 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         await act(p.locator('aside .grid > button', { hasText: size }));
         await act(btn('See it on my car'));
         await waitPath('/configure');
-        await p.waitForFunction(() => document.querySelector('aside h3')?.textContent.trim() === 'Wheels', null, { timeout: 120000 });
+        await stepShown('wheels', 120000);
         assert((await heroName()) === w.name, 'wheel');
-        const sub = await text(p.locator('aside .text-\\[16px\\] + div'));
-        assert(sub === `${size} · ${FINISHES[fin]}`, `size/finish shown: ${sub}`);
+        const sub = await wheelLine();
+        assert(sub.endsWith(`${size} · ${FINISHES[fin]}`), `size/finish shown: ${sub}`);
       });
       await check(R, 'unknown rim id: "Wheel not found" + Back', async () => {
         await go('/rims/no-such-wheel');
@@ -918,8 +1013,8 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
       await check(D, `/?config=${FAKE_CODE} opens that build`, async () => {
         await go(`/?config=${FAKE_CODE}`);
         await waitPath('/configure', 240000);
-        await overviewShown();
-        const panel = await text(p.locator('aside'));
+        await panelReady(120000);
+        const panel = await panelText();
         for (const want of [FAKE_CAR.name, FAKE_WHEEL.name, '21"', FINISHES.bronze]) assert(panel.includes(want), `panel lacks ${want}`);
       });
       await check(D, '/admin shows its sign-in', async () => {
@@ -937,6 +1032,9 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
     row('errors', 'no failed requests or HTTP errors', pr.some((x) => /http|requestfailed/.test(x.kind)) ? 'FAIL' : 'PASS', pr.filter((x) => /http|requestfailed/.test(x.kind)).map((x) => `${x.detail} [${x.during}]`).slice(0, 8).join(' | '));
     row('errors', 'no unexpected backend writes', unexpected.length ? 'FAIL' : 'PASS', unexpected.slice(0, 5).join(' | '));
     results.push({ device: devName, section: 'writes', control: 'intercepted', status: 'INFO', detail: writes.map((w) => `${w.table}${w.body && w.body.code ? ' ' + w.body.code : ''} during ${w.during}`).join(' | ') });
+    // a hot update mid-check can fail it without the app being wrong (a full reload resets the journey)
+    const hot = hmr.filter((h) => !/connected/.test(h));
+    if (hot.length) { results.push({ device: devName, section: 'dev', control: 'hot updates during the run', status: 'INFO', detail: hot.slice(0, 12).join(' | ') }); console.log(`${devName}: ${hot.length} dev-server hot update(s): ${hot.slice(0, 6).join(' | ')}`); }
     save();
     console.log(`${devName}: done in ${Math.round((Date.now() - t0) / 1000)} s`);
     await ctx.close();
