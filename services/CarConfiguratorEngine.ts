@@ -1282,6 +1282,7 @@ export class CarConfiguratorEngine {
         modelCalipers = true;
         return;
       }
+      if (isOwnTyre && !Array.isArray(mesh.material)) mesh.material = this.greyCarTyre(mesh.material);
       if (isOwnTyre || isOwnDisc) return; // kept with the car's own material
       if (paintRe.test(ownNames) && !notPaintRe.test(ownNames)) {
         mesh.material = Array.isArray(mesh.material)
@@ -2360,6 +2361,23 @@ export class CarConfiguratorEngine {
       m.color.set(caliper.hex);
       m.needsUpdate = true;
     });
+  }
+
+  /**
+   * The car's own tyre, as the owner's viewer draws it: dark grey rubber, never black. The bead texture has an
+   * orange ring that a brightness lift turns into a glowing lip, so only its luminance is kept, capped at 0.24.
+   */
+  private greyCarTyre(material: THREE.Material): THREE.Material {
+    if (material.userData.tyreGreyed || !(material instanceof THREE.MeshStandardMaterial)) return material;
+    material.userData.tyreGreyed = true;
+    material.color.setScalar(5.5);
+    material.roughness = 0.8;
+    material.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+        diffuseColor.rgb = vec3(min(dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722)), 0.24));`);
+    };
+    material.customProgramCacheKey = () => 'car-tyre-grey';
+    return material;
   }
 
   /** The car's caliper material: the painted body gets its own copy (recoloured by applyCaliperColor); the rest is kept. */
