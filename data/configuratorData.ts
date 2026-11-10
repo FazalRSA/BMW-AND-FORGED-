@@ -55,12 +55,11 @@ export const BMW_MODELS: CarModel[] = [
     paintIds: [
       'riviera_blue', 'frozen_isle_of_man_green', 'brooklyn_grey', 'black_sapphire'
     ],
-    modelUrl: '/models/bmw-m4-cs-vr46.glb',
+    modelUrl: '/models/m4_cs_g82.glb',
+    modelRotationDeg: 0,
     modelLengthM: 4.79,
-    // Body, hood, kit and spoiler take the paint. The model's own wheels are hidden; its calipers are kept
-    // (not in the hide pattern), so the configurator uses them and recolours them.
-    paintMeshMatch: 'm4car_body1|m4car_hood1|m4car_bodykit1|m4car_spoiler1',
-    hideMeshMatch: 'wheel1a|phong11|phong23'
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
     id: 'm4_convertible_g83',
@@ -141,8 +140,8 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm2_g87',
-    name: 'BMW M2 Coupe',
-    badge: 'M2 G87',
+    name: 'BMW M2 CS',
+    badge: 'M2 CS G87',
     generation: 'G87',
     chassisCode: 'G87 M2',
     engine: '3.0L S58 Twin-Turbo Inline-6',
@@ -161,10 +160,11 @@ export const BMW_MODELS: CarModel[] = [
       'sao_paulo_yellow', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey', 'java_green',
       'grigio_telesto', 'twilight_purple', 'voodoo_blue', 'borusan_turkish_blue'
     ],
-    modelUrl: '/models/bmw-m2-competition.glb',
+    modelUrl: '/models/m2_g87.glb',
+    modelRotationDeg: 0,
     modelLengthM: 4.58,
-    paintMeshMatch: 'm2g87undg_paint',
-    hideMeshMatch: '(^|[^a-z])(rimslaw|tire_01|calliper|caliper|brakedisc|rotor)'
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
     id: 'm235_f74',
@@ -212,9 +212,10 @@ export const BMW_MODELS: CarModel[] = [
       'frozen_black', 'nardo_grey', 'mineral_white', 'oxford_green_ii', 'bernina_grey_amber_effect',
       'alpine_white', 'storm_bay', 'frozen_deep_grey_c64'
     ],
-    modelUrl: '/models/bmw-m5-g90-cc-by.glb',
-    modelLengthM: 5.1,
-    paintMeshMatch: 'm5g90_body_paint',
+    modelUrl: '/models/m5_g90.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 5.09,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
@@ -234,7 +235,12 @@ export const BMW_MODELS: CarModel[] = [
       'carbon_black', 'fire_red', 'marina_bay_blue', 'brooklyn_grey', 'sophisto_grey_brilliant_effect',
       'isle_of_man_green', 'black_sapphire', 'urban_green_ii', 'barcelona_blue', 'alpine_white', 'storm_bay',
       'frozen_deep_grey_c64'
-    ]
+    ],
+    modelUrl: '/models/m5_touring_g99.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 5.09,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
     id: 'm8_f92',

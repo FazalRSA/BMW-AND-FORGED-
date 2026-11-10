@@ -8,6 +8,21 @@ description: Add or replace a BMW car in the FORGEDSA configurator. Covers sourc
 The car catalogue lives in Supabase `public.cars` (source of truth) and is mirrored in
 `data/configuratorData.ts` (offline fallback). Both must agree.
 
+## 0. Prepared package? One command (do this first)
+
+A car package in the `3d cars` convention (zip with `web/<car>_web.glb`, wheels `C10_Wheel_FL..C13_Wheel_RR`,
+brakes `C20..C23`, material `Paint`; any clean GLB whose wheels and paint are findable by name also works):
+
+```bash
+node scripts/ingest-car.mjs <car.zip|car.glb> --car <id> --check        # dev server on 5173 for --check
+```
+
+It checks the file like the engine (4 wheels in 4 corners, paint material), copies it to `public/models/<id>.glb`,
+updates the fallback + writes the migration, retires the car's old Blender frames (live GLB mode) or re-renders
+them with `--render` (bpy), and shoots `docs/ingest/<id>.jpg`. Full runbook: `docs/ADD_PREPARED_CAR.md`.
+Rims: `node scripts/ingest-rim.mjs <rim.glb> --wheel <id> --check`. Steps 1-6 below are the manual route for
+other files.
+
 ## 1. Source the model and check the licence first
 
 - The browser downloads the GLB, so anyone can extract it. The licence must allow **commercial,
