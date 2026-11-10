@@ -88,6 +88,15 @@ export class CarConfiguratorEngine {
     isRight: boolean;
   }[] = [];
   private kit!: WheelKitMaterials;
+  /** The car's own tyres and brake discs per corner ('front-right' ...), filled when a car is mounted. */
+  private ownTyreMeshes = new Map<string, THREE.Object3D[]>();
+  private ownDiscMeshes = new Map<string, THREE.Object3D[]>();
+  /** Copies of the car's painted caliper material, recoloured by applyCaliperColor. */
+  private ownCaliperPaints: THREE.MeshStandardMaterial[] = [];
+  /** Factory rim diameter (inches) of each axle from the car's fitment; null when not known. */
+  private factoryInches: { front: number | null; rear: number | null } = { front: null, rear: null };
+  /** The chosen rim diameter in inches. */
+  private rimInches = 20;
   /** Inside of the barrel: the finish, a touch darker and less polished. */
   private barrelMaterial!: THREE.MeshPhysicalMaterial;
   private lipStyle: LipStyle = 'mono';
@@ -1204,6 +1213,15 @@ export class CarConfiguratorEngine {
     const notPaintRe = /glass|window|light|lamp|chrome|trim|rubber|interior|carbon|grille|badge|logo|plastic/i;
     const notWheelRe = /steer|arch|well|house|liner|mudguard|fender/i;
     const wheelRe = /wheel|(^|[^a-z])(rim|tyre|tire)/i;
+    // Per-car wheel parts, filled by the traversal below. Copies from an earlier mount are released first.
+    this.ownCaliperPaints.forEach((m) => m.dispose());
+    this.ownCaliperPaints = [];
+    this.ownTyreMeshes.clear();
+    this.ownDiscMeshes.clear();
+    this.factoryInches = {
+      front: CarConfiguratorEngine.inchesFrom(car.recommendedWheelFitment?.front),
+      rear: CarConfiguratorEngine.inchesFrom(car.recommendedWheelFitment?.rear),
+    };
 
     // Wheel bounds per corner, keyed by side of the car's centre line: front/rear + left/right.
     const corners = new Map<string, THREE.Box3>();
@@ -1244,14 +1262,27 @@ export class CarConfiguratorEngine {
       }
 
       const ownNames = `${mesh.name} ${materialNames}`;
-      // A car whose hide pattern leaves its own calipers visible keeps them: the painted body of the
-      // caliper takes the caliper colour (like ours), its hardware keeps a metal look
+      // The car's own tyre and brake disc at each corner: the viewer keeps them and swaps only the rim.
+      // They keep their own materials (never painted); applyOwnPartsVisibility decides which one shows.
+      const isOwnTyre = wheelRe.test(partNames) && /tyre|tire/i.test(materialNames);
+      const isOwnDisc = wheelRe.test(partNames) && /disc/i.test(materialNames);
+      if (isOwnTyre || isOwnDisc) {
+        const bucket = isOwnTyre ? this.ownTyreMeshes : this.ownDiscMeshes;
+        const key = CarConfiguratorEngine.cornerKeyOf(mesh);
+        bucket.set(key, [...(bucket.get(key) ?? []), mesh]);
+        mesh.userData.ownWheelPart = true;
+      }
+      // A car whose hide pattern leaves its own calipers visible keeps them, with their shape, badge and metal.
+      // The painted body takes its own copy of the car's material, so the owner's caliper colour still applies.
       if (/caliper|calliper/i.test(materialNames)) {
-        mesh.material = this.kit.caliper;
+        mesh.material = Array.isArray(mesh.material)
+          ? mesh.material.map((m) => this.ownCaliperMaterial(m))
+          : this.ownCaliperMaterial(mesh.material);
         mesh.userData.modelCaliper = true;
         modelCalipers = true;
         return;
       }
+      if (isOwnTyre || isOwnDisc) return; // kept with the car's own material
       if (paintRe.test(ownNames) && !notPaintRe.test(ownNames)) {
         mesh.material = Array.isArray(mesh.material)
           ? mesh.material.map((m) => this.paintMaterialFor(m))
@@ -1297,6 +1328,7 @@ export class CarConfiguratorEngine {
 
     // The model's own calipers replace ours (they match its brakes and arches)
     this.wheelAssemblies.forEach((a) => (a.caliper.visible = !modelCalipers));
+    this.applyOwnPartsVisibility();
 
     this.disposeBody();
     this.bodyMeshGroup.add(model);
@@ -1338,7 +1370,7 @@ export class CarConfiguratorEngine {
     const v = new THREE.Vector3();
     model.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay || mesh.userData.modelCaliper) return;
+      if (!mesh.isMesh || !mesh.visible || mesh.userData.isOverlay || mesh.userData.modelCaliper || mesh.userData.ownWheelPart) return;
       const geo = mesh.geometry;
       // Decided once per geometry: a cached model is mounted as a clone whose userData is a copy,
       // but whose geometry is shared, so the decision lives on the geometry
@@ -1671,6 +1703,7 @@ export class CarConfiguratorEngine {
       // Spoke faces are built for 20"; they scale across the face, not in depth
       a.spokeMeshGroup.scale.set(1, s, s);
     });
+    this.applyOwnPartsVisibility();
   }
 
   /** Frees every cached tyre and rim shell (engine cleanup). */
@@ -1697,6 +1730,7 @@ export class CarConfiguratorEngine {
 
   /** Resizes the rim inside a fixed tyre, e.g. '21"'. Bigger rim = thinner sidewall, like a real upgrade. */
   public setRimSize(size: string) {
+    this.rimInches = parseInt(size, 10) || this.rimInches;
     const scale = CarConfiguratorEngine.rimScaleFor(size);
     if (Math.abs(scale - this.rimScale) < 1e-6 && this.wheelAssemblies.every((a) => a.tyre)) return;
     this.rimScale = scale;
@@ -2322,6 +2356,49 @@ export class CarConfiguratorEngine {
   public applyCaliperColor(caliper: CaliperColor) {
     this.kit.caliper.color.set(caliper.hex);
     this.kit.caliper.needsUpdate = true;
+    this.ownCaliperPaints.forEach((m) => {
+      m.color.set(caliper.hex);
+      m.needsUpdate = true;
+    });
+  }
+
+  /** The car's caliper material: the painted body gets its own copy (recoloured by applyCaliperColor); the rest is kept. */
+  private ownCaliperMaterial(material: THREE.Material): THREE.Material {
+    if (!(material instanceof THREE.MeshStandardMaterial) || !/paint/i.test(material.name)) return material;
+    const copy = material.clone();
+    this.ownCaliperPaints.push(copy);
+    return copy;
+  }
+
+  /**
+   * The car's own tyre shows at a corner only when the chosen size is that axle's factory fitment: the
+   * car's tyre has one size. Our procedural tyre shows everywhere else. The brake disc does not depend on the
+   * rim, so the car's own disc shows wherever the car has one; ours is hidden behind it.
+   */
+  private applyOwnPartsVisibility() {
+    this.wheelAssemblies.forEach((a) => {
+      const key = `${a.isFront ? 'front' : 'rear'}-${a.isRight ? 'right' : 'left'}`;
+      const factory = a.isFront ? this.factoryInches.front : this.factoryInches.rear;
+      const ownTyres = this.ownTyreMeshes.get(key) ?? [];
+      const ownDiscs = this.ownDiscMeshes.get(key) ?? [];
+      const useOwnTyre = ownTyres.length > 0 && factory !== null && factory === this.rimInches;
+      ownTyres.forEach((m) => (m.visible = useOwnTyre));
+      ownDiscs.forEach((m) => (m.visible = true));
+      if (a.tyre) a.tyre.visible = !useOwnTyre;
+      a.disc.visible = ownDiscs.length === 0;
+    });
+  }
+
+  /** Corner key of a part from its centre: 'front-right', 'rear-left' ... (the same keys as the wheel bounds). */
+  private static cornerKeyOf(part: THREE.Object3D): string {
+    const c = new THREE.Box3().setFromObject(part).getCenter(new THREE.Vector3());
+    return `${c.z >= 0 ? 'front' : 'rear'}-${c.x >= 0 ? 'right' : 'left'}`;
+  }
+
+  /** Rim diameter in inches from a fitment such as '19 x 9.5J ET12'; null when it cannot be read. */
+  private static inchesFrom(fitment: string | undefined): number | null {
+    const m = fitment?.match(/(\d{2})\s*x/);
+    return m ? Number(m[1]) : null;
   }
 
   public setRideHeight(dropMeters: number) {
