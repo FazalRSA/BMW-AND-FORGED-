@@ -70,6 +70,11 @@ function satinBronzeRim(source: THREE.Material): THREE.Material {
     mat.metalness = Math.min(mat.metalness, 0.4);
   }
   mat.onBeforeCompile = (sh) => {
+    // If a three.js update renames these chunks, the replacements below do nothing and the rim keeps
+    // its own colour with no error. Say so in the console instead.
+    if (!sh.fragmentShader.includes('#include <map_fragment>') || !sh.fragmentShader.includes('#include <color_fragment>')) {
+      console.warn('satinBronzeRim: shader chunks not found; the stock rim keeps its own colour');
+    }
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <map_fragment>', `#include <map_fragment>
         float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -1472,6 +1477,17 @@ export class CarConfiguratorEngine {
         delete mesh.userData.liveMaterial;
         mesh.renderOrder = 0;
       }
+    });
+    // The satin-bronze copies of a rim (setStockRims) are made per car: release them now, after the
+    // loop above has handed back any live material. A mesh still showing a copy gets the car's own
+    // material back first. The car's own material belongs to the cached model and is not disposed.
+    this.bodyMeshGroup.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      const bronze = mesh.isMesh ? (mesh.userData.stockBronze as THREE.Material | undefined) : undefined;
+      if (!bronze) return;
+      if (mesh.material === bronze) mesh.material = mesh.userData.stockOriginal;
+      bronze.dispose();
+      delete mesh.userData.stockBronze;
     });
     this.bodyMeshGroup.children.forEach((child) => {
       if (child.userData.cachedModel) return; // geometry shared with the cached GLB
