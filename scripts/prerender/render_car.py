@@ -65,6 +65,12 @@ CAR_FIXES = {
     # the panoramic roof's black plastic panel is coplanar with its glass: the two z-fought into black blotches from above.
     # Drop the panel, render the glass as flat dark glass and keep the crisp strips off it.
     'x5m_f95': {'hide': r'^roof_panoram_plastic', 'dark_glass': r'^roof_panoram\d*_glass', 'glass_unlink': r'^roof_panoram\d*_glass'},
+    # The prepared packages (Drive > 3d cars): subdivided, Blender is killed for memory right after the glTF import on an
+    # 8 GB machine. Their panels are already smooth (authored normals), so they render without subdivision.
+    'm2_g87': {'no_subdiv': True},
+    'm4_cs_g82': {'no_subdiv': True},
+    'm5_g90': {'no_subdiv': True},
+    'm5_touring_g99': {'no_subdiv': True},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors

@@ -512,9 +512,20 @@ if (opts.live) {
   if (opts.port !== '5173') die('scripts/prerender/export-scene.cjs reads the dev server on port 5173; start it there for --render');
   const idx = carIndex();
   log(`\nRendering the Blender body frames (car index ${idx}, STUDIO=dark; about 15 minutes on 4 cores)...`);
+  const started = Date.now();
   const r = spawnSync('bash', [path.join(ROOT, 'scripts/prerender/render-all.sh'), String(idx)], { stdio: 'inherit', env: { ...process.env, STUDIO: process.env.STUDIO || 'dark' } });
   if (r.status !== 0) die('render-all.sh failed (see above); the GLB, catalogue and migration are in place, so --live is the fallback');
-  log(`Rendered public/renders/${opts.car} and updated the manifest.`);
+  // render-all.sh pipes Blender through grep, so it exits 0 even when Blender is killed (e.g. out of memory). Check the
+  // frames themselves: every view the other cars have needs a gloss_w.webp written by this run.
+  const manifest = JSON.parse(fs.readFileSync(path.join(RENDERS, 'manifest.json'), 'utf8'));
+  const expected = [...new Set(Object.entries(manifest).filter(([c, v]) => c !== opts.car && v.length).flatMap(([, v]) => v))];
+  const fresh = (manifest[opts.car] || []).filter((v) => fs.statSync(path.join(rendersDir, v, 'gloss_w.webp')).mtimeMs >= started);
+  const missing = expected.filter((v) => !fresh.includes(v));
+  if (!fresh.length || missing.length) {
+    die(`Blender wrote no new body frames for ${missing.length ? missing.join(', ') : 'any view'} of ${opts.car} (it was probably killed, `
+      + 'e.g. out of memory: run scripts/prerender/render_car.py by hand to see why). The GLB, catalogue and migration are in place, so --live is the fallback');
+  }
+  log(`Rendered public/renders/${opts.car} (${fresh.length} views) and updated the manifest.`);
 }
 
 // ---------------------------------------------------------------------------------------------------
