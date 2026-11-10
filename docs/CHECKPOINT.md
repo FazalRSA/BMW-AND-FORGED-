@@ -30,7 +30,9 @@ are hidden (`active: false`; `WheelDesign.active`, `STATIC_CATALOG` filters). `p
 **"FORGED" plates** (the viewer's, ported: `engine.addNumberPlates`, `wheelKit.plateTexture`; `?plates=0`). **Customer accounts**
 (Google via Supabase Auth, profiles, garage, `user_id` on share codes and leads): `docs/ACCOUNTS.md`,
 `20261110150000_customer_accounts.sql`, `services/authService.ts`, `components/journey/AccountSheet.tsx`. Check sheets:
-`docs/ingest/stock-wheels.jpg`.
+`docs/ingest/stock-wheels.jpg`. **Preview:** <https://forgedsa-configurator.onrender.com> (Render static site, bundled catalogue;
+README → Hosting). Verified: tsc, vite build, `journey.cjs` phone + desktop, `pdf-check.cjs` (brochure 2 pages, lead +
+share-code writes stubbed), accounts sheet check at both sizes.
 
 ## Goal of this phase (owner's words, condensed)
 Two cars and at least two wheels each **perfectly done**: **M4 Competition** and **M5 (G90)**, with

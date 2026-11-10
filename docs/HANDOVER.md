@@ -217,6 +217,16 @@ Build settings: framework **Vite**, build `vite build`, output `dist`. No enviro
 
 ---
 
+### Branch preview on Render
+
+While a branch is under review it can be seen at <https://forgedsa-configurator.onrender.com>: a Render
+static site (`forgedsa-configurator`, workspace *My Workspace*) that builds `ccr-f52bf849-fnf7qs` on every
+push with `npm install --no-audit --no-fund && npm run build && cp dist/index.html dist/404.html`, publish
+`dist`, env `NODE_VERSION=22` and `VITE_CATALOG_SOURCE=static` (the bundled catalogue, so the preview shows
+the new cars and wheels before the migrations are applied). Point it at another branch in the Render
+dashboard → Settings → Branch. Everything else (share codes, leads, PDF, admin) uses the live Supabase
+project, so test leads from the preview email the team like real ones.
+
 ## 5a. New-lead email automation
 
 Every insert into `public.leads` (the PDF gate, `source = 'pdf'`, and the enquiry form, `source = 'enquiry'`)

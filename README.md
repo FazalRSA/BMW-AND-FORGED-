@@ -5,6 +5,10 @@
 A modern, interactive wheel configurator for BMW vehicles, built with TypeScript. Configure premium wheels, visualize in real-time, and explore customization options with a sleek, intuitive interface.
 
 **Live:** <https://forged-configurator.vercel.app> · **Admin:** `/admin`
+**Preview of this branch (new cars, stock-sheet wheels, viewer look, accounts):**
+<https://forgedsa-configurator.onrender.com> (Render static site built from `ccr-f52bf849-fnf7qs` on every push,
+`VITE_CATALOG_SOURCE=static` so it shows the bundled catalogue until the migrations are applied; see
+[Hosting](#hosting) below).
 
 A real-time 3D configurator for FORGEDSA forged wheels on BMW M cars: pick a car, factory paint,
 wheel design, size and finish, then share the build, download a branded PDF spec sheet or send an
@@ -83,6 +87,22 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
   `20261110153000_wheel_inventory_stock_sheet.sql`. Until then the live site keeps the old rows.
 - **Hosting:** Vercel project `forged-configurator` (team Nova Havens). Framework preset Vite,
   build `vite build`, output `dist`, no environment variables required.
+
+## Hosting
+
+| Where | URL | Builds from | Catalogue |
+|---|---|---|---|
+| Production (Vercel) | <https://forged-configurator.vercel.app> | `main` | Supabase (live) |
+| Branch preview (Render static site `forgedsa-configurator`) | <https://forgedsa-configurator.onrender.com> | `ccr-f52bf849-fnf7qs`, auto-deploy on push | bundled (`VITE_CATALOG_SOURCE=static`) |
+
+The Render preview exists so the new work can be seen before the migrations touch the live database:
+build command `npm install --no-audit --no-fund && npm run build && cp dist/index.html dist/404.html`
+(the `404.html` copy makes deep links such as `/configure` load the app; a `/* → /index.html` rewrite in
+the Render dashboard does the same with a 200), publish directory `dist`, `NODE_VERSION=22`. Share codes,
+leads, the PDF gate and the admin on the preview talk to the live Supabase project as usual; Google
+sign-in works there once the preview URL is in Supabase → Authentication → URL Configuration → Redirect URLs
+(`docs/ACCOUNTS.md`). To go to production: merge the PR, apply the migrations, remove nothing (Vercel
+builds without the static switch).
 
 ## The admin panel (`/admin`)
 
