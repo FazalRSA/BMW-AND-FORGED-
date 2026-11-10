@@ -48,7 +48,7 @@ export const ForgedPage: React.FC<ForgedPageProps> = ({ wheels, finishes, region
             The collection
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-mute animate-rise delay-200">
-            {wheels.length} forged designs, each offered in {rimSizes(wheels[0] ?? ({} as WheelDesign)).join(', ') || 'several sizes'} and a choice of hand-applied finishes.
+            {wheels.length} forged designs in stock, offered in {[...new Set<string>(wheels.flatMap((w) => rimSizes(w)))].sort((a, b) => parseFloat(a) - parseFloat(b)).join(', ') || 'several sizes'} and a choice of hand-applied finishes.
           </p>
         </div>
         <div className="flex justify-center animate-rise delay-300">

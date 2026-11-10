@@ -7,6 +7,7 @@ import type { jsPDF as JsPDF } from 'jspdf';
 import { BRAND, Region, formatMoney } from '../config/brand';
 import { CarModel, PaintColor, WheelDesign, WheelFinish } from '../types';
 import { SOCIAL_ICON_PATHS } from '../config/socialIcons';
+import { finishSurcharge } from './pricing';
 
 export interface BrochureInput {
   car: CarModel;
@@ -127,7 +128,7 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     body();
     doc.setFontSize(8);
     doc.setTextColor(...MUTE);
-    doc.text(`Configuration ${input.code}  ·  ${new Date().toLocaleDateString(input.region.locale)}  ·  ${page}/2`, W - M, 15.5, { align: 'right' });
+    doc.text(pdfText(`Configuration ${input.code}  ·  ${new Date().toLocaleDateString(input.region.locale)}  ·  ${page}/2`), W - M, 15.5, { align: 'right' });
     doc.setDrawColor(...GOLD);
     doc.setLineWidth(0.3);
     doc.line(M, 21, W - M, 21);
@@ -186,20 +187,25 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   const heroH = await placeImage(input.images[0], M, 58, W - 2 * M, 104);
   let y = 58 + heroH + 11;
 
+  const money = (usd: number) => pdfText(formatMoney(usd, input.region));
+  // The wheel's own fitment from the stock sheet (its "PCD 5×112 · ET8/15 · CB 66.6" highlight) wins over the
+  // car's recommended fitment: the factory sizes and offsets must not print beside a wheel that states its own
   const fit = input.car.recommendedWheelFitment;
+  const wheelFitment =
+    input.wheel.highlights.find((h) => /\bPCD\b/i.test(h)) ||
+    [fit?.front && `Front ${fit.front}`, fit?.rear && `Rear ${fit.rear}`].filter(Boolean).join(' · ');
+  // The size row carries the base-finish set price and the finish row what the finish adds (input.price is
+  // finish-inclusive), so the two line items add up to the total box, as on the summary page
+  const surcharge = finishSurcharge(input.wheel, input.size, input.finish.id);
   // Blank specs (cars listed without them) leave the detail column empty rather than "Front  · Rear "
-  const rows: [string, string, string][] = [
+  const rows: [string, string, string, string?][] = [
     ['Vehicle', input.car.name, [input.car.chassisCode, input.car.power].filter((v) => v?.trim()).join(' · ')],
     ['Paint', input.paint.name, `${input.paint.type} · ${input.paint.code}`],
     ['Wheel design', input.wheel.name, [input.wheel.code, input.wheel.style].filter((v) => v?.trim()).join(' · ')],
-    [
-      'Wheel size',
-      input.size,
-      [fit?.front && `Front ${fit.front}`, fit?.rear && `Rear ${fit.rear}`].filter(Boolean).join(' · ')
-    ],
-    ['Wheel finish', input.finish.name, input.finish.colorName]
+    ['Wheel size', input.size, pdfText(wheelFitment), money(Math.max(0, input.price - surcharge))],
+    ['Wheel finish', input.finish.name, input.finish.colorName, surcharge > 0 ? `+${money(surcharge)}` : undefined]
   ];
-  rows.forEach(([k, v, d]) => {
+  rows.forEach(([k, v, d, price]) => {
     doc.setDrawColor(...HAIRLINE);
     doc.setLineWidth(0.2);
     doc.line(M, y - 5, W - M, y - 5);
@@ -213,10 +219,19 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     doc.setFontSize(11);
     doc.setTextColor(...INK);
     doc.text(v, 62, y);
+    // Price (when the row has one) sits at the right edge; the detail text is right-aligned before it
+    let right = W - M;
+    if (price) {
+      heading('bold');
+      doc.setFontSize(10);
+      doc.setTextColor(...INK);
+      doc.text(price, right, y, { align: 'right' });
+      right -= doc.getTextWidth(price) + 4;
+    }
     body();
     doc.setFontSize(9);
     doc.setTextColor(...MUTE);
-    if (d) doc.text(d, W - M, y, { align: 'right' });
+    if (d) doc.text(d, right, y, { align: 'right' });
     y += 11;
   });
 
@@ -253,23 +268,42 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   doc.setFontSize(20);
   doc.setTextColor(...INK);
   doc.text(input.wheel.name, M, y);
+  // The wheel story is bounded: the "Next steps" box (42 mm), its gap (14 mm) and the weight line (4 mm) stay
+  // above the footer rule at 268 mm, so free text from /admin is wrapped and cut rather than run off the page
+  const textW = W - 2 * M;
+  const LINE = 5;
+  const hasWeight = input.wheel.weightFrontKg > 0 || input.wheel.weightRearKg > 0;
+  const storyLimit = 266 - 42 - 14 - (hasWeight ? 4 : 0);
+  const wrap = (s: string, width: number) => doc.splitTextToSize(pdfText(s), width) as string[];
+  // Keeps the first `max` lines; the last one loses words until the ellipsis fits the width
+  const clip = (lines: string[], max: number, width: number) => {
+    if (lines.length <= max) return lines;
+    let last = lines[Math.max(0, max - 1)];
+    while (last && doc.getTextWidth(`${last}…`) > width) last = last.replace(/\s*\S+$/, '');
+    return [...lines.slice(0, Math.max(0, max - 1)), `${last}…`];
+  };
   body();
   doc.setFontSize(10);
   doc.setTextColor(...MUTE);
-  doc.text(input.wheel.subtitle, M, y + 7);
-  const desc = doc.splitTextToSize(input.wheel.description, W - 2 * M);
+  const subtitle = wrap(input.wheel.subtitle, textW);
+  doc.text(subtitle, M, y + 7);
+  y += 7 + (subtitle.length - 1) * LINE + 10;
   doc.setTextColor(...INK);
-  doc.text(desc, M, y + 17);
-  y += 17 + desc.length * 5 + 6;
-  input.wheel.highlights.forEach((h) => {
+  const desc = clip(wrap(input.wheel.description, textW), Math.max(1, Math.floor((storyLimit - y - 6) / LINE)), textW);
+  doc.text(desc, M, y);
+  y += desc.length * LINE + 6;
+  for (const h of input.wheel.highlights) {
+    const lines = wrap(h, textW - 5);
+    const height = (lines.length - 1) * LINE + 6.5;
+    if (y + height > storyLimit) break;
     doc.setFillColor(...GOLD);
     doc.circle(M + 1, y - 1.2, 0.8, 'F');
     doc.setTextColor(...INK);
-    doc.text(h, M + 5, y);
-    y += 6.5;
-  });
+    doc.text(lines, M + 5, y);
+    y += height;
+  }
   // Weights only when the wheel has them (the catalogue leaves them 0 until measured)
-  if (input.wheel.weightFrontKg > 0 || input.wheel.weightRearKg > 0) {
+  if (hasWeight) {
     y += 4;
     doc.setFontSize(9);
     doc.setTextColor(...MUTE);

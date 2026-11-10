@@ -100,9 +100,14 @@ front three-quarter, side and rear in at least one metallic and one black paint.
 - forged wheels seated in the arches, with the caliper visible behind the spokes;
 - correct scale.
 
-## Current line-up (Oct 2026)
+## Current line-up (Nov 2026)
 
-**Active:** M4 G82, M3 G80, M3 Touring G81, M5 G90, M8 F92.
+**Active (4), all prepared GLBs drawn live** (`data/configuratorData.ts`, migration
+`20261110141000_legacy_cars_hidden.sql`): M4 CS G82 (`m4_cs_g82`), M2 CS G87 (`m2_g87`), M5 G90
+(`m5_g90`), M5 Touring G99 (`m5_touring_g99`).
 
-**Inactive in Supabase:** M2, M235i, X3 M50, X5 M, M4 Convertible and M5 Touring (the last two
-have no model). Reactivate a car only with a model that passes the checks above.
+**Hidden (`active: false`, 8):** M4 G82, M4 Convertible G83 (no model), M3 G80, M3 Touring G81,
+M235i F74, M8 F92, X3 M50 G45, X5 M F95: Sketchfab-era bodies kept until a prepared package
+replaces them (reactivate in `/admin`). Reactivate a car only with a model that passes the checks
+above. In `scripts/render/engine.html`, `car=N` indexes the full `BMW_MODELS` list including the
+hidden cars: the live ones are 1 (M4 CS), 5 (M2 CS), 7 (M5), 8 (M5 Touring); `car=0` is the hidden M4 G82.

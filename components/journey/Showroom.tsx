@@ -37,6 +37,22 @@ export const ShowroomBackdrop: React.FC<{ car: CarModel; visible: boolean }> = (
   </div>
 );
 
+const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+const ACTIVATES_ON_ENTER = 'button, a[href], summary, [role="button"], [role="link"]';
+
+/**
+ * True when a key press is not meant for the showroom: a modifier is held (browser shortcut), the caret is in a text
+ * field, or any sheet is open on top (Enquire and Account are rendered by App and also use role="dialog"), so typing an
+ * email must not drive the car behind the sheet.
+ */
+const keyBelongsElsewhere = (e: KeyboardEvent) => {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.isComposing) return true;
+  const target = e.target instanceof Element ? e.target : null;
+  if (target && (target.closest(EDITABLE) || (target as HTMLElement).isContentEditable)) return true;
+  if (target?.closest('[role="dialog"]')) return true;
+  return document.querySelector('[role="dialog"]') !== null;
+};
+
 export const Showroom: React.FC<{
   cars: CarModel[];
   index: number;
@@ -52,10 +68,14 @@ export const Showroom: React.FC<{
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (explore || notice) return;
+      if (explore || notice || keyBelongsElsewhere(e)) return;
       if (e.key === 'ArrowRight') onStep(1);
       if (e.key === 'ArrowLeft') onStep(-1);
-      if (e.key === 'Enter') setNotice(true);
+      if (e.key === 'Enter') {
+        // Enter on a focused button or link already activates it; don't also open the notice on top.
+        if (e.target instanceof Element && e.target.closest(ACTIVATES_ON_ENTER)) return;
+        setNotice(true);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
