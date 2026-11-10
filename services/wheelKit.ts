@@ -642,7 +642,7 @@ export function createWheelKitMaterials(): WheelKitMaterials {
     // M Compound blue: high-temperature gloss paint under a clear coat
     caliper: new THREE.MeshPhysicalMaterial({
       name: 'caliper_paint',
-      color: 0x0055b8, // M Performance Blue (CALIPER_COLORS m_blue)
+      color: 0xc01824, // M Competition Red (CALIPER_COLORS m_red): the reference renders show red calipers
       metalness: 0,
       roughness: 0.32,
       clearcoat: 1,

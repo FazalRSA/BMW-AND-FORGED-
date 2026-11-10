@@ -2,7 +2,7 @@
 /**
  * Puts a 3D rim file on a configurator wheel in one command.
  *
- *   node scripts/ingest-rim.mjs <rim.glb> --wheel forged_fsa_03 [--flip] [--check] [--budget 40000]
+ *   node scripts/ingest-rim.mjs <rim.glb> --wheel forged_fsa_03 [--flip] [--check] [--budget 160000]
  *   node scripts/ingest-rim.mjs <rim.glb> --wheel forged_fsa005 --new --name FSA005 --finishes gold,hyper_black --price-zar 75000
  *
  * Takes a rim GLB in the website's convention (public/models/wheels/README.md in the Forgedwebsite repo:
@@ -24,7 +24,7 @@
  *   --wheel <id>          catalogue wheel id, e.g. forged_fsa_03 (required; lowercase letters, digits, _)
  *   --flip                the rim face points into the car in the check shot: mirror it (modelFlip)
  *   --rear <rear.glb>     staggered set: a second file packed as the rear rim (rearModelUrl)
- *   --budget <n>          triangle budget for packing (default 40000)
+ *   --budget <n>          triangle budget for packing (default 160000: no reduction, the thin spokes break below ~100k)
  *   --drop <regex>        mesh names removed when packing (default: brake parts and tyres, see
  *                         scripts/rim3d/pack.mjs); --drop '' keeps every mesh
  *   --check               screenshots (see 4)          --port <n>  dev server port (default 5173)
@@ -73,7 +73,7 @@ const log = (msg) => console.log(msg);
 process.on('uncaughtException', (e) => die(e?.message || String(e)));
 process.on('unhandledRejection', (e) => die(e?.message || String(e)));
 
-const opts = { flip: false, check: false, dryRun: false, budget: '40000', port: '5173', isNew: false };
+const opts = { flip: false, check: false, dryRun: false, budget: '160000', port: '5173', isNew: false };
 const positional = [];
 const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) {
@@ -103,7 +103,7 @@ if (!input) die('usage: node scripts/ingest-rim.mjs <rim.glb> --wheel <id> [--fl
 if (!fs.existsSync(input)) die(`${input} does not exist`);
 if (!/\.glb$/i.test(input)) die('the input must be a .glb (STEP/IGES/STL/OBJ: `bun run rim:convert` first, or upload in /admin)');
 if (!opts.wheel || !/^[a-z0-9_]+$/.test(opts.wheel)) die('--wheel <id> is required, e.g. forged_fsa_03');
-if (!(+opts.budget > 1000)) die('--budget is a triangle count, e.g. 40000');
+if (!(+opts.budget > 1000)) die('--budget is a triangle count, e.g. 160000');
 if (opts.rear && (!fs.existsSync(opts.rear) || !/\.glb$/i.test(opts.rear))) die('--rear must be the rear rim .glb of a staggered set');
 if (opts.isNew) {
   if (!opts.name) die('--new needs --name "Wheel name"');

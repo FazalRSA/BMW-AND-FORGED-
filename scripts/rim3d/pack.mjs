@@ -1,6 +1,6 @@
 // Packs a rim GLB for the live site: weld, simplify to a triangle budget, quantize, meshopt-compress
 // (same extensions as public/models/*.glb; the engine registers MeshoptDecoder).
-//   node scripts/rim3d/pack.mjs in.glb out.glb [maxTriangles=40000] [dropRegex]
+//   node scripts/rim3d/pack.mjs in.glb out.glb [maxTriangles=160000] [dropRegex]
 // Meshes whose node or mesh name matches dropRegex (default: names that START with brake, caliper, rotor,
 // tyre or tire, i.e. the brake parts and tyres the engine draws itself; a "Disc_Face" or "Rotor_Lip" spoke
 // mesh is kept) are removed before packing; pass '' to keep everything. The triangle budget applies to
@@ -10,7 +10,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { weld, simplify, quantize, meshopt, dedup, prune } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 const [, , input, output, budgetArg, dropArg] = process.argv;
-const budget = +(budgetArg || 40000);
+const budget = +(budgetArg || 160000); // above a rim's own count: no triangle reduction (40k shredded the thin spokes)
 const drop = dropArg === '' ? null : new RegExp(dropArg || '^(brake|caliper|calliper|rotor|tyre|tire)([^a-z]|$)', 'i');
 await MeshoptEncoder.ready; await MeshoptSimplifier.ready;
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });

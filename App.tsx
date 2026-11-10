@@ -802,7 +802,8 @@ export const App: React.FC = () => {
                 <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigateTo({ name: 'configure' })}>
                   Configure
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => setEnquiryOpen(true)}>
+                {/* Phones: Enquire is in the menu (it overlapped the logo at 390 px) */}
+                <Button variant="secondary" size="sm" className="hidden sm:inline-flex" onClick={() => setEnquiryOpen(true)}>
                   Enquire
                 </Button>
                 <IconButton label="Account" onClick={() => setAccountOpen(true)} className="ring-1 ring-line">
