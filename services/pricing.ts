@@ -14,13 +14,24 @@ export function rimSizes(wheel: WheelDesign): string[] {
   return [...sizes].sort((a, b) => inches(a) - inches(b));
 }
 
-/** Set price (4 wheels) for a size; falls back to the single set price. */
-export function rimPrice(wheel: WheelDesign, size: string): number {
+/**
+ * Set price (4 wheels) for a size and, when given, a finish. A finish with its own price (the stock
+ * sheet prices Polished Face and Liquid Metal above the base finishes) wins over the size price; the
+ * size price falls back to the single set price.
+ */
+export function rimPrice(wheel: WheelDesign, size: string, finishId?: string): number {
+  const f = finishId ? wheel.priceByFinish?.[finishId] : undefined;
+  if (typeof f === 'number' && f > 0) return f;
   const p = wheel.priceBySize?.[size];
   return typeof p === 'number' ? p : wheel.pricePerSet;
 }
 
-/** Lowest set price across sizes, for "from" labels. */
+/** How much more a finish costs than the base price at this size (0 for the base finishes). */
+export function finishSurcharge(wheel: WheelDesign, size: string, finishId: string): number {
+  return Math.max(0, rimPrice(wheel, size, finishId) - rimPrice(wheel, size));
+}
+
+/** Lowest set price across sizes (base finish), for "from" labels. */
 export function rimFromPrice(wheel: WheelDesign): number {
   const prices = rimSizes(wheel).map((s) => rimPrice(wheel, s));
   return prices.length ? Math.min(...prices) : wheel.pricePerSet;

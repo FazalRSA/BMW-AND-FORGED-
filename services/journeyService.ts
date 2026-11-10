@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabaseClient';
+import { currentUserId } from './authService';
 import { PaintColor } from '../types';
 
 /** Everything needed to rebuild a configuration. */
@@ -64,16 +65,20 @@ const withTimeout = <T,>(p: PromiseLike<T>, ms: number): Promise<T> =>
  * Stores the configuration under a new code. The code is returned at once (kept in this browser), so
  * the summary never waits on the network; the shared copy is written in the background, with retries,
  * and `shared` resolves false when it could not be (the caller then says the link only works here).
+ * A signed-in customer's id (from authService's cached session, never awaited) goes on the row, so the
+ * build is in their garage; `name` is the garage's label for it. The `payload` shape is unchanged.
  */
-export function saveConfiguration(config: SavedConfiguration): SavedCode {
+export function saveConfiguration(config: SavedConfiguration, name?: string): SavedCode {
   const code = newConfigCode();
   const local = readLocal<Record<string, SavedConfiguration>>(LOCAL_CODES, {});
   local[code] = config;
   writeLocal(LOCAL_CODES, local);
+  const userId = currentUserId();
+  const row = { code, payload: config, ...(userId ? { user_id: userId } : {}), ...(name?.trim() ? { name: name.trim().slice(0, 80) } : {}) };
   const shared = (async () => {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const { error } = await withTimeout(supabase.from('saved_configurations').insert({ code, payload: config }), 8000);
+        const { error } = await withTimeout(supabase.from('saved_configurations').insert(row), 8000);
         if (!error) return true;
         console.warn(`Saving configuration ${code} failed (attempt ${attempt + 1}):`, error.message);
         // The code exists already: on a retry, an earlier attempt that timed out here landed after all;
@@ -96,6 +101,14 @@ export async function loadConfiguration(code: string): Promise<SavedConfiguratio
   const { data, error } = await supabase.rpc('get_configuration', { p_code: clean });
   if (error || !data) return null;
   return data as SavedConfiguration;
+}
+
+/** Drops the copy of a code kept in this browser (after the shared row was deleted from the garage). */
+export function forgetLocalConfiguration(code: string) {
+  const local = readLocal<Record<string, SavedConfiguration>>(LOCAL_CODES, {});
+  if (!(code in local)) return;
+  delete local[code];
+  writeLocal(LOCAL_CODES, local);
 }
 
 export const shareUrl = (code: string) => `${window.location.origin}/?config=${code}`;
@@ -131,8 +144,10 @@ export type EnquiryResult =
   /** The server refused it (e.g. the rate limit): nothing stored, the message is for the visitor. */
   | { status: 'rejected'; message: string };
 
-/** Sends an enquiry to Supabase; keeps a copy in this browser if that fails. */
+/** Sends an enquiry to Supabase; keeps a copy in this browser if that fails. A signed-in customer's
+ * id goes on the lead (the `configuration` object n8n reads is unchanged). */
 export async function submitEnquiry(enquiry: Enquiry): Promise<EnquiryResult> {
+  const userId = currentUserId();
   const { error } = await supabase.from('leads').insert({
     name: enquiry.name.trim() || null,
     email: enquiry.email,
@@ -142,7 +157,8 @@ export async function submitEnquiry(enquiry: Enquiry): Promise<EnquiryResult> {
     config_code: enquiry.configCode || null,
     configuration: enquiry.configuration ?? null,
     region: enquiry.region ?? null,
-    source: enquiry.source ?? 'enquiry'
+    source: enquiry.source ?? 'enquiry',
+    ...(userId ? { user_id: userId } : {})
   });
   if (!error) return { status: 'sent' };
   // A deliberate refusal (the lead rate limit raises P0001 with a visitor-facing message, a check

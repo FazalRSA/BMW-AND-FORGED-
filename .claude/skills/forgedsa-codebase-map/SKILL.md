@@ -72,3 +72,12 @@ Shared UI lives in `components/journey/ui.tsx` (Button, Modal, PaintChip, RimThu
 - Prefer the brand tokens over raw hex in new code (a few older components and the admin panel still hard-code colours).
 - Verify visually before claiming done.
 - Ask the owner before assuming on product decisions.
+
+## Since 2026-11-10 (afternoon)
+
+- `/configure` = `components/journey/ViewerPanel.tsx` on the viewer look (`services/viewerStudio.ts`, `engine.setLook`,
+  "FORGED" plates via `engine.addNumberPlates`). `?panel=steps` = the old panel, `?look=studio`, `?plates=0`.
+- Wheels = the stock sheet (`docs/WHEEL_INVENTORY.md`); `services/pricing.ts rimPrice(wheel, size, finishId)`;
+  staggered rims via `WheelDesign.rearModelUrl` (engine `applyWheelDesign`).
+- Accounts: `services/authService.ts`, `components/journey/AccountSheet.tsx`, `docs/ACCOUNTS.md`.
+- Ingest: `scripts/ingest-car.mjs`, `scripts/ingest-rim.mjs` (`docs/ADD_PREPARED_CAR.md`); `scripts/rim3d/pack.mjs` drops brake meshes.

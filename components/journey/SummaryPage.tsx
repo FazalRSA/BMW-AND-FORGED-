@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { ArrowLeft, Check, Copy, Download, Mail, Share2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Check, Copy, Download, Mail, Share2, Warehouse } from 'lucide-react';
 import { BRAND, Region, formatMoney } from '../../config/brand';
 import { CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import { PdfContact, rememberPdfContact, rememberedPdfContact, shareUrl } from '../../services/journeyService';
@@ -28,6 +28,13 @@ export interface SummaryProps {
   onEnquire: () => void;
   /** Saves the contact as a lead, then builds the PDF. */
   onDownloadPdf: (contact: PdfContact) => Promise<void>;
+  /** Customer accounts: signed in, "Save to garage" names the build and keeps it; signed out, the button
+   * reads "Sign in to save" and opens the sign-in. Omit onSaveToGarage to hide the button. */
+  signedIn?: boolean;
+  onSaveToGarage?: (name: string) => Promise<boolean>;
+  onSignIn?: () => void;
+  /** The signed-in customer's details, offered in the PDF form for the fields still blank. */
+  contactPrefill?: Partial<PdfContact>;
 }
 
 export const SummaryPage: React.FC<SummaryProps> = (p) => {
@@ -65,6 +72,47 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
     }
   };
   const setField = (k: keyof PdfContact) => (e: React.ChangeEvent<HTMLInputElement>) => setContact((c) => ({ ...c, [k]: e.target.value }));
+  // A signed-in customer's profile fills the blanks (what they typed, or remembered here, stays)
+  useEffect(() => {
+    const pre = p.contactPrefill;
+    if (!pre) return;
+    setContact((c) => ({ name: c.name || pre.name || '', email: c.email || pre.email || '', phone: c.phone || pre.phone || '' }));
+  }, [p.contactPrefill]);
+
+  // Save to garage: the build gets a name (default "<badge> · <wheel>") and goes under the customer's account
+  const [garage, setGarage] = useState<'idle' | 'naming' | 'saving' | 'saved'>('idle');
+  const [garageName, setGarageName] = useState('');
+  const [garageError, setGarageError] = useState<string | null>(null);
+  useEffect(() => {
+    setGarage('idle');
+    setGarageError(null);
+  }, [p.code]);
+  const startGarage = () => {
+    if (!p.signedIn) {
+      setShare(false);
+      p.onSignIn?.();
+      return;
+    }
+    setGarageName(`${p.car.badge} · ${p.wheel.name}`);
+    setGarageError(null);
+    setGarage('naming');
+  };
+  const saveToGarage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!p.onSaveToGarage || !p.code) return;
+    setGarage('saving');
+    try {
+      const ok = await p.onSaveToGarage(garageName.trim() || `${p.car.badge} · ${p.wheel.name}`);
+      if (ok) setGarage('saved');
+      else {
+        setGarage('naming');
+        setGarageError('This build is not on the server yet (saved on this device only). Check your connection and try again.');
+      }
+    } catch (err) {
+      setGarage('naming');
+      setGarageError(err instanceof Error && err.message ? err.message : 'The build could not be saved to your garage.');
+    }
+  };
 
   const options = [
     { label: 'Paint', value: p.paint.name, detail: `${p.paint.type} · ${p.paint.code}`, visual: <PaintChip paint={p.paint} size={52} />, price: 'Included' },
@@ -236,6 +284,36 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
             </p>
           )}
         </div>
+        {p.onSaveToGarage && (
+          <div className="mt-4">
+            {garage === 'naming' || garage === 'saving' ? (
+              <form onSubmit={saveToGarage} className="flex gap-2">
+                <input
+                  autoFocus
+                  aria-label="Build name"
+                  value={garageName}
+                  maxLength={80}
+                  onChange={(e) => setGarageName(e.target.value)}
+                  className="h-11 min-w-0 flex-1 rounded-full bg-ink/[0.04] px-5 text-[13.5px] outline-none ring-1 ring-line focus:ring-gold/60 transition"
+                />
+                <Button type="submit" variant="secondary" disabled={garage === 'saving' || !p.code}>
+                  {garage === 'saving' ? 'Saving…' : 'Save'}
+                </Button>
+              </form>
+            ) : (
+              <Button
+                variant="secondary"
+                className="w-full"
+                aria-label={p.signedIn ? 'Save to garage' : 'Sign in to save'}
+                onClick={startGarage}
+                icon={garage === 'saved' ? <Check className="h-4 w-4" /> : <Warehouse className="h-4 w-4" strokeWidth={1.7} />}
+              >
+                {garage === 'saved' ? 'Saved to your garage' : p.signedIn ? 'Save to garage' : 'Sign in to save'}
+              </Button>
+            )}
+            {garageError && <p className="mt-2 text-[12px] leading-relaxed text-red-400">{garageError}</p>}
+          </div>
+        )}
         <div className="mt-5 grid gap-2.5">
           <Button
             variant="secondary"

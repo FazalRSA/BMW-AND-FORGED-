@@ -19,8 +19,18 @@ old stepped panel for comparison): Car chips, paint swatch groups by finish, rim
 (incl. the new `front` preset), Auto-rotate, price + CTA; the paint name sits bottom-left of the stage. The harness selectors
 ("Step N: …" headings, "Summary", "Wheel details", "View in 360°", "Change model", "View your …") are kept.
 **Legacy cars hidden** (`active: false` in the fallback + `20261110141000_legacy_cars_hidden.sql`): the showroom and configurator list
-the four prepared cars until their packages arrive. **Website rims in**: forged_fsa002, forged_fsa004, sixnine_ff1, sixnine_ff3
-(placeholders; `ingest-rim --new`), FSA-03 from fsa003.glb; STF399 (staggered) and the spins are queued.
+the four prepared cars until their packages arrive.
+
+**Later the same day: the wheel catalogue is the stock sheet** (`docs/WHEEL_INVENTORY.md`, migration
+`20261110153000_wheel_inventory_stock_sheet.sql`): FSA001 (staggered, `rearModelUrl` + engine support in `applyWheelDesign`),
+FSA002, FSA003 (`forged_fsa_03` renamed), FSA004, FF-1, FF-3 with the sheet's sizes, finishes (new `gold`, `hyper_black`,
+`polished_face`, `pure_bronze`, `black_matte`) and ZAR prices (USD ÷ 18.2; dearer finishes via `priceByFinish` /
+`price_by_finish`, read by `rimPrice(wheel, size, finishId)` everywhere incl. the lead email). The eleven photo-traced wheels
+are hidden (`active: false`; `WheelDesign.active`, `STATIC_CATALOG` filters). `pack.mjs` drops brake meshes inside rim files.
+**"FORGED" plates** (the viewer's, ported: `engine.addNumberPlates`, `wheelKit.plateTexture`; `?plates=0`). **Customer accounts**
+(Google via Supabase Auth, profiles, garage, `user_id` on share codes and leads): `docs/ACCOUNTS.md`,
+`20261110150000_customer_accounts.sql`, `services/authService.ts`, `components/journey/AccountSheet.tsx`. Check sheets:
+`docs/ingest/stock-wheels.jpg`.
 
 ## Goal of this phase (owner's words, condensed)
 Two cars and at least two wheels each **perfectly done**: **M4 Competition** and **M5 (G90)**, with
@@ -65,10 +75,14 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 `decision_m3t_headlights`); read them with ArtifactData `list`.
 
 ## Queue (do the top unchecked item; tick it when committed)
-- [ ] Apply the five 2026-11-10 migrations (four cars, FSA-03 rim) in Supabase, or set the same fields in /admin; deploy.
-- [ ] Owner: look at `docs/ingest/*.jpg`; decide live GLB vs `--render` Blender frames for the four prepared cars.
+- [ ] Apply the 2026-11-10 migrations in order (four cars, legacy cars hidden, the `_wheel_*_rim_model` files, customer accounts,
+      wheel inventory) in Supabase, or set the same fields in /admin; deploy; smoke the live catalogue (source `supabase`).
+- [ ] Owner: Supabase dashboard → Authentication → Providers → Google (client id/secret, redirect URLs) per `docs/ACCOUNTS.md`;
+      then the manual sign-in → save → garage test on the preview URL.
+- [ ] Rim-page spins for the six stocked wheels (`scripts/rim3d/turntable.py`, ~75 min each on CPU; the live engine is the fallback).
+- [ ] Owner: look at `docs/ingest/*.jpg` and `docs/ingest/stock-wheels.jpg`; decide live GLB vs `--render` Blender frames for the four prepared cars.
 - [ ] Owner: licence for the four prepared cars (game-derived, none supplied); real M5 Touring / M2 CS specs and palettes.
-- [ ] Owner: is the website's `fsa004.glb` the configurator's FSA-06 Aldo Fork 15? If yes: `node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa004.glb --wheel forged_fsa_06 --check`.
+- [ ] Optional: the viewer's GTAO + SMAA composer behind a flag (`CarConfiguratorEngine.AO`) for the on-screen frame.
 - [x] Spins for FSA-12, FSA-13, FSA-03, FSA-14 (all five finishes).
 - [x] Re-render Liquid Metal + Silver for those four (brighter chrome surround, plain barrel; review fixes).
       All four wheels completed with improved chrome reflections and consistent brushed barrel texture.

@@ -11,6 +11,7 @@ import { CarModel, PaintColor, WheelDesign, WheelFinish, CameraViewPreset } from
 import { BRAND, DEFAULT_REGION, Region } from './config/brand';
 import { DELIVERY, TERMS } from './config/pages';
 import { SavedConfiguration, configKey, loadConfiguration, saveConfiguration, submitEnquiry } from './services/journeyService';
+import { Profile, claimConfiguration, getMyProfile, signInWithGoogle, useAuthUser } from './services/authService';
 import { downloadBrochurePdf } from './services/brochurePdf';
 import { IN_APP_STATE, cameFromApp } from './services/nav';
 import { controlsInset, layoutMode } from './services/layout';
@@ -21,7 +22,9 @@ import { TopBar } from './components/journey/TopBar';
 import { ConfigStep, Configurator, MoreOptionsModal } from './components/journey/Configurator';
 import { SummaryPage } from './components/journey/SummaryPage';
 import { EnquiryModal } from './components/journey/EnquiryModal';
-import { Button } from './components/journey/ui';
+import { AccountSheet } from './components/journey/AccountSheet';
+import { Button, IconButton } from './components/journey/ui';
+import { UserRound } from 'lucide-react';
 import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
 import { backdropCss, hasBodies, renderedStills } from './services/renderedBody';
 
@@ -157,6 +160,30 @@ export const App: React.FC = () => {
   // shared: undefined while the copy every device can open is being written, false if it could not be
   const [configCode, setConfigCode] = useState<{ key: string; code: string; shared?: boolean } | null>(null);
   const saveToken = useRef(0);
+  // the latest save's shared-copy promise, awaited before a build is put in the garage
+  const pendingShared = useRef<{ code: string; shared: Promise<boolean> } | null>(null);
+
+  // Customer account (Google sign-in through Supabase): the profile prefills the enquiry and PDF forms
+  const user = useAuthUser();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    let live = true;
+    getMyProfile().then((p) => live && setProfile(p));
+    return () => {
+      live = false;
+    };
+  }, [user?.id]);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [garageVersion, setGarageVersion] = useState(0);
+  const contactPrefill = useMemo(
+    () => (user ? { name: profile?.displayName ?? (user.user_metadata?.full_name as string | undefined) ?? '', email: profile?.email ?? user.email ?? '', phone: profile?.phone ?? '' } : undefined),
+    [user, profile]
+  );
+  const avatarUrl = profile?.avatarUrl ?? (user?.user_metadata?.avatar_url as string | undefined) ?? (user?.user_metadata?.picture as string | undefined) ?? null;
 
   const carIndex = Math.max(0, cars.findIndex((c) => c.id === selectedCar.id));
 
@@ -599,6 +626,7 @@ export const App: React.FC = () => {
       // earlier configuration can no longer overwrite this one
       const token = ++saveToken.current;
       const saved = saveConfiguration(cfg);
+      pendingShared.current = { code: saved.code, shared: saved.shared };
       setConfigCode({ key, code: saved.code });
       saved.shared.then((shared) => {
         if (token === saveToken.current) setConfigCode((c) => (c && c.code === saved.code ? { ...c, shared } : c));
@@ -618,7 +646,48 @@ export const App: React.FC = () => {
     enterSummary();
   }, [navigateTo, enterSummary]);
 
-  const price = rimPrice(selectedWheel, selectedSize);
+  // ----------------------------------------------------
+  // Account and garage
+  // ----------------------------------------------------
+  /** The shared copy of the current code, once written (false when it could not be). */
+  const awaitShared = async (code: string, maxMs?: number) => {
+    const pending = pendingShared.current;
+    if (!pending || pending.code !== code) return true; // a loaded code: already on the server
+    return maxMs === undefined ? pending.shared : Promise.race([pending.shared, new Promise<boolean>((r) => setTimeout(() => r(true), maxMs))]);
+  };
+  /**
+   * Google sign-in. The round trip reloads the page, so a build in progress (showroom, configurator,
+   * summary) is kept under its configuration code and reopened through the /?config= link; from any
+   * other page the visitor simply comes back to it.
+   */
+  const signIn = async (): Promise<string | null> => {
+    let returnTo: string | undefined;
+    if (route.name === 'showroom' || route.name === 'configure' || route.name === 'summary') {
+      const cfg = currentConfig();
+      const key = configKey(cfg);
+      let code = configCode?.key === key ? configCode.code : null;
+      if (!code) {
+        const saved = saveConfiguration(cfg);
+        pendingShared.current = { code: saved.code, shared: saved.shared };
+        setConfigCode({ key, code: saved.code });
+        code = saved.code;
+      }
+      await awaitShared(code, 4000); // give the shared copy a moment; the local copy opens it here regardless
+      returnTo = `/?config=${code}`;
+    }
+    return signInWithGoogle(returnTo);
+  };
+  /** "Save to garage" on the summary: names the current code and puts it under the signed-in customer. */
+  const saveToGarage = async (name: string) => {
+    const code = configCode?.code;
+    if (!code) return false;
+    if (!(await awaitShared(code))) return false;
+    const ok = await claimConfiguration(code, name);
+    if (ok) setGarageVersion((v) => v + 1);
+    return ok;
+  };
+
+  const price = rimPrice(selectedWheel, selectedSize, selectedFinish.id);
   const carPaints = useMemo(() => paintsForCar(catalog.paints, selectedCar), [catalog.paints, selectedCar]);
 
   const menuLinks = [
@@ -675,6 +744,13 @@ export const App: React.FC = () => {
                 <Button variant="secondary" size="sm" onClick={() => setEnquiryOpen(true)}>
                   Enquire
                 </Button>
+                <IconButton label="Account" onClick={() => setAccountOpen(true)} className="ring-1 ring-line">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+                  ) : (
+                    <UserRound className="h-5 w-5" strokeWidth={1.6} />
+                  )}
+                </IconButton>
               </>
             }
           />
@@ -725,6 +801,18 @@ export const App: React.FC = () => {
           onOpenMore={() => setMoreOpen(true)}
         />
       )}
+      {booted && route.name === 'configure' && (
+        /* Account and garage, in the stage's top corner next to the panel (top-right above the sheet on phones) */
+        <div className="absolute z-30 top-4 right-[calc(var(--panel-w)+8px)] sheet:right-4 animate-fade">
+          <IconButton label="Account" onClick={() => setAccountOpen(true)} className="bg-surface/70 ring-1 ring-line backdrop-blur hover:bg-surface">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+            ) : (
+              <UserRound className="h-[18px] w-[18px]" strokeWidth={1.6} />
+            )}
+          </IconButton>
+        </div>
+      )}
 
       {route.name === 'summary' && (
         <SummaryPage
@@ -740,6 +828,10 @@ export const App: React.FC = () => {
           codeShared={configCode?.shared}
           onBack={() => navigateTo({ name: 'configure' })}
           onEnquire={() => setEnquiryOpen(true)}
+          signedIn={!!user}
+          onSaveToGarage={saveToGarage}
+          onSignIn={() => setAccountOpen(true)}
+          contactPrefill={contactPrefill}
           onDownloadPdf={async (contact) => {
             // Saved as a lead first (never blocks the PDF: submitEnquiry keeps a local copy if offline;
             // only a refusal from the server, e.g. the rate limit, stops it and is shown)
@@ -784,12 +876,33 @@ export const App: React.FC = () => {
         onRegion={changeRegion}
         onLoadCode={loadCode}
         onRestart={() => navigateTo({ name: 'welcome' })}
+        onOpenAccount={() => setAccountOpen(true)}
+      />
+
+      <AccountSheet
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        user={user}
+        profile={profile}
+        onProfile={setProfile}
+        onSignIn={signIn}
+        onOpenBuild={async (code) => {
+          const ok = await loadCode(code);
+          if (ok) setAccountOpen(false);
+          return ok;
+        }}
+        cars={catalog.cars}
+        paints={catalog.paints}
+        wheels={catalog.wheels}
+        finishes={catalog.finishes}
+        garageVersion={garageVersion}
       />
 
       <EnquiryModal
         open={enquiryOpen}
         onClose={() => setEnquiryOpen(false)}
         summary={enquirySummary}
+        prefill={contactPrefill}
         context={{
           configCode: configCode?.code,
           configuration: {

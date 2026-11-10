@@ -142,3 +142,20 @@ an edit in Finishes changes the live site at once.
   The wheel kit is in metres, so mesh space is right.
 - **Changing the four thresholds in `finishKind()`** moves every admin-made finish between
   kinds. Re-render all active finishes after any change.
+
+## The stock-sheet finishes (Nov 2026)
+
+The owner's stock sheet names the finishes customers see; they map onto these rows (`docs/WHEEL_INVENTORY.md`):
+
+| Sheet | id | kind | hex, metal, rough, clear |
+|---|---|---|---|
+| Gold | `gold` | metallic paint | #c9a24e, 0.9, 0.32, 0.85 |
+| Hyper Black | `hyper_black` | metallic paint (dark, bright flop) | #3a3e44, 0.9, 0.24, 0.9 |
+| Polished Face | `polished_face` | polished | #e6e9ec, 1.0, 0.08, 0.6 |
+| Pure Bronze | `pure_bronze` | metallic paint | #9c6b3a, 0.9, 0.3, 0.85 |
+| Black Matte | `black_matte` | satin solid (no flake/flop) | #26282b, 0.0, 0.5, 0.0 |
+| Silver / Gloss Black / Liquid Metal | `silver` / `black` / `liquid_metal` | as above | unchanged |
+
+A finish can cost more on one wheel (Polished Face on FSA002, Liquid Metal on FF-1/FF-3): that is the wheel's
+`price_by_finish` (admin "Dearer finishes"), not a finish property. On GLB rims the one finish material covers
+every mesh, so a "polished face with painted pockets" reads as fully polished.

@@ -521,6 +521,32 @@ const FieldInput: React.FC<FieldInputProps> = ({ field, value, folder, finishIds
     case 'finishes':
       control = <MultiPick options={finishIds.map((id) => ({ id, label: id }))} value={value} onChange={onChange} />;
       break;
+    case 'finishPrices': {
+      // One optional set price per finish; a blank field means the finish costs the same as the size price.
+      const prices = (value as Record<string, number>) || {};
+      control = (
+        <div className="space-y-2">
+          {finishIds.map((id) => (
+            <div key={id} className="flex items-center gap-2">
+              <span className="w-32 truncate text-sm text-white font-bold">{id}</span>
+              <input
+                type="number"
+                step={50}
+                placeholder="same as size price"
+                value={prices[id] ?? ''}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  const { [id]: _removed, ...rest } = prices;
+                  onChange(e.target.value === '' || !(n > 0) ? rest : { ...rest, [id]: n });
+                }}
+                className={inputCls}
+              />
+            </div>
+          ))}
+        </div>
+      );
+      break;
+    }
     case 'paints':
       control = <MultiPick options={paintOptions} value={value} onChange={onChange} />;
       break;

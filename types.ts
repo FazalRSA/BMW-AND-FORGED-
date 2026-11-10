@@ -80,6 +80,8 @@ export interface WheelDesign {
   pricePerSet: number;
   /** Set price per rim size, e.g. { '20"': 7800 }. Keys are the sizes offered. */
   priceBySize?: Record<string, number>;
+  /** Set price (USD) for finishes that cost more than the base price, e.g. { polished_face: 4670 }; wins over the size price. */
+  priceByFinish?: Record<string, number>;
   description: string;
   highlights: string[];
   availableVariants: FinishVariantKey[];
@@ -94,6 +96,8 @@ export interface WheelDesign {
   rearModelUrl?: string | null;
   /** Turn the GLB rim around when its face points into the car. */
   modelFlip?: boolean;
+  /** false = not offered (Supabase filters its rows; the bundled list carries the flag so stock changes stay in sync). */
+  active?: boolean;
 }
 
 export interface CaliperColor {

@@ -464,14 +464,76 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
     clearcoat: 0.2,
     description: 'Dark satin gunmetal metallic with a soft, low-sheen finish.',
     badge: 'New'
+  },
+  // The finishes on the Nov 2026 stock sheet (BMW M / M Performance wheel inventory). Numbers follow
+  // services/wheelFinish.ts: gold, hyper black and pure bronze read as gloss metallic paint; polished
+  // face as bare polished metal; black matte as a satin solid paint (no flake, no flop).
+  gold: {
+    id: 'gold',
+    name: 'Gold',
+    colorName: 'Gold',
+    hex: '#c9a24e',
+    metalness: 0.9,
+    roughness: 0.32,
+    clearcoat: 0.85,
+    description: 'Rich metallic gold under a gloss clear coat: bright on the spoke faces, deeper in the pockets.',
+    badge: 'In stock'
+  },
+  hyper_black: {
+    id: 'hyper_black',
+    name: 'Hyper Black',
+    colorName: 'Hyper Black',
+    hex: '#3a3e44',
+    metalness: 0.9,
+    roughness: 0.24,
+    clearcoat: 0.9,
+    description: 'Dark hyper-black metallic: a bright flop on the spoke faces, near black where they turn away.',
+    badge: 'In stock'
+  },
+  polished_face: {
+    id: 'polished_face',
+    name: 'Polished Face',
+    colorName: 'Polished Aluminium',
+    hex: '#e6e9ec',
+    metalness: 1.0,
+    roughness: 0.08,
+    clearcoat: 0.6,
+    description: 'Machine-polished bright aluminium face under a clear protective coat.',
+    badge: 'In stock'
+  },
+  pure_bronze: {
+    id: 'pure_bronze',
+    name: 'Pure Bronze',
+    colorName: 'Gloss Bronze',
+    hex: '#9c6b3a',
+    metalness: 0.9,
+    roughness: 0.3,
+    clearcoat: 0.85,
+    description: 'Deep gloss bronze metallic, the FF-3 signature finish.',
+    badge: 'In stock'
+  },
+  black_matte: {
+    id: 'black_matte',
+    name: 'Black Matte',
+    colorName: 'Satin Black',
+    hex: '#26282b',
+    metalness: 0.0,
+    roughness: 0.5,
+    clearcoat: 0.0,
+    description: 'Satin black powder coat with no gloss: the FSA001 two-piece finish.',
+    badge: 'In stock'
   }
 };
 
 // FORGED's own designs, mirrored from the live catalogue (Supabase is the source of truth; this is the
 // offline fallback). Images live in the rim-images bucket and are extruded into 3D spokes on the car.
 export const WHEEL_DESIGNS: WheelDesign[] = [
+  // The Nov 2026 stock sheet (BMW M / M Performance wheel inventory, docs/WHEEL_INVENTORY.md) is the source of
+  // the names, sizes, finishes and prices of the six wheels at the end of this list. The photo-traced designs
+  // above them stay in the catalogue but hidden (active: false) until they are stocked again.
   {
     id: 'forged_fsa_01',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-01',
     name: 'Killarney S5',
     subtitle: 'Two-piece split five-spoke',
@@ -493,6 +555,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_02',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-02',
     name: 'Zwartkops Branch',
     subtitle: 'Branched multi-spoke monoblock',
@@ -513,30 +576,8 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     imageExtrude: true
   },
   {
-    id: 'forged_fsa_03',
-    code: 'FSA-03',
-    name: 'Kyalami 15',
-    subtitle: 'Fifteen-spoke classic',
-    style: 'Monoblock Forged',
-    spokeType: 'multi',
-    spokeCount: 15,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Fifteen straight, evenly spaced spokes run from a crisp five-lug hub to a slim outer lip for a clean motorsport look.',
-    highlights: ['Fifteen straight spokes', 'Slim outer lip', 'Timeless motorsport style'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_03-1790526482896.png',
-    imageExtrude: true,
-    modelUrl: '/models/rims/forged_fsa_03.glb',
-    modelFlip: false
-  },
-  {
     id: 'forged_fsa_04',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-04',
     name: 'Scribante 3P',
     subtitle: 'Riveted multi-piece split spoke',
@@ -558,6 +599,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_05',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-05',
     name: 'Phakisa Twin',
     subtitle: 'Slim twin five-spoke',
@@ -579,6 +621,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_06',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-06',
     name: 'Aldo Fork 15',
     subtitle: 'Forked fifteen-spoke',
@@ -600,6 +643,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_07',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-07',
     name: 'Dezzi Star',
     subtitle: 'Split-star two-piece',
@@ -621,6 +665,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_08',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-08',
     name: 'Red Star 3P',
     subtitle: 'Riveted Y-spoke multi-piece',
@@ -642,6 +687,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_09',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-09',
     name: 'Heritage Mesh',
     subtitle: 'Classic cross-spoke mesh',
@@ -660,10 +706,10 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     defaultVariant: 'liquid_metal',
     imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_09-1790526498397.png',
     imageExtrude: true
-  }
-,
+  },
   {
     id: 'forged_fsa_12',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-12',
     name: 'Forged SA Twin-Y',
     subtitle: 'Polished twin-Y five-spoke',
@@ -688,6 +734,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_13',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-13',
     name: 'Forged SA Star 6',
     subtitle: 'Brushed six-point split star',
@@ -712,6 +759,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   },
   {
     id: 'forged_fsa_14',
+    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
     code: 'FSA-14',
     name: 'Forged SA Turbine 25',
     subtitle: 'Gloss black 25-spoke turbine',
@@ -735,6 +783,30 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     imageExtrude: true
   },
   {
+    id: 'forged_fsa001',
+    code: 'FSA001',
+    name: 'FSA001',
+    subtitle: 'Two-piece ten-spoke',
+    style: 'Two-Piece Forged',
+    spokeType: 'multi',
+    spokeCount: 10,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['19"', '20"'],
+    pricePerSet: 4945.05,
+    priceBySize: { '19"': 4945.05, '20"': 4945.05 },
+    description: 'Two-piece forged ten-spoke in Black Matte with a staggered front and rear profile. In stock for the M3 Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
+    highlights: ['Two-piece construction', 'Staggered front and rear', 'Black Matte', 'PCD 5×112 · ET8/15 · CB 66.6'],
+    availableVariants: ['black_matte'],
+    defaultVariant: 'black_matte',
+    imageUrl: '/rim-images/forged_fsa001.webp', // cut-out of a Blender front view of the rim file (thumbnail only; the car uses the GLB)
+    imageExtrude: false,
+    modelUrl: '/models/rims/forged_fsa001.glb',
+    rearModelUrl: '/models/rims/forged_fsa001-rear.glb',
+    modelFlip: false
+  },
+  {
     id: 'forged_fsa002',
     code: 'FSA002',
     name: 'FSA002',
@@ -746,15 +818,39 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     weightRearKg: 0,
     weightSavingsKg: 0,
     standardSizes: ['20"', '21"'],
-    pricePerSet: 4120,
-    priceBySize: { '20"': 4120, '21"': 4490 },
-    description: 'PLACEHOLDER description: set the real copy in /admin.',
-    highlights: [],
-    availableVariants: ['satin_gold', 'gunmetal', 'silver'],
-    defaultVariant: 'satin_gold',
+    pricePerSet: 4120.88,
+    priceBySize: { '20"': 4120.88, '21"': 4120.88 },
+    priceByFinish: { polished_face: 4670.33 },
+    description: 'Fifteen-spoke forged monoblock in Gold, Hyper Black or Polished Face. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
+    highlights: ['Forged monoblock', 'Gold, Hyper Black or Polished Face', 'PCD 5×112 · ET8/15 · CB 66.6'],
+    availableVariants: ['gold', 'hyper_black', 'polished_face'],
+    defaultVariant: 'gold',
     imageUrl: '/rim-images/forged_fsa002.webp',
     imageExtrude: false,
     modelUrl: '/models/rims/forged_fsa002.glb',
+    modelFlip: false
+  },
+  {
+    id: 'forged_fsa_03',
+    code: 'FSA003',
+    name: 'FSA003',
+    subtitle: 'Fifteen-spoke classic',
+    style: 'Monoblock Forged',
+    spokeType: 'multi',
+    spokeCount: 15,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 4120.88,
+    priceBySize: { '20"': 4120.88, '21"': 4120.88 },
+    description: 'Fifteen straight, evenly spaced spokes from a five-lug hub to a slim outer lip, in Silver or Hyper Black. In stock for the M3 Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
+    highlights: ['Fifteen straight spokes', 'Silver or Hyper Black', 'PCD 5×112 · ET8/15 · CB 66.6'],
+    availableVariants: ['silver', 'hyper_black'],
+    defaultVariant: 'silver',
+    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_03-1790526482896.png',
+    imageExtrude: true,
+    modelUrl: '/models/rims/forged_fsa_03.glb',
     modelFlip: false
   },
   {
@@ -769,11 +865,11 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     weightRearKg: 0,
     weightSavingsKg: 0,
     standardSizes: ['20"', '21"'],
-    pricePerSet: 3850,
-    priceBySize: { '20"': 3850, '21"': 4200 },
-    description: 'PLACEHOLDER description: set the real copy in /admin.',
-    highlights: [],
-    availableVariants: ['silver', 'gunmetal', 'black'],
+    pricePerSet: 3846.15,
+    priceBySize: { '20"': 3846.15, '21"': 3846.15 },
+    description: 'Twelve-spoke forged monoblock in Silver, Hyper Black or Gloss Black. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
+    highlights: ['Forged monoblock', 'Silver, Hyper Black or Gloss Black', 'PCD 5×112 · ET8/15 · CB 66.6'],
+    availableVariants: ['silver', 'hyper_black', 'black'],
     defaultVariant: 'silver',
     imageUrl: '/rim-images/forged_fsa004.webp',
     imageExtrude: false,
@@ -783,7 +879,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   {
     id: 'sixnine_ff1',
     code: 'FF-1',
-    name: 'SIXNINE FF-1',
+    name: 'FF-1',
     subtitle: 'Split five-spoke, two-piece',
     style: 'Two-Piece Forged',
     spokeType: 'multi',
@@ -792,10 +888,11 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     weightRearKg: 0,
     weightSavingsKg: 0,
     standardSizes: ['20"', '21"'],
-    pricePerSet: 4400,
-    priceBySize: { '20"': 4400, '21"': 4800 },
-    description: 'PLACEHOLDER description: set the real copy in /admin.',
-    highlights: [],
+    pricePerSet: 4395.60,
+    priceBySize: { '20"': 4395.60, '21"': 4395.60 },
+    priceByFinish: { liquid_metal: 5219.78 },
+    description: 'Split five-spoke two-piece forged wheel in Silver or Liquid Metal. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET15/20 · CB 66.6.',
+    highlights: ['Two-piece construction', 'Silver or Liquid Metal', 'PCD 5×112 · ET15/20 · CB 66.6'],
     availableVariants: ['silver', 'liquid_metal'],
     defaultVariant: 'silver',
     imageUrl: '/rim-images/sixnine_ff1.webp',
@@ -806,7 +903,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
   {
     id: 'sixnine_ff3',
     code: 'FF-3',
-    name: 'SIXNINE FF-3',
+    name: 'FF-3',
     subtitle: 'Twin five-spoke, three-piece',
     style: 'Three-Piece Forged',
     spokeType: 'multi',
@@ -815,12 +912,13 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     weightRearKg: 0,
     weightSavingsKg: 0,
     standardSizes: ['20"', '21"'],
-    pricePerSet: 4400,
-    priceBySize: { '20"': 4400, '21"': 4800 },
-    description: 'PLACEHOLDER description: set the real copy in /admin.',
-    highlights: [],
-    availableVariants: ['bronze', 'black', 'liquid_metal'],
-    defaultVariant: 'bronze',
+    pricePerSet: 4395.60,
+    priceBySize: { '20"': 4395.60, '21"': 4395.60 },
+    priceByFinish: { liquid_metal: 5219.78 },
+    description: 'Twin five-spoke three-piece forged wheel in Pure Bronze, Glossy Black or Liquid Metal. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET15/17 · CB 66.6.',
+    highlights: ['Three-piece construction', 'Pure Bronze, Glossy Black or Liquid Metal', 'PCD 5×112 · ET15/17 · CB 66.6'],
+    availableVariants: ['pure_bronze', 'black', 'liquid_metal'],
+    defaultVariant: 'pure_bronze',
     imageUrl: '/rim-images/sixnine_ff3.webp',
     imageExtrude: false,
     modelUrl: '/models/rims/sixnine_ff3.glb',

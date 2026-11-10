@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { Enquiry, submitEnquiry } from '../../services/journeyService';
 import { Button, Modal } from './ui';
@@ -23,10 +23,16 @@ export const EnquiryModal: React.FC<{
   onClose: () => void;
   summary: string;
   context: Omit<Enquiry, 'name' | 'email' | 'phone' | 'message' | 'consultation'>;
-}> = ({ open, onClose, summary, context }) => {
+  /** A signed-in customer's details, filled into the fields still blank when the form opens. */
+  prefill?: { name?: string; email?: string; phone?: string };
+}> = ({ open, onClose, summary, context, prefill }) => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '', consultation: true });
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open || !prefill) return;
+    setForm((f) => ({ ...f, name: f.name || prefill.name || '', email: f.email || prefill.email || '', phone: f.phone || prefill.phone || '' }));
+  }, [open, prefill]);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: k === 'consultation' ? (e.target as HTMLInputElement).checked : e.target.value }));
 

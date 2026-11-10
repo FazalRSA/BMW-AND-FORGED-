@@ -90,7 +90,7 @@ export const Configurator: React.FC<ConfiguratorProps> = (p) => {
 
 const LegacyConfigurator: React.FC<ConfiguratorProps> = (p) => {
   const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
-  const price = rimPrice(p.wheel, p.size);
+  const price = rimPrice(p.wheel, p.size, p.finish.id);
   const stepIndex = STEPS.findIndex((s) => s.id === p.step);
 
   return (
@@ -257,7 +257,7 @@ const Overview: React.FC<ConfiguratorProps> = (p) => {
       step: 'size',
       label: 'Wheel size',
       value: p.size,
-      detail: formatMoney(rimPrice(p.wheel, p.size), p.region),
+      detail: formatMoney(rimPrice(p.wheel, p.size, p.finish.id), p.region),
       visual: <span className="font-display text-[13px] font-extrabold">{p.size}</span>
     },
     { step: 'finish', label: 'Wheel finish', value: p.finish.name, detail: p.finish.colorName, visual: <FinishChip finish={p.finish} size={36} /> }
@@ -422,7 +422,7 @@ const SizeStep: React.FC<ConfiguratorProps> = (p) => {
               )}
             >
               <div className="font-display text-[24px] font-extrabold tracking-[-0.02em]">{s}</div>
-              <div className={cx('mt-1 text-[12px] tabular-nums', active ? 'text-carbon/70' : 'text-mute')}>{formatMoney(rimPrice(p.wheel, s), p.region)}</div>
+              <div className={cx('mt-1 text-[12px] tabular-nums', active ? 'text-carbon/70' : 'text-mute')}>{formatMoney(rimPrice(p.wheel, s, p.finish.id), p.region)}</div>
             </button>
           );
         })}
@@ -555,7 +555,9 @@ export const MoreOptionsModal: React.FC<{
   onRegion: (r: Region) => void;
   onLoadCode: (code: string) => Promise<boolean>;
   onRestart: () => void;
-}> = ({ open, onClose, region, onRegion, onLoadCode, onRestart }) => {
+  /** Opens the account sheet (sign-in, profile, garage). */
+  onOpenAccount?: () => void;
+}> = ({ open, onClose, region, onRegion, onLoadCode, onRestart, onOpenAccount }) => {
   const [code, setCode] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
   return (
@@ -608,6 +610,23 @@ export const MoreOptionsModal: React.FC<{
         </Button>
       </form>
       {state === 'error' && <p className="mt-2 text-[12px] text-red-600">No configuration found for that code.</p>}
+
+      {onOpenAccount && (
+        <>
+          <Eyebrow className="mt-7 mb-3">Account</Eyebrow>
+          <button
+            aria-label="Account & garage"
+            onClick={() => {
+              onClose();
+              onOpenAccount();
+            }}
+            className="flex w-full items-center justify-between rounded-xl bg-ink/[0.035] px-4 py-3 text-left text-[13px] transition hover:bg-ink/[0.06]"
+          >
+            <span className="font-medium">Account &amp; garage</span>
+            <span className="text-mute">Sign in · saved builds</span>
+          </button>
+        </>
+      )}
 
       <button
         onClick={() => {

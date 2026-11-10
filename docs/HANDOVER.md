@@ -29,8 +29,9 @@ Follow the sections in order. Each step has a **Check** line; do not move on unt
 |---|---|
 | `/` | Welcome: live car in the dark FORGEDSA studio, region and currency select, **Enter** |
 | `/models` | Showroom: one BMW M car at a time, huge model name behind it, ← → to switch (the car drives out and the next drives in), **Explore** (specs) and **Build** |
-| `/configure` | Configurator: right-hand panel (bottom sheet on phones) with 4 steps: Paint, Wheels, Size, Finish. Wheel choices cut to a close-up of the wheel |
-| `/summary` | Your build: studio stills, options, price, **Share** (configuration code + link), **PDF**, **Enquire** |
+| `/configure` | Configurator: the owner's vehicle viewer as the screen. The car in the grey studio dome (gradient horizon, fogged floor, pool shadow, "FORGED" plates); one glass panel (bottom sheet on phones) with Car, Paint (grouped by finish), Wheels, Size, Finish, View and Auto-rotate; the paint name over the stage; live set price (the dearer finish counts). `?panel=steps` shows the older four-step panel |
+| `/summary` | Your build: studio stills, options, price, **Share** (configuration code + link), **PDF**, **Enquire**, **Save to garage** (signed in) |
+| Account sheet (top bar) | Google sign-in (Supabase Auth); profile; garage of saved builds (open, rename, delete); sign out. `docs/ACCOUNTS.md` |
 | `/?config=CODE` | Reopens a shared configuration |
 | `/forged` | The wheel collection |
 | `/rims/<rim-id>` | 360° view of one wheel: finish, size, price, "See it on my car" |
@@ -130,7 +131,11 @@ Each wheel can have a **rim image**, a **rim 3D model**, or both (the model wins
 - *Build 3D spokes from the image* is ticked by default; untick it to show the image flat.
 
 **Rim GLB (best quality)**: from the client's CAD files, an AI image-to-3D tool (Tripo, Meshy, Hunyuan3D)
-or a 3D modeller. See `NO_BLENDER_AND_UI_PLAN.md` section 2b.
+or a 3D modeller. See `NO_BLENDER_AND_UI_PLAN.md` section 2b. The six stocked designs are already real
+3D rims (`public/models/rims/`, from the website's files); a new one goes in with one command,
+`node scripts/ingest-rim.mjs rim.glb --wheel <id> --new --name … --sizes … --price-zar … --finishes … --check`
+(`docs/ADD_PREPARED_CAR.md`, "Rims the same way"; a staggered set adds `--rear rear.glb`). Brake parts inside
+the file are dropped automatically.
 - The rim only, **without a tyre**. Under 15 MB is ideal (compress at gltf.report).
 - Upload: `/admin` → **Wheels** → the wheel → **Rim 3D model (.glb) → Upload** → **Save**.
 - It's turned, sized to the rim diameter and centred automatically, and takes the finish colour.
@@ -146,8 +151,11 @@ Everything in the drawers comes from the admin tabs. Edit → **Save** → the s
 - **Order**: *Sort order* (lower = first).
 - A wheel only offers the finishes ticked in *Available finishes*; *Default finish ID* must be one of them.
 - **Sizes & prices**: each wheel has a list of sizes with a set price (4 wheels) per size. Only listed sizes
-  are offered; remove a size with the bin icon, add one with the **+ 22"** style buttons. Starting prices are
-  placeholders (20" = the old set price, 19" −$600, 21" +$700, 22" +$1,500): **set the real ones**.
+  are offered; remove a size with the bin icon, add one with the **+ 22"** style buttons. The six stocked
+  wheels carry the stock sheet's prices (`docs/WHEEL_INVENTORY.md`; USD = ZAR ÷ 18.2 so the ZA price shows
+  exactly). **Dearer finishes** (Polished Face, Liquid Metal) have their own set price in the field of that name;
+  blank = same as the size price.
+- **Rear rim 3D model**: only for a staggered set whose rear rim differs (FSA001); otherwise leave it empty.
 
 ---
 
@@ -243,6 +251,17 @@ n8n "FORGEDSA · Lead email" ── Webhook (POST) ─▶ Code "Build branded em
 
 ---
 
+## 5b. Customer accounts (Google sign-in)
+
+Customers can sign in with Google (Supabase Auth) to keep a garage of saved builds; share codes and
+leads they create carry their account id, and the PDF gate and enquiry form pre-fill from their
+profile. Anonymous use is unchanged. The one-time dashboard setup (Google provider, redirect URLs),
+the schema and policies (`supabase/migrations/20261110150000_customer_accounts.sql`), what is stored
+(POPIA) and the test script are in [`ACCOUNTS.md`](ACCOUNTS.md). Admins are unaffected: `/admin` keeps
+its password sign-in and the `admin_users` allowlist, so a Google customer gains nothing there.
+
+---
+
 ## 6. Pre-handover checklist (do it on the live URL, on a laptop **and** a phone)
 
 - [ ] Loader → welcome in a few seconds; the car turns slowly on the welcome screen
@@ -256,6 +275,8 @@ n8n "FORGEDSA · Lead email" ── Webhook (POST) ─▶ Code "Build branded em
 - [ ] An enquiry appears in `/admin` → Enquiries
 - [ ] Both send a branded email to forgedsa1@gmail.com within a few seconds (n8n → Executions shows green)
 - [ ] `/admin` sign-in works for you **and** the client; sign-ups disabled (step 1.3)
+- [ ] Account → **Continue with Google** signs a customer in; **Save to garage** on the summary lists the build in the garage; **Open** restores it; sign out
+- [ ] Every wheel in the panel is one of the six on the stock sheet, with its finishes and ZAR prices (`docs/WHEEL_INVENTORY.md`); FSA001 shows different front and rear rims
 
 ---
 

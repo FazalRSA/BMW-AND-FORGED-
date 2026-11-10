@@ -28,6 +28,7 @@ import {
   buildDisc,
   buildHub,
   capTexture,
+  plateTexture,
   buildRimShell,
   buildTyre,
   createWheelKitMaterials,
@@ -208,6 +209,9 @@ export class CarConfiguratorEngine {
   })();
   /** Stage look at start: 'studio' (softbox studio over the page backdrop) or 'viewer' (the four-car viewer's dome, floor and coves, services/viewerStudio.ts); ?look=viewer compares. */
   static LOOK: 'studio' | 'viewer' = typeof window !== 'undefined' && /[?&]look=viewer/.test(window.location.search) ? 'viewer' : 'studio';
+  /** "FORGED" placeholder plates on live GLB bodies (the viewer's idea); `?plates=0` turns them off for comparisons. */
+  static PLATES = typeof window === 'undefined' || !/[?&]plates=0/.test(window.location.search);
+  private plates: THREE.Mesh[] = [];
   static DEFAULT_HIDE = '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)';
   private isDisposed = false;
   private contactShadow: {
@@ -1248,6 +1252,7 @@ export class CarConfiguratorEngine {
     this.paintVariants = usedVariants;
     this.markShadowDirty();
     this.syncRenderedBody();
+    this.addNumberPlates(model);
 
 
     if (corners.size === 4) {
@@ -1389,7 +1394,67 @@ export class CarConfiguratorEngine {
         if (mesh.isMesh) mesh.geometry?.dispose();
       });
     });
+    this.plates.forEach((p) => (Array.isArray(p.material) ? p.material : [p.material]).forEach((m) => { (m as THREE.MeshStandardMaterial).map?.dispose(); m.dispose(); }));
+    this.plates = [];
     this.bodyMeshGroup.clear();
+  }
+
+  /**
+   * The viewer's placeholder number plates, ported: a UK-format plate reading "FORGED" (so no real
+   * registration is shown) on the front and rear bumpers of a live GLB body. The bumper surface is found
+   * by a ray along the car's axis at plate height; the plate sits square to the car (pitch only). A car
+   * without a bumper surface at those heights simply gets no plate.
+   */
+  private addNumberPlates(model: THREE.Object3D) {
+    if (!CarConfiguratorEngine.PLATES) return;
+    this.carGroup.updateMatrixWorld(true);
+    const meshes: THREE.Mesh[] = [];
+    model.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (mesh.isMesh && mesh.visible && !/glass|wheel|tyre|tire|brake|interior|plate/i.test(`${mesh.name} ${mesh.parent?.name ?? ''}`)) meshes.push(mesh);
+    });
+    if (!meshes.length) return;
+    const toLocal = new THREE.Matrix4().copy(this.bodyMeshGroup.matrixWorld).invert();
+    const ray = new THREE.Raycaster();
+    const mount = (rear: boolean) => {
+      const dz = rear ? 1 : -1; // the nose points +z: the front plate is hit from +z looking back
+      const preferred = rear ? 0.62 : 0.4; // the viewer's heights, fitted on the M2 CS
+      const heights = [preferred, ...Array.from({ length: 13 }, (_, i) => 0.34 + i * 0.03)];
+      let best: { point: THREE.Vector3; normal: THREE.Vector3; score: number } | null = null;
+      for (const h of heights) {
+        const origin = new THREE.Vector3(0, h, -dz * 6).applyMatrix4(this.carGroup.matrixWorld);
+        const dir = new THREE.Vector3(0, 0, dz).transformDirection(this.carGroup.matrixWorld);
+        ray.set(origin, dir);
+        ray.near = 0;
+        ray.far = 12;
+        const hit = ray.intersectObjects(meshes, false)[0];
+        if (!hit?.face) continue;
+        const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+        if (n.dot(dir) > 0) n.negate();
+        const score = Math.abs(n.dot(dir)) + (h === preferred ? 0.08 : 0); // the most square surface wins; the fitted height gets a small bonus
+        if (!best || score > best.score) best = { point: hit.point.clone(), normal: n, score };
+        if (h === preferred && score >= 0.98) break;
+      }
+      if (!best || best.score < 0.75) return;
+      const point = best.point.applyMatrix4(toLocal);
+      const n = best.normal.transformDirection(toLocal);
+      n.x = 0;
+      n.y = THREE.MathUtils.clamp(n.y, -0.05, 0.28);
+      n.normalize();
+      const black = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.6 });
+      const face = new THREE.MeshStandardMaterial({ map: plateTexture(rear, this.renderer.capabilities.getMaxAnisotropy()), roughness: 0.55, metalness: 0 });
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.111, 0.008), [black, black, black, black, face, black]);
+      plate.position.copy(point).addScaledVector(n, 0.03);
+      plate.up.set(0, 1, 0);
+      plate.lookAt(plate.position.clone().add(n));
+      plate.castShadow = true;
+      plate.receiveShadow = true;
+      plate.name = rear ? 'Plate_Rear' : 'Plate_Front';
+      this.bodyMeshGroup.add(plate);
+      this.plates.push(plate);
+    };
+    mount(false);
+    mount(true);
   }
 
   // ----------------------------------------------------
@@ -1691,8 +1756,17 @@ export class CarConfiguratorEngine {
     };
 
     if (modelUrl) {
-      this.loadRimModel(modelUrl).then(
-        (template) => commit(() => this.wheelAssemblies.forEach((a) => this.mountRimModel(a.spokeMeshGroup, template, !!wheel.modelFlip))),
+      // Staggered sets bring a second file for the rear axle; it falls back to the front file if it fails.
+      const rearUrl = wheel.rearModelUrl && wheel.rearModelUrl !== modelUrl ? wheel.rearModelUrl : null;
+      const rear = rearUrl
+        ? this.loadRimModel(rearUrl).catch((err) => {
+            console.warn(`Failed to load the rear 3D rim for ${wheel.name}; using the front file on every corner.`, err);
+            return null;
+          })
+        : Promise.resolve(null);
+      Promise.all([this.loadRimModel(modelUrl), rear]).then(
+        ([front, back]) =>
+          commit(() => this.wheelAssemblies.forEach((a) => this.mountRimModel(a.spokeMeshGroup, a.isFront || !back ? front : back, !!wheel.modelFlip))),
         (err) => {
           console.warn(`Failed to load 3D rim for ${wheel.name}; falling back.`, err);
           if (token === this.wheelDesignToken) this.applyWheelDesign({ ...wheel, modelUrl: null });

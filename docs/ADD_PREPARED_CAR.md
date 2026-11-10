@@ -123,12 +123,15 @@ Thumbnails: `RimThumb` masks the photo by its alpha, so a website `front.webp` o
 first (`rembg`, as the photo pipeline does), squared on a transparent canvas and saved as WebP with alpha
 into `public/rim-images/<id>.webp`.
 
-Website rims in the configurator on 2026-11-10: `fsa003.glb` → `forged_fsa_03` (Kyalami 15), `fsa002.glb` →
-`forged_fsa002`, `fsa004.glb` → `forged_fsa004`, `ff-1.glb` → `sixnine_ff1`, `ff-3.glb` → `sixnine_ff3`
-(names, copy and prices are placeholders from the website). Still to do: STF399 front/rear (needs the rear
-file support) and the rim-page spins (`turntable.py`; the live engine is the fallback meanwhile).
-`fsa004.glb` (12 straight spokes) may be the same design as FSA-06 Aldo Fork 15: if the owner confirms,
-re-run `ingest-rim … --wheel forged_fsa_06` and hide `forged_fsa004`.
+Website rims in the configurator on 2026-11-10, named and priced from the owner's stock sheet
+(`docs/WHEEL_INVENTORY.md`): `stf399-front/rear.glb` → `forged_fsa001` (FSA001, staggered: `--rear`),
+`fsa002.glb` → `forged_fsa002` (FSA002), `fsa003.glb` → `forged_fsa_03` (FSA003), `fsa004.glb` →
+`forged_fsa004` (FSA004), `ff-1.glb` → `sixnine_ff1` (FF-1), `ff-3.glb` → `sixnine_ff3` (FF-3). Brake
+calipers and rotors inside a rim file are dropped when packing (`scripts/rim3d/pack.mjs`; the engine draws
+its own). The rim-page spins (`turntable.py`) are still to do; the live engine is the fallback meanwhile.
+A thumbnail for a rim that has no website photo: `python3 scripts/rim3d/preview.py out.png <uncompressed
+rim.glb> --size 1024x1024 --angle 0`, cut out with `rembg`, saved as WebP with alpha (FSA001 was done this
+way).
 
 ## Licence
 

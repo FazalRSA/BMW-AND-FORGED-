@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { ArrowRight, ChevronLeft, ClipboardList, Info, MoreHorizontal, Rotate3d } from 'lucide-react';
 import { Region, formatMoney } from '../../config/brand';
 import { CameraViewPreset, CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
-import { rimPrice, rimSizes } from '../../services/pricing';
+import { finishSurcharge, rimPrice, rimSizes } from '../../services/pricing';
 import { Button, FinishChip, IconButton, PaintChip, RimThumb, cx } from './ui';
 import { shortModelName } from './Showroom';
 import type { ConfigStep } from './Configurator';
@@ -116,7 +116,7 @@ const Swatch: React.FC<{ active: boolean; title: string; onClick: () => void; ch
 );
 
 export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
-  const price = rimPrice(p.wheel, p.size);
+  const price = rimPrice(p.wheel, p.size, p.finish.id);
   const groups = useMemo(() => PAINT_GROUPS.map((g) => ({ ...g, paints: p.paints.filter((x) => x.type === g.type) })).filter((g) => g.paints.length), [p.paints]);
   const sizes = rimSizes(p.wheel);
   const finishes = p.wheel.availableVariants.map((id) => p.finishes[id]).filter(Boolean);
@@ -193,19 +193,21 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             <H2 step="wheels" onStep={p.onStep} aside={p.wheel.name}>
               Wheels
             </H2>
-            <div className="grid grid-cols-4 sheet:grid-cols-5 gap-x-2 gap-y-3">
+            <ul data-section="wheels" className="grid grid-cols-4 sheet:grid-cols-5 gap-x-2 gap-y-3">
               {p.wheels.map((w) => {
                 const active = w.id === p.wheel.id;
                 return (
-                  <button key={w.id} onClick={() => p.onWheel(w)} title={w.name} aria-pressed={active} className="group flex flex-col items-center text-center">
-                    <span className={cx('rounded-full p-[2px] transition-all duration-200 ease-lux', active ? 'outline outline-2 outline-ink outline-offset-1' : 'group-hover:scale-[1.06]')}>
-                      <RimThumb wheel={w} finish={active ? p.finish : p.finishes[w.defaultVariant] ?? p.finish} size={48} />
-                    </span>
-                    <span className={cx('mt-1.5 w-full truncate text-[10.5px] leading-tight', active ? 'text-ink font-semibold' : 'text-mute')}>{w.name}</span>
-                  </button>
+                  <li key={w.id} className="min-w-0">
+                    <button onClick={() => p.onWheel(w)} title={w.name} aria-pressed={active} className="group flex w-full flex-col items-center text-center">
+                      <span className={cx('rounded-full p-[2px] transition-all duration-200 ease-lux', active ? 'outline outline-2 outline-ink outline-offset-1' : 'group-hover:scale-[1.06]')}>
+                        <RimThumb wheel={w} finish={active ? p.finish : p.finishes[w.defaultVariant] ?? p.finish} size={48} />
+                      </span>
+                      <span className={cx('mt-1.5 w-full truncate text-[10.5px] leading-tight', active ? 'text-ink font-semibold' : 'text-mute')}>{w.name}</span>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
             <div className="mt-2 flex gap-1.5">
               <Chip onClick={() => p.onInfo(p.wheel)} aria-label="Wheel details" title="Wheel details" className="inline-flex items-center gap-1.5">
                 <Info className="h-3.5 w-3.5" strokeWidth={1.7} /> Details
@@ -222,7 +224,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </H2>
             <div className="flex flex-wrap gap-1.5">
               {sizes.map((s) => (
-                <Chip key={s} active={s === p.size} onClick={() => p.onSize(s)} title={`${s} · ${formatMoney(rimPrice(p.wheel, s), p.region)}`}>
+                <Chip key={s} active={s === p.size} onClick={() => p.onSize(s)} title={`${s} · ${formatMoney(rimPrice(p.wheel, s, p.finish.id), p.region)}`}>
                   {s}
                 </Chip>
               ))}
@@ -233,13 +235,22 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             <H2 step="finish" onStep={p.onStep} aside={p.finish.name}>
               Finish
             </H2>
-            <div className="grid grid-cols-6 sheet:grid-cols-8 gap-2">
-              {finishes.map((f) => (
-                <Swatch key={f.id} active={f.id === p.finish.id} title={`${f.name} · ${f.colorName}`} onClick={() => p.onFinish(f)}>
-                  <FinishChip finish={f} size={34} className="ring-1 ring-white/20" />
-                </Swatch>
-              ))}
-            </div>
+            <ul data-section="finish" className="grid grid-cols-6 sheet:grid-cols-8 gap-2">
+              {finishes.map((f) => {
+                const extra = finishSurcharge(p.wheel, p.size, f.id);
+                return (
+                  <li key={f.id}>
+                    <Swatch
+                      active={f.id === p.finish.id}
+                      title={`${f.name} · ${f.colorName}${extra ? ` · +${formatMoney(extra, p.region)}` : ''}`}
+                      onClick={() => p.onFinish(f)}
+                    >
+                      <FinishChip finish={f} size={34} className="ring-1 ring-white/20" />
+                    </Swatch>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
 
           <section>

@@ -140,6 +140,8 @@ log(`  barrel/lip: ${partOf(/barrel|lip/i).join(', ') || 'none named'}   face: $
 log(`  size: ${size.map((v) => v.toFixed(3)).join(' x ')} (axle along ${'XYZ'[axle]}, diameter ${diameter.toFixed(3)}, width ${width.toFixed(3)}, width/diameter ${ratio.toFixed(2)})`);
 log(`  extensions: ${root.listExtensionsUsed().map((e) => e.extensionName).join(', ') || 'none'}`);
 const problems = [];
+const brakes = partOf(/brake|caliper|calliper|rotor|disc/i);
+if (brakes.length) log(`  note: brake parts in the file (${brakes.join(', ')}) are dropped when packing; the engine draws its own disc and caliper`);
 if (tyre.length) problems.push(`the file holds a tyre (${tyre.join(', ')}); the engine adds its own tyre, so export the rim only.`);
 if (ratio < 0.25 || ratio > 0.8) problems.push(`width/diameter ${ratio.toFixed(2)} is outside 0.25-0.8: this is not a complete rim (a flat face only?), or the units differ per axis. The engine needs face + barrel + lip + centre.`);
 if (!partOf(/barrel|lip/i).length) log('  note: no mesh named barrel/lip; fine if the barrel is part of another mesh (the engine hides its own barrel and lip whatever the names)');

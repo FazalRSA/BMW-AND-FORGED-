@@ -83,7 +83,9 @@ export const Modal: React.FC<{
   title?: React.ReactNode;
   children: React.ReactNode;
   width?: string;
-}> = ({ open, onClose, title, children, width = 'max-w-lg' }) => {
+  /** Replaces the panel's surface, radius and height classes (e.g. the account sheet's glass column). */
+  panelClassName?: string;
+}> = ({ open, onClose, title, children, width = 'max-w-lg', panelClassName }) => {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -96,7 +98,8 @@ export const Modal: React.FC<{
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] animate-fade" onClick={onClose} />
       <div
         className={cx(
-          'relative w-full bg-surface shadow-panel animate-rise rounded-t-[28px] sm:rounded-[28px] max-h-[88dvh] overflow-y-auto overscroll-contain',
+          'relative w-full shadow-panel animate-rise overflow-y-auto overscroll-contain',
+          panelClassName ?? 'bg-surface rounded-t-[28px] sm:rounded-[28px] max-h-[88dvh]',
           width
         )}
       >
