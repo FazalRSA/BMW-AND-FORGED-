@@ -1,7 +1,26 @@
 # Checkpoint: photoreal cars and rims
 
-**Last updated:** 2026-10-06 · **Branch:** `ccr-a49729da-y3hwoq` · **PR:** #9 (draft) · **To continue:** the
+**Last updated:** 2026-11-10 · **Branch:** `ccr-f52bf849-fnf7qs` · **To continue:** the
 `forgedsa-resume` skill (`.claude/skills/forgedsa-resume/SKILL.md`) restores the tools, and this file says what is next.
+
+## 2026-11-10: the four prepared cars are in (live GLB mode)
+The owner's prepared packages (Drive > `3d cars`: M5 G90, M5 Touring G99, M4 CS G82, M2 CS G87; clean meshes,
+`C10_Wheel_FL..` nodes, `Paint` material) replace the Sketchfab bodies. `scripts/ingest-car.mjs` is the one-command
+route (`docs/ADD_PREPARED_CAR.md`); it copies the GLB to `public/models/<carId>.glb`, writes the catalogue fields and a
+migration, and **retires the Blender frames of that car** so the configurator draws the GLB live (the frames were
+renders of the old dented bodies). `--render` re-renders Blender frames from the new GLB (bpy, ~15 min/car) if the
+photoreal route is wanted back for these cars. Check sheets: `docs/ingest/<carId>.jpg`. Rims: `scripts/ingest-rim.mjs`
+puts a website-convention rim GLB on a wheel (FSA-03 done from the website's `fsa003.glb`; sheet in `docs/ingest/rims/`).
+The migrations in `supabase/migrations/2026111013*_*` still have to be applied (no Supabase MCP in that session).
+The configurator screen now uses the four-car viewer's studio for live cars (`services/viewerStudio.ts`, `engine.setLook`): dome,
+fogged floor, pool shadow, Neutral tone mapping, gloss / soft coves by paint; `?look=viewer` in the harness.
+**The panel is the viewer's too** (`components/journey/ViewerPanel.tsx`, rendered by `Configurator.tsx`; `?panel=steps` shows the
+old stepped panel for comparison): Car chips, paint swatch groups by finish, rim thumbs, size chips, finish swatches, view chips
+(incl. the new `front` preset), Auto-rotate, price + CTA; the paint name sits bottom-left of the stage. The harness selectors
+("Step N: …" headings, "Summary", "Wheel details", "View in 360°", "Change model", "View your …") are kept.
+**Legacy cars hidden** (`active: false` in the fallback + `20261110141000_legacy_cars_hidden.sql`): the showroom and configurator list
+the four prepared cars until their packages arrive. **Website rims in**: forged_fsa002, forged_fsa004, sixnine_ff1, sixnine_ff3
+(placeholders; `ingest-rim --new`), FSA-03 from fsa003.glb; STF399 (staggered) and the spins are queued.
 
 ## Goal of this phase (owner's words, condensed)
 Two cars and at least two wheels each **perfectly done**: **M4 Competition** and **M5 (G90)**, with
@@ -11,7 +30,7 @@ here for later.
 ## How it works now (decided, keep)
 | Surface | What renders it |
 |---|---|
-| Car body (configurator) | Blender Cycles images per car × view, recoloured per paint in the browser (`scripts/prerender/`, `components/journey/RenderedCarView.tsx`). Since 2026-10-07: darker reflection panels in the `STUDIO=dark` studio (no milky haze), a third `flake_w` frame (metallic base) blended in for Metallic/Pearl paints (`flakeLook` in `services/renderedBody.ts`), `BODY_EXPOSURE` 1.25 |
+| Car body (configurator) | **Prepared cars (M5, M5 Touring, M4 CS, M2 CS since 2026-11-10): the GLB live** (`docs/ADD_PREPARED_CAR.md`). Others: Blender Cycles images per car × view, recoloured per paint in the browser (`scripts/prerender/`, `components/journey/RenderedCarView.tsx`). Since 2026-10-07: darker reflection panels in the `STUDIO=dark` studio (no milky haze), a third `flake_w` frame (metallic base) blended in for Metallic/Pearl paints (`flakeLook` in `services/renderedBody.ts`), `BODY_EXPOSURE` 1.25 |
 | Wheels on the car | live engine, **2D photo/bar face** (`imageUrl`, `services/rimFaces.ts`), lit by the Blender studio HDR (`public/env/forgedsa_studio.hdr`) |
 | Rim detail page | **Blender 360° spin**, 36 frames × 5 finishes (`scripts/rim3d/turntable.py` → `public/renders/rims/<id>/`, `RimSpinView.tsx`); live 3D only as a fallback |
 | Finishes (spins) | `scripts/rim3d/finishes.json` + `materials.py`: Liquid Metal, Satin Bronze, Satin Gold, Gloss Black, Silver = brushed aluminium |
@@ -46,6 +65,10 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 `decision_m3t_headlights`); read them with ArtifactData `list`.
 
 ## Queue (do the top unchecked item; tick it when committed)
+- [ ] Apply the five 2026-11-10 migrations (four cars, FSA-03 rim) in Supabase, or set the same fields in /admin; deploy.
+- [ ] Owner: look at `docs/ingest/*.jpg`; decide live GLB vs `--render` Blender frames for the four prepared cars.
+- [ ] Owner: licence for the four prepared cars (game-derived, none supplied); real M5 Touring / M2 CS specs and palettes.
+- [ ] Owner: is the website's `fsa004.glb` the configurator's FSA-06 Aldo Fork 15? If yes: `node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa004.glb --wheel forged_fsa_06 --check`.
 - [x] Spins for FSA-12, FSA-13, FSA-03, FSA-14 (all five finishes).
 - [x] Re-render Liquid Metal + Silver for those four (brighter chrome surround, plain barrel; review fixes).
       All four wheels completed with improved chrome reflections and consistent brushed barrel texture.

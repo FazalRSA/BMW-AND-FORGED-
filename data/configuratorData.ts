@@ -8,6 +8,7 @@ import { CarModel, PaintColor, WheelDesign, WheelFinish, CaliperColor, FinishVar
 export const BMW_MODELS: CarModel[] = [
   {
     id: 'm4_g82',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M4 Competition',
     badge: 'M4 G82',
     generation: 'G82',
@@ -55,15 +56,15 @@ export const BMW_MODELS: CarModel[] = [
     paintIds: [
       'riviera_blue', 'frozen_isle_of_man_green', 'brooklyn_grey', 'black_sapphire'
     ],
-    modelUrl: '/models/bmw-m4-cs-vr46.glb',
+    modelUrl: '/models/m4_cs_g82.glb',
+    modelRotationDeg: 0,
     modelLengthM: 4.79,
-    // Body, hood, kit and spoiler take the paint. The model's own wheels are hidden; its calipers are kept
-    // (not in the hide pattern), so the configurator uses them and recolours them.
-    paintMeshMatch: 'm4car_body1|m4car_hood1|m4car_bodykit1|m4car_spoiler1',
-    hideMeshMatch: 'wheel1a|phong11|phong23'
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
     id: 'm4_convertible_g83',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M4 Competition Convertible',
     badge: 'M4 Convertible G83',
     generation: 'G83',
@@ -84,6 +85,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm3_g80',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M3 Competition',
     badge: 'M3 G80',
     generation: 'G80',
@@ -116,6 +118,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm3_touring_g81',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M3 Competition Touring',
     badge: 'M3 Touring G81',
     generation: 'G81',
@@ -141,8 +144,8 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'm2_g87',
-    name: 'BMW M2 Coupe',
-    badge: 'M2 G87',
+    name: 'BMW M2 CS',
+    badge: 'M2 CS G87',
     generation: 'G87',
     chassisCode: 'G87 M2',
     engine: '3.0L S58 Twin-Turbo Inline-6',
@@ -161,13 +164,15 @@ export const BMW_MODELS: CarModel[] = [
       'sao_paulo_yellow', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey', 'java_green',
       'grigio_telesto', 'twilight_purple', 'voodoo_blue', 'borusan_turkish_blue'
     ],
-    modelUrl: '/models/bmw-m2-competition.glb',
+    modelUrl: '/models/m2_g87.glb',
+    modelRotationDeg: 0,
     modelLengthM: 4.58,
-    paintMeshMatch: 'm2g87undg_paint',
-    hideMeshMatch: '(^|[^a-z])(rimslaw|tire_01|calliper|caliper|brakedisc|rotor)'
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
     id: 'm235_f74',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M235 xDrive Gran Coupé',
     badge: 'M235 F74',
     generation: 'F74',
@@ -212,9 +217,10 @@ export const BMW_MODELS: CarModel[] = [
       'frozen_black', 'nardo_grey', 'mineral_white', 'oxford_green_ii', 'bernina_grey_amber_effect',
       'alpine_white', 'storm_bay', 'frozen_deep_grey_c64'
     ],
-    modelUrl: '/models/bmw-m5-g90-cc-by.glb',
-    modelLengthM: 5.1,
-    paintMeshMatch: 'm5g90_body_paint',
+    modelUrl: '/models/m5_g90.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 5.09,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
@@ -234,10 +240,16 @@ export const BMW_MODELS: CarModel[] = [
       'carbon_black', 'fire_red', 'marina_bay_blue', 'brooklyn_grey', 'sophisto_grey_brilliant_effect',
       'isle_of_man_green', 'black_sapphire', 'urban_green_ii', 'barcelona_blue', 'alpine_white', 'storm_bay',
       'frozen_deep_grey_c64'
-    ]
+    ],
+    modelUrl: '/models/m5_touring_g99.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 5.09,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
   },
   {
     id: 'm8_f92',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW M8 Competition Coupé',
     badge: 'M8 F92',
     generation: 'F92',
@@ -261,6 +273,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'x3m50_g45',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW X3 M50 xDrive',
     badge: 'X3 M50 G45',
     generation: 'G45',
@@ -284,6 +297,7 @@ export const BMW_MODELS: CarModel[] = [
   },
   {
     id: 'x5m_f95',
+    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
     name: 'BMW X5 M Competition',
     badge: 'X5 M F95',
     generation: 'F95 LCI',
@@ -517,7 +531,9 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
     defaultVariant: 'liquid_metal',
     imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_03-1790526482896.png',
-    imageExtrude: true
+    imageExtrude: true,
+    modelUrl: '/models/rims/forged_fsa_03.glb',
+    modelFlip: false
   },
   {
     id: 'forged_fsa_04',
@@ -717,6 +733,98 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     // (services/rimFaces.ts, docs/rim-template/fsa_14-spec.json). The rim page uses the rendered spin.
     imageUrl: '/rim-images/forged_fsa_14.png',
     imageExtrude: true
+  },
+  {
+    id: 'forged_fsa002',
+    code: 'FSA002',
+    name: 'FSA002',
+    subtitle: 'Fifteen-spoke monoblock',
+    style: 'Monoblock Forged',
+    spokeType: 'multi',
+    spokeCount: 15,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 4120,
+    priceBySize: { '20"': 4120, '21"': 4490 },
+    description: 'PLACEHOLDER description: set the real copy in /admin.',
+    highlights: [],
+    availableVariants: ['satin_gold', 'gunmetal', 'silver'],
+    defaultVariant: 'satin_gold',
+    imageUrl: '/rim-images/forged_fsa002.webp',
+    imageExtrude: false,
+    modelUrl: '/models/rims/forged_fsa002.glb',
+    modelFlip: false
+  },
+  {
+    id: 'forged_fsa004',
+    code: 'FSA004',
+    name: 'FSA004',
+    subtitle: 'Twelve-spoke monoblock',
+    style: 'Monoblock Forged',
+    spokeType: 'multi',
+    spokeCount: 12,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 3850,
+    priceBySize: { '20"': 3850, '21"': 4200 },
+    description: 'PLACEHOLDER description: set the real copy in /admin.',
+    highlights: [],
+    availableVariants: ['silver', 'gunmetal', 'black'],
+    defaultVariant: 'silver',
+    imageUrl: '/rim-images/forged_fsa004.webp',
+    imageExtrude: false,
+    modelUrl: '/models/rims/forged_fsa004.glb',
+    modelFlip: false
+  },
+  {
+    id: 'sixnine_ff1',
+    code: 'FF-1',
+    name: 'SIXNINE FF-1',
+    subtitle: 'Split five-spoke, two-piece',
+    style: 'Two-Piece Forged',
+    spokeType: 'multi',
+    spokeCount: 10,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 4400,
+    priceBySize: { '20"': 4400, '21"': 4800 },
+    description: 'PLACEHOLDER description: set the real copy in /admin.',
+    highlights: [],
+    availableVariants: ['silver', 'liquid_metal'],
+    defaultVariant: 'silver',
+    imageUrl: '/rim-images/sixnine_ff1.webp',
+    imageExtrude: false,
+    modelUrl: '/models/rims/sixnine_ff1.glb',
+    modelFlip: false
+  },
+  {
+    id: 'sixnine_ff3',
+    code: 'FF-3',
+    name: 'SIXNINE FF-3',
+    subtitle: 'Twin five-spoke, three-piece',
+    style: 'Three-Piece Forged',
+    spokeType: 'multi',
+    spokeCount: 10,
+    weightFrontKg: 0,
+    weightRearKg: 0,
+    weightSavingsKg: 0,
+    standardSizes: ['20"', '21"'],
+    pricePerSet: 4400,
+    priceBySize: { '20"': 4400, '21"': 4800 },
+    description: 'PLACEHOLDER description: set the real copy in /admin.',
+    highlights: [],
+    availableVariants: ['bronze', 'black', 'liquid_metal'],
+    defaultVariant: 'bronze',
+    imageUrl: '/rim-images/sixnine_ff3.webp',
+    imageExtrude: false,
+    modelUrl: '/models/rims/sixnine_ff3.glb',
+    modelFlip: false
   }
 ];
 

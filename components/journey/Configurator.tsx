@@ -24,6 +24,7 @@ import { PAINT_FAMILIES, PaintFamily, paintFamily } from '../../services/journey
 import { Button, Eyebrow, FinishChip, IconButton, Modal, PaintChip, RimThumb, cx } from './ui';
 import { RimFaceSvg } from './RimFaceSvg';
 import { shortModelName } from './Showroom';
+import { ViewerPanel } from './ViewerPanel';
 
 export type ConfigStep = 'overview' | 'paint' | 'wheels' | 'size' | 'finish';
 const STEPS: { id: Exclude<ConfigStep, 'overview'>; label: string }[] = [
@@ -43,6 +44,9 @@ const VIEWS: { id: CameraViewPreset; label: string }[] = [
 
 export interface ConfiguratorProps {
   car: CarModel;
+  /** Every car the visitor may switch to from the panel (the viewer's Car chips); omitted = no chips. */
+  cars?: CarModel[];
+  onSelectCar?: (car: CarModel) => void;
   paints: PaintColor[];
   wheels: WheelDesign[];
   finishes: Record<string, WheelFinish>;
@@ -67,7 +71,24 @@ export interface ConfiguratorProps {
   onOpenMore: () => void;
 }
 
+/**
+ * The configurator screen: the stage controls laid out like the owner's vehicle spec viewer (ViewerPanel)
+ * plus the wheel detail sheet. The stepped panel below (LegacyConfigurator) is kept for reference and for
+ * the `?panel=steps` comparison switch; it is not rendered otherwise.
+ */
 export const Configurator: React.FC<ConfiguratorProps> = (p) => {
+  const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
+  const legacy = typeof window !== 'undefined' && /[?&]panel=steps/.test(window.location.search);
+  if (legacy) return <LegacyConfigurator {...p} />;
+  return (
+    <>
+      <ViewerPanel {...p} onInfo={setInfoWheel} />
+      <WheelInfoModal wheel={infoWheel} region={p.region} finishes={p.finishes} onClose={() => setInfoWheel(null)} onOpen360={p.onOpen360} />
+    </>
+  );
+};
+
+const LegacyConfigurator: React.FC<ConfiguratorProps> = (p) => {
   const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
   const price = rimPrice(p.wheel, p.size);
   const stepIndex = STEPS.findIndex((s) => s.id === p.step);

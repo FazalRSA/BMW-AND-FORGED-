@@ -28,3 +28,6 @@ dist-ssr
 scripts/_*.mjs
 .prerender/
 __pycache__/
+
+# ingest check shots: only the contact sheets (*.jpg) are committed
+docs/ingest/**/*.png

@@ -116,7 +116,15 @@ reasons** otherwise. Re-running a row updates that wheel; style, weights and spo
 
 ### Adding a new car
 
-Cars tab → **New** → fill in the spec fields (engine, power, fitment, etc.) → upload a `.glb`
+**Prepared car package** (the `3d cars` zips: `web/<car>_web.glb`, wheels `C10_Wheel_FL..`, material `Paint`)?
+One command checks the file, copies it in, updates the catalogue and migration and shoots a check sheet:
+
+```bash
+node scripts/ingest-car.mjs BMW_M5_G90.zip --car m5_g90 --check     # see docs/ADD_PREPARED_CAR.md
+node scripts/ingest-rim.mjs rim.glb --wheel forged_fsa_03 --check   # a 3D rim on a wheel
+```
+
+Any other model, by hand: Cars tab → **New** → fill in the spec fields (engine, power, fitment, etc.) → upload a `.glb`
 (compressed with `gltf-transform`, see [`public/models/CREDITS.md`](public/models/CREDITS.md) for
 the compression command and the licence-credit convention every sourced model follows — note any
 non-commercial licence there too) → Save.

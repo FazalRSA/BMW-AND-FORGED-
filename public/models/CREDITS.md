@@ -13,6 +13,10 @@
 | `bmw-m235-gran-coupe.glb` | [BMW M235i Gran Coupé](https://sketchfab.com/3d-models/bmw-m235i-gran-coupe-23aea45df6da44fab8785df6c3b09ecd) | Gerda | [Sketchfab Free Standard](https://sketchfab.com/licenses) | Commercial use allowed. Previous-generation F44 body, standing in for the F74. Skeleton baked out; wheels replaced in the app. |
 | `bmw-x3-m50-g45.glb` | [2026 BMW X3](https://sketchfab.com/3d-models/2026-bmw-x3-73212a0045524ca0804b82b813847a94) | tonielpro520 | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) | Commercial use allowed with this credit. G45 X3 body; tyres cut out of the merged trim mesh and wheels replaced in the app. |
 | `../env/studio_small_09_1k.hdr` | [Studio Small 09](https://polyhaven.com/a/studio_small_09) | Poly Haven | CC0 | Studio reflections. |
+| `m5_g90.glb` | Prepared package bmw_m5_g90.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
+| `m5_touring_g99.glb` | Prepared package bmw_m5_touring_g99.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
+| `m4_cs_g82.glb` | Prepared package bmw_m4_cs_g82.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
+| `m2_g87.glb` | Prepared package bmw_m2_cs_g87.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 
 All car files were compressed for the web (meshopt geometry, WebP textures up to 2048 px) with gltf-transform.
 

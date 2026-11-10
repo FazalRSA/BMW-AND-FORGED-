@@ -85,8 +85,9 @@ const pickFinish = (catalog: Catalog, wheel: WheelDesign, current?: WheelFinish)
 
 /** Cars with a real 3D body make the showroom; the simple procedural bodies are only a fallback. */
 const showroomCars = (cars: CarModel[]) => {
-  const withModels = cars.filter((c) => c.modelUrl);
-  return withModels.length ? withModels : cars;
+  const active = cars.filter((c) => c.active !== false);
+  const withModels = active.filter((c) => c.modelUrl);
+  return withModels.length ? withModels : active.length ? active : cars;
 };
 
 /** First-visit paint when the car offers it (otherwise the car's first factory paint). */
@@ -334,11 +335,14 @@ export const App: React.FC = () => {
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
+    // The configurator screen looks like the four-car viewer (dome, floor, coves) for cars drawn live; the
+    // showroom keeps its own backdrop (the giant model name sits behind the transparent canvas)
+    engine.setLook(route.name === 'configure' && !rendered ? 'viewer' : 'studio');
     engine.setRenderedBody(rendered);
     engine.handleResize();
     applyInsetRef.current();
     if (route.name === 'configure') engine.setCameraPreset(cameraView, { instant: rendered });
-  }, [rendered, stage]);
+  }, [rendered, stage, route.name]);
 
   // Keep the car centred in the space the panel leaves
   const applyInsetRef = useRef<() => void>(() => {});
@@ -692,6 +696,11 @@ export const App: React.FC = () => {
       {booted && route.name === 'configure' && (
         <Configurator
           car={selectedCar}
+          cars={cars}
+          onSelectCar={(car) => {
+            const i = cars.findIndex((c) => c.id === car.id);
+            if (i >= 0) stepCar(i > carIndex ? 1 : -1, i);
+          }}
           paints={carPaints}
           wheels={catalog.wheels}
           finishes={catalog.finishes}
