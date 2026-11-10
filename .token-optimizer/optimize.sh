@@ -156,6 +156,14 @@ load_config() {
   [[ -r "$CONFIG_FILE" ]] || { degrade "config not readable: $CONFIG_FILE"; return 0; }
   command -v yq >/dev/null 2>&1 || { degrade "yq not installed"; return 0; }
 
+  # The Python yq (a jq wrapper) has no `eval` subcommand, so every key read below
+  # would fail without a word and the config would be ignored. Degrade once, so
+  # explain and doctor say so, instead of reporting defaults as if they were the config.
+  if ! yq eval '.version' "$CONFIG_FILE" >/dev/null 2>&1; then
+    degrade "yq cannot read $CONFIG_FILE (need mikefarah yq v4; config ignored)"
+    return 0
+  fi
+
   local v
   # Schema version first — an unknown schema must not be interpreted with
   # this version's key meanings.
