@@ -1,5 +1,8 @@
 # Add a prepared car to the configurator
 
+> The whole process for cars and wheels, with file types, limits, checks and go-live, is in
+> [`PRODUCT_SPEC_CARS_AND_WHEELS.md`](PRODUCT_SPEC_CARS_AND_WHEELS.md). This page is the command reference for cars.
+
 For the car packages in Drive > **3d cars** (`BMW_M5_G90.zip`, `BMW_M5_Touring_G99.zip`,
 `BMW_M4_CS_G82.zip`, `BMW_M2_CS_G87.zip`) and any future car built the same way. Each package holds
 `web/<car>_web.glb` with the wheels named `C10_Wheel_FL` … `C13_Wheel_RR`, the brakes `C20_Brake_*`
@@ -65,7 +68,7 @@ GLB, and so does the turntable (Auto-rotate), because a frame is a fixed camera.
 - **Live GLB** (what the ingest sets up by default): the engine draws the model with the studio lighting, paint
   shader and materials pass; the forged wheels sit in the model's arches. Any car without render frames
   works this way.
-- **Blender frames** (`--render`; what the four prepared cars use since 2026-11-10): Cycles renders the body once
+- **Blender frames** (`--render`; today only the M5 G90 has them, in the dark studio; the other three prepared cars are drawn live): Cycles renders the body once
   per view chip (Front ¾, Side, Rear ¾, Front, Wheel, Top) with white and black paint bases, and the browser
   recolours them for any paint. The wheels are still drawn live on top, so paint, wheel, size and finish all
   change at once. It needs Blender as a Python module:

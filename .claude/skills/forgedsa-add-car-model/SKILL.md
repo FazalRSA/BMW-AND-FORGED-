@@ -8,6 +8,8 @@ description: Add or replace a BMW car in the FORGEDSA configurator. Covers sourc
 The car catalogue lives in Supabase `public.cars` (source of truth) and is mirrored in
 `data/configuratorData.ts` (offline fallback). Both must agree.
 
+> Full process with file types, limits, checks and go-live: `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`.
+
 ## 0. Prepared package? One command (do this first)
 
 A car package in the `3d cars` convention (zip with `web/<car>_web.glb`, wheels `C10_Wheel_FL..C13_Wheel_RR`,

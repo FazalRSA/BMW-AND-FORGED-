@@ -7,8 +7,9 @@ description: Ship FORGEDSA changes safely. Covers the pre-push checks (tsc, vite
 
 ## Branches
 
-- **Work branch:** `claude/vigilant-brahmagupta-8sy04u` → PR
-  [Novahavens/BMW-AND-FORGED-#2](https://github.com/Novahavens/BMW-AND-FORGED-/pull/2) into `main`.
+- **Repo and base:** `FazalRSA/BMW-AND-FORGED-`, base `main`. PR #2 (branch `ccr-f52bf849-fnf7qs`) is merged.
+  The open work is PR #3 (`claude/prepared-cars-render-frames`). Work on a `claude/<topic>` branch from `main`
+  and merge `main` into it (never rebase or force-push a shared branch) when the PR reports a conflict.
 - **Experiments go on their own branch** (e.g. `claude/photoreal-proof`), created from the work
   branch.
   - Commit locally and **don't push until the owner approves**. Then push, and preview on Vercel
@@ -35,7 +36,7 @@ description: Ship FORGEDSA changes safely. Covers the pre-push checks (tsc, vite
   `prj_p1fOXWBPFfxedbLZFp9R3s1Qiq9P`). Vite framework, build `vite build`, output `dist`, no env
   vars.
 - **Production:** Vercel MCP `create_deployment` with `target: production` and
-  `gitSource {type: github, org: Novahavens, repo: BMW-AND-FORGED-, ref: <branch>, sha: <commit>}`.
+  `gitSource {type: github, org: FazalRSA, repo: BMW-AND-FORGED-, ref: <branch>, sha: <commit>}`.
 - **Verify:** poll the live HTML for something unique to the change, e.g.
   `until curl -s https://forged-configurator.vercel.app/ | grep -q "<marker>"; do sleep 5; done`.
 - **Docs-only changes don't need a deploy.**

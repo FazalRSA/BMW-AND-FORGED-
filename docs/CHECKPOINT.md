@@ -1,7 +1,19 @@
 # Checkpoint: photoreal cars and rims
 
-**Last updated:** 2026-11-10 · **Branch:** `ccr-f52bf849-fnf7qs` · **To continue:** the
+**Last updated:** 2026-11-11 · **Branch:** `claude/prepared-cars-render-frames` (PR #3; `ccr-f52bf849-fnf7qs` is merged into `main`) · **To continue:** the
 `forgedsa-resume` skill (`.claude/skills/forgedsa-resume/SKILL.md`) restores the tools, and this file says what is next.
+
+## 2026-11-11: welcome stage, Cycles stills, 16-bit normals (PR #3)
+- **Welcome screen** is a dark studio stage that cycles Cycles-rendered stills of the four cars (arrows, scroll, keyboard,
+  swipe, dots; Enter opens the showroom on the car showing): `components/journey/HeroStage.tsx`, `WelcomeGate.tsx`,
+  `public/hero/*.webp`, `scripts/make-hero-stills.py`. Checked headless at phone, desktop and landscape-phone; not on a real device.
+- **Cycles scripts** in `scripts/cycles/` (`batch_stills.py`, `body_hero.py`, `body_views.py`, `body_still.py`). Wheel-less M2 CS
+  bodies (21 paints, six views) exist but are **not wired into the configurator**, and the reference studio `.blend` is not in the repo.
+- **Four prepared GLBs rebuilt with 16-bit normals** (the 8-bit ones crumpled the bonnet). **M5 G90 has Blender frames** in six
+  views including a new `front`; it is the only car with frames, the other three prepared cars are drawn live.
+- **Not done:** Cycles bodies in the app and the live wheels over them; wheel-less bodies for M4 CS, M5, M5 Touring; licence for
+  the four packages; any real-device or GPU test.
+- **Process for adding cars and wheels, start to finish:** `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`.
 
 ## 2026-11-10: the four prepared cars are in (live GLB mode)
 The owner's prepared packages (Drive > `3d cars`: M5 G90, M5 Touring G99, M4 CS G82, M2 CS G87; clean meshes,
@@ -63,7 +75,7 @@ the stock FSA003 GLB, not the photo-traced Kyalami 15.
 | FSA-14 Turbine 25 | done after fold fix | done after fold fix | ✓ complete; brighter chrome, flat barrel |
 
 **Live since 2026-10-05:** FSA-12/13/14 are active in Supabase (migration `20261004180000_wheels_fsa_12_13_14_live.sql`)
-with PLACEHOLDER names/sizes/prices from FSA-05. **Every one of the twelve spun wheels has a rim page spin, but all twelve
+with PLACEHOLDER names/sizes/prices from FSA-05. **Every one of the twelve spun wheels has a rim page spin, but eleven of the twelve (FSA-03 is now the stock FSA003)
 are hidden since 2026-11-10 (`active: false`); the six active stock wheels have no spin yet** (queue). FSA-01, 02, 04,
 05, 06, 07, 08, 09 were added on 2026-10-05 (FSA-07 built from `public/rim-faces/forged_fsa_07.png`; FSA-09 rendered
 with `turntable.py --resmooth`). Weakest matches: FSA-07 Dezzi Star, then FSA-04 Scribante 3P.
@@ -85,8 +97,11 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 `decision_m3t_headlights`); read them with ArtifactData `list`.
 
 ## Queue (do the top unchecked item; tick it when committed)
-- [ ] Apply the 2026-11-10 migrations in order (four cars, legacy cars hidden, the `_wheel_*_rim_model` files, customer accounts,
-      wheel inventory) in Supabase, or set the same fields in /admin; deploy; smoke the live catalogue (source `supabase`).
+- [ ] Supabase migrations, checked by name on 2026-11-11: the four cars, legacy cars hidden, the `_wheel_*_rim_model` files, the
+      wheel inventory and `car_specs_m2cs_m5touring` are applied and the four prepared cars are active. **Not applied:**
+      `customer_accounts`, `admin_requires_confirmed_email` (no migration named `lead_hardening` either). **Applied but not in
+      the repo:** `prepared_cars_keep_own_brakes`: commit its SQL. Supabase still names `m2_g87` "BMW M2 Coupe". Then deploy and
+      smoke the live catalogue (source `supabase`).
 - [ ] Owner: Supabase dashboard → Authentication → Providers → Google (client id/secret, redirect URLs) per `docs/ACCOUNTS.md`;
       then the manual sign-in → save → garage test on the preview URL.
 - [ ] Rim-page spins for the six stocked wheels (`scripts/rim3d/turntable.py`, ~75 min each on CPU; the live engine is the fallback).
