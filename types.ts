@@ -33,6 +33,8 @@ export interface CarModel {
   hideMeshMatch?: string;
   /** false = hidden from the showroom and configurator (Supabase filters its rows; the bundled list carries the flag). */
   active?: boolean;
+  /** With a stock-rims wheel: the car's own rim mesh takes the viewer's satin bronze (the M2 CS look). */
+  stockRimsFinished?: boolean;
 }
 
 export interface PaintColor {
@@ -96,6 +98,8 @@ export interface WheelDesign {
   rearModelUrl?: string | null;
   /** Turn the GLB rim around when its face points into the car. */
   modelFlip?: boolean;
+  /** The car's own rims are shown (no forged rim is mounted): the viewer's default look. */
+  stockRims?: boolean;
   /** false = not offered (Supabase filters its rows; the bundled list carries the flag so stock changes stay in sync). */
   active?: boolean;
 }

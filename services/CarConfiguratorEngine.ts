@@ -59,6 +59,30 @@ import {
 export const proceduralShape = (style: CarModel['bodyStyle']): 'coupe' | 'sedan' | 'suv' =>
   style === 'convertible' ? 'coupe' : style === 'touring' || style === 'gran_coupe' ? 'sedan' : style;
 
+/**
+ * The owner's viewer's satin bronze for the car's own rim (its bronzeRims look): the texture is pulled toward a
+ * warm neutral, the gloss softened and the metalness capped, and the baked occlusion is kept. Returns a copy.
+ */
+function satinBronzeRim(source: THREE.Material): THREE.Material {
+  const mat = source.clone();
+  if (mat instanceof THREE.MeshStandardMaterial) {
+    mat.roughness = 0.5;
+    mat.metalness = Math.min(mat.metalness, 0.4);
+  }
+  mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(lum) * vec3(1.0, 0.88, 0.70), 0.78) * 0.95;`)
+      .replace('#include <color_fragment>', `#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )
+        float vlum = dot(vColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+        diffuseColor.rgb *= vec3(pow(vlum, 0.5));
+        #endif`);
+  };
+  mat.customProgramCacheKey = () => 'stock-rim-satin-bronze';
+  return mat;
+}
+
 export class CarConfiguratorEngine {
   private container: HTMLElement;
   private scene: THREE.Scene;
@@ -91,7 +115,10 @@ export class CarConfiguratorEngine {
   /** Inside of the barrel: the finish, a touch darker and less polished. */
   private barrelMaterial!: THREE.MeshPhysicalMaterial;
   private lipStyle: LipStyle = 'mono';
-  private wheelMode: 'model' | 'image' | 'procedural' = 'procedural';
+  private wheelMode: 'model' | 'image' | 'procedural' | 'stock' = 'procedural';
+  /** The car's own rim meshes (hidden at mount); shown in stock mode. */
+  private modelWheelMeshes: THREE.Mesh[] = [];
+  private stockFinished = false;
   private rimFaceCache = new Map<string, Promise<{ front: THREE.BufferGeometry; rear: THREE.BufferGeometry } | null>>();
   /**
    * Tyres and rim shells, kept per size (and lip style) instead of being rebuilt: a size or lip
@@ -1298,6 +1325,8 @@ export class CarConfiguratorEngine {
     // The model's own calipers replace ours (they match its brakes and arches)
     this.wheelAssemblies.forEach((a) => (a.caliper.visible = !modelCalipers));
 
+    this.modelWheelMeshes = wheelMeshes;
+    this.stockFinished = car.stockRimsFinished === true;
     this.disposeBody();
     this.bodyMeshGroup.add(model);
     this.paintVariants = usedVariants;
@@ -1308,6 +1337,7 @@ export class CarConfiguratorEngine {
     this.markShadowDirty();
     this.syncRenderedBody();
     this.addNumberPlates(model, carBox);
+    this.setStockRims(this.wheelMode === 'stock'); // a car mounted under a stock design shows its own rims
 
 
     if (corners.size === 4) {
@@ -1817,7 +1847,8 @@ export class CarConfiguratorEngine {
         ? { imageUrl: wheel.imageUrl, name: wheel.name, bumpScale: 0.006, invertAlpha: false, spokeThreshold: 0.15, extrude: wheel.imageExtrude !== false }
         : null;
     const modelUrl = custom2DConfig?.imageUrl ? null : wheel.modelUrl;
-    const mode = modelUrl ? 'model' : imageConfig ? 'image' : 'procedural';
+    const stock = wheel.stockRims === true && !modelUrl && !imageConfig;
+    const mode = modelUrl ? 'model' : stock ? 'stock' : imageConfig ? 'image' : 'procedural';
     // Two- and three-piece designs get a polished, bolted lip
     const lip = lipStyleFor(wheel.style, wheel.name);
 
@@ -1839,9 +1870,10 @@ export class CarConfiguratorEngine {
       this.syncWheelShells();
       this.wheelAssemblies.forEach((a) => {
         // A GLB rim brings its own barrel, lip and centre
-        if (a.rim) a.rim.visible = mode !== 'model';
-        a.hub.visible = mode !== 'model';
+        if (a.rim) a.rim.visible = mode !== 'model' && mode !== 'stock';
+        a.hub.visible = mode !== 'model' && mode !== 'stock';
       });
+      this.setStockRims(mode === 'stock');
       mount();
       this.markShadowDirty(3);
     };
@@ -1899,7 +1931,8 @@ export class CarConfiguratorEngine {
       return;
     }
 
-    commit(() =>
+    commit(() => {
+      if (stock) return; // the car's own rims are shown instead (setStockRims)
       this.wheelAssemblies.forEach((assembly) => {
         if (imageConfig) {
           this.applyCustom2DSpokeTexture(assembly.spokeMeshGroup, imageConfig, assembly.isFront, token);
@@ -1910,8 +1943,33 @@ export class CarConfiguratorEngine {
         const face = new THREE.Mesh(this.getProceduralFaceGeometry(wheel, mirror, concavity), this.wheelMaterial);
         assembly.spokeMeshGroup.add(face);
         if (wheel.spokeType === 'clubsport') this.addLipBolts(assembly.spokeMeshGroup);
-      })
-    );
+      });
+    });
+  }
+
+  /**
+   * Stock rims: the car's own rim meshes (hidden at mount) show in stock mode and the forged parts go. A
+   * forged design hides them again and gives the car's own material back. On a car flagged stockRimsFinished
+   * (the M2 CS) the rim takes the viewer's satin bronze. The caliper is left to its own rule.
+   */
+  private setStockRims(on: boolean) {
+    this.wheelAssemblies.forEach((a) => {
+      a.group.children.forEach((c) => {
+        if (c !== a.caliper) c.visible = !on;
+      });
+    });
+    this.modelWheelMeshes.forEach((m) => {
+      if (!m.userData.stockOriginal) m.userData.stockOriginal = m.material; // the car's own material, kept once
+      const own: THREE.Material | THREE.Material[] = m.userData.stockOriginal;
+      m.visible = on;
+      const isRim = !Array.isArray(own) && /rim/i.test(own.name) && !/tyre|tire|disc|brake/i.test(own.name);
+      if (!on || !this.stockFinished || !isRim) {
+        m.material = own;
+        return;
+      }
+      if (!m.userData.stockBronze) m.userData.stockBronze = satinBronzeRim(own as THREE.Material);
+      m.material = m.userData.stockBronze;
+    });
   }
 
   /**

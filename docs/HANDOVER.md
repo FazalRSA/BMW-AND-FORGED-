@@ -234,8 +234,8 @@ customer accounts, the confirmed-email admin lock, the M2 CS / M5 Touring specs)
 but **not applied** (there is no Supabase access from the sandbox). Until every
 `supabase/migrations/20261110*.sql` has been run in file-name order in the SQL Editor (the two
 `CONCURRENTLY` indexes from `ACCOUNTS.md` step 5b as their own run after `20261110150000`, and
-`20261110170000_admin_requires_confirmed_email.sql` then `20261110171000_car_specs_m2cs_m5touring.sql`
-last), the live site still shows the old Sketchfab cars and photo-traced wheels, and **Continue with
+`20261110170000_admin_requires_confirmed_email.sql`, then `20261110171000_car_specs_m2cs_m5touring.sql`,
+then `20261110180000_stock_rims_default.sql` last), the live site still shows the old Sketchfab cars and photo-traced wheels, and **Continue with
 Google** fails until the Google provider and redirect URLs are set up (`ACCOUNTS.md`, owner steps 1 to 4).
 
 ---
@@ -304,7 +304,7 @@ you add it (section 5, "Branch preview on Render").
 ## 6. Pre-handover checklist (do it on the live URL, on a laptop **and** a phone)
 
 **Before you start (otherwise the car, wheel and account items below cannot pass):** every
-`supabase/migrations/20261110*.sql` applied in order, ending with `20261110170000` and `20261110171000`
+`supabase/migrations/20261110*.sql` applied in order, ending with `20261110170000`, `20261110171000` and `20261110180000`
 (section 5); the Google provider, redirect URLs and the confirmed-admin check done (`ACCOUNTS.md`, owner
 steps 1 to 5); the URL you test on is in the redirect list. Until then, use the Render preview for the
 car and wheel items (it ships the bundled catalogue) and skip the account item.
