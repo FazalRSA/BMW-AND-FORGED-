@@ -146,7 +146,7 @@ yq_get() {
   # false as well as null, so `.enabled // ""` turns `enabled: false` into "" and
   # a real `false` is indistinguishable from a missing key.
   local out
-  out="$(yq eval "$1" "$CONFIG_FILE" 2>/dev/null)" || return 1
+  out="$(yq -r "$1" "$CONFIG_FILE" 2>/dev/null)" || return 1
   [[ "$out" == "null" ]] && return 1
   printf '%s' "$out"
   return 0
@@ -156,10 +156,10 @@ load_config() {
   [[ -r "$CONFIG_FILE" ]] || { degrade "config not readable: $CONFIG_FILE"; return 0; }
   command -v yq >/dev/null 2>&1 || { degrade "yq not installed"; return 0; }
 
-  # The Python yq (a jq wrapper) has no `eval` subcommand, so every key read below
-  # would fail without a word and the config would be ignored. Degrade once, so
-  # explain and doctor say so, instead of reporting defaults as if they were the config.
-  if ! yq eval '.version' "$CONFIG_FILE" >/dev/null 2>&1; then
+  # `yq -r` works on both builds (mikefarah v4 and the Python jq wrapper). A config that
+  # cannot be read degrades once, so explain and doctor say so, instead of reporting
+  # defaults as if they were the config.
+  if ! yq -r '.version' "$CONFIG_FILE" >/dev/null 2>&1; then
     degrade "yq cannot read $CONFIG_FILE (need mikefarah yq v4; config ignored)"
     return 0
   fi
@@ -206,7 +206,7 @@ load_config() {
   v="$(yq_get '.max_worker_retries')"  && set_uint MAX_WORKER_RETRIES "$v" 0 10
   v="$(yq_get '.max_worker_seconds')"  && set_uint MAX_WORKER_SECONDS "$v" 1 3600
 
-  v="$(yq eval '.exempt_agent_types[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ')"
+  v="$(yq -r '.exempt_agent_types[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ')"
   [[ -n "${v// /}" && "$v" != "null " ]] && EXEMPT_AGENT_TYPES="$v"
 
   apply_platform_defaults
