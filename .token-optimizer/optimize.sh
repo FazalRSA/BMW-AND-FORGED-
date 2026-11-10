@@ -160,7 +160,7 @@ load_config() {
   # cannot be read degrades once, so explain and doctor say so, instead of reporting
   # defaults as if they were the config.
   if ! yq -r '.version' "$CONFIG_FILE" >/dev/null 2>&1; then
-    degrade "yq cannot read $CONFIG_FILE (need mikefarah yq v4; config ignored)"
+    degrade "yq cannot read $CONFIG_FILE (config ignored; check the yq install and the YAML)"
     return 0
   fi
 
