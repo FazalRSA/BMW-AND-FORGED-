@@ -272,7 +272,7 @@ const sql = (s) => `'${String(s).replace(/'/g, "''")}'`;
 const sqlArr = (a) => `array[${a.map(sql).join(', ')}]::text[]`;
 const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 const migration = path.join(MIGRATIONS, (fs.existsSync(MIGRATIONS) && fs.readdirSync(MIGRATIONS).find((f) => f.endsWith(`_wheel_${opts.wheel}_rim_model.sql`))) || `${stamp}_wheel_${opts.wheel}_rim_model.sql`);
-const rearSql = rearModelUrl ? `, rear_model_url = '${rearModelUrl}'` : '';
+fs.mkdirSync(MIGRATIONS, { recursive: true });
 fs.writeFileSync(migration, `-- ${opts.wheel}: 3D rim ${path.basename(input)}${opts.rear ? ` + rear ${path.basename(opts.rear)}` : ''} packed by scripts/ingest-rim.mjs on ${new Date().toISOString().slice(0, 10)}.
 -- Served from the repo at ${modelUrl}; on the car it replaces the wheel's photo face (the rim page keeps its spin).
 ${newRow ? `-- New wheel with PLACEHOLDER copy; set the real name, sizes, prices and description in /admin.
