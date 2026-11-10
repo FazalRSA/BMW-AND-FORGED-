@@ -79,6 +79,18 @@ Going back to the old frames: `git checkout <commit> -- public/renders/<carId>` 
 (`node scripts/ingest-car.mjs … --dry-run` does not; run `scripts/prerender/render-all.sh` with no
 index, or delete `public/renders/manifest.json` entries by hand).
 
+## The configurator screen looks like the viewer
+
+Cars drawn live (the prepared four, and any car without Blender frames) sit in the four-car viewer's studio on
+the configurator screen: the gradient dome, the floor that fogs into the horizon, the pool of shadow around the
+footprint, Neutral tone mapping with the exposure set by the paint, and the viewer's two reflection coves (the
+gloss cove for solid, metallic and pearl paints; the soft grey cove for Frozen). The port is
+`services/viewerStudio.ts` (the viewer's numbers verbatim) and `CarConfiguratorEngine.setLook('viewer' | 'studio')`;
+`App.tsx` turns it on for `/configure` only, so the showroom keeps its giant model name behind the car. The
+headless harness takes `?look=viewer`. The viewer's Daylight and Golden-hour modes are not ported (the
+configurator has one studio); its paint library maps onto the catalogue's paints (`type` Uni / Metallic / Pearl /
+Frozen).
+
 ## Rims the same way
 
 A rim GLB in the website's convention (`Rim_Barrel`, `Rim_Face_Spokes`, `Center_Cap`, `Hardware_Bolts`,

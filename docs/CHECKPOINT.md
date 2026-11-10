@@ -12,6 +12,8 @@ renders of the old dented bodies). `--render` re-renders Blender frames from the
 photoreal route is wanted back for these cars. Check sheets: `docs/ingest/<carId>.jpg`. Rims: `scripts/ingest-rim.mjs`
 puts a website-convention rim GLB on a wheel (FSA-03 done from the website's `fsa003.glb`; sheet in `docs/ingest/rims/`).
 The migrations in `supabase/migrations/2026111013*_*` still have to be applied (no Supabase MCP in that session).
+The configurator screen now uses the four-car viewer's studio for live cars (`services/viewerStudio.ts`, `engine.setLook`): dome,
+fogged floor, pool shadow, Neutral tone mapping, gloss / soft coves by paint; `?look=viewer` in the harness.
 
 ## Goal of this phase (owner's words, condensed)
 Two cars and at least two wheels each **perfectly done**: **M4 Competition** and **M5 (G90)**, with

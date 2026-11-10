@@ -168,10 +168,16 @@ log(`Wrote ${path.relative(ROOT, target)} (${(fs.statSync(target).size / 1024).t
 const lines = source.split('\n');
 const start = lines.findIndex((l) => l === `    id: '${opts.wheel}',`);
 let end = start;
-while (end < lines.length && !/^  },?$/.test(lines[end])) end++;
+while (end < lines.length && !/^  },?\s*(\/\/.*)?$/.test(lines[end])) end++;   // "  }," with or without a trailing comment
 if (start < 0 || end >= lines.length) die('could not find the wheel entry');
 const kept = lines.slice(start, end).filter((l) => !/^    (modelUrl|modelFlip):/.test(l));
-if (!kept[kept.length - 1].trimEnd().endsWith(',')) kept[kept.length - 1] = kept[kept.length - 1].trimEnd() + ',';
+{ // a trailing comma on the last line that holds code (not on a trailing full-line comment), in front of any "// comment"
+  let last = kept.length - 1;
+  while (last > 0 && /^\s*(\/\/.*)?$/.test(kept[last])) last--;
+  const m = kept[last].match(/^(.*?)(\s*\/\/.*)?$/);
+  const code = m[1].trimEnd(), comment = m[2] || '';
+  if (code && !code.endsWith(',')) kept[last] = `${code},${comment}`;
+}
 kept.push(`    modelUrl: '${modelUrl}',`, `    modelFlip: ${opts.flip}`);
 lines.splice(start, end - start, ...kept);
 fs.writeFileSync(CATALOGUE, lines.join('\n'));

@@ -334,11 +334,14 @@ export const App: React.FC = () => {
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
+    // The configurator screen looks like the four-car viewer (dome, floor, coves) for cars drawn live; the
+    // showroom keeps its own backdrop (the giant model name sits behind the transparent canvas)
+    engine.setLook(route.name === 'configure' && !rendered ? 'viewer' : 'studio');
     engine.setRenderedBody(rendered);
     engine.handleResize();
     applyInsetRef.current();
     if (route.name === 'configure') engine.setCameraPreset(cameraView, { instant: rendered });
-  }, [rendered, stage]);
+  }, [rendered, stage, route.name]);
 
   // Keep the car centred in the space the panel leaves
   const applyInsetRef = useRef<() => void>(() => {});

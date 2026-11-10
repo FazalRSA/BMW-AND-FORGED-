@@ -16,7 +16,7 @@
 | `m5_g90.glb` | Prepared package bmw_m5_g90.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 | `m5_touring_g99.glb` | Prepared package bmw_m5_touring_g99.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 | `m4_cs_g82.glb` | Prepared package bmw_m4_cs_g82.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
-| `m2_g87.glb` | Prepared package b91b17c6-BMW_M2_CS_G87.zip (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
+| `m2_g87.glb` | Prepared package bmw_m2_cs_g87.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 
 All car files were compressed for the web (meshopt geometry, WebP textures up to 2048 px) with gltf-transform.
 

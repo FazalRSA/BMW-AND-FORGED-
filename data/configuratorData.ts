@@ -523,7 +523,9 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
     defaultVariant: 'liquid_metal',
     imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_03-1790526482896.png',
-    imageExtrude: true
+    imageExtrude: true,
+    modelUrl: '/models/rims/forged_fsa_03.glb',
+    modelFlip: false
   },
   {
     id: 'forged_fsa_04',

@@ -122,17 +122,25 @@ function unpack(file) {
     const py = spawnSync('python3', ['-I', '-m', 'zipfile', '-e', file, dir], { stdio: 'inherit' });
     if (py.status !== 0) die(`could not unzip ${file}`);
   }
-  const files = walk(dir);
+  // Finder zips add __MACOSX/._name resource forks that look like GLBs and are not.
+  const files = walk(dir).filter((f) => !/(^|[\\/])__MACOSX([\\/]|$)/.test(f) && !path.basename(f).startsWith('._'));
   const glbs = files.filter((f) => f.toLowerCase().endsWith('.glb'));
   if (!glbs.length) die('the zip holds no .glb file');
   const web = glbs.filter((f) => /(^|[\\/])web[\\/][^\\/]+\.glb$/i.test(f) || /_web\.glb$/i.test(f));
   const model = glbs.filter((f) => /(^|[\\/])model[\\/][^\\/]+\.glb$/i.test(f));
-  const largest = [...glbs].sort((a, b) => fs.statSync(b).size - fs.statSync(a).size);
-  const glb = web[0] || model[0] || largest[0];
+  let candidates = web.length ? web : model.length ? model : glbs;
+  if (candidates.length > 1) {
+    // A zip with several cars (e.g. the four-car viewer): keep the files named after the requested car.
+    const tokens = opts.car.split('_').filter(Boolean);
+    const named = candidates.filter((f) => tokens.every((t) => path.basename(f).toLowerCase().includes(t)));
+    if (named.length === 1) candidates = named;
+    else die(`the zip holds ${candidates.length} candidate models (${candidates.map((f) => path.relative(dir, f)).join(', ')}); unzip it and pass the one for ${opts.car} as the first argument`);
+  }
+  const glb = candidates[0];
   const readme = files.find((f) => /readme\.md$/i.test(f)) || null;
   log(`Package: ${path.basename(file)}`);
   log(`  .glb files: ${glbs.map((f) => `${path.relative(dir, f)} (${mb(fs.statSync(f).size)})`).join(', ')}`);
-  log(`  using: ${path.relative(dir, glb)}${web[0] ? ' (the web build)' : model[0] ? ' (no web build; the plain model)' : ' (the largest)'}`);
+  log(`  using: ${path.relative(dir, glb)}${glbs.length > 1 ? ` (${web.length ? 'the web build' : model.length ? 'no web build; the plain model' : 'the only candidate'}${candidates.length < (web.length || model.length || glbs.length) || glbs.length > 1 ? `, named after ${opts.car}` : ''})` : ''}`);
   return { glb, readme, packageName: path.basename(file) };
 }
 
@@ -329,7 +337,7 @@ fs.mkdirSync(MODELS, { recursive: true });
 if (needsCompression) {
   await MeshoptEncoder.ready;
   const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
-  await doc.transform(dedup(), prune(), weld(), quantize(), meshopt({ encoder: MeshoptEncoder, level: 'medium' }));
+  await doc.transform(dedup({ keepUniqueNames: true }), prune(), weld(), quantize(), meshopt({ encoder: MeshoptEncoder, level: 'medium' })); // names stay: the engine keys paint/hide/caliper on them
   const sharp = await import('sharp').catch(() => null);
   if (sharp) {
     const { textureCompress } = await import('@gltf-transform/functions');
@@ -356,13 +364,21 @@ const modelLines = [
   `    hideMeshMatch: ${tsStr(hideMatch)}`
 ];
 const MODEL_KEYS = /^    (modelUrl|modelRotationDeg|modelLengthM|paintMeshMatch|hideMeshMatch):/;
+/** The line that closes a catalogue entry: "  }," or "  }", with or without a trailing comment. */
+const ENTRY_END = /^  },?\s*(\/\/.*)?$/;
+/** The line with a trailing comma on its code, keeping any "// comment" after it. */
+function withComma(line) {
+  const m = line.match(/^(.*?)(\s*\/\/.*)?$/);
+  const code = m[1].trimEnd(), comment = m[2] || '';
+  return !code || code.endsWith(',') || code.endsWith('{') || code.endsWith('[') ? line : `${code},${comment}`;
+}
 
 function updateCar(text) {
   const lines = text.split('\n');
   const start = lines.findIndex((l) => l === `    id: ${tsStr(opts.car)},` || l === `    id: '${opts.car}',`);
   if (start < 0) die(`car ${opts.car} not found in the catalogue text`);
   let end = start;
-  while (end < lines.length && !/^  },?$/.test(lines[end])) end++;
+  while (end < lines.length && !ENTRY_END.test(lines[end])) end++;
   if (end >= lines.length) die('could not find the end of the car entry');
   // Drop the old model lines and the full-line comments right above them (they describe the old file).
   const body = lines.slice(start, end);
@@ -376,8 +392,10 @@ function updateCar(text) {
     }
     kept.push(body[i]);
   }
-  const last = kept.length - 1;
-  if (last >= 0 && !kept[last].trimEnd().endsWith(',')) kept[last] = kept[last].trimEnd() + ',';
+  // The comma goes on the last line that holds code (a trailing full-line comment is left alone).
+  let last = kept.length - 1;
+  while (last >= 0 && /^\s*(\/\/.*)?$/.test(kept[last])) last--;
+  if (last >= 0) kept[last] = withComma(kept[last]);
   const fresh = modelLines.map((l, i) => (i < modelLines.length - 1 ? `${l},` : l));
   lines.splice(start, end - start, ...kept, ...fresh);
   return lines.join('\n');
@@ -415,7 +433,7 @@ log(`Updated ${path.relative(ROOT, CATALOGUE)} (${exists ? `model fields replace
 // 6. Supabase migration
 // ---------------------------------------------------------------------------------------------------
 const field = (block, key) => (block.match(new RegExp(`^    ${key}: '((?:[^'\\\\]|\\\\.)*)'`, 'm')) || [])[1]?.replace(/\\'/g, "'") ?? '';
-const block = (() => {
+const carBlock = (() => {
   const t = fs.readFileSync(CATALOGUE, 'utf8');
   const s = t.indexOf(`    id: '${opts.car}',`);
   return t.slice(s, t.indexOf('\n  }', s));
@@ -424,14 +442,14 @@ const sqlStr = (s) => `'${String(s).replace(/'/g, "''")}'`;
 // One migration per car: a re-run (e.g. with --check) rewrites it instead of adding a second file.
 const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 const migration = path.join(MIGRATIONS, (fs.existsSync(MIGRATIONS) && fs.readdirSync(MIGRATIONS).find((f) => f.endsWith(`_car_${opts.car}_prepared_model.sql`))) || `${stamp}_car_${opts.car}_prepared_model.sql`);
-const body = exists ? field(block, 'bodyStyle') || 'sedan' : opts.body || 'sedan';
+const body = exists ? field(carBlock, 'bodyStyle') || 'sedan' : opts.body || 'sedan';
 fs.mkdirSync(MIGRATIONS, { recursive: true });
-fs.writeFileSync(migration, `-- ${field(block, 'name') || opts.name}: prepared model from ${pkg.packageName}, ingested by scripts/ingest-car.mjs on ${new Date().toISOString().slice(0, 10)}.
+fs.writeFileSync(migration, `-- ${field(carBlock, 'name') || opts.name}: prepared model from ${pkg.packageName}, ingested by scripts/ingest-car.mjs on ${new Date().toISOString().slice(0, 10)}.
 -- The file is served from the repo at ${modelUrl}. Licence: see public/models/CREDITS.md (not confirmed for the
 -- prepared packages; prototype use until a licence is in hand).
 insert into public.cars (id, name, badge, generation, chassis_code, body_style, model_url, model_rotation_deg, model_length_m,
   paint_mesh_match, hide_mesh_match, active)
-values (${sqlStr(opts.car)}, ${sqlStr(field(block, 'name') || opts.name)}, ${sqlStr(field(block, 'badge') || opts.name)}, ${sqlStr(field(block, 'generation'))}, ${sqlStr(field(block, 'chassisCode'))},
+values (${sqlStr(opts.car)}, ${sqlStr(field(carBlock, 'name') || opts.name)}, ${sqlStr(field(carBlock, 'badge') || opts.name)}, ${sqlStr(field(carBlock, 'generation'))}, ${sqlStr(field(carBlock, 'chassisCode'))},
   ${sqlStr(body)}, ${sqlStr(modelUrl)}, ${rotationDeg}, ${lengthM}, ${sqlStr(paintMatch)}, ${sqlStr(hideMatch)}, true)
 on conflict (id) do update set
   model_url = excluded.model_url, model_rotation_deg = excluded.model_rotation_deg, model_length_m = excluded.model_length_m,

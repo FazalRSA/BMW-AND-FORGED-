@@ -12,6 +12,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { applyPaintLayers, installPaintLayers } from './paintShader';
 import { buildSoftboxStudio, ROOM_DARK, ROOM_LIGHT, ROOM_WALLS, ROOM_WHITE } from './studioSoftbox';
 import { bindEnvironment, blackenGrilleChrome, glassReflectionMaterial, passMaterial } from './carMaterials';
+import { DOME_HORIZON, GLOSS_COVE, VIEWER_FINISH, buildDome, buildFloor, buildGlossCove, buildPool, buildSoftCove, disposeCove, floorColorFor, isGlossPaint, poolTexture, studioExposure } from './viewerStudio';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 import { traceRimShapes, buildRimFaceGeometry } from './rimExtrusion';
@@ -205,6 +206,8 @@ export class CarConfiguratorEngine {
     const m = typeof window !== 'undefined' ? /[?&]exposure=([0-9.]+)/.exec(window.location.search) : null;
     return m ? +m[1] : undefined;
   })();
+  /** Stage look at start: 'studio' (softbox studio over the page backdrop) or 'viewer' (the four-car viewer's dome, floor and coves, services/viewerStudio.ts); ?look=viewer compares. */
+  static LOOK: 'studio' | 'viewer' = typeof window !== 'undefined' && /[?&]look=viewer/.test(window.location.search) ? 'viewer' : 'studio';
   static DEFAULT_HIDE = '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)';
   private isDisposed = false;
   private contactShadow: {
@@ -308,6 +311,7 @@ export class CarConfiguratorEngine {
 
     // Generate procedural studio environment reflection
     this.generateStudioEnvironment();
+    if (CarConfiguratorEngine.LOOK === 'viewer') this.setLook('viewer');
 
     // Start loop
     this.animate = this.animate.bind(this);
@@ -1135,6 +1139,8 @@ export class CarConfiguratorEngine {
     model.updateMatrixWorld(true);
 
     const carBox = new THREE.Box3().setFromObject(model);
+    const carSize = carBox.getSize(new THREE.Vector3());
+    this.setCarFootprint(carSize.z / 2 + 0.1, carSize.x / 2 + 0.28); // the viewer look's pool of shadow hugs this car
     const paintRe = CarConfiguratorEngine.safeRegex(car.paintMeshMatch, 'paint|body|carpaint|exterior');
     // Whole words only by default, so "trim" or "brim" never count as a rim.
     const legacyHide = 'wheel|rim|tyre|tire|brake|caliper|rotor';
@@ -2027,17 +2033,31 @@ export class CarConfiguratorEngine {
     this.currentPaint = paint;
     for (const m of [this.carBodyMaterial, ...this.paintVariants]) {
       applyPaintLayers(m, paint);
-      m.envMapIntensity = CarConfiguratorEngine.BODY_ENV_INTENSITY;
+      m.envMapIntensity = this.look === 'viewer' ? 1 : CarConfiguratorEngine.BODY_ENV_INTENSITY; // the viewer's coves are built for full reflections
       m.color.set(paint.hex);
-      // Gloss: a sharper clear coat and a smoother base coat for glossy paints; Frozen stays matte
-      const glossy = paint.type !== 'Frozen';
-      const g = glossy ? CarConfiguratorEngine.GLOSS : 1;
-      m.roughness = paint.roughness * g;
-      m.metalness = paint.metalness;
-      m.clearcoat = paint.clearcoat;
-      m.clearcoatRoughness = glossy ? Math.min(paint.clearcoatRoughness, 0.025) : paint.clearcoatRoughness;
+      if (this.look === 'viewer') {
+        // The viewer's finish table by paint type (its coves were tuned for these values)
+        const f = VIEWER_FINISH[paint.type] ?? VIEWER_FINISH.Metallic;
+        m.metalness = f.metalness;
+        m.roughness = f.roughness;
+        m.clearcoat = f.clearcoat;
+        m.clearcoatRoughness = f.clearcoatRoughness;
+        m.iridescence = f.iridescence;
+        m.iridescenceIOR = f.iridescenceIOR;
+        m.iridescenceThicknessRange = [180, 620];
+      } else {
+        // Gloss: a sharper clear coat and a smoother base coat for glossy paints; Frozen stays matte
+        const glossy = paint.type !== 'Frozen';
+        const g = glossy ? CarConfiguratorEngine.GLOSS : 1;
+        m.roughness = paint.roughness * g;
+        m.metalness = paint.metalness;
+        m.clearcoat = paint.clearcoat;
+        m.clearcoatRoughness = glossy ? Math.min(paint.clearcoatRoughness, 0.025) : paint.clearcoatRoughness;
+        m.iridescence = 0;
+      }
       m.needsUpdate = true;
     }
+    this.applyViewerPaint(paint);
     this.requestRender();
   }
 
@@ -2131,6 +2151,12 @@ export class CarConfiguratorEngine {
         this.targetCameraPos.set(4.1 * fit, 1.3, 4.0 * fit);
         break;
 
+      case 'front':
+        // Straight on, at headlight height (the viewer's "Front" chip)
+        this.targetLookAt.set(0, 0.55, 0.3);
+        this.targetCameraPos.set(0.0, 1.15, 6.4 * fit);
+        break;
+
       case 'side':
         this.targetLookAt.set(0, 0.5, 0.0);
         this.targetCameraPos.set(5.9 * fit, 0.95, 0.0);
@@ -2213,6 +2239,11 @@ export class CarConfiguratorEngine {
   })();
   private static DEPTH_ONLY = new THREE.MeshBasicMaterial({ colorWrite: false });
   private renderedBody = false;
+  // The stage look (setLook): the viewer's dome, floor, pool and reflection coves are built on first use and stay in the scene, hidden when the softbox studio is on
+  private lookWanted: 'studio' | 'viewer' = 'studio';
+  private look: 'studio' | 'viewer' = 'studio';
+  private viewer: { dome: THREE.Mesh; floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshStandardMaterial>; pool: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>; gloss: THREE.WebGLRenderTarget | null; soft: THREE.WebGLRenderTarget | null } | null = null;
+  private carFootprint = { halfL: 2.4, halfW: 1.32 };
   private renderEnvTarget: THREE.WebGLRenderTarget | null = null;
   private renderEnvLoading: Promise<THREE.WebGLRenderTarget | null> | null = null;
   private liveEnv: { env: THREE.Texture | null; intensity: number; rotation: THREE.Euler } | null = null;
@@ -2220,7 +2251,9 @@ export class CarConfiguratorEngine {
     if (on === this.renderedBody) return;
     this.renderedBody = on;
     this.syncRenderedBody();
+    if (on) this.applyLook(); // the viewer dome and coves stand down before the render studio takes over
     this.applyRenderedEnvironment(on);
+    if (!on) this.applyLook(); // and come back once the live studio is restored
     if (on) this.isAutoRotate = false;
     if (!on && this.shadowStale) {
       this.shadowStale = false;
@@ -2288,6 +2321,105 @@ export class CarConfiguratorEngine {
     this.wheelAssemblies.forEach((a) => {
       if (on) a.caliper.visible = true;
     });
+  }
+
+  // ----------------------------------------------------
+  // STAGE LOOK: the four-car viewer's studio (services/viewerStudio.ts) on the configurator screen
+  // ----------------------------------------------------
+  /**
+   * 'viewer' puts the car in the viewer's gradient dome and reflection coves (Neutral tone mapping, exposure by
+   * paint); 'studio' is the softbox studio over the page backdrop. While a pre-rendered body is shown the stage
+   * stays 'studio' and the wanted look returns when rendered mode ends.
+   */
+  public setLook(look: 'studio' | 'viewer') {
+    this.lookWanted = look;
+    this.applyLook();
+  }
+  private applyLook() {
+    const want = this.renderedBody ? 'studio' : this.lookWanted;
+    if (want === this.look) return;
+    this.look = want;
+    if (want === 'viewer') {
+      if (!this.viewer) {
+        const dome = buildDome(), floor = buildFloor(), pool = buildPool(this.carFootprint.halfL, this.carFootprint.halfW);
+        this.scene.add(dome, floor, pool);
+        this.viewer = { dome, floor, pool, gloss: null, soft: null };
+      }
+      this.viewer.dome.visible = this.viewer.floor.visible = this.viewer.pool.visible = true;
+      this.studioLightsGroup.visible = false; // the coves light the car on their own, as in the viewer
+      this.scene.fog = new THREE.Fog(DOME_HORIZON, 7, 24); // the floor melts into the dome's horizon
+      this.renderer.toneMapping = THREE.NeutralToneMapping;
+      this.scene.environmentRotation.set(0, 0, 0);
+      this.scene.environmentIntensity = 1.0;
+    } else {
+      if (this.viewer) this.viewer.dome.visible = this.viewer.floor.visible = this.viewer.pool.visible = false;
+      this.studioLightsGroup.visible = true;
+      this.scene.fog = null;
+      this.setGlassForCove(null);
+      const tone = CarConfiguratorEngine.TONE;
+      this.renderer.toneMapping = tone === 'agx' ? THREE.AgXToneMapping : tone === 'neutral' ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = CarConfiguratorEngine.EXPOSURE ?? (tone === 'agx' ? 1.25 : tone === 'neutral' ? 0.95 : 1.08);
+      if (this.environmentTarget) {
+        this.scene.environment = this.environmentTarget.texture;
+        this.scene.environmentIntensity = CarConfiguratorEngine.STUDIO === 'softbox' ? CarConfiguratorEngine.SOFTBOX_INTENSITY : 1.0;
+        this.scene.environmentRotation.set(0, CarConfiguratorEngine.STUDIO === 'softbox' ? 0 : Math.PI * 0.35, 0);
+      }
+    }
+    // The tone mapping is compiled into every material
+    this.scene.traverse((o) => {
+      const mats = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+      if (!mats) return;
+      (Array.isArray(mats) ? mats : [mats]).forEach((m) => (m.needsUpdate = true));
+    });
+    if (this.currentPaint) this.applyPaintColor(this.currentPaint); // cove, exposure and body reflectivity follow the look
+    this.markShadowDirty();
+    this.requestRender();
+  }
+  /** The cove, exposure and floor colour for a paint in the viewer look: glossy paints get the gloss cove, Frozen the soft one. */
+  private applyViewerPaint(paint: PaintColor) {
+    if (this.look !== 'viewer' || !this.viewer) return;
+    const gloss = isGlossPaint(paint);
+    if ((gloss && !this.viewer.gloss) || (!gloss && !this.viewer.soft)) {
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      const env = gloss ? buildGlossCove() : buildSoftCove();
+      const target = gloss ? pmrem.fromScene(env, 0.0, 0.1, 100, { size: 512 }) : pmrem.fromScene(env, 0.02);
+      disposeCove(env);
+      pmrem.dispose();
+      if (gloss) this.viewer.gloss = target;
+      else this.viewer.soft = target;
+    }
+    this.scene.environment = (gloss ? this.viewer.gloss : this.viewer.soft)!.texture;
+    const exposure = studioExposure(paint);
+    this.renderer.toneMappingExposure = exposure;
+    this.viewer.floor.material.color.copy(floorColorFor(gloss, exposure));
+    this.setGlassForCove(gloss);
+  }
+  /**
+   * Window glass mirrored the gloss cove's overhead box as a hard white arc (the viewer's finding): in that cove the
+   * glass gets a little roughness and a weaker specular; the soft cove and the softbox studio get the materials pass's own values.
+   */
+  private setGlassForCove(gloss: boolean | null) {
+    this.bodyMeshGroup.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        const g = m as THREE.MeshPhysicalMaterial;
+        if (!g || g.userData.partKind !== 'glass' || !('specularIntensity' in g)) continue;
+        if (!g.userData.studioGlass) g.userData.studioGlass = { specularIntensity: g.specularIntensity, roughness: g.roughness };
+        const base = g.userData.studioGlass as { specularIntensity: number; roughness: number };
+        g.specularIntensity = gloss ? GLOSS_COVE.glass : base.specularIntensity;
+        g.roughness = gloss ? GLOSS_COVE.glassRough : base.roughness;
+      }
+    });
+  }
+  /** The pool of shadow sized to the car on screen (mountCarModel). */
+  private setCarFootprint(halfL: number, halfW: number) {
+    this.carFootprint = { halfL, halfW };
+    if (!this.viewer) return;
+    const old = this.viewer.pool.material.alphaMap;
+    this.viewer.pool.material.alphaMap = poolTexture(halfL, halfW);
+    this.viewer.pool.material.needsUpdate = true;
+    old?.dispose();
   }
 
   public setViewInset(right: number, bottom = 0) {
@@ -2631,6 +2763,18 @@ export class CarConfiguratorEngine {
   // CLEANUP
   // ----------------------------------------------------
   public cleanup() {
+    if (this.viewer) {
+      this.viewer.gloss?.dispose();
+      this.viewer.soft?.dispose();
+      for (const m of [this.viewer.dome, this.viewer.floor, this.viewer.pool]) {
+        m.geometry.dispose();
+        const mat = m.material as THREE.MeshBasicMaterial;
+        mat.map?.dispose();
+        mat.alphaMap?.dispose();
+        mat.dispose();
+      }
+      this.viewer = null;
+    }
     this.isDisposed = true;
     this.drive?.resolve();
     this.drive = null;

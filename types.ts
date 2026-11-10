@@ -102,8 +102,9 @@ export interface CaliperColor {
 export type CameraViewPreset =
   | 'showroom'
   | 'hero'
-  | 'frontThreeQuarter' 
-  | 'side' 
+  | 'frontThreeQuarter'
+  | 'front'
+  | 'side'
   | 'frontWheel' 
   | 'rearWheel' 
   | 'rearThreeQuarter' 
