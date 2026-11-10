@@ -172,12 +172,12 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
           )}
 
           <section ref={(el) => (sections.current.paint = el)}>
-            {groups.map((g, gi) => (
-              <div key={g.type}>
-                <H2 step={gi === 0 ? 'paint' : undefined} onStep={p.onStep} aside={g.paints.some((x) => x.id === p.paint.id) ? p.paint.name : undefined}>
-                  {gi === 0 ? 'Paint' : g.label}
-                </H2>
-                {gi === 0 && <div className="-mt-1 mb-1.5 text-[10.5px] text-mute">{g.label}</div>}
+            <H2 step="paint" onStep={p.onStep} aside={`${p.paint.name} · ${p.paint.code}`}>
+              Paint
+            </H2>
+            {groups.map((g) => (
+              <div key={g.type} className="mb-2.5">
+                {groups.length > 1 && <div className="mb-1.5 text-[10.5px] text-mute/80">{g.label}</div>}
                 <div className="grid grid-cols-6 sheet:grid-cols-8 gap-2">
                   {g.paints.map((paint) => (
                     <Swatch key={paint.id} active={paint.id === p.paint.id} title={`${paint.name} (${paint.code})`} onClick={() => p.onPaint(paint)}>
@@ -278,11 +278,12 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </div>
             <div className="shrink-0 font-display text-[20px] short:text-[17px] font-extrabold tabular-nums">{formatMoney(price, p.region)}</div>
           </div>
-          <div className="mt-3 sheet:mt-0 flex items-center gap-2 sheet:flex-1">
-            <Button className="flex-1 short:h-11 sheet:h-12 sheet:px-4" size="lg" onClick={p.onSummary} icon={<ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 [@media(max-width:374px)]:hidden" />}>
-              View your {shortModelName(p.car)}
+          <div className="mt-3 sheet:mt-0 flex items-center gap-2 sheet:flex-1 sheet:min-w-0">
+            {/* One line on a phone: the label does not wrap, the summary icon steps aside (the button is the summary) */}
+            <Button className="flex-1 min-w-0 whitespace-nowrap short:h-11 sheet:h-12 sheet:px-4" size="lg" onClick={p.onSummary} icon={<ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 [@media(max-width:374px)]:hidden" />}>
+              <span className="truncate">View your {shortModelName(p.car)}</span>
             </Button>
-            <IconButton label="Summary" onClick={p.onSummary} className="shrink-0 bg-ink/[0.06] ring-1 ring-line">
+            <IconButton label="Summary" onClick={p.onSummary} className="shrink-0 bg-ink/[0.06] ring-1 ring-line sheet:hidden">
               <ClipboardList className="h-[18px] w-[18px]" strokeWidth={1.6} />
             </IconButton>
             <IconButton label="More options" onClick={p.onOpenMore} className="shrink-0 bg-ink/[0.06] ring-1 ring-line">
