@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { ArrowRight, ChevronLeft, ClipboardList, Info, MoreHorizontal, Rotate3d } from 'lucide-react';
 import { Region, formatMoney } from '../../config/brand';
 import { CameraViewPreset, CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
-import { rimPrice, rimSizes } from '../../services/pricing';
+import { finishSurcharge, rimPrice, rimSizes } from '../../services/pricing';
 import { Button, FinishChip, IconButton, PaintChip, RimThumb, cx } from './ui';
 import { shortModelName } from './Showroom';
 import type { ConfigStep } from './Configurator';
@@ -72,25 +72,30 @@ export const paintTypeLabel = (type: PaintColor['type']) => PAINT_GROUPS.find((g
  */
 const STEP_NUMBER: Record<Exclude<ConfigStep, 'overview'>, number> = { paint: 1, wheels: 2, size: 3, finish: 4 };
 const H2: React.FC<{ children: React.ReactNode; aside?: React.ReactNode; className?: string; step?: Exclude<ConfigStep, 'overview'>; onStep?: (s: ConfigStep) => void }> = ({ children, aside, className, step, onStep }) => (
-  <div className={cx('mt-4 mb-2 flex items-baseline justify-between gap-3 first:mt-0', className)}>
+  // On the phone sheet the heading is a 40 px tap target (touch minimum), the margins trimmed to match
+  <div className={cx('mt-4 mb-2 flex items-baseline justify-between gap-3 first:mt-0 sheet:mt-1.5 sheet:mb-0 sheet:items-center sheet:first:mt-0', className)}>
     {step ? (
-      <button onClick={() => onStep?.(step)} aria-label={`Step ${STEP_NUMBER[step]}: ${String(children)}`} className="text-[11px] font-medium uppercase tracking-[0.08em] text-mute hover:text-ink">
+      <button
+        onClick={() => onStep?.(step)}
+        aria-label={`Step ${STEP_NUMBER[step]}: ${String(children)}`}
+        className="text-[11px] font-medium uppercase tracking-[0.08em] text-mute hover:text-ink sheet:inline-flex sheet:min-h-10 sheet:min-w-10 sheet:items-center"
+      >
         {children}
       </button>
     ) : (
-      <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-mute">{children}</h2>
+      <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-mute sheet:flex sheet:min-h-10 sheet:items-center">{children}</h2>
     )}
     {aside && <span className="truncate text-[11.5px] text-mute">{aside}</span>}
   </div>
 );
 
-/** Pill chip; pressed = Forged Gold. */
+/** Pill chip; pressed = Forged Gold. 32 px on desktop, a 40 px touch target on the phone sheet. */
 const Chip: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }> = ({ active, className, children, ...rest }) => (
   <button
     {...rest}
     aria-pressed={!!active}
     className={cx(
-      'h-8 rounded-lg px-2.5 text-[12px] leading-none ring-1 transition-all duration-200 ease-lux active:scale-[0.97]',
+      'h-8 sheet:h-10 sheet:min-w-10 rounded-lg px-2.5 text-[12px] leading-none ring-1 transition-all duration-200 ease-lux active:scale-[0.97]',
       active ? 'bg-gold text-carbon ring-gold font-semibold' : 'bg-ink/[0.06] text-ink ring-line hover:bg-ink/[0.1]',
       className
     )}
@@ -116,7 +121,7 @@ const Swatch: React.FC<{ active: boolean; title: string; onClick: () => void; ch
 );
 
 export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
-  const price = rimPrice(p.wheel, p.size);
+  const price = rimPrice(p.wheel, p.size, p.finish.id);
   const groups = useMemo(() => PAINT_GROUPS.map((g) => ({ ...g, paints: p.paints.filter((x) => x.type === g.type) })).filter((g) => g.paints.length), [p.paints]);
   const sizes = rimSizes(p.wheel);
   const finishes = p.wheel.availableVariants.map((id) => p.finishes[id]).filter(Boolean);
@@ -136,13 +141,13 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
           {p.car.generation ? <span className="text-mute"> · {p.car.generation}</span> : null}
         </h1>
         <p className="mt-0.5 text-[12px] text-mute">Drag to orbit · scroll or pinch to zoom</p>
-        <button onClick={p.onChangeModel} className="pointer-events-auto mt-2 inline-flex h-8 items-center gap-1 rounded-lg bg-surface/70 px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink ring-1 ring-line backdrop-blur hover:bg-surface">
+        <button onClick={p.onChangeModel} className="pointer-events-auto mt-2 inline-flex h-8 sheet:h-10 items-center gap-1 rounded-lg bg-surface/70 px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink ring-1 ring-line backdrop-blur hover:bg-surface">
           <ChevronLeft className="h-3.5 w-3.5" strokeWidth={1.8} /> Change model
         </button>
       </div>
 
       {/* Paint name, bottom-left (top-left on phones, under the header) */}
-      <div className="absolute z-30 left-4 sm:left-6 bottom-6 sheet:bottom-auto sheet:top-[92px] pointer-events-none animate-fade [text-shadow:0_1px_10px_rgba(0,0,0,.5)]">
+      <div className="absolute z-30 left-4 sm:left-6 bottom-6 sheet:bottom-auto sheet:top-[120px] pointer-events-none animate-fade [text-shadow:0_1px_10px_rgba(0,0,0,.5)]">
         <div className="font-display text-[22px] sheet:text-[17px] short:text-[16px] font-semibold tracking-[-0.01em] text-ink">{p.paint.name}</div>
         <div className="mt-0.5 text-[12px] text-ink/70">
           Code {p.paint.code} · {paintTypeLabel(p.paint.type)} · {p.car.badge}
@@ -177,8 +182,9 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </H2>
             {groups.map((g) => (
               <div key={g.type} className="mb-2.5">
-                {groups.length > 1 && <div className="mb-1.5 text-[10.5px] text-mute/80">{g.label}</div>}
-                <div className="grid grid-cols-6 sheet:grid-cols-8 gap-2">
+                {groups.length > 1 && <div className="mb-1.5 text-[11px] text-mute/80">{g.label}</div>}
+                {/* On the sheet as many columns as fit at 40 px or more: every swatch a full touch target */}
+                <div className="grid grid-cols-6 sheet:grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2">
                   {g.paints.map((paint) => (
                     <Swatch key={paint.id} active={paint.id === p.paint.id} title={`${paint.name} (${paint.code})`} onClick={() => p.onPaint(paint)}>
                       <PaintChip paint={paint} size={34} className="ring-1 ring-white/20 shadow-[inset_0_-6px_10px_rgba(0,0,0,.35),inset_0_4px_8px_rgba(255,255,255,.25)]" />
@@ -193,19 +199,21 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             <H2 step="wheels" onStep={p.onStep} aside={p.wheel.name}>
               Wheels
             </H2>
-            <div className="grid grid-cols-4 sheet:grid-cols-5 gap-x-2 gap-y-3">
+            <ul data-section="wheels" className="grid grid-cols-4 sheet:grid-cols-5 gap-x-2 gap-y-3">
               {p.wheels.map((w) => {
                 const active = w.id === p.wheel.id;
                 return (
-                  <button key={w.id} onClick={() => p.onWheel(w)} title={w.name} aria-pressed={active} className="group flex flex-col items-center text-center">
-                    <span className={cx('rounded-full p-[2px] transition-all duration-200 ease-lux', active ? 'outline outline-2 outline-ink outline-offset-1' : 'group-hover:scale-[1.06]')}>
-                      <RimThumb wheel={w} finish={active ? p.finish : p.finishes[w.defaultVariant] ?? p.finish} size={48} />
-                    </span>
-                    <span className={cx('mt-1.5 w-full truncate text-[10.5px] leading-tight', active ? 'text-ink font-semibold' : 'text-mute')}>{w.name}</span>
-                  </button>
+                  <li key={w.id} className="min-w-0">
+                    <button onClick={() => p.onWheel(w)} title={w.name} aria-pressed={active} className="group flex w-full flex-col items-center text-center">
+                      <span className={cx('rounded-full p-[2px] transition-all duration-200 ease-lux', active ? 'outline outline-2 outline-ink outline-offset-1' : 'group-hover:scale-[1.06]')}>
+                        <RimThumb wheel={w} finish={active ? p.finish : p.finishes[w.defaultVariant] ?? p.finish} size={48} />
+                      </span>
+                      <span className={cx('mt-1.5 w-full truncate text-[11px] leading-tight', active ? 'text-ink font-semibold' : 'text-mute')}>{w.name}</span>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
             <div className="mt-2 flex gap-1.5">
               <Chip onClick={() => p.onInfo(p.wheel)} aria-label="Wheel details" title="Wheel details" className="inline-flex items-center gap-1.5">
                 <Info className="h-3.5 w-3.5" strokeWidth={1.7} /> Details
@@ -222,7 +230,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </H2>
             <div className="flex flex-wrap gap-1.5">
               {sizes.map((s) => (
-                <Chip key={s} active={s === p.size} onClick={() => p.onSize(s)} title={`${s} · ${formatMoney(rimPrice(p.wheel, s), p.region)}`}>
+                <Chip key={s} active={s === p.size} onClick={() => p.onSize(s)} title={`${s} · ${formatMoney(rimPrice(p.wheel, s, p.finish.id), p.region)}`}>
                   {s}
                 </Chip>
               ))}
@@ -233,13 +241,22 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             <H2 step="finish" onStep={p.onStep} aside={p.finish.name}>
               Finish
             </H2>
-            <div className="grid grid-cols-6 sheet:grid-cols-8 gap-2">
-              {finishes.map((f) => (
-                <Swatch key={f.id} active={f.id === p.finish.id} title={`${f.name} · ${f.colorName}`} onClick={() => p.onFinish(f)}>
-                  <FinishChip finish={f} size={34} className="ring-1 ring-white/20" />
-                </Swatch>
-              ))}
-            </div>
+            <ul data-section="finish" className="grid grid-cols-6 sheet:grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2">
+              {finishes.map((f) => {
+                const extra = finishSurcharge(p.wheel, p.size, f.id);
+                return (
+                  <li key={f.id}>
+                    <Swatch
+                      active={f.id === p.finish.id}
+                      title={`${f.name} · ${f.colorName}${extra ? ` · +${formatMoney(extra, p.region)}` : ''}`}
+                      onClick={() => p.onFinish(f)}
+                    >
+                      <FinishChip finish={f} size={34} className="ring-1 ring-white/20" />
+                    </Swatch>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
 
           <section>
@@ -280,8 +297,16 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
           </div>
           <div className="mt-3 sheet:mt-0 flex items-center gap-2 sheet:flex-1 sheet:min-w-0">
             {/* One line on a phone: the label does not wrap, the summary icon steps aside (the button is the summary) */}
-            <Button className="flex-1 min-w-0 whitespace-nowrap short:h-11 sheet:h-12 sheet:px-4" size="lg" onClick={p.onSummary} icon={<ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 [@media(max-width:374px)]:hidden" />}>
-              <span className="truncate">View your {shortModelName(p.car)}</span>
+            <Button
+              className="flex-1 min-w-0 whitespace-nowrap short:h-11 sheet:h-12 sheet:px-4"
+              size="lg"
+              onClick={p.onSummary}
+              aria-label={`View your ${shortModelName(p.car)}`}
+              icon={<ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 [@media(max-width:374px)]:hidden" />}
+            >
+              {/* The full wording needs a wide footer; narrower screens get a label that never truncates */}
+              <span className="hidden xl:inline">View your {shortModelName(p.car)}</span>
+              <span className="xl:hidden">View build</span>
             </Button>
             <IconButton label="Summary" onClick={p.onSummary} className="shrink-0 bg-ink/[0.06] ring-1 ring-line sheet:hidden">
               <ClipboardList className="h-[18px] w-[18px]" strokeWidth={1.6} />

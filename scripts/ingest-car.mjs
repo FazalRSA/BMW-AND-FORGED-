@@ -535,10 +535,10 @@ if (opts.check) {
     fs.rmSync(outDir, { recursive: true, force: true });
     fs.mkdirSync(outDir, { recursive: true });
     const shots = [
-      { name: '1-front34-grey', car: idx, paint: paint('brooklyn_grey'), wheel: 2, finish: 'liquid_metal', view: 'frontThreeQuarter', w: 1280, h: 800, q: rendered },
-      { name: '2-side-black', car: idx, paint: paint('black_sapphire'), wheel: 2, finish: 'silver', view: 'side', w: 1280, h: 800, q: rendered },
-      { name: '3-rear34-white', car: idx, paint: paint('alpine_white'), wheel: 9, finish: 'black', view: 'rearThreeQuarter', w: 1280, h: 800, q: rendered },
-      { name: '4-wheel-grey', car: idx, paint: paint('brooklyn_grey'), wheel: 2, finish: 'liquid_metal', view: 'frontWheel', w: 1280, h: 800, q: rendered }
+      { name: '1-front34-grey', car: idx, paint: paint('brooklyn_grey'), wheel: 'forged_fsa002', finish: 'liquid_metal', view: 'frontThreeQuarter', w: 1280, h: 800, q: rendered },
+      { name: '2-side-black', car: idx, paint: paint('black_sapphire'), wheel: 'forged_fsa002', finish: 'silver', view: 'side', w: 1280, h: 800, q: rendered },
+      { name: '3-rear34-white', car: idx, paint: paint('alpine_white'), wheel: 'sixnine_ff3', finish: 'black', view: 'rearThreeQuarter', w: 1280, h: 800, q: rendered },
+      { name: '4-wheel-grey', car: idx, paint: paint('brooklyn_grey'), wheel: 'forged_fsa002', finish: 'liquid_metal', view: 'frontWheel', w: 1280, h: 800, q: rendered }
     ];
     const spec = path.join(os.tmpdir(), `ingest-car-${opts.car}-shots.json`);
     fs.writeFileSync(spec, JSON.stringify(shots));

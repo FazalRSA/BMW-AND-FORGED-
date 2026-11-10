@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Car, Rotate3d } from 'lucide-react';
 import { CarConfiguratorEngine } from '../services/CarConfiguratorEngine';
 import { WheelDesign, WheelFinish } from '../types';
-import { nearestRimSize, rimPrice, rimSizes } from '../services/pricing';
+import { finishSurcharge, nearestRimSize, rimPrice, rimSizes } from '../services/pricing';
 import { Region, formatMoney } from '../config/brand';
 import { Button, Eyebrow, FinishChip, IconButton, cx } from './journey/ui';
 import RimSpinView, { loadRimSpinManifest } from './RimSpinView';
@@ -179,7 +179,7 @@ export const RimDetailPage: React.FC<RimDetailPageProps> = ({
               <button
                 key={f.id}
                 onClick={() => setFinish(f)}
-                title={f.name}
+                title={`${f.name}${finishSurcharge(wheel, size, f.id) ? ` · +${money(finishSurcharge(wheel, size, f.id))}` : ''}`}
                 className={cx('rounded-full p-[3px] transition-all duration-300', finish?.id === f.id ? 'ring-[1.5px] ring-ink' : 'ring-1 ring-transparent hover:ring-line')}
               >
                 <FinishChip finish={f} size={40} />
@@ -206,7 +206,7 @@ export const RimDetailPage: React.FC<RimDetailPageProps> = ({
         <div className="flex items-end justify-between border-y border-line py-5">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-mute">Set of four</div>
-            <div className="mt-1 font-display text-[26px] font-extrabold tabular-nums">{money(rimPrice(wheel, size))}</div>
+            <div className="mt-1 font-display text-[26px] font-extrabold tabular-nums">{money(rimPrice(wheel, size, finish?.id))}</div>
           </div>
           {(wheel.weightFrontKg > 0 || wheel.weightRearKg > 0) && (
             <div className="text-right text-[12px] text-mute">

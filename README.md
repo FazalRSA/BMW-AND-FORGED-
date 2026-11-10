@@ -5,6 +5,10 @@
 A modern, interactive wheel configurator for BMW vehicles, built with TypeScript. Configure premium wheels, visualize in real-time, and explore customization options with a sleek, intuitive interface.
 
 **Live:** <https://forged-configurator.vercel.app> · **Admin:** `/admin`
+**Preview of this branch (new cars, stock-sheet wheels, viewer look, accounts):**
+<https://forgedsa-configurator.onrender.com> (Render static site built from `ccr-f52bf849-fnf7qs` on every push,
+`VITE_CATALOG_SOURCE=static` so it shows the bundled catalogue until the migrations are applied; see
+[Hosting](#hosting) below).
 
 A real-time 3D configurator for FORGEDSA forged wheels on BMW M cars: pick a car, factory paint,
 wheel design, size and finish, then share the build, download a branded PDF spec sheet or send an
@@ -21,10 +25,16 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 ## 📖 The customer journey
 
 1. **Welcome** – pick a region and currency (South Africa / ZAR by default) and enter the studio.
-2. **Showroom** – choose one of 11 BMW M models.
-3. **Configure** – Paint → Wheels → Size → Finish, with a live price and wheel close-ups.
+2. **Showroom** – choose one of the four prepared BMW M cars (M2 CS, M4 CS, M5, M5 Touring; the older
+   models stay in the catalogue, hidden, until their prepared packages arrive).
+3. **Configure** – the owner's vehicle viewer as the configurator screen: the car in the grey studio
+   dome with the "FORGED" plates, and one glass panel with Car, Paint (grouped by finish), Wheels, Size,
+   Finish, View and Auto-rotate, with the live set price. Every wheel is a real 3D rim from the stock sheet.
 4. **Summary** – studio stills of the build, share code and link, PDF spec sheet (email + mobile
-   required), enquiry form.
+   required), enquiry form, **Save to garage** when signed in.
+5. **Account** (optional) – Google sign-in via Supabase Auth; the garage lists the customer's saved
+   builds (share codes mapped to their account) and pre-fills the PDF gate and enquiry form.
+   See [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
 
 ---
 
@@ -42,6 +52,13 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 ## ✨ Features
 
 - **🎨 Interactive Visualization** – Real-time wheel preview and customization
+- **🚘 Prepared car packages** – one command (`scripts/ingest-car.mjs`) drops a prepared BMW package
+  (`web/<car>_web.glb`) into the catalogue, migration and check sheet ([`docs/ADD_PREPARED_CAR.md`](docs/ADD_PREPARED_CAR.md))
+- **🛞 Real 3D rims from the stock sheet** – the six in-stock designs (FSA001–FSA004, FF-1, FF-3) with the
+  sheet's names, sizes, finishes and ZAR prices, including dearer finishes and the staggered FSA001
+  ([`docs/WHEEL_INVENTORY.md`](docs/WHEEL_INVENTORY.md))
+- **👤 Customer accounts** – Google sign-in, profile, garage of saved builds; share codes and leads carry
+  the customer's id ([`docs/ACCOUNTS.md`](docs/ACCOUNTS.md))
 - **⚡ TypeScript-First** – Fully typed codebase for reliability and maintainability
 - **📱 Responsive Design** – Seamless experience across desktop and mobile devices
 - **🔧 Advanced Configuration** – Deep customization options for wheel specifications
@@ -61,9 +78,31 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 - **Backend:** Supabase (Postgres + Auth + Storage). The catalogue tables (`cars`, `paints`,
   `wheels`, `wheel_finishes`) are the **source of truth**; `data/configuratorData.ts` is only a
   bundled fallback used if Supabase is unreachable, so the app never renders empty. If you edit the
-  catalogue by hand instead of through `/admin`, keep both in sync.
+  catalogue by hand instead of through `/admin`, keep both in sync. Customer accounts use Supabase
+  Auth (Google provider) with `profiles`, `saved_configurations.user_id` and `leads.user_id`
+  (migration `20261110150000_customer_accounts.sql`); admins stay on the `admin_users` allowlist.
+- **Migrations to apply after merging the 2026-11-10 work** (in timestamp order, Supabase SQL editor
+  or CLI): `20261110131741…131759_car_*_prepared_model.sql`, `20261110133425…141826_wheel_*_rim_model.sql`,
+  `20261110141000_legacy_cars_hidden.sql`, `20261110150000_customer_accounts.sql`,
+  `20261110153000_wheel_inventory_stock_sheet.sql`. Until then the live site keeps the old rows.
 - **Hosting:** Vercel project `forged-configurator` (team Nova Havens). Framework preset Vite,
   build `vite build`, output `dist`, no environment variables required.
+
+## Hosting
+
+| Where | URL | Builds from | Catalogue |
+|---|---|---|---|
+| Production (Vercel) | <https://forged-configurator.vercel.app> | `main` | Supabase (live) |
+| Branch preview (Render static site `forgedsa-configurator`) | <https://forgedsa-configurator.onrender.com> | `ccr-f52bf849-fnf7qs`, auto-deploy on push | bundled (`VITE_CATALOG_SOURCE=static`) |
+
+The Render preview exists so the new work can be seen before the migrations touch the live database:
+build command `npm install --no-audit --no-fund && npm run build && cp dist/index.html dist/404.html`
+(the `404.html` copy makes deep links such as `/configure` load the app; a `/* → /index.html` rewrite in
+the Render dashboard does the same with a 200), publish directory `dist`, `NODE_VERSION=22`. Share codes,
+leads, the PDF gate and the admin on the preview talk to the live Supabase project as usual; Google
+sign-in works there once the preview URL is in Supabase → Authentication → URL Configuration → Redirect URLs
+(`docs/ACCOUNTS.md`). To go to production: merge the PR, apply the migrations, remove nothing (Vercel
+builds without the static switch).
 
 ## The admin panel (`/admin`)
 
@@ -81,11 +120,36 @@ something rather than remove it.
 Wheels tab → open a wheel → edit the **"Sizes & set prices"** grid (one row per size, price in USD
 for a set of four; add or remove sizes with the buttons). On Save, the overall "from" price and the
 list of offered sizes are **computed automatically** from that grid — you never edit those two
-fields directly.
+fields directly. Prices are stored in USD and shown per region (`config/brand.ts formatMoney`; ZA =
+USD × 18.2, so R75 000 is stored as 4120.88). A finish that costs more (Polished Face, Liquid Metal)
+goes in **"Dearer finishes"** on the same wheel; blank means the same price as the others.
+
+### The wheels on offer: the stock sheet
+
+The catalogue is the owner's stock sheet (*BMW M / M Performance Wheel Inventory (in stock)*): FSA001,
+FSA002, FSA003, FSA004, FF-1 and FF-3 with the sheet's sizes, finishes, prices and fitment
+([`docs/WHEEL_INVENTORY.md`](docs/WHEEL_INVENTORY.md)). Each one is a real 3D rim on the car
+(`public/models/rims/*.glb`, FSA001 with a separate rear file). Everything else in the wheel table is
+hidden, not deleted: tick **Visible in configurator** to bring a design back.
 
 ### Adding a new wheel design
 
-Wheels tab → **New** → fill in code/name/subtitle/style/spoke type/spoke count/weights/description
+**With a rim GLB** (the website's convention: `Rim_Barrel`, `Rim_Face_Spokes`, `Center_Cap`,
+`Hardware_Bolts`, no tyre):
+
+```bash
+node scripts/ingest-rim.mjs rim.glb --wheel forged_fsa005 --new --name FSA005 --code FSA005 \
+  --sizes 20,21 --price-zar 75000 --finishes gold,hyper_black --default-finish gold --check
+# staggered set: add --rear rear.glb
+```
+
+It checks and packs the file, writes the catalogue row and a migration, and shoots a check sheet on the
+prepared M4 CS and M5. `--new` is for an id that does not exist yet (the script refuses an existing one);
+to put a rim on a wheel already in the catalogue, leave `--new` and the describing options out
+(`node scripts/ingest-rim.mjs rim.glb --wheel forged_fsa_03 --check`). `--dry-run` prints the plan and
+changes nothing; `node scripts/ingest-rim.mjs --help` lists every option.
+
+**By hand:** Wheels tab → **New** → fill in code/name/subtitle/style/spoke type/spoke count/weights/description
 → upload either a transparent front-on rim **PNG** (the app extrudes it into 3D automatically) or a
 rim **GLB** if you have a real 3D model → set the finishes it's offered in and the size/price grid →
 Save. See `docs/HANDOVER.md` §2b for image prep specifics (square crop, transparent gaps between
@@ -104,7 +168,7 @@ in the FORGED Drive folder; edit it like any spreadsheet.
 | `code` | `FSA-02` | optional; becomes the wheel id (`forged_fsa_02`), keep it stable |
 | `sizes` | `19\|20\|21\|22` | separate values with `\|` |
 | `prices_zar` or `prices_usd` | `68000\|74000\|82000\|92000` | set of four, one per size |
-| `finishes` | `Liquid Metal\|Silver` | Liquid Metal, Bronze Matte, Black Gloss, Silver |
+| `finishes` | `Liquid Metal\|Silver` | any finish in the `wheel_finishes` table: Liquid Metal, Bronze Matte, Black Gloss, Silver, Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte (and Satin Gold, Gunmetal Matte) |
 | optional | `subtitle`, `description`, `highlights` (split on `\|`), `style`, `skip` (`yes` = leave alone), `notes` | AI writes the copy if blank |
 
 Each photo is cut out (rim only, transparent gaps), then posted to the Supabase function
@@ -134,9 +198,9 @@ Two fields need a bit of care, because every 3D model names its own parts differ
 - **Paint mesh match** — a regex matched against the model's own mesh/material names to decide what
   gets recoloured. The default (`paint|body|carpaint|exterior`) is only a starting point. Real
   exports are inconsistent: the M3's paint is one flat-colour material covering every body panel
-  (`merged_materials`), while the M4 needed **three** separate materials named `zx1mtl`,
-  `body151mtl` and (confusingly) `pillars1mtl` — the last one, despite its name, covers most of the
-  rear bodywork, not window pillars. **Inspect the model's real material names** (open the browser
+  (`merged_materials`), while the M4 needed **four** separate materials named `zx1mtl`,
+  `body151mtl`, `livery1mtl` and (confusingly) `pillars1mtl` — the last one, despite its name, covers
+  most of the rear bodywork, not window pillars. **Inspect the model's real material names** (open the browser
   console on `/configure` with the car loaded, or a glTF viewer) rather than assuming the default
   regex is enough — an incomplete match is exactly what causes a car to look "two-tone" or have
   unpainted panels.
@@ -151,22 +215,29 @@ real cars being added this way.
 
 The PDF gate (email + mobile required) and the enquiry form both insert into `public.leads`
 (`source` = `pdf` / `enquiry`); admins read them in `/admin` → Enquiries. An `AFTER INSERT` trigger
-posts each lead, enriched with paint hex, wheel image and price, to the n8n workflow
-*FORGEDSA · Lead email*, which emails forgedsa1@gmail.com a branded HTML summary through Gmail. The
-webhook URL lives in Supabase Vault (`lead_webhook_url`), and the template is in
-`n8n/lead-email.code.js`. Details: `docs/HANDOVER.md` §5a.
+posts each lead, enriched with paint hex, wheel image and price (the dearer-finish price when it
+applies), to the n8n workflow *FORGEDSA · Lead email*, which emails forgedsa1@gmail.com a branded
+HTML summary through Gmail. The webhook URL lives in Supabase Vault (`lead_webhook_url`), and the
+template is in `n8n/lead-email.code.js`. Details: `docs/HANDOVER.md` §5a. A signed-in customer's
+leads and share codes also carry their `user_id`, so the garage and the admin can tie them together.
 
 ## Rendering notes
 
 - The studio (lighting, HDRI reflections, camera, contact shadow, paint/wheel materials) lives in
-  `services/CarConfiguratorEngine.ts`.
+  `services/CarConfiguratorEngine.ts`. On `/configure` a live car sits in the owner's viewer studio
+  (`services/viewerStudio.ts`, `engine.setLook('viewer')`): gradient dome, fogged floor, pool shadow,
+  Neutral tone mapping with the exposure set by the paint, gloss/soft reflection coves, the viewer's
+  finish table for Uni / Metallic / Pearl / Frozen paints, and "FORGED" placeholder plates on the
+  bumpers (`?plates=0` turns them off). The harness takes `?look=viewer`.
 - Procedural wheel faces (used until a design has a real rim image or GLB) are generated in
-  `services/proceduralRims.ts` and extruded in `services/rimExtrusion.ts`.
-- Pricing helpers (`rimPrice`, `rimSizes`, `nearestRimSize`) are in `services/pricing.ts`.
+  `services/proceduralRims.ts` and extruded in `services/rimExtrusion.ts`. A rim GLB
+  (`modelUrl`, optional `rearModelUrl`) wins over both.
+- Pricing helpers (`rimPrice(wheel, size, finishId)`, `finishSurcharge`, `rimSizes`,
+  `nearestRimSize`) are in `services/pricing.ts`.
 
 ## Project skills (for Claude Code and developers)
 
-Eighteen task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
+Twenty task playbooks in `.claude/skills/` capture how this project is built and run: adding cars
 and wheels (including turning a rim photo into a swappable 3D rim, and the wheel finishes), tuning
 paint, verifying renders, the PDF, lead emails, branding, docs, deploys and secrets. Claude Code loads them automatically; the index with when-to-use notes is
 [`docs/SKILLS.md`](docs/SKILLS.md).
@@ -186,14 +257,20 @@ step-by-step skill is `3d-car-perfect`, and the research behind it is in
 ```
 config/brand.ts              Brand name, logo, colours, copy, regions/currencies — one file
 data/configuratorData.ts     Bundled fallback catalogue (cars, paints, wheels, finishes)
-services/                    3D engine, wheel kit (tyres, rims, brakes), studio, paint, pricing, catalogue
-scripts/render/              Headless render harness (engine page + batch screenshots) for visual checks
-components/journey/          Welcome → showroom → configurator → summary screens
+services/                    3D engine, viewer studio, wheel kit (tyres, rims, brakes), paint, pricing, catalogue, auth
+scripts/ingest-car.mjs       One command: prepared car package → catalogue + migration + check sheet
+scripts/ingest-rim.mjs       One command: rim GLB (front, optional rear) → packed rim on a wheel
+scripts/render/              Headless render harness (engine page + batch screenshots, journey/e2e/responsive)
+components/journey/          Welcome → showroom → configurator (ViewerPanel) → summary, AccountSheet
 components/admin/            /admin UI (AdminPage.tsx, entityConfig.ts defines every field)
+public/models/               Prepared car GLBs; public/models/rims/ the packed rim GLBs; CREDITS.md
 supabase/migrations/         Database schema, RLS policies, and catalogue changes over time
 n8n/lead-email.code.js       Copy of the n8n Code node that builds the branded lead email
-public/models/CREDITS.md     Licence and attribution for every 3D car model
 docs/HANDOVER.md             Full handover guide: setup, workflow, pre-handover checklist
+docs/ADD_PREPARED_CAR.md     Runbook: a prepared car package or a rim GLB into the configurator
+docs/WHEEL_INVENTORY.md      The stock sheet as the wheel catalogue: ids, finishes, prices
+docs/ACCOUNTS.md             Customer accounts: Supabase Google setup, schema, RLS, test plan
+docs/CHECKPOINT.md           Where the work stands and what is queued next
 docs/SKILLS.md               Index of the project skills in .claude/skills/ (task playbooks)
 docs/PHOTOREAL_METHOD.md     The validated photoreal method (studio, paint, wheels, materials, checks)
 .claude/skills/              Skills Claude Code loads when working in this repo
