@@ -24,7 +24,8 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 
 ## 📖 The customer journey
 
-1. **Welcome** – pick a region and currency (South Africa / ZAR by default) and enter the studio.
+1. **Welcome** – a dark studio stage that cycles studio renders of the four cars (arrows, scroll, keyboard, swipe
+   or dots); pick a region and currency (South Africa / ZAR by default) and enter on the car showing.
 2. **Showroom** – choose one of the four prepared BMW M cars (M2 CS, M4 CS, M5, M5 Touring; the older
    models stay in the catalogue, hidden, until their prepared packages arrive).
 3. **Configure** – the owner's vehicle viewer as the configurator screen: the car in the grey studio
@@ -53,7 +54,8 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 
 - **🎨 Interactive Visualization** – Real-time wheel preview and customization
 - **🚘 Prepared car packages** – one command (`scripts/ingest-car.mjs`) drops a prepared BMW package
-  (`web/<car>_web.glb`) into the catalogue, migration and check sheet ([`docs/ADD_PREPARED_CAR.md`](docs/ADD_PREPARED_CAR.md))
+  (`web/<car>_web.glb`) into the catalogue, migration and check sheet ([`docs/ADD_PREPARED_CAR.md`](docs/ADD_PREPARED_CAR.md);
+  the full process for cars and wheels is [`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`](docs/PRODUCT_SPEC_CARS_AND_WHEELS.md))
 - **🛞 Real 3D rims from the stock sheet** – the six in-stock designs (FSA001–FSA004, FF-1, FF-3) with the
   sheet's names, sizes, finishes and ZAR prices, including dearer finishes and the staggered FSA001
   ([`docs/WHEEL_INVENTORY.md`](docs/WHEEL_INVENTORY.md))

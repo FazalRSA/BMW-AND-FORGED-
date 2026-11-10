@@ -1,4 +1,4 @@
--- BMW M5 Touring: prepared model from bmw_m5_touring_g99.glb, ingested by scripts/ingest-car.mjs on 2026-11-10.
+-- BMW M5 Touring: prepared model from BMW_M5_Touring_G99.zip, ingested by scripts/ingest-car.mjs on 2026-11-10.
 -- The file is served from the repo at /models/m5_touring_g99.glb. Licence: see public/models/CREDITS.md (not confirmed for the
 -- prepared packages; prototype use until a licence is in hand).
 insert into public.cars (id, name, badge, generation, chassis_code, body_style, model_url, model_rotation_deg, model_length_m,

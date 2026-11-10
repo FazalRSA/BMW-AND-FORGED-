@@ -13,7 +13,7 @@ import type { CarConfiguratorEngine } from './CarConfiguratorEngine';
  * goes through here, so the tone curve and the backdrop cannot drift apart.
  */
 export const RENDER_ASPECT = 1.6; // matches scripts/prerender/export-scene.cjs
-export const RENDER_VIEWS: CameraViewPreset[] = ['frontThreeQuarter', 'side', 'rearThreeQuarter', 'frontWheel', 'top'];
+export const RENDER_VIEWS: CameraViewPreset[] = ['frontThreeQuarter', 'side', 'rearThreeQuarter', 'frontWheel', 'top', 'front'];
 
 let manifest: Promise<Record<string, string[]>> | null = null;
 /** Car ids that have renders, with their views. */
