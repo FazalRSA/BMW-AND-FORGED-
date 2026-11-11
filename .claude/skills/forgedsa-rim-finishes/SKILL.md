@@ -72,6 +72,11 @@ shading.
   - two-/three-piece rims (style text "two-piece"/"three-piece"): always the polished lip with
     bolts (`kit.lipPolished`), whatever the finish, as on the real wheels.
 - **GLB rims (CAD) and the flat-photo fallback:** same look, without flake (their units vary).
+- **The rim page (`/rims/<id>`):** the wheel studio (`components/WheelStudio.tsx`) loads the same rim file as
+  the car and draws it with `finishLook()` / `applyFinishLook()` from `services/wheelFinish.ts`, so a finish
+  is the same coating on the rim page and on the car. Its barrel, face and cap take the finish; bolts and
+  brake meshes keep their own materials (`FINISH_PARTS` in `services/wheelStudioParts.ts`). What differs is
+  the room: a light product stage with its own generated reflections, and no wheel-arch shading.
 - **Not affected:** caliper colour (`applyCaliperColor`), tyre, disc, lug nuts, centre cap.
 
 ## Adding or tuning a finish
@@ -107,17 +112,17 @@ an edit in Finishes changes the live site at once.
 
 1. **Shot list:** the same stocked design (by id), live car and view in every stock-sheet finish;
    no other change between shots. `car` 1 is the M4 CS (live cars: 1, 5, 7, 8; `3` is the hidden
-   M3), `"q": "&look=viewer"` is what /configure draws:
+   M3), `"q": "&look=stage"` is what /configure draws:
 
    ```json
-   [{"name":"gold","car":1,"paint":16,"wheel":"forged_fsa004","finish":"gold","view":"frontWheel","q":"&look=viewer"},
-    {"name":"hyper_black","car":1,"paint":16,"wheel":"forged_fsa004","finish":"hyper_black","view":"frontWheel","q":"&look=viewer"},
-    {"name":"polished_face","car":1,"paint":16,"wheel":"forged_fsa004","finish":"polished_face","view":"frontWheel","q":"&look=viewer"},
-    {"name":"silver","car":1,"paint":16,"wheel":"forged_fsa004","finish":"silver","view":"frontWheel","q":"&look=viewer"},
-    {"name":"black","car":1,"paint":16,"wheel":"forged_fsa004","finish":"black","view":"frontWheel","q":"&look=viewer"},
-    {"name":"pure_bronze","car":1,"paint":16,"wheel":"forged_fsa004","finish":"pure_bronze","view":"frontWheel","q":"&look=viewer"},
-    {"name":"liquid","car":1,"paint":16,"wheel":"forged_fsa004","finish":"liquid_metal","view":"frontWheel","q":"&look=viewer"},
-    {"name":"black_matte","car":1,"paint":16,"wheel":"forged_fsa004","finish":"black_matte","view":"frontWheel","q":"&look=viewer"}]
+   [{"name":"gold","car":1,"paint":16,"wheel":"forged_fsa004","finish":"gold","view":"frontWheel","q":"&look=stage"},
+    {"name":"hyper_black","car":1,"paint":16,"wheel":"forged_fsa004","finish":"hyper_black","view":"frontWheel","q":"&look=stage"},
+    {"name":"polished_face","car":1,"paint":16,"wheel":"forged_fsa004","finish":"polished_face","view":"frontWheel","q":"&look=stage"},
+    {"name":"silver","car":1,"paint":16,"wheel":"forged_fsa004","finish":"silver","view":"frontWheel","q":"&look=stage"},
+    {"name":"black","car":1,"paint":16,"wheel":"forged_fsa004","finish":"black","view":"frontWheel","q":"&look=stage"},
+    {"name":"pure_bronze","car":1,"paint":16,"wheel":"forged_fsa004","finish":"pure_bronze","view":"frontWheel","q":"&look=stage"},
+    {"name":"liquid","car":1,"paint":16,"wheel":"forged_fsa004","finish":"liquid_metal","view":"frontWheel","q":"&look=stage"},
+    {"name":"black_matte","car":1,"paint":16,"wheel":"forged_fsa004","finish":"black_matte","view":"frontWheel","q":"&look=stage"}]
    ```
 
    Then the same list on each stocked wheel in the finishes it offers (`docs/WHEEL_INVENTORY.md`);
@@ -140,7 +145,9 @@ an edit in Finishes changes the live site at once.
      a touch whiter; on a GLB rim the whole rim reads polished (one material covers every mesh).
    - **Black Matte:** satin solid black with no flake, no flop and no sharp highlight anywhere; not a
      black hole (the base must still show form).
-3. **Close-up:** check `/rims/<id>` in each finish (the showcase has no arch shading).
+3. **Close-up:** check `/rims/<id>` in each finish. The wheel studio there uses the same recipe as the
+   car, on a light stage with no arch shading: the recipe is shared, only the room differs. The finish
+   chips in its control card switch finishes without leaving the page.
 4. **Colour and gloss:** judge on a real screen as well; the headless renderer has no
    anti-aliasing.
 

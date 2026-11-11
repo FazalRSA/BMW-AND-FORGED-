@@ -43,8 +43,10 @@ Notes
   The website's brake caliper and rotor meshes inside the STF399 files are dropped when packing
   (`scripts/rim3d/pack.mjs`), because the engine draws its own.
 - **FSA003's old spin frames were removed** (`public/renders/rims/forged_fsa_03/` and its `manifest.json` entry, 2026-11-10):
-  they showed the earlier photo-traced design under the reused id, so the rim page now draws the live GLB for every finish
-  until a spin of the stocked wheel is rendered (`scripts/rim3d/turntable.py`).
+  they showed the earlier photo-traced design under the reused id. Since 2026-11-11 no wheel has a spin: the rim page
+  (`/rims/<id>`) draws each stocked wheel's rim file live in the wheel studio (`components/WheelStudio.tsx`), in every
+  finish, with the same finish recipe as on the car (`services/wheelFinish.ts`). `scripts/rim3d/turntable.py` is a legacy
+  script; nothing in the app uses its output.
 - **Stock quantity and status** are not shown in the configurator (the sheet says one or two sets each).
   Hide a design when it sells out: `/admin > Wheels > Visible in configurator`.
 
@@ -73,4 +75,5 @@ wheels and for any wheel the owner ticks them on.
 3. A new finish: `/admin > Finishes` (the `forgedsa-rim-finishes` skill explains the numbers), then tick it
    on the wheel.
 4. Render the wheel on the car before telling anyone it is live (`visual-qa` skill):
-   `node scripts/render/shoot.cjs <out> shots.json` with `"q": "&look=viewer"`.
+   `node scripts/render/shoot.cjs <out> shots.json` with `"q": "&look=stage"` (what `/configure` draws), and open
+   `/rims/<id>` to check it in the wheel studio.

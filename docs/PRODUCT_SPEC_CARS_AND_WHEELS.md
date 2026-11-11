@@ -19,7 +19,9 @@ It is written so that one person can run it. Every step names the command, the f
 | Hidden cars | M4 Competition, M4 Convertible, M3, M3 Touring, M235i, M8, X3 M50, X5 M (and a model-less `m5_f90` row in Supabase). Hidden with `active = false`, never deleted. |
 | Active wheels | Six from the stock sheet: FSA001 (staggered), FSA002, FSA003, FSA004, FF-1, FF-3. All are real 3D rim files. |
 | Hidden wheels | Eleven photo-traced designs (FSA-01, 02, 04 to 09, 12, 13, 14). |
-| How a car is drawn | Live from its GLB for all four. Only the M5 G90 also has Blender frames (dark studio). |
+| How a car is chosen | On the welcome carousel (`HERO_SLIDES` in `components/journey/HeroStage.tsx`). **Enter** opens the configurator on the car on stage. There is no showroom page (removed 2026-11-11). |
+| How a car is drawn | Live from its GLB for all four, in the stage look on `/configure` (`engine.setLook('stage')`, `services/viewerStudio.ts`). Only the M5 G90 also has Blender frames (dark studio). |
+| Rim page (`/rims/<id>`) | The wheel studio (`components/WheelStudio.tsx`) draws the same rim file the car uses. The pre-rendered 360 spin is no longer part of the app. |
 | Cycles bodies in the configurator | **Planned.** Wheel-less Cycles bodies exist for the M2 CS only, in files outside the app, and are not wired in. |
 | Licences | Not confirmed for the four prepared cars (game-derived). Prototype use until resolved. |
 
@@ -35,7 +37,7 @@ A car always works the first way. The other two are upgrades.
 | **B. Blender frames** | Pre-rendered body images per view, recoloured in the browser, live wheels on top | A Blender (bpy) render run, about 15 to 25 minutes per car | Shipped for the M5 G90 only. Dark-studio look. |
 | **C. Cycles bodies + live wheels** | Bodies rendered without wheels in the approved reference studio, one image per paint and view, live FORGED wheels on top | Reference studio `.blend`, Cycles run per car, wiring in `services/renderedBody.ts` | **Planned.** Not wired. Acceptance rule in section 9. |
 
-The welcome screen is separate: it shows one Cycles still per car (`public/hero/`), baked-in stock wheels, and does not take part in the wheel swap.
+The welcome screen is separate: it shows one Cycles still per car (`public/hero/`), baked-in stock wheels, and does not take part in the wheel swap. It is where the customer chooses the car: **Enter** opens the configurator on the car on stage (section 4.7).
 
 ---
 
@@ -65,6 +67,12 @@ Never put source masters or secrets in the repo.
 Do these first. A car that fails the licence check is not built.
 
 1. **Licence.** The file must allow commercial, real-time web use. Accept CC BY (credit required) or a paid licence that names real-time use. Reject editorial licences and CC BY-NC or CC BY-NC-SA. A "CC BY" copy of a non-commercial model is unlicensed. Many marketplace models come from games: record that in `CREDITS.md` and flag a formal check before a large launch. BMW's trademark is a separate question from the mesh licence.
+   **BlendKit models (the service was formerly BlenderKit).** The owner is looking at BlendKit car models. Checked 2026-11-11 on `blendkit.com/docs/licenses` and `blendkit.com/docs/licenses/licensing-faq`:
+   - Royalty Free "allows commercial use without mentioning the author, but doesn't allow for re-sale of the asset in the same form".
+   - For games the FAQ says yes "if these can't be extracted by the users in an easy way" and "the assets shouldn't be directly extractable in the distribution".
+   - A GLB that a browser downloads is directly extractable. So a BlendKit Royalty Free car **must not be shipped as a live GLB (mode A)**. It can be used through pre-rendered images: Blender frames (mode B) or Cycles bodies with live wheels (mode C, section 8).
+   - As built today, mode B still serves the car's GLB: the engine loads it as an invisible depth mask behind the frames, and the turntable and any view without a frame draw it live (`docs/ADD_PREPARED_CAR.md`, "Body modes"). For a BlendKit car that file must not be served, so mode B needs that changed first. This is not built.
+   - Those pages do not say anything about trademarks or real car brands, or whether the licence continues after a subscription ends. Both are open questions for the owner (section 10).
 2. **Real figures.** Length, width, height, wheelbase, track, tyre sizes. Put them in the car spec (`car_specs.yaml`, with `# est` on every estimate).
 3. **Names.** Pick the catalogue id: lowercase, digits and underscores, model plus chassis code (`m5_touring_g99`). The id is permanent because saved builds and share codes point at it.
 
@@ -166,9 +174,11 @@ Pass all of these before it goes anywhere:
 - `node scripts/render/journey.cjs <out> <rimCache> both`: phone and desktop, no FAILED step, no page error, no long task.
 - Not yet covered by any check: real phones, real GPUs, frame rate. Say so in the report.
 
-### 4.7 Optional: the welcome screen
+### 4.7 The welcome carousel (where the car is chosen)
 
-The welcome stage has a fixed list in `components/journey/HeroStage.tsx` (`HERO_SLIDES`) and a picks table in `scripts/make-hero-stills.py` (`PICKS`). To add a car: render one Cycles still, add it to `PICKS` and `HERO_SLIDES`, run `python3 scripts/make-hero-stills.py <stills_dir>`, and add the `public/hero/<carId>-1600.webp` and `-960.webp` files. The car id must be active in the catalogue, or Enter falls back to the default car.
+Since 2026-11-11 there is no showroom page: the welcome carousel is where a customer chooses the car, and the stepped drawer on `/configure` has no car picker (**Change model** goes back to the carousel). A car that is active in the catalogue but not on the carousel is not offered on the normal journey: it is only reached through a share code or garage build that points at it, or the `?panel=viewer` comparison panel. So a new car needs a slide.
+
+The welcome stage has a fixed list in `components/journey/HeroStage.tsx` (`HERO_SLIDES`) and a picks table in `scripts/make-hero-stills.py` (`PICKS`). To add a car: render one Cycles still, add it to `PICKS` and `HERO_SLIDES`, run `python3 scripts/make-hero-stills.py <stills_dir>`, and add the `public/hero/<carId>-1600.webp` and `-960.webp` files. Each slide carries `paintId`, the catalogue paint its still shows: **Enter** opens the car in that paint when the car's palette has it, otherwise in the first paint of its palette (today the M2 CS opens in Portimao Blue and the M5 in Fire Red; the M4 CS and M5 Touring palettes do not have their stills' paints). The car id must be active in the catalogue, or Enter keeps the car that was already selected.
 
 ### 4.8 Optional upgrade: Blender frames (mode B)
 
@@ -277,7 +287,7 @@ A new finish needs a recipe in `services/wheelFinish.ts` and a row in `wheel_fin
 - Contact sheet `docs/ingest/rims/<wheelId>.jpg` read by a person: spokes face outward (else `--flip`), no tyre or barrel showing through, spokes not fat, thin or broken against the source, correct in every offered finish and size, staggered front and rear if offered.
 - The wheel on at least two different cars (the M4 CS and the M5 are the harness defaults).
 - `bun run lint`, `bun run build`, `journey.cjs both`, and `pdf-check.cjs` if price or spec fields changed.
-- The rim detail page draws the live GLB. A pre-rendered 360 spin is optional and takes 45 to 75 minutes per wheel on CPU (`scripts/rim3d/turntable.py`); none of the six stock wheels has one yet.
+- The rim page: open `/rims/<wheelId>`. The wheel studio (`components/WheelStudio.tsx`) draws the same rim file the car uses, with the same finish recipe (`services/wheelFinish.ts`). Check each offered finish, the Front / Rear switch on a staggered set, and the Exploded, Bolts and Cap toggles (offered only when the file has those parts). The pre-rendered 360 spin is no longer part of the app; `scripts/rim3d/turntable.py` and `spin-manifest.py` are legacy scripts whose output nothing uses.
 
 ---
 
@@ -297,9 +307,9 @@ Retiring a car or wheel: set `active = false` in the fallback and in a migration
 
 Checked by migration name against the project's applied list:
 
-- **In the repo, not applied:** `customer_accounts` (20261110150000), `admin_requires_confirmed_email` (20261110170000), and `lead_hardening` (20261001090000) has no migration of that name in the applied list.
-- **Applied, not in the repo:** `prepared_cars_keep_own_brakes`. Add its SQL to the repo so the two agree.
-- **Name mismatch:** Supabase still calls `m2_g87` "BMW M2 Coupe"; the bundled catalogue says "BMW M2 CS".
+- **Applied since the first check:** `customer_accounts`, `admin_requires_confirmed_email` and `prepared_cars_keep_own_brakes` are in the applied list (read with `list_migrations` on 2026-11-11), and the SQL for `prepared_cars_keep_own_brakes` is in the repo (`20261110190000`). All fifteen `20261110*` files are applied.
+- **In the repo, not applied:** `20261111090000_car_m2_g87_name_m2_cs.sql`. It waits for the owner's go-ahead because it changes live data. `lead_hardening` (20261001090000) has no migration of that name in the applied list.
+- **Name mismatch:** Supabase still calls `m2_g87` "BMW M2 Coupe" (badge "M2 G87"); the bundled catalogue and the welcome carousel say "BMW M2 CS". The earlier upsert updated only the model fields. The migration above fixes it.
 - The `cars` table has an `m5_f90` row that the bundled catalogue does not.
 
 ---
@@ -318,12 +328,14 @@ Checked by migration name against the project's applied list:
 
 ## 8. The photoreal lane (mode C, Planned)
 
-Today the app draws prepared cars live, which looks less real than the approved Cycles stills. The plan:
+Today the app draws prepared cars live, which looks less real than the approved Cycles stills. Since 2026-11-11 the live stage on `/configure` is modelled on those stills (the stage look: black backdrop, a pool of light on a pale floor, one overhead softbox in a black cove), but it is still the live WebGL car: it does not have the stills' path-traced reflections and soft shadows. The plan:
 
 1. Render each car **without wheels** in the approved reference studio (Cycles CPU, 8 samples, adaptive 0.03, OpenImageDenoise, 1600 x 900, Khronos PBR Neutral at -0.8 EV, metalness x 1.2, `Wheels` and `Mechanical` collections hidden). Scripts: `scripts/cycles/` (`batch_stills.py`, `body_hero.py`, `body_views.py`, `body_still.py`).
 2. One body image per paint (21 paints) at front three-quarter, plus six view images in one paint, per car. Camera names in the scene GLB: `CAM_frontThreeQuarter`, `CAM_side`, `CAM_rearThreeQuarter`, `CAM_frontWheel`, `CAM_top`, `CAM_front`.
 3. Convert to WebP and wire into `services/renderedBody.ts`; draw the live FORGED wheels on top.
 4. **Acceptance:** send a side-by-side of the app against the approved still for one car (the M2 CS first) and get the owner's yes before rendering the others. Do not call any result photoreal until black, white, a saturated colour and a Frozen paint all pass at three views.
+
+**Licence reason for this lane (BlendKit, section 4.1):** a BlendKit Royalty Free car must not be shipped as a live GLB, because a GLB that a browser downloads is directly extractable. It can be used through pre-rendered images (mode B or this mode C). When this lane is wired in, it must not serve the car's GLB to the browser either; today's mode B still does (section 4.1).
 
 **Gap:** the reference studio `.blend` (`BMW_M2_CS_G87_clean_studio.blend`) lives only on the working machine. It must be saved somewhere durable (Drive > 3d cars) before this lane is relied on.
 
@@ -352,6 +364,9 @@ A car or wheel is done when all of these are true, and the report says which wer
 3. Licences for the four prepared packages.
 4. Where the studio `.blend` and the source masters are stored long term.
 5. Whether the website rim files (FF-1 and FF-3 use the historic `sixnine_` ids) are FORGEDSA's own designs.
+6. BlendKit car models (section 4.1): the licence pages checked on 2026-11-11 say nothing about trademarks or real car brands. Is a BlendKit model of a real BMW usable on a public site?
+7. BlendKit: the same pages do not say whether the licence continues after a subscription ends. Confirm before any BlendKit car is rendered for the site.
+8. BlendKit: if one is used, which pre-rendered mode (B or C), given that neither may serve the car's GLB to the browser.
 
 ---
 
@@ -363,4 +378,5 @@ A car or wheel is done when all of these are true, and the report says which wer
 - Cinevva, "How to optimize GLB files for the web" (Sept 2026; Meshopt vs Draco vs KTX2, texture order of work): https://app.cinevva.com/guides/optimize-glb-for-web
 - Needle Engine optimization notes (KTX2 vs WebP in GPU memory): https://engine.needle.tools/docs/how-to-guides/optimization/
 - Khronos glTF Validator: https://github.khronos.org/glTF-Validator
+- BlendKit licences and licensing FAQ (checked 2026-11-11): `blendkit.com/docs/licenses`, `blendkit.com/docs/licenses/licensing-faq`
 - Repo: `docs/ADD_PREPARED_CAR.md`, `docs/RIM_3D_PROCESS.md`, `docs/WHEEL_PIPELINE.md`, `docs/WHEEL_INVENTORY.md`, `scripts/ingest-car.mjs --help`, `scripts/ingest-rim.mjs --help`.

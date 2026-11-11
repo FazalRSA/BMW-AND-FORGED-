@@ -15,9 +15,9 @@ be **confirmed** in Supabase Auth (see *Owner steps* and *How RLS keeps customer
 | Auth service: sign in / out, cached session, profile, garage | `services/authService.ts` |
 | `user_id` on saved builds and leads | `services/journeyService.ts` (`saveConfiguration`, `submitEnquiry`) |
 | The account sheet (sign-in, profile, garage) | `components/journey/AccountSheet.tsx` |
-| Entry points | `App.tsx`: the **Account** button in the showroom header and in the configurator's stage corner; `SummaryPage.tsx`: **Save to garage** / **Sign in to save** under the configuration code in *Share summary*; the PDF form and the enquiry form are prefilled from the profile |
+| Entry points | `App.tsx`: the **Account** button in the configurator's stage corner, and **Account & garage** in the configurator's **More options** (`MoreOptionsModal` in `Configurator.tsx`); `SummaryPage.tsx`: **Save to garage** / **Sign in to save** under the configuration code in *Share summary*; the PDF form and the enquiry form are prefilled from the profile |
 
-**Signed out:** the sheet ("Your garage") explains what an account gives, offers **Continue with
+**Signed out:** the sheet ("Sign in") explains what an account gives, offers **Continue with
 Google** and states what is stored (POPIA line with the contact email from `config/brand.ts`).
 
 **Signed in:** avatar, name and email; editable profile (display name, phone, city, your car from
@@ -36,7 +36,7 @@ wheel · size · finish, date) with **Open** (reopens it in the configurator thr
   touches a row the caller already owns.
 - `leads.user_id` is set the same way for enquiries and PDF downloads. The `configuration` object the
   lead email (n8n) reads is unchanged.
-- The Google round trip reloads the page. From the showroom, configurator or summary the build in
+- The Google round trip reloads the page. From the configurator or summary the build in
   progress is first saved under a code and the visitor returns to `/?config=CODE`, which reopens it
   in the configurator; from any other page they return to that page. The token fragment Supabase
   puts in the URL is removed again (`history.replaceState`), so `/?config=` links and share links
@@ -149,8 +149,8 @@ the enquiry form. Google receives nothing from the app beyond the sign-in itself
 Run the dev server (`bun run dev`, or Vite on 5173) with `http://localhost:5173/**` in the redirect
 list, or test on a preview deployment.
 
-1. Open `/`, **Enter**, **Build**, **Confirm**. Click the **Account** button (top-right corner of the
-   stage): the sheet says "Your garage" and shows **Continue with Google**.
+1. Open `/`, **Enter** (it opens the configurator on the car showing). Click the **Account** button
+   (top-right corner of the stage): the sheet says "Sign in" and shows **Continue with Google**.
 2. Click it, choose a Google account. You land back in the configurator with the same car and paint
    (`/?config=…` → `/configure`); the address bar has no `#access_token`.
 3. **Account** again: avatar, name, email. Fill in phone and city, pick your car, **Save profile** →

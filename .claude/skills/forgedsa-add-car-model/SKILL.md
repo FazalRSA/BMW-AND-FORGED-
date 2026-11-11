@@ -35,6 +35,21 @@ other files.
 - Many community uploads derive from game assets. Note it in `public/models/CREDITS.md` and flag a
   formal licence check before a large launch.
 - Record author, link and licence in `public/models/CREDITS.md` in the same commit.
+- **BlendKit models (the service was formerly BlenderKit).** The owner is looking at BlendKit car models.
+  Checked 2026-11-11 on `blendkit.com/docs/licenses` and `blendkit.com/docs/licenses/licensing-faq`:
+  - Royalty Free "allows commercial use without mentioning the author, but doesn't allow for re-sale of
+    the asset in the same form".
+  - For games the FAQ says yes "if these can't be extracted by the users in an easy way" and "the assets
+    shouldn't be directly extractable in the distribution".
+  - A GLB that a browser downloads is directly extractable (first bullet above). So a BlendKit Royalty
+    Free car **must not be shipped as a live GLB** (mode A, the default of `scripts/ingest-car.mjs`). It
+    can be used through pre-rendered images: Blender frames (mode B) or Cycles bodies with live wheels
+    (mode C, planned). Modes: `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` sections 2, 4.1 and 8.
+  - As built today, mode B still serves the car's GLB (the engine keeps the body as an invisible depth
+    mask behind the frames, and the turntable and any view without a frame draw it live). That has to
+    change before a BlendKit car goes in; it is not built.
+  - Those pages do not say anything about trademarks or real car brands, or whether the licence
+    continues after a subscription ends. Both are open questions for the owner: ask before using one.
 
 ## 2. Prepare the GLB
 
@@ -95,12 +110,23 @@ and fix any misfiled part by tightening the rules (colour-gate them), never with
 ## 6. Verify
 
 Use the `forgedsa-render-verification` skill and the full checklist in `3d-car-perfect`. Render
-front three-quarter, side and rear in at least one metallic and one black paint. Check:
+front three-quarter, side and rear in at least one metallic and one black paint, with `&look=stage`
+(what `/configure` draws for a live car). Check:
 - one consistent paint colour and no floating unpainted panels;
 - glass tinted, not coloured;
 - red tail lights, clear headlight covers;
 - forged wheels seated in the arches, with the caliper visible behind the spokes;
 - correct scale.
+
+## 7. Put it on the welcome carousel
+
+Customers choose the car on the welcome carousel; there is no showroom, and the configurator's stepped
+drawer has no car picker ("Change model" goes back to the carousel). An active car without a slide is
+only reached through a share code or garage build, or the `?panel=viewer` panel. Add the car to
+`HERO_SLIDES` in `components/journey/HeroStage.tsx` (`carId`, `name`, `paint`, and `paintId`: the catalogue
+paint its still shows; Enter opens the car in it when the car's palette has it, otherwise in the first
+paint of its palette) and its stills to `public/hero/<carId>-1600.webp` and `-960.webp`
+(`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.7).
 
 ## Current line-up (Nov 2026)
 

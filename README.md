@@ -5,9 +5,9 @@
 A modern, interactive wheel configurator for BMW vehicles, built with TypeScript. Configure premium wheels, visualize in real-time, and explore customization options with a sleek, intuitive interface.
 
 **Live:** <https://forged-configurator.vercel.app> · **Admin:** `/admin`
-**Preview of this branch (new cars, stock-sheet wheels, viewer look, accounts):**
+**Preview of this branch (new cars, stock-sheet wheels, stage look, accounts):**
 <https://forgedsa-configurator.onrender.com> (Render static site built from `ccr-f52bf849-fnf7qs` on every push,
-`VITE_CATALOG_SOURCE=static` so it shows the bundled catalogue until the migrations are applied; see
+`VITE_CATALOG_SOURCE=static` so it shows the bundled catalogue, whatever the live database holds; see
 [Hosting](#hosting) below).
 
 A real-time 3D configurator for FORGEDSA forged wheels on BMW M cars: pick a car, factory paint,
@@ -24,16 +24,22 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 
 ## 📖 The customer journey
 
-1. **Welcome** – a dark studio stage that cycles studio renders of the four cars (arrows, scroll, keyboard, swipe
-   or dots); pick a region and currency (South Africa / ZAR by default) and enter on the car showing.
-2. **Showroom** – choose one of the four prepared BMW M cars (M2 CS, M4 CS, M5, M5 Touring; the older
-   models stay in the catalogue, hidden, until their prepared packages arrive).
-3. **Configure** – the owner's vehicle viewer as the configurator screen: the car in the grey studio
-   dome with the "FORGED" plates, and one glass panel with Car, Paint (grouped by finish), Wheels, Size,
-   Finish, View and Auto-rotate, with the live set price. Every wheel is a real 3D rim from the stock sheet.
-4. **Summary** – studio stills of the build, share code and link, PDF spec sheet (email + mobile
-   required), enquiry form, **Save to garage** when signed in.
-5. **Account** (optional) – Google sign-in via Supabase Auth; the garage lists the customer's saved
+1. **Welcome** – a dark studio stage that cycles studio renders of the four prepared BMW M cars (M2 CS, M4 CS,
+   M5, M5 Touring; the older models stay in the catalogue, hidden, until their prepared packages arrive). This is
+   where the car is chosen: arrows, scroll, keyboard, swipe or dots. Pick a region and currency (South Africa /
+   ZAR by default); **Enter** opens the configurator on the car showing. There is no separate showroom page.
+2. **Configure** – a live car on a dark stage modelled on the welcome stills (black backdrop, a pool of light on a
+   pale floor) with the "FORGED" plates (the M5 shows its pre-rendered Blender frames in the fixed views
+   instead), and the stepped drawer (a bottom sheet on phones, a side panel on wider
+   screens): Overview, then Paint, Wheels, Size and Finish, with the live set price. Camera chips (Front, Side,
+   Rear, Wheel, Top) and a turntable button sit over the stage; **Change model** goes back to the welcome.
+   **More options** (the … button in the drawer header) holds Region, Load a configuration, Account & garage,
+   the links to The wheels, Enquire, Delivery & fitment, Terms & conditions and Credits, and Start again; it
+   replaces the hamburger menu and top bar, which went with the showroom.
+   Every wheel is a real 3D rim from the stock sheet.
+3. **Summary** – studio stills of the build, share code and link, PDF spec sheet (email + mobile
+   required), enquiry form, the visualisation notice, **Save to garage** when signed in.
+4. **Account** (optional) – Google sign-in via Supabase Auth; the garage lists the customer's saved
    builds (share codes mapped to their account) and pre-fills the PDF gate and enquiry form.
    See [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
 
@@ -83,10 +89,9 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
   catalogue by hand instead of through `/admin`, keep both in sync. Customer accounts use Supabase
   Auth (Google provider) with `profiles`, `saved_configurations.user_id` and `leads.user_id`
   (migration `20261110150000_customer_accounts.sql`); admins stay on the `admin_users` allowlist.
-- **Migrations to apply after merging the 2026-11-10 work** (in timestamp order, Supabase SQL editor
-  or CLI): `20261110131741…131759_car_*_prepared_model.sql`, `20261110133425…141826_wheel_*_rim_model.sql`,
-  `20261110141000_legacy_cars_hidden.sql`, `20261110150000_customer_accounts.sql`,
-  `20261110153000_wheel_inventory_stock_sheet.sql`. Until then the live site keeps the old rows.
+- **Migrations:** all fifteen `supabase/migrations/20261110*.sql` files are applied to the live project
+  (read back on 2026-11-11). One is written and not applied: `20261111090000_car_m2_g87_name_m2_cs.sql`,
+  which renames the live `m2_g87` row from "BMW M2 Coupe" to "BMW M2 CS".
 - **Hosting:** Vercel project `forged-configurator` (team Nova Havens). Framework preset Vite,
   build `vite build`, output `dist`, no environment variables required.
 
@@ -103,8 +108,8 @@ build command `npm install --no-audit --no-fund && npm run build && cp dist/inde
 the Render dashboard does the same with a 200), publish directory `dist`, `NODE_VERSION=22`. Share codes,
 leads, the PDF gate and the admin on the preview talk to the live Supabase project as usual; Google
 sign-in works there once the preview URL is in Supabase → Authentication → URL Configuration → Redirect URLs
-(`docs/ACCOUNTS.md`). To go to production: merge the PR, apply the migrations, remove nothing (Vercel
-builds without the static switch).
+(`docs/ACCOUNTS.md`). To go to production: merge the PR and deploy `main` to Vercel by hand; the Vercel
+project is not linked to this repo, so a merge alone deploys nothing (`docs/HANDOVER.md` section 5).
 
 ## The admin panel (`/admin`)
 
@@ -209,6 +214,11 @@ Two fields need a bit of care, because every 3D model names its own parts differ
 - **Hide mesh match** — a regex for the model's own wheels/brakes/lug nuts, which get hidden so the
   app's configurable wheels sit in their place instead.
 
+A new car also needs a slide on the welcome carousel, because that is where customers choose the car:
+an entry in `HERO_SLIDES` (`components/journey/HeroStage.tsx`) and its stills in `public/hero/`
+([`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`](docs/PRODUCT_SPEC_CARS_AND_WHEELS.md) section 4.7). The carousel
+is a fixed list and does not follow the catalogue.
+
 You can also add a car directly with SQL if you're comfortable with it — insert a row into
 `public.cars` with the same columns (snake_case); see `supabase/migrations/` for worked examples of
 real cars being added this way.
@@ -226,11 +236,18 @@ leads and share codes also carry their `user_id`, so the garage and the admin ca
 ## Rendering notes
 
 - The studio (lighting, HDRI reflections, camera, contact shadow, paint/wheel materials) lives in
-  `services/CarConfiguratorEngine.ts`. On `/configure` a live car sits in the owner's viewer studio
-  (`services/viewerStudio.ts`, `engine.setLook('viewer')`): gradient dome, fogged floor, pool shadow,
-  Neutral tone mapping with the exposure set by the paint, gloss/soft reflection coves, the viewer's
-  finish table for Uni / Metallic / Pearl / Frozen paints, and "FORGED" placeholder plates on the
-  bumpers (`?plates=0` turns them off). The harness takes `?look=viewer`.
+  `services/CarConfiguratorEngine.ts`. On `/configure` a live car sits in the stage look
+  (`services/viewerStudio.ts`: `STAGE`, `buildStageDome`, `buildStageFloor`, `buildStageCove`;
+  `engine.setLook('stage')`), modelled on the Cycles stills of the welcome screen: a black backdrop, a
+  pool of light on a pale floor that fades to black, a pool shadow, Neutral tone mapping with the
+  exposure set by the paint, a black reflection cove with one overhead softbox (Frozen paints keep the
+  soft cove), the viewer's finish table for Uni / Metallic / Pearl / Frozen paints (`VIEWER_FINISH`), and
+  "FORGED" placeholder plates on the bumpers (`?plates=0` turns them off). The harness takes
+  `?look=stage`; `?look=viewer` still draws the older grey viewer dome, for comparison only.
+- The rim page (`/rims/<id>`) is the wheel studio ported from the FORGED website
+  (`components/WheelStudio.tsx`, loaded on demand by `components/WheelStage.tsx`). It loads the same rim
+  files the car uses (`public/models/rims/`) and draws the finishes with `services/wheelFinish.ts`, so a
+  finish is the same on the rim page and on the car. A wheel without a `modelUrl` shows its photo.
 - Procedural wheel faces (used until a design has a real rim image or GLB) are generated in
   `services/proceduralRims.ts` and extruded in `services/rimExtrusion.ts`. A rim GLB
   (`modelUrl`, optional `rearModelUrl`) wins over both.
@@ -259,11 +276,13 @@ step-by-step skill is `3d-car-perfect`, and the research behind it is in
 ```
 config/brand.ts              Brand name, logo, colours, copy, regions/currencies — one file
 data/configuratorData.ts     Bundled fallback catalogue (cars, paints, wheels, finishes)
-services/                    3D engine, viewer studio, wheel kit (tyres, rims, brakes), paint, pricing, catalogue, auth
+services/                    3D engine, stage and viewer looks (viewerStudio.ts), wheel kit (tyres, rims, brakes), paint, pricing, catalogue, auth
 scripts/ingest-car.mjs       One command: prepared car package → catalogue + migration + check sheet
 scripts/ingest-rim.mjs       One command: rim GLB (front, optional rear) → packed rim on a wheel
-scripts/render/              Headless render harness (engine page + batch screenshots, journey/e2e/responsive)
-components/journey/          Welcome → showroom → configurator (ViewerPanel) → summary, AccountSheet
+scripts/render/              Headless render harness (engine page + batch screenshots, journey/e2e/responsive;
+                             e2e.cjs still walks the removed showroom and has not been updated)
+components/journey/          Welcome (car carousel) → configurator (StepDrawer in Configurator.tsx) → summary, AccountSheet
+components/WheelStudio.tsx   The rim page's 3D wheel studio (with WheelStage.tsx and services/wheelStudioParts.ts)
 components/admin/            /admin UI (AdminPage.tsx, entityConfig.ts defines every field)
 public/models/               Prepared car GLBs; public/models/rims/ the packed rim GLBs; CREDITS.md
 supabase/migrations/         Database schema, RLS policies, and catalogue changes over time
