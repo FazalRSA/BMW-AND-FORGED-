@@ -61,9 +61,13 @@ jobs:
       - name: Deploy to Modal (environment main)
         if: env.DRY_RUN != 'true' && env.MODAL_TOKEN_ID != '' && env.MODAL_TOKEN_SECRET != ''
         run: |
-          # A pasted secret often carries a trailing space or line break; Modal rejects those.
-          MODAL_TOKEN_ID="$(printf %s "${MODAL_TOKEN_ID}" | tr -d '[:space:]')"
-          MODAL_TOKEN_SECRET="$(printf %s "${MODAL_TOKEN_SECRET}" | tr -d '[:space:]')"
+          # A pasted secret can carry more than the token (a trailing "--profile=..." from the command
+          # line, a space, a line break). Keep the first word only, and mask it: GitHub masks the value
+          # as stored, not this shorter part of it.
+          MODAL_TOKEN_ID="$(printf %s "${MODAL_TOKEN_ID}" | awk '{print $1; exit}')"
+          MODAL_TOKEN_SECRET="$(printf %s "${MODAL_TOKEN_SECRET}" | awk '{print $1; exit}')"
+          echo "::add-mask::${MODAL_TOKEN_ID}"
+          echo "::add-mask::${MODAL_TOKEN_SECRET}"
           export MODAL_TOKEN_ID MODAL_TOKEN_SECRET
           PLATES_API_TOKEN="$(python -c "import hashlib,os;print(hashlib.sha256((os.environ['MODAL_TOKEN_SECRET']+':forgedsa-plates-api').encode()).hexdigest())")"
           echo "::add-mask::${PLATES_API_TOKEN}"
@@ -72,6 +76,8 @@ jobs:
           modal deploy --env "${MODAL_ENVIRONMENT}" scripts/plates/cloud/app.py > status/deploy.txt 2>&1
           echo "exit: $?" >> status/deploy.txt
           set -e
+          # The status branch is public: strip anything shaped like a Modal token before it is published.
+          sed -i -E 's/a[ks]-[A-Za-z0-9]{10,}/[redacted]/g' status/deploy.txt
           tail -40 status/deploy.txt
       - name: Publish the status
         if: always()
