@@ -16,7 +16,8 @@
 -- confirmed; a password user created in the dashboard with "Auto Confirm", or who set a password through
 -- the emailed link, is confirmed too).
 --
--- Written, not applied: the sandbox has no Supabase access. Apply it, then see docs/DEALERS.md.
+-- Applied to the live project on 2026-11-11 (as migration "dealers"; the leads.dealer_id index was built
+-- separately with CREATE INDEX CONCURRENTLY). Owner steps and the RLS checks: docs/DEALERS.md.
 
 -- ----------------------------------------------------------------------------------------------
 -- 1. dealers and the people who may sign in for them

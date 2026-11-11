@@ -25,20 +25,24 @@ other dealerships' enquiries or unassigned ones. `components/dealer/DealerPage.t
 - **Enquiries tab**: a *Dealership* dropdown on every enquiry assigns it (or sends it back to FORGED), a status
   dropdown and notes, and a filter by dealership. The CSV now includes status and dealership.
 
-## Owner steps (once)
+## Owner steps
 
-1. Apply `supabase/migrations/20261111120000_dealers.sql` (SQL editor or `supabase db push`). Not applied from the
-   sandbox: there is no Supabase access here.
-2. Build the index on its own (it cannot run inside the migration's transaction):
+Done on 2026-11-11 (applied through the Supabase connector at the owner's request):
+
+1. `supabase/migrations/20261111120000_dealers.sql` is applied (live migration name `dealers`).
+2. The index is built and valid:
    ```sql
    create index concurrently if not exists leads_dealer_created_idx
      on public.leads (dealer_id, created_at desc) where dealer_id is not null;
    ```
+
+Still to do:
+
 3. In `/admin` → Dealers, add the dealership and the email of each person who will sign in.
 4. The person signs in at `/dealer`. Easiest is **Continue with Google** (needs the Google provider from
    docs/ACCOUNTS.md; the address arrives confirmed). For a password login, create the user in Supabase Auth →
    Users → Add user → Auto Confirm, then they use *First time here, or forgot your password?* on `/dealer`
-   (the link returns to `/dealer`).
+   (the link returns to `/dealer`). This real sign-in has not been tried yet.
 5. Supabase Auth URL configuration already allows `https://forged-configurator.vercel.app/**`, so `/dealer` is covered.
 
 ## How it is locked down
@@ -51,5 +55,8 @@ other dealerships' enquiries or unassigned ones. `components/dealer/DealerPage.t
   grant); contact details and the build stay as the customer sent them.
 - Visitors still send enquiries anonymously, but the insert policy now refuses a row that picks its own dealer,
   status or notes.
-- Test before relying on it: as a dealer (a signed-in session) `select` from `leads` returns only its rows; an
-  `update leads set dealer_id = '<other>'` returns 0 rows; a write to `wheels` is refused.
+- Checked on 2026-11-11 against the live database, in a block that always ended in an error so nothing was kept
+  (a throwaway dealer and user; existing leads reused so no enquiry email could fire): a dealer sees and updates only
+  its own enquiries; cannot reassign one, edit a customer's email, delete a lead, write to `wheels` or `cars`, add its
+  own login or edit its dealership; a switched-off dealership sees nothing; a visitor cannot choose a dealer or status.
+  Repeat the same checks after any change to these policies.
