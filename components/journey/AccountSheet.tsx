@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Check, FolderOpen, LogOut, Pencil, Trash2, UserRound } from 'lucide-react';
+import { Check, FileText, FolderOpen, Loader2, Lock, LogOut, MonitorSmartphone, Pencil, Trash2, UserRound } from 'lucide-react';
 import { BRAND } from '../../config/brand';
 import { CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import {
@@ -24,6 +24,7 @@ import {
 import { forgetLocalConfiguration } from '../../services/journeyService';
 import { Alert, Button, Divider, Eyebrow, Modal, Status, cx } from './ui';
 import { shortModelName } from './Showroom';
+import { HERO_SLIDES } from './HeroStage';
 
 export interface AccountSheetProps {
   open: boolean;
@@ -45,6 +46,8 @@ export interface AccountSheetProps {
   garageVersion?: number;
   /** Called once a build has been deleted from the garage (the app stops showing its code as saved). */
   onDeleted?: (code: string) => void;
+  /** The car on stage, so the sign-in shows the same car (its welcome still); the first welcome car otherwise. */
+  stageCarId?: string;
 }
 
 const fieldCls = 'mt-1.5 h-12 w-full rounded-xl bg-ink/[0.04] px-4 text-[14px] text-ink outline-none ring-1 ring-line focus:ring-gold/60 transition placeholder:text-mute/50';
@@ -56,10 +59,10 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
   </label>
 );
 
-/** Google's "G", as its sign-in button guidelines ask for. */
+/** Google's standard-colour "G" on white, as its sign-in branding guidelines require. */
 const GoogleMark: React.FC = () => (
-  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white">
-    <svg viewBox="0 0 48 48" className="h-3.5 w-3.5" aria-hidden>
+  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white">
+    <svg viewBox="0 0 48 48" className="h-[18px] w-[18px]" aria-hidden>
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
@@ -67,6 +70,63 @@ const GoogleMark: React.FC = () => (
     </svg>
   </span>
 );
+
+/**
+ * "Continue with Google" to Google's branding guidelines (dark theme), which app verification requires: fill #131314,
+ * a 1px #8E918F inside stroke, #E3E3E3 text in Google Sans Medium 14/20 (loaded for this label in index.html), the
+ * standard G on white, 12px before the logo, 10px after it and 12px after the text. Never the brand's orange button.
+ */
+const GoogleButton: React.FC<{ busy: boolean; onClick: () => void }> = ({ busy, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={busy}
+    aria-busy={busy}
+    className="relative flex h-12 w-full items-center rounded-full bg-[#131314] px-3 text-[#E3E3E3] ring-1 ring-inset ring-[#8E918F] transition-colors duration-200 hover:bg-[#1f1f21] active:bg-[#28292b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:cursor-progress"
+    style={{ fontFamily: "'Google Sans', Roboto, Arial, sans-serif", fontWeight: 500, fontSize: 14, lineHeight: '20px' }}
+  >
+    <GoogleMark />
+    {/* Centred on the button, not on the space beside the logo (the logo and its gap are 34px) */}
+    <span className="ml-2.5 flex-1 pr-[34px] text-center">Continue with Google</span>
+    {busy && <Loader2 className="absolute right-4 h-4 w-4 animate-spin text-[#E3E3E3]/80" aria-hidden />}
+  </button>
+);
+
+/** What an account is for, in the customer's terms (each line is something the app really does with it). */
+const PERKS = [
+  { icon: MonitorSmartphone, title: 'Every build, every device', body: 'Builds you save wait in your garage on your phone and on your computer.' },
+  { icon: FileText, title: 'Your details, filled in', body: 'Your name, email and number go straight into the enquiry and PDF forms.' },
+  { icon: FolderOpen, title: 'Back where you left off', body: 'Reopen any saved build exactly as you configured it.' }
+] as const;
+
+/** The car on stage, as on the welcome: a studio still that fades into the sheet. */
+// The fade is on the frame, not the image: the image is taller than the frame, so a fade on it would happen
+// out of sight and leave the backdrop and the floor's pool of light cut off by straight edges.
+const STILL_FADE_Y = 'linear-gradient(to bottom, transparent 0%, #000 16%, #000 58%, transparent 100%)';
+const STILL_FADE_X = 'linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)';
+const StageStill: React.FC<{ carId?: string }> = ({ carId }) => {
+  const slide = HERO_SLIDES.find((s) => s.carId === carId) ?? HERO_SLIDES[0];
+  return (
+    <div
+      className="relative -mx-7 h-40 overflow-hidden sm:h-44"
+      aria-hidden
+      style={{
+        WebkitMaskImage: `${STILL_FADE_Y}, ${STILL_FADE_X}`,
+        WebkitMaskComposite: 'source-in',
+        maskImage: `${STILL_FADE_Y}, ${STILL_FADE_X}`,
+        maskComposite: 'intersect'
+      }}
+    >
+      <img
+        src={`/hero/${slide.carId}-960.webp`}
+        alt=""
+        draggable={false}
+        decoding="async"
+        className="absolute left-1/2 top-1/2 w-[122%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
+      />
+    </div>
+  );
+};
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
@@ -110,6 +170,21 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
     window.addEventListener('pageshow', onShow);
     return () => window.removeEventListener('pageshow', onShow);
   }, []);
+  /** Hands over to Google; on success the page leaves, so only a failure comes back here. */
+  const startSignIn = async () => {
+    setSignInBusy(true);
+    setSignInError(null);
+    let err: string | null;
+    try {
+      err = await p.onSignIn();
+    } catch (e) {
+      err = e instanceof Error ? e.message : 'Google sign-in could not be started. Please try again.';
+    }
+    if (err) {
+      setSignInError(err);
+      setSignInBusy(false);
+    }
+  };
 
   // Profile form
   const [form, setForm] = useState<ProfileForm>(() => formFrom(p.profile, p.user));
@@ -278,41 +353,51 @@ export const AccountSheet: React.FC<AccountSheetProps> = (p) => {
     <Modal
       open={p.open}
       onClose={p.onClose}
-      title="Your garage"
+      title={signedIn ? 'Your garage' : 'Sign in'}
       width="max-w-md"
       panelClassName="bg-surface/[0.82] backdrop-blur-xl ring-1 ring-line rounded-none sm:rounded-[14px] h-[100dvh] sm:h-auto sm:max-h-[88dvh]"
     >
       {!signedIn ? (
-        <div className="pb-2">
-          <p className="text-[13.5px] leading-relaxed text-mute">
-            An account keeps your saved builds together on every device and fills in your details when you enquire.
-          </p>
-          <Button
-            size="lg"
-            className="mt-6 w-full"
-            aria-label="Continue with Google"
-            disabled={signInBusy}
-            icon={<GoogleMark />}
-            onClick={async () => {
-              setSignInBusy(true);
-              setSignInError(null);
-              const err = await p.onSignIn();
-              if (err) {
-                setSignInError(err);
-                setSignInBusy(false);
-              }
-            }}
-          >
-            {signInBusy ? 'Opening Google…' : 'Continue with Google'}
-          </Button>
-          {signInError && <Alert className="mt-3">{signInError}</Alert>}
-          <p className="mt-5 text-[11px] leading-relaxed text-mute">
-            We store your name, email and saved builds to run your garage. Delete your account any time via{' '}
-            <a href={`mailto:${BRAND.contact.email}`} className="underline decoration-line underline-offset-2 hover:text-gold">
-              {BRAND.contact.email}
-            </a>{' '}
-            or the enquiry form.
-          </p>
+        // Full height on phones (the sheet is the screen there), so the button sits low, within thumb reach
+        <div className="flex min-h-[calc(100dvh-6.5rem)] flex-col sm:min-h-0">
+          <StageStill carId={p.stageCarId} />
+          <Eyebrow className="mt-2 text-gold">{BRAND.name} garage</Eyebrow>
+          <h3 className="mt-2.5 font-display text-[27px] font-extrabold leading-[1.06] tracking-[-0.025em] text-ink">Keep every build you make</h3>
+          <p className="mt-2.5 text-[13.5px] leading-relaxed text-mute">Sign in to save your builds and pick them up again on any device.</p>
+          <ul className="mt-6 space-y-4">
+            {PERKS.map(({ icon: Icon, title, body }) => (
+              <li key={title} className="flex gap-3.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/[0.08] ring-1 ring-gold/35">
+                  <Icon className="h-4 w-4 text-gold" strokeWidth={1.7} aria-hidden />
+                </span>
+                <div className="min-w-0 pt-0.5">
+                  <div className="text-[13.5px] font-semibold text-ink">{title}</div>
+                  <div className="mt-0.5 text-[12.5px] leading-relaxed text-mute">{body}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-auto pt-8 sm:pt-7">
+            <GoogleButton busy={signInBusy} onClick={startSignIn} />
+            {signInError && <Alert className="mt-3">{signInError}</Alert>}
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11.5px] text-mute">
+              <Lock className="h-3 w-3 shrink-0" strokeWidth={2} aria-hidden /> Google signs you in. We never see your password.
+            </p>
+            <button
+              type="button"
+              onClick={p.onClose}
+              className="mt-4 h-11 w-full rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] text-mute transition hover:bg-ink/[0.05] hover:text-ink"
+            >
+              Not now, keep configuring
+            </button>
+            <p className="mt-4 text-center text-[11px] leading-relaxed text-mute/80">
+              We store your name, email and saved builds to run your garage. Delete your account any time via{' '}
+              <a href={`mailto:${BRAND.contact.email}`} className="underline decoration-line underline-offset-2 hover:text-gold">
+                {BRAND.contact.email}
+              </a>{' '}
+              or the enquiry form.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="pb-2">
