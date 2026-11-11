@@ -138,7 +138,9 @@ no tyre; see `public/models/wheels/README.md` in the Forgedwebsite repo) goes on
 node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa003.glb --wheel forged_fsa_03 --check
 ```
 
-It packs the file (`scripts/rim3d/pack.mjs`, to `--budget` triangles, default 40 000), writes
+It packs the file (`scripts/rim3d/pack.mjs`, to `--budget` triangles; the default is 160 000, which is above
+the triangle count of every stocked rim, so they were packed without losing triangles; at 40 000 the thin
+spokes broke up), writes
 `public/models/rims/<wheelId>.glb`, sets `modelUrl` on the wheel in the bundled catalogue plus a migration
 for `public.wheels`, and with `--check` shoots the wheel on the two prepared cars the engine page indexes as
 `1` (M4 CS, `m4_cs_g82`: close-up in Liquid Metal and Black Gloss, front three-quarter in Silver) and `7`

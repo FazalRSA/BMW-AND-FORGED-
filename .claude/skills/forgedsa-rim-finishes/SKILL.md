@@ -71,7 +71,12 @@ shading.
   - one-piece rims: the finish;
   - two-/three-piece rims (style text "two-piece"/"three-piece"): always the polished lip with
     bolts (`kit.lipPolished`), whatever the finish, as on the real wheels.
-- **GLB rims (CAD) and the flat-photo fallback:** same look, without flake (their units vary).
+- **GLB rims (the six stocked wheels, CAD uploads):** the same look, flake and flop included.
+  `makeRimFinishMaterial` in the engine gives each rim mesh the finish layers and multiplies the flake
+  scale by the mesh's own unit, so the cells stay about 1 mm whatever units the file is in.
+- **The flat-photo fallback** (a photo that could not be turned into 3D spokes, or a wheel with
+  `imageExtrude: false`; `applyCustom2DSpokeTexture`): the finish's colour, metalness, roughness and
+  clear coat only. Its material has no finish layers, so it has no flake and no flop.
 - **The rim page (`/rims/<id>`):** the wheel studio (`components/WheelStudio.tsx`) loads the same rim file as
   the car and draws it with `finishLook()` / `applyFinishLook()` from `services/wheelFinish.ts`, so a finish
   is the same coating on the rim page and on the car. Its barrel, face and cap take the finish; bolts and
@@ -164,7 +169,8 @@ an edit in Finishes changes the live site at once.
 - **Flake in the wrong space:**
   - world space makes the sparkle swim as the wheel turns;
   - file units make it glitter on GLBs.
-  The wheel kit is in metres, so mesh space is right.
+  The wheel kit is in metres, so mesh space is right. A GLB rim is not in metres, so
+  `makeRimFinishMaterial` multiplies the flake scale by each mesh's unit.
 - **Changing the four thresholds in `finishKind()`** moves every admin-made finish between
   kinds. Re-render all active finishes after any change.
 
