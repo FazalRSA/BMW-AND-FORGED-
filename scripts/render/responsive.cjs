@@ -11,7 +11,7 @@
  * welcome, configurator (overview, paint, wheels, size, finish), summary, the wheels
  * gallery, a rim page (forged_fsa_12), terms, delivery.
  *
- * Not updated yet: the rim page is the wheel studio now (components/WheelStudio.tsx), but the `rim`
+ * Not updated yet: the rim page is the wheel studio now (shared/wheel-viewer/WheelStudio.tsx), but the `rim`
  * step below still waits for a frame of the pre-rendered spin (public/renders/rims/, removed), so
  * that page fails with a timeout on every device until its wait is rewritten.
  *

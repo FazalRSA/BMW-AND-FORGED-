@@ -1,20 +1,14 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * Pure helpers for the 3D wheel studio (components/WheelStudio.tsx): which part a mesh is, and
- * how far each part moves in the exploded view. Kept free of three.js so they can be unit tested.
+ * Pure helpers for the 3D wheel studio: which part a mesh is, and how far each part
+ * moves in the exploded view. Kept free of three.js so they can be unit tested.
  */
 
 export type StudioPart = 'barrel' | 'face' | 'bolts' | 'cap' | 'rotor' | 'caliper';
 
 /**
  * Classify a mesh by its glTF node name. Accepts the documented names
- * (Rim_Barrel, Rim_Face_Spokes, Hardware_Bolts, Center_Cap, Brake_Rotor, Brake_Caliper: the rim
- * files in public/models/rims/ keep them, see scripts/ingest-rim.mjs) and the short names older
- * exports used (barrel, face, bolts, cap, rotor, caliper).
+ * (Rim_Barrel, Rim_Face_Spokes, Hardware_Bolts, Center_Cap, Brake_Rotor, Brake_Caliper)
+ * and the short names older exports used (barrel, face, bolts, cap, rotor, caliper).
  * Anything unrecognised is treated as part of the face, so it still follows the finish.
  */
 export function classifyStudioPart(meshName: string): StudioPart {
@@ -45,7 +39,7 @@ export function explodeOffsets(wheelDiameterM: number): Record<StudioPart, numbe
     cap: unit * 1.15,
     barrel: -unit * 0.5,
     rotor: -unit * 0.95,
-    caliper: -unit * 1.25
+    caliper: -unit * 1.25,
   };
 }
 
@@ -62,4 +56,19 @@ export function cameraDistanceScale(aspect: number, visibleHeightFraction = 1): 
   const widthFit = 0.85 / Math.max(0.2, aspect);
   const heightFit = 0.78 / Math.min(1, Math.max(0.35, visibleHeightFraction));
   return Math.max(1, widthFit, heightFit);
+}
+
+/**
+ * Whether a finish name describes a matte or satin paint ("Black Matte", "Satin Bronze").
+ * The studio paints each catalogue finish with one gloss setting; a matte name flattens it so a
+ * matte wheel is not shown with a gloss clear coat.
+ */
+export function isMatteFinishName(finishName?: string | null): boolean {
+  return /\b(matte|matt|satin|flat)\b/i.test(finishName ?? '');
+}
+
+/** True when the visitor has asked their device to reduce motion. False outside a browser. */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }

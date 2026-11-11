@@ -122,7 +122,7 @@ Never use the photo as the face texture, and never extrude the whole photo. Inst
    - inner parts at envMapIntensity 0.45–0.75;
    - `installWheelShading` arch shade on everything under the fender;
    - switched off in the engine's rim showcase (the `showcase` constructor option, which the app no
-     longer uses: the rim page is the wheel studio, `components/WheelStudio.tsx`).
+     longer uses: the rim page is the wheel studio, `shared/wheel-viewer/WheelStudio.tsx`).
 5. **Finishes** are layered coatings read from the admin numbers (`services/wheelFinish.ts`):
    polished metal, gloss paint (Black Gloss is a non-metal), satin metallic (Bronze Matte's clear
    coat is rough) and metallic paint (Silver), with flop and flake. See `forgedsa-rim-finishes`.

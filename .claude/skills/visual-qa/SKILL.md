@@ -194,7 +194,7 @@ The current gate (Nov 2026):
   reference is `docs/ingest/stock-wheels.jpg`. Every sheet has been looked at, and the doubtful
   shots at full size.
 - When a rim file or a finish changed: the rim page (`/rims/<id>`) looked at too. It is the wheel
-  studio (`components/WheelStudio.tsx`), which loads the same rim file and finish recipe as the car but
+  studio (`shared/wheel-viewer/WheelStudio.tsx`), which loads the same rim file and finish recipe as the car but
   is not covered by `shoot.cjs`.
 - Only when a photo wheel is touched: Layer 1 on **every** photo wheel (one engine change touches
   them all) and the matrix; both cover the hidden photo wheels only.
