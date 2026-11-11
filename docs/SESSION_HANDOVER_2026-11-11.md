@@ -13,7 +13,7 @@ read from GitHub, the live Supabase project and the repo on 11 November 2026, no
 | **Not on `main` yet** | Nine later commits, carried by **draft PR #14**: the menu links (`48c53f8`), the black-car-after-GPU-restore fix (`6c7ac95`), the carousel fix (`e4d75aa`), the M2 name migration file (`e3c1de7`), and the docs (`576e644`, `90f2a72`, `7cccc99`, `ed5fac5`, `06cbf9d`). `main` right now has no menu, because #12 removed the showroom's top bar. **Merging #14 is the most urgent thing.** |
 | Render preview | https://forgedsa-configurator.onrender.com builds the branch on every push, with the bundled catalogue (`VITE_CATALOG_SOURCE=static`). It has everything above. |
 | Production | https://forged-configurator.vercel.app still runs the **8 October** build. The Vercel project `forged-configurator` is not linked to this repo (see section 6). Merging to `main` deploys nothing. |
-| Live database | Supabase project `qxlfkfhzpqbxffuqqewg`. All fifteen `20261110*` migrations are applied (read back with `list_migrations`). One is written and **not applied**: `20261111090000_car_m2_g87_name_m2_cs.sql`. |
+| Live database | Supabase project `qxlfkfhzpqbxffuqqewg`. All fifteen `20261110*` migrations are applied (read back with `list_migrations`). `20261111090000_car_m2_g87_name_m2_cs.sql` was applied later on 11 Nov with the owner's go-ahead. |
 | Other open draft PRs | #10 (drop the M5's stale stored frames, other session) and #13 ("Photoreal plates configurator: path-traced renders, wheel overlay, cloud render service", other session). Not reviewed by this session. |
 
 ## 2. What the owner asked for, in order (this session)
@@ -68,7 +68,7 @@ against its own screenshots (do not trust a report alone); cherry-pick onto `ccr
 ## 5. Decisions waiting for the owner
 
 1. **Merge PR #14** (menu links, GPU-restore fix, carousel fix, docs). Squash-merge is how earlier PRs were done; the PR body carries what to say.
-2. **Apply the M2 name fix** to the live database: `20261111090000_car_m2_g87_name_m2_cs.sql` renames the `m2_g87` row from "BMW M2 Coupe" / "M2 G87" to "BMW M2 CS" / "M2 CS G87". Dry-run read-only against the live schema: it matches exactly one row; the only trigger on `cars` is `touch_updated_at`. Written, not applied, because it changes live data.
+2. **Done 11 Nov (owner approved): the M2 name fix** applied to the live database: `20261111090000_car_m2_g87_name_m2_cs.sql` renames the `m2_g87` row from "BMW M2 Coupe" / "M2 G87" to "BMW M2 CS" / "M2 CS G87". Dry-run read-only against the live schema: it matches exactly one row; the only trigger on `cars` is `touch_updated_at`. Written, not applied, because it changes live data.
 3. **Deploy production.** The live site is the 8 October build. Either connect this repo to the Vercel project, or start a production deployment by hand from a `main` commit (`forgedsa-deploy-and-release` skill). Not done: it is the owner's call.
 4. **The photoreal route and BlendKit cars.**
    - The scene still does not match the Cycles still's fidelity. Matching it needs pre-rendered Cycles bodies with live wheels (mode C in `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`). That needs the reference studio file `BMW_M2_CS_G87_clean_studio.blend`, which is **not in the repo and not in the owner's Google Drive** (searched). The owner should upload it, plus any BlendKit `.blend` files.

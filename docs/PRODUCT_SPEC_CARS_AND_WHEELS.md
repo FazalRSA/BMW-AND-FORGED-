@@ -308,7 +308,7 @@ Retiring a car or wheel: set `active = false` in the fallback and in a migration
 Checked by migration name against the project's applied list:
 
 - **Applied since the first check:** `customer_accounts`, `admin_requires_confirmed_email` and `prepared_cars_keep_own_brakes` are in the applied list (read with `list_migrations` on 2026-11-11), and the SQL for `prepared_cars_keep_own_brakes` is in the repo (`20261110190000`). All fifteen `20261110*` files are applied.
-- **In the repo, not applied:** `20261111090000_car_m2_g87_name_m2_cs.sql`. It waits for the owner's go-ahead because it changes live data. `lead_hardening` (20261001090000) has no migration of that name in the applied list.
+- **Applied 2026-11-11:** `20261111090000_car_m2_g87_name_m2_cs.sql` (the live `m2_g87` row now reads "BMW M2 CS" / "M2 CS G87", read back through the REST API). `lead_hardening` (20261001090000) has no migration of that name in the applied list.
 - **Name mismatch:** Supabase still calls `m2_g87` "BMW M2 Coupe" (badge "M2 G87"); the bundled catalogue and the welcome carousel say "BMW M2 CS". The earlier upsert updated only the model fields. The migration above fixes it.
 - The `cars` table has an `m5_f90` row that the bundled catalogue does not.
 
