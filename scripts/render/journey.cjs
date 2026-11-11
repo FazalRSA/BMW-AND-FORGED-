@@ -4,16 +4,17 @@
  * each step took, horizontal overflow, and a screenshot per step.
  *
  *   bunx vite --host 127.0.0.1 --port 5173            # dev server, in another shell
- *   node scripts/render/journey.cjs <outDir> <rimCacheDir> [phone|desktop|both]
+ *   node scripts/render/journey.cjs <outDir> <rimCacheDir> [phone|desktop|both] [baseUrl]
  *
- * Welcome -> Enter -> showroom (next model) -> Build -> Confirm -> wheels step -> three wheels ->
- * size -> finish -> summary. Writes <outDir>/<size>.log and <size>-<step>.png (…-FAIL.png on a
- * failed step). SwiftShader: a few minutes per size; the step times are for comparison between
- * runs, not absolute.
+ * Welcome -> Enter -> showroom (next model) -> Build -> Confirm -> the configurator (plates, on the car
+ * that was on stage) -> a paint -> a wheel when one is pictured -> summary. Writes <outDir>/<size>.log and
+ * <size>-<step>.png (…-FAIL.png on a failed step). The welcome and showroom draw 3D on SwiftShader: a few
+ * minutes per size; the step times are for comparison between runs, not absolute. The configurator's own
+ * states and failure paths are checked by scripts/render/plates.cjs.
  */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'); const path = require('path');
-const [,, OUT, RIMS, which = 'both'] = process.argv;
+const [,, OUT, RIMS, which = 'both', BASE = 'http://127.0.0.1:5173'] = process.argv;
 const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }, desktop: { width: 1440, height: 900 } };
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -55,7 +56,7 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       return true;
     };
     await step('load', async () => {
-      await p.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded', timeout: 240000 });
+      await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 240000 });
       await p.getByRole('button', { name: /enter|start|begin|explore|discover/i }).first().waitFor({ timeout: 240000 });
     });
     await step('welcome-enter', async () => {
@@ -73,48 +74,35 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       // The notice closes as it is confirmed; a click whose target vanishes mid-way is fine, and the notice is not shown for every car
       const confirm = p.getByRole('button', { name: /^confirm$/i });
       if (await confirm.waitFor({ timeout: 8000 }).then(() => true, () => false)) await confirm.click({ timeout: 45000, noWaitAfter: true }).catch(() => {});
-      await p.getByRole('button', { name: /step 2|wheels/i }).first().waitFor({ timeout: 60000 });
+      // the configurator is another half of the site (Root.tsx): its picture is on the stage once it has loaded
+      await p.waitForFunction(() => (document.querySelector('[data-plate-stage]')?.getAttribute('data-plate-stage') || '').includes('/body/'), null, { timeout: 120000 });
+      await p.waitForTimeout(600);
     });
-    await step('configure-wheels-step', async () => {
-      await p.getByRole('button', { name: /step 2: wheels|^wheels$/i }).first().click();
-      await p.waitForTimeout(1500);
-    });
+    note(`configurator: ${new URL(p.url()).pathname}${new URL(p.url()).search}; showing ${await p.locator('[data-plate-stage]').first().getAttribute('data-plate-stage')}`);
     await overflowCheck('configure');
-    for (let i = 0; i < 3; i++) {
-      await step(`pick-wheel-${i}`, async () => {
-        // the wheel list in the panel (each design is an <li><button>; the viewer panel marks its list data-section="wheels")
-        const wheelList = p.locator('aside [data-section="wheels"] li > button');
-        const btns = (await wheelList.count()) ? wheelList : p.locator('aside ul li > button');
-        const n = await btns.count();
-        if (n < 2) throw new Error(`only ${n} wheel buttons found`);
-        await btns.nth(Math.min(n - 1, 1 + i * 2)).click();
-        await p.waitForTimeout(3000);
+    const stageChanged = (was) => p.waitForFunction((before) => document.querySelector('[data-plate-stage]')?.getAttribute('data-plate-stage') !== before, was, { timeout: 60000 });
+    await step('pick-paint', async () => {
+      const was = await p.locator('[data-plate-stage]').first().getAttribute('data-plate-stage');
+      await p.locator('[data-options="paints"] button[aria-pressed="false"]:not([aria-disabled])').nth(2).click();
+      await stageChanged(was);
+      await p.waitForTimeout(500);
+    });
+    // a catalogue wheel, when one is pictured on this car (none are until the wheel plates are rendered)
+    const wheels = p.locator('[data-options="wheels"] li:not(:first-child) button:not([aria-disabled])');
+    if (await wheels.count()) {
+      await step('pick-wheel', async () => {
+        await wheels.first().scrollIntoViewIfNeeded();
+        await wheels.first().click();
+        await p.waitForFunction(() => (document.querySelector('[data-plate-stage]')?.getAttribute('data-plate-stage') || '').includes('/wheels/'), null, { timeout: 60000 });
+        await p.waitForTimeout(500);
       });
-    }
-    await step('size-step', async () => {
-      await p.getByRole('button', { name: /step 3|wheel size|^size$/i }).first().click();
-      await p.waitForTimeout(800);
-      const sizes = p.locator('aside button', { hasText: /^\d\d"/ });
-      if (await sizes.count()) await sizes.last().click();
-      await p.waitForTimeout(2500);
-    });
-    await step('finish-step', async () => {
-      await p.getByRole('button', { name: /step 4|wheel finish|^finish$/i }).first().click();
-      await p.waitForTimeout(800);
-      const finList = p.locator('aside [data-section="finish"] li > button');
-      const fin = (await finList.count()) ? finList : p.locator('aside ul li > button');
-      if (await fin.count() > 1) await fin.nth(1).click();
-      await p.waitForTimeout(2500);
-    });
-    await step('summary', async () => {
-      // Desktop: the "Summary" icon button; phones: the footer CTA "View your <car>" (the icon is hidden there)
-      const summaryBtn = p.getByRole('button', { name: /^summary$/i }).first();
-      if (await summaryBtn.isVisible().catch(() => false)) await summaryBtn.click({ timeout: 60000 });
-      else await p.getByRole('button', { name: /^view your /i }).first().click({ timeout: 60000 });
-      // the summary page: its price card has Enquire / Share / PDF
-      await p.getByRole('button', { name: /^pdf$|download pdf/i }).first().waitFor({ timeout: 60000 });
-      await p.waitForTimeout(6000);
-    });
+      await step('summary', async () => {
+        await p.getByRole('button', { name: /^view build$/i }).click({ timeout: 60000 });
+        // the summary page: its price card has Enquire / Share / PDF
+        await p.getByRole('button', { name: /^pdf$|download pdf/i }).first().waitFor({ timeout: 60000 });
+        await p.waitForTimeout(1500);
+      });
+    } else note('no catalogue wheel is pictured on this car yet: wheel and summary steps skipped');
     const finalLongs = await p.evaluate(() => window.__long);
     note(`remaining long tasks: ${finalLongs.filter(([, d]) => d >= 100).map(([, d]) => d + 'ms').join(', ') || 'none'}`);
     await overflowCheck('end');
