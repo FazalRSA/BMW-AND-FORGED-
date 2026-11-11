@@ -5,28 +5,26 @@
 
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CarConfiguratorEngine } from './services/CarConfiguratorEngine';
-import { Catalog, STATIC_CATALOG, fetchCatalog, paintsForCar, pickPaintForCar } from './services/catalogService';
-import { nearestRimSize, rimPrice, rimSizes } from './services/pricing';
-import { CarModel, PaintColor, WheelDesign, WheelFinish, CameraViewPreset } from './types';
+import { Catalog, STATIC_CATALOG, fetchCatalog, pickPaintForCar } from './services/catalogService';
+import { nearestRimSize } from './services/pricing';
+import { CarModel, PaintColor, WheelDesign } from './types';
 import { BRAND, DEFAULT_REGION, Region } from './config/brand';
 import { CREDITS, DELIVERY, TERMS } from './config/pages';
-import { SavedConfiguration, accountColumnsMissing, configKey, findConfiguration, isConfigurationShared, saveConfiguration, submitEnquiry } from './services/journeyService';
-import { Profile, getMyProfile, peekOAuthError, signInWithGoogle, useAuthUser } from './services/authService';
-import { downloadBrochurePdf } from './services/brochurePdf';
-import { IN_APP_STATE, cameFromApp } from './services/nav';
-import { controlsInset, layoutMode } from './services/layout';
+import { findConfiguration } from './services/journeyService';
+import { peekOAuthError, signInWithGoogle } from './services/authService';
+import { useCustomerAccount } from './services/useCustomerAccount';
+import { IN_APP_STATE, appAddress, cameFromApp, goTo } from './services/nav';
+import { layoutMode } from './services/layout';
+import { configureHref, isConfigureAddress, parseConfigureAddress } from './services/plates/address';
+import type { WantedSelection } from './services/plates/selection';
 import { BootLoader } from './components/journey/BootLoader';
 import { WelcomeGate } from './components/journey/WelcomeGate';
 import { Showroom, ShowroomBackdrop } from './components/journey/Showroom';
 import { TopBar } from './components/journey/TopBar';
-import { ConfigStep, Configurator, MoreOptionsModal } from './components/journey/Configurator';
-import { SummaryPage } from './components/journey/SummaryPage';
 import { EnquiryModal } from './components/journey/EnquiryModal';
 import { AccountSheet } from './components/journey/AccountSheet';
 import { Button, IconButton } from './components/journey/ui';
 import { UserRound } from 'lucide-react';
-import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
-import { backdropCss, hasBodies, renderedStills } from './services/renderedBody';
 
 // Pages off the main journey load on demand
 const ForgedPage = lazy(() => import('./components/ForgedPage').then((m) => ({ default: m.ForgedPage })));
@@ -34,14 +32,15 @@ const RimDetailPage = lazy(() => import('./components/RimDetailPage').then((m) =
 const InfoPage = lazy(() => import('./components/InfoPage').then((m) => ({ default: m.InfoPage })));
 const AdminPage = lazy(() => import('./components/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
 
-// Journey: welcome -> showroom (choose the car) -> configure (paint, wheel design, size, finish) -> summary.
-// One 3D studio lives behind every stage; the camera moves between them instead of the page changing.
+// The site around the configurator: welcome -> showroom (choose the car), the wheel collection and its
+// 360° wheel viewer, the info pages and the admin. One 3D studio lives behind the welcome and showroom
+// stages. The configurator itself (/configure, drawn from pre-rendered plates, no 3D engine) is a
+// separate half of the site: Root.tsx shows it instead of this component, and everything here that used
+// to open the configurator now goes to its address (openConfigurator).
 
 type Route =
   | { name: 'welcome' }
   | { name: 'showroom' }
-  | { name: 'configure' }
-  | { name: 'summary' }
   | { name: 'forged' }
   | { name: 'admin' }
   | { name: 'terms' }
@@ -52,10 +51,8 @@ type Route =
 const routeFromLocation = (): Route => {
   if (typeof window === 'undefined') return { name: 'welcome' };
   const hash = window.location.hash.replace(/^#/, '');
-  const path = (hash.startsWith('/') ? hash : window.location.pathname).toLowerCase().replace(/\/+$/, '');
+  const path = (hash.startsWith('/') ? hash.split('?')[0] : window.location.pathname).toLowerCase().replace(/\/+$/, '');
   if (path === '/models') return { name: 'showroom' };
-  if (path === '/configure') return { name: 'configure' };
-  if (path === '/summary') return { name: 'configure' }; // stills are captured on the way in
   if (path === '/forged' || hash === 'forged') return { name: 'forged' };
   if (path === '/admin' || hash === 'admin') return { name: 'admin' };
   if (path === '/terms') return { name: 'terms' };
@@ -66,28 +63,35 @@ const routeFromLocation = (): Route => {
   return { name: 'welcome' };
 };
 
-const routePath = (route: Route) =>
+/**
+ * The configurator address a wheel page was opened from (`/rims/<id>?back=/configure?car=…`), so the
+ * page can return to that build, or null. Only an address of the configurator is accepted.
+ */
+const buildToReturnTo = (): string | null => {
+  const back = new URLSearchParams(appAddress().search).get('back');
+  if (!back || !back.startsWith('/')) return null;
+  const [path, query = ''] = back.split('?');
+  return isConfigureAddress(path, `?${query}`) ? back : null;
+};
+
+const routePath = (route: Route, returnToBuild: string | null) =>
   ({
     welcome: '/',
     showroom: '/models',
-    configure: '/configure',
-    summary: '/summary',
     forged: '/forged',
     admin: '/admin',
     terms: '/terms',
     delivery: '/delivery',
     credits: '/credits',
-    rim: route.name === 'rim' ? `/rims/${encodeURIComponent(route.rimId)}` : '/'
+    rim: route.name === 'rim' ? `/rims/${encodeURIComponent(route.rimId)}${returnToBuild ? `?back=${encodeURIComponent(returnToBuild)}` : ''}` : '/'
   })[route.name];
+
+/** Opens the configurator (the plates half of the site) on what is known: a car, a wheel, a saved build's code. */
+const openConfigurator = (target: Parameters<typeof configureHref>[0] = {}) => goTo(configureHref(target));
 
 // Car fields that change what the engine renders for the body.
 const carModelKey = (car: CarModel) =>
   JSON.stringify([car.id, car.modelUrl, car.modelRotationDeg, car.modelLengthM, car.paintMeshMatch, car.hideMeshMatch, car.bodyStyle]);
-
-const pickFinish = (catalog: Catalog, wheel: WheelDesign, current?: WheelFinish) =>
-  (current && wheel.availableVariants.includes(current.id) && catalog.finishes[current.id]) ||
-  catalog.finishes[wheel.defaultVariant] ||
-  Object.values(catalog.finishes)[0];
 
 /** Cars with a real 3D body make the showroom; the simple procedural bodies are only a fallback. */
 const showroomCars = (cars: CarModel[]) => {
@@ -99,13 +103,12 @@ const showroomCars = (cars: CarModel[]) => {
 /** First-visit paint when the car offers it (otherwise the car's first factory paint). */
 const DEFAULT_PAINT_ID = 'isle_of_man_green';
 
-/** Fades the pre-rendered stage's edges that stop short of the space around it (8 % of its size). */
-const stageEdgeFade = (st: { left: number; top: number }): React.CSSProperties => {
-  const v = st.top > 0.5 ? 'linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent)' : 'linear-gradient(#000, #000)';
-  const h = st.left > 0.5 ? 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)' : 'linear-gradient(#000, #000)';
-  const mask = `${v}, ${h}`;
-  return { maskImage: mask, WebkitMaskImage: mask, maskComposite: 'intersect', WebkitMaskComposite: 'source-in' };
+/** The wheel the showroom cars stand on: the first wheel of the collection in its own finish, nearest to 20". */
+const showroomWheel = (catalog: Catalog): { wheel: WheelDesign; size: string } | null => {
+  const wheel = catalog.wheels[0];
+  return wheel ? { wheel, size: nearestRimSize(wheel, '20"') } : null;
 };
+const showroomFinish = (catalog: Catalog, wheel: WheelDesign) => catalog.finishes[wheel.defaultVariant] ?? Object.values(catalog.finishes)[0];
 
 export const App: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -127,14 +130,11 @@ export const App: React.FC = () => {
 
   const cars = useMemo(() => showroomCars(catalog.cars), [catalog.cars]);
 
-  // The five choices
+  // The car on stage and its paint (the configurator has its own choices, in its address)
   const [selectedCar, setSelectedCar] = useState<CarModel>(() => showroomCars(STATIC_CATALOG.cars)[0]);
   const [selectedPaint, setSelectedPaint] = useState<PaintColor>(
     () => pickPaintForCar(STATIC_CATALOG.paints, showroomCars(STATIC_CATALOG.cars)[0], DEFAULT_PAINT_ID)!
   );
-  const [selectedWheel, setSelectedWheel] = useState<WheelDesign>(STATIC_CATALOG.wheels[0]);
-  const [selectedFinish, setSelectedFinish] = useState<WheelFinish>(STATIC_CATALOG.finishes.liquid_metal);
-  const [selectedSize, setSelectedSize] = useState<string>('20"');
   const [region, setRegion] = useState<Region>(() => {
     try {
       return BRAND.regions.find((r) => r.id === localStorage.getItem('forged_region')) ?? DEFAULT_REGION;
@@ -145,41 +145,14 @@ export const App: React.FC = () => {
 
   // Journey UI
   const [route, setRoute] = useState<Route>(routeFromLocation);
+  const [returnToBuild, setReturnToBuild] = useState<string | null>(buildToReturnTo);
   const [booted, setBooted] = useState(false);
   const [bootProgress, setBootProgress] = useState(0.08);
   const [driving, setDriving] = useState(false);
-  const [step, setStep] = useState<ConfigStep>('overview');
-  const [cameraView, setCameraView] = useState<CameraViewPreset>('frontThreeQuarter');
-  // Cars with pre-rendered (Blender) bodies show those in the configurator; see RenderedCarView
-  const [renderedCars, setRenderedCars] = useState<Record<string, string[]>>({});
-  useEffect(() => {
-    loadRenderManifest().then(setRenderedCars);
-  }, []);
-  const [stage, setStage] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
-  const [autoRotate, setAutoRotate] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
-  const [summaryImages, setSummaryImages] = useState<string[]>([]);
-  // shared: undefined while the copy every device can open is being written, false if it could not be
-  const [configCode, setConfigCode] = useState<{ key: string; code: string; shared?: boolean } | null>(null);
-  const saveToken = useRef(0);
-  // the latest save's shared-copy promise, awaited before a build is put in the garage
-  const pendingShared = useRef<{ code: string; shared: Promise<boolean> } | null>(null);
 
-  // Customer account (Google sign-in through Supabase): the profile prefills the enquiry and PDF forms
-  const user = useAuthUser();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  useEffect(() => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-    let live = true;
-    getMyProfile().then((p) => live && setProfile(p));
-    return () => {
-      live = false;
-    };
-  }, [user?.id]);
+  // Customer account (Google sign-in through Supabase): the profile prefills the enquiry form
+  const account = useCustomerAccount();
   const [accountOpen, setAccountOpen] = useState(false);
   // A sign-in that came back with an error (the visitor cancelled on Google's consent screen) opens the
   // account sheet, which reads and shows the message itself (takeOAuthError). Not on /admin: an expired
@@ -187,12 +160,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (routeFromLocation().name !== 'admin' && peekOAuthError() !== null) setAccountOpen(true);
   }, []);
-  const [garageVersion, setGarageVersion] = useState(0);
-  const contactPrefill = useMemo(
-    () => (user ? { name: profile?.displayName ?? (user.user_metadata?.full_name as string | undefined) ?? '', email: profile?.email ?? user.email ?? '', phone: profile?.phone ?? '' } : undefined),
-    [user, profile]
-  );
-  const avatarUrl = profile?.avatarUrl ?? (user?.user_metadata?.avatar_url as string | undefined) ?? (user?.user_metadata?.picture as string | undefined) ?? null;
 
   const carIndex = Math.max(0, cars.findIndex((c) => c.id === selectedCar.id));
 
@@ -200,21 +167,9 @@ export const App: React.FC = () => {
   // Routing
   // ----------------------------------------------------
   useEffect(() => {
-    // /summary opens the configurator (its stills are captured on the way in): the address bar says so
-    const fixSummaryUrl = () => {
-      if (window.location.pathname.toLowerCase().replace(/\/+$/, '') !== '/summary') return;
-      try {
-        window.history.replaceState(window.history.state, '', '/configure' + window.location.search + window.location.hash);
-      } catch {
-        /* the configurator shows either way */
-      }
-    };
-    fixSummaryUrl();
     const onPop = () => {
-      // Back to the summary (e.g. from the terms linked in its footer) shows it again, with fresh stills
-      if (window.location.pathname.toLowerCase().replace(/\/+$/, '') === '/summary' && reenterSummaryRef.current()) return setRoute({ name: 'summary' });
-      fixSummaryUrl();
       setRoute(routeFromLocation());
+      setReturnToBuild(buildToReturnTo());
     };
     window.addEventListener('popstate', onPop);
     window.addEventListener('hashchange', onPop);
@@ -224,43 +179,61 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  const navigateTo = useCallback((next: Route, replace = false) => {
-    setRoute(next);
-    const path = routePath(next);
-    try {
-      if (replace) window.history.replaceState(window.history.state, '', path);
-      else window.history.pushState(IN_APP_STATE, '', path);
-    } catch {
-      window.location.hash = `#${path}`;
-    }
-  }, []);
+  const navigateTo = useCallback(
+    (next: Route, replace = false) => {
+      setRoute(next);
+      // only the wheel pages carry the build to return to (stepping through the designs keeps it)
+      const path = routePath(next, next.name === 'rim' ? returnToBuild : null);
+      if (next.name !== 'rim') setReturnToBuild(null);
+      try {
+        if (replace) window.history.replaceState(window.history.state, '', path);
+        else window.history.pushState(IN_APP_STATE, '', path);
+      } catch {
+        window.location.hash = `#${path}`;
+      }
+    },
+    [returnToBuild]
+  );
 
   /** Back on a page reached from anywhere: the previous page when it is part of the app, else the welcome page. */
   const goBack = useCallback(() => (cameFromApp() ? window.history.back() : navigateTo({ name: 'welcome' })), [navigateTo]);
 
-  // The rim page returns to the page that opened it (the configurator or the collection), not to the
-  // rim before it when the visitor stepped through the designs; a direct link returns to the configurator
+  // The rim page returns to the page that opened it (the collection, or the build it was opened from),
+  // not to the rim before it when the visitor stepped through the designs; a direct link returns to the
+  // configurator
   const lastRouteRef = useRef<Route | null>(null);
-  const rimReturnRef = useRef<Route>({ name: 'configure' });
+  const rimOpenedFromRef = useRef<Route | null>(null);
   // (during render, so the rim page's first render already knows where Back goes; repeat renders are no-ops)
   if (lastRouteRef.current !== route) {
     const prev = lastRouteRef.current;
-    if (route.name === 'rim' && prev && prev.name !== 'rim') rimReturnRef.current = prev;
+    if (route.name === 'rim' && prev && prev.name !== 'rim') rimOpenedFromRef.current = prev;
     lastRouteRef.current = route;
   }
+  /** What the build the wheel page was opened from had chosen (its finish and size open the wheel page in them). */
+  const buildAddress = useMemo(() => {
+    if (!returnToBuild) return null;
+    const [path, query = ''] = returnToBuild.split('?');
+    return parseConfigureAddress(path, `?${query}`);
+  }, [returnToBuild]);
 
   // ----------------------------------------------------
   // Engine
   // ----------------------------------------------------
+  const applyShowroomWheel = (engine: CarConfiguratorEngine, from: Catalog) => {
+    const onStage = showroomWheel(from);
+    if (!onStage) return;
+    engine.applyWheelDesign(onStage.wheel);
+    engine.applyWheelFinish(showroomFinish(from, onStage.wheel));
+    engine.setRimSize(onStage.size);
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
     const engine = new CarConfiguratorEngine(containerRef.current, () => setBootProgress((p) => Math.max(p, 0.3)));
     engineRef.current = engine;
     loadedCarKeyRef.current = carModelKey(selectedCar);
     engine.applyPaintColor(selectedPaint);
-    engine.applyWheelDesign(selectedWheel);
-    engine.applyWheelFinish(selectedFinish);
-    engine.setRimSize(selectedSize);
+    applyShowroomWheel(engine, STATIC_CATALOG);
     engine.setCameraPreset('hero', { instant: true });
 
     const started = performance.now();
@@ -272,8 +245,8 @@ export const App: React.FC = () => {
       setTimeout(() => setBooted(true), Math.max(0, 1500 - (performance.now() - started)));
     });
 
-    // Rotating a phone or resizing a window can change the layout (sheet <-> panel) or the aspect: the
-    // camera's inset and framing follow, instead of keeping the previous orientation's composition
+    // Rotating a phone or resizing a window can change the aspect: the camera's inset and framing follow,
+    // instead of keeping the previous orientation's composition
     let shape = `${layoutMode()}|${window.innerWidth > window.innerHeight}`;
     let reframe: ReturnType<typeof setTimeout> | undefined;
     const onResize = () => {
@@ -295,20 +268,13 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // After a catalogue load or admin edit, point selections at the fresh rows and push them to the engine.
+  // After a catalogue load or admin edit, point the stage at the fresh rows and push them to the engine.
   useEffect(() => {
     const car = catalog.cars.find((c) => c.id === selectedCar.id) ?? showroomCars(catalog.cars)[0];
     const paint = pickPaintForCar(catalog.paints, car, selectedPaint.id);
-    const wheel = catalog.wheels.find((w) => w.id === selectedWheel.id) ?? catalog.wheels[0];
-    if (!car || !paint || !wheel) return;
-    const finish = pickFinish(catalog, wheel, selectedFinish);
-    if (!finish) return;
-    const size = nearestRimSize(wheel, selectedSize);
+    if (!car || !paint) return;
     setSelectedCar(car);
     setSelectedPaint(paint);
-    setSelectedWheel(wheel);
-    setSelectedFinish(finish);
-    setSelectedSize(size);
     const engine = engineRef.current;
     if (!engine) return;
     const key = carModelKey(car);
@@ -317,9 +283,7 @@ export const App: React.FC = () => {
       engine.loadCar(car);
     }
     engine.applyPaintColor(paint);
-    engine.applyWheelDesign(wheel);
-    engine.applyWheelFinish(finish);
-    engine.setRimSize(size);
+    applyShowroomWheel(engine, catalog);
   }, [catalog]);
 
   // Warm the neighbouring cars so showroom changes don't wait on downloads
@@ -330,70 +294,12 @@ export const App: React.FC = () => {
     engine?.preloadCar(cars[(carIndex - 1 + cars.length) % cars.length]);
   }, [booted, cars, carIndex]);
 
-  // Picking a wheel should only swap meshes: once the customer reaches the wheels step, every
-  // wheel's 3D spokes (nearest in the list first) and the tyres for the other sizes are prepared
-  // in the background, in idle time (not on the welcome page, and never ahead of a pick)
-  useEffect(() => {
-    if (route.name !== 'configure' || step !== 'wheels' || !catalogLoaded) return;
-    const engine = engineRef.current;
-    if (!engine) return;
-    engine.preloadWheels(catalog.wheels, selectedWheel.id);
-    engine.preloadRimSizes([...new Set(catalog.wheels.flatMap(rimSizes))]);
-  }, [route.name, step, catalogLoaded, catalog.wheels]);
-
-  // Pre-rendered mode: a fixed-aspect stage, centred in the space the controls leave. The dark studio
-  // backdrop is painted over the whole screen, sized to the stage, so it carries on past the stage's edges
-  // (4:3 and portrait tablets) instead of stopping in a line above and below the car (backdropCss); the car
-  // itself (the wheel close-up fills its frame) fades out at the edges that stop short (stageEdgeFade)
-  // The frames are fixed views, so the turntable (Auto-rotate) shows the live model; a view chip goes back to its frame
-  const rendered = route.name === 'configure' && !autoRotate && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
-  const renderedRef = useRef(rendered);
-  renderedRef.current = rendered;
-  const computeStage = useCallback(() => {
-    const inset = controlsInset();
-    const aw = window.innerWidth - Math.max(0, inset.right);
-    const ah = window.innerHeight - inset.bottom;
-    const width = Math.min(aw, ah * RENDER_ASPECT);
-    const height = width / RENDER_ASPECT;
-    return { left: (aw - width) / 2, top: Math.max(0, (ah - height) / 2), width, height };
-  }, []);
-  // the backdrop keeps the last stage's size while it fades out
-  const [backdropFrame, setBackdropFrame] = useState<typeof stage>(null);
-  useEffect(() => {
-    if (stage) setBackdropFrame(stage);
-  }, [stage]);
-  useEffect(() => {
-    if (!rendered) return setStage(null);
-    const update = () => setStage(computeStage());
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [rendered, computeStage]);
-  useEffect(() => {
-    const engine = engineRef.current;
-    if (!engine) return;
-    // The configurator screen looks like the four-car viewer (dome, floor, coves) for cars drawn live; the
-    // showroom keeps its own backdrop (the giant model name sits behind the transparent canvas)
-    engine.setLook(route.name === 'configure' && !rendered ? 'viewer' : 'studio');
-    engine.setRenderedBody(rendered);
-    if (route.name === 'configure') engine.setAutoRotate(autoRotate); // the engine refuses to turn while a frame is showing
-    engine.handleResize();
-    applyInsetRef.current();
-    if (route.name === 'configure') engine.setCameraPreset(cameraView, { instant: rendered });
-  }, [rendered, stage, route.name]);
-
-  // Keep the car centred in the space the panel leaves
+  // Keep the car centred in the space the page leaves
   const applyInsetRef = useRef<() => void>(() => {});
   applyInsetRef.current = () => {
     const engine = engineRef.current;
     if (!engine) return;
-    if (renderedRef.current) {
-      engine.setViewInset(0, 0);
-    } else if (route.name === 'configure') {
-      // the same sheet/panel rule and sizes as the CSS (services/layout.ts)
-      const inset = controlsInset();
-      engine.setViewInset(inset.right, inset.bottom);
-    } else if (route.name === 'welcome') {
+    if (route.name === 'welcome') {
       // Car to the right of the welcome copy (above it when the copy sits underneath)
       if (layoutMode() === 'sheet') engine.setViewInset(0, window.innerHeight * 0.42);
       else engine.setViewInset(-window.innerWidth * 0.34, 0);
@@ -409,7 +315,6 @@ export const App: React.FC = () => {
     if (!engine || !booted) return;
     if (route.name === 'welcome') engine.setCameraPreset('hero');
     else if (route.name === 'showroom') engine.setCameraPreset('showroom');
-    else if (route.name === 'configure') engine.setCameraPreset(cameraView);
   };
 
   // Camera choreography per stage
@@ -417,7 +322,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine || !booted) return;
-    engine.setPaused(!['welcome', 'showroom', 'configure'].includes(route.name));
+    engine.setPaused(!['welcome', 'showroom'].includes(route.name));
     applyInsetRef.current();
     if (route.name === 'welcome') {
       engine.setCameraPreset('hero');
@@ -427,18 +332,9 @@ export const App: React.FC = () => {
       engine.setAutoRotate(false);
       engine.setCameraPreset('showroom');
       if (!revealedRef.current) engine.playReveal();
-    } else if (route.name === 'configure') {
-      engine.setAutoRotate(autoRotate);
-      engine.setCameraPreset(cameraView);
-      if (!revealedRef.current) engine.playReveal();
     }
     revealedRef.current = true;
   }, [route.name, booted]);
-
-  const selectView = useCallback((view: CameraViewPreset) => {
-    setCameraView(view);
-    engineRef.current?.setCameraPreset(view);
-  }, []);
 
   // ----------------------------------------------------
   // Choices
@@ -473,77 +369,6 @@ export const App: React.FC = () => {
     [driving, cars, carIndex, selectedCar.id, mountCar]
   );
 
-  const choosePaint = useCallback(
-    (paint: PaintColor) => {
-      setSelectedPaint(paint);
-      engineRef.current?.applyPaintColor(paint);
-      if (cameraView === 'frontWheel' || cameraView === 'rearWheel') selectView('frontThreeQuarter');
-    },
-    [cameraView, selectView]
-  );
-
-  /** Rim design, colour and size together; keeps the colour/size when the new rim offers them. */
-  const applyRim = useCallback(
-    (wheel: WheelDesign, finish?: WheelFinish, size?: string) => {
-      const nextFinish = finish ?? pickFinish(catalog, wheel, selectedFinish);
-      const nextSize = nearestRimSize(wheel, size ?? selectedSize);
-      setSelectedWheel(wheel);
-      setSelectedFinish(nextFinish);
-      setSelectedSize(nextSize);
-      const engine = engineRef.current;
-      if (engine) {
-        engine.applyWheelDesign(wheel);
-        engine.applyWheelFinish(nextFinish);
-        engine.setRimSize(nextSize);
-      }
-    },
-    [catalog, selectedFinish, selectedSize]
-  );
-
-  // Wheel choices cut to a close-up of the wheel on the car
-  const focusWheel = useCallback(() => {
-    if (cameraView !== 'frontWheel') selectView('frontWheel');
-    if (autoRotate) {
-      setAutoRotate(false);
-      engineRef.current?.setAutoRotate(false);
-    }
-  }, [cameraView, selectView, autoRotate]);
-
-  const chooseWheel = useCallback((wheel: WheelDesign) => {
-    applyRim(wheel);
-    focusWheel();
-  }, [applyRim, focusWheel]);
-
-  const chooseSize = useCallback((size: string) => {
-    setSelectedSize(size);
-    engineRef.current?.setRimSize(size);
-    focusWheel();
-  }, [focusWheel]);
-
-  const chooseFinish = useCallback((finish: WheelFinish) => {
-    setSelectedFinish(finish);
-    engineRef.current?.applyWheelFinish(finish);
-    focusWheel();
-  }, [focusWheel]);
-
-  const changeStep = useCallback(
-    (next: ConfigStep) => {
-      setStep(next);
-      if (next === 'paint' && (cameraView === 'frontWheel' || cameraView === 'rearWheel')) selectView('frontThreeQuarter');
-      if (next === 'wheels' || next === 'size' || next === 'finish') focusWheel();
-    },
-    [cameraView, selectView, focusWheel]
-  );
-
-  const toggleRotate = useCallback(() => {
-    setAutoRotate((prev) => {
-      const next = !prev;
-      engineRef.current?.setAutoRotate(next);
-      if (next && (cameraView === 'frontWheel' || cameraView === 'rearWheel')) selectView('frontThreeQuarter');
-      return next;
-    });
-  }, [cameraView, selectView]);
-
   const changeRegion = useCallback((r: Region) => {
     setRegion(r);
     try {
@@ -553,209 +378,19 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // ----------------------------------------------------
-  // Saved configurations
-  // ----------------------------------------------------
-  const currentConfig = (): SavedConfiguration => ({
-    carId: selectedCar.id,
-    paintId: selectedPaint.id,
-    wheelId: selectedWheel.id,
-    finishId: selectedFinish.id,
-    size: selectedSize,
-    regionId: region.id
-  });
-
-  const applyConfig = useCallback(
-    (cfg: SavedConfiguration) => {
-      // Cars are looked up in the showroom list (active, with a body), the same with the bundled catalogue
-      // (whose cars are not filtered) and Supabase's (which are): a saved car that was hidden falls back to
-      // the first car on offer, like a retired wheel, so the car drawn is always one the panel can show
-      let car = cars.find((c) => c.id === cfg.carId);
-      if (!car && cars.length) {
-        console.warn(`Configuration for car ${cfg.carId}, which is no longer offered: showing ${cars[0].id} instead`);
-        car = cars[0];
-      }
-      // A saved paint the car no longer offers (or that was retired) falls back to its first factory paint
-      const paint = car && pickPaintForCar(catalog.paints, car, cfg.paintId);
-      // A saved wheel that was retired falls back to the first wheel in the collection
-      const wheel = catalog.wheels.find((w) => w.id === cfg.wheelId) ?? catalog.wheels[0];
-      if (!car || !paint || !wheel) return false;
-      const finish = wheel.availableVariants.includes(cfg.finishId) ? catalog.finishes[cfg.finishId] : undefined;
-      const engine = engineRef.current;
-      if (carModelKey(car) !== loadedCarKeyRef.current) {
-        loadedCarKeyRef.current = carModelKey(car);
-        engine?.loadCar(car);
-      }
-      setSelectedCar(car);
-      choosePaint(paint);
-      applyRim(wheel, finish, cfg.size);
-      const r = BRAND.regions.find((x) => x.id === cfg.regionId);
-      if (r) changeRegion(r);
-      return true;
-    },
-    [catalog, cars, choosePaint, applyRim, changeRegion]
-  );
-
-  const loadCode = useCallback(
-    async (code: string) => {
-      const found = await findConfiguration(code);
-      if (!found || !applyConfig(found.config)) return false;
-      const clean = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const key = configKey(found.config);
-      if (found.source === 'server') {
-        setConfigCode({ key, code: clean, shared: true }); // the shared copy is where it came from
-      } else {
-        // Made in this browser: its save may still be running (pendingShared) or may have failed in an
-        // earlier visit, so the server is asked (meanwhile the summary says the build is being saved)
-        setConfigCode({ key, code: clean });
-        const pending = pendingShared.current;
-        (pending?.code === clean ? pending.shared : isConfigurationShared(clean)).then((shared) =>
-          setConfigCode((c) => (c && c.code === clean ? { ...c, shared } : c))
-        );
-      }
-      setStep('overview');
-      navigateTo({ name: 'configure' });
-      return true;
-    },
-    [applyConfig, navigateTo]
-  );
-
-  // ?config=CODE opens that configuration once the studio and catalogue are ready
-  const deepLinkDone = useRef(false);
-  useEffect(() => {
-    if (!booted || !catalogLoaded || deepLinkDone.current) return;
-    deepLinkDone.current = true;
-    const code = new URLSearchParams(window.location.search).get('config');
-    if (code) loadCode(code);
-  }, [booted, catalogLoaded, loadCode]);
+  /** The configurator on the car that is on stage. */
+  const buildThisCar = useCallback(() => openConfigurator({ selection: { car: selectedCar.id } }), [selectedCar.id]);
 
   /**
-   * Saves the current build under a fresh code and shows it at once; only the shared copy is awaited
-   * (configCode.shared follows), and a save started for an earlier configuration can no longer overwrite this one.
+   * Google sign-in. The round trip reloads the page: from the showroom the visitor comes back to the
+   * configurator on the car that was on stage, from any other page to that page.
    */
-  const saveCurrent = (cfg: SavedConfiguration, key: string) => {
-    const token = ++saveToken.current;
-    const saved = saveConfiguration(cfg);
-    pendingShared.current = { code: saved.code, shared: saved.shared };
-    setConfigCode({ key, code: saved.code });
-    saved.shared.then((shared) => {
-      if (token === saveToken.current) setConfigCode((c) => (c && c.code === saved.code ? { ...c, shared } : c));
-    });
-    return saved;
-  };
-
-  /**
-   * Resolves once nothing is in flight in the studio (a drive between cars, a wheel swap or a size change
-   * still being prepared), when the engine can say so (settle); capped so the stills always land.
-   */
-  const settled = (engine: CarConfiguratorEngine): Promise<void> => {
-    const settle = (engine as unknown as { settle?: () => Promise<void> }).settle;
-    if (typeof settle !== 'function') return Promise.resolve();
-    return Promise.race([settle.call(engine).catch(() => undefined), new Promise<void>((r) => setTimeout(r, 4000))]);
-  };
-
-  /** The summary's stills and configuration code, taken whenever the summary opens. */
-  const stillsToken = useRef(0); // the latest request wins when stills finish out of order
-  const stillsKey = useRef<string | null>(null); // the build the stills on screen were taken of
-  const enterSummary = useCallback(() => {
-    const cfg = currentConfig();
-    const key = configKey(cfg);
-    // The three stills are a few hundred ms of rendering and JPEG encoding on a phone: taken on the
-    // next frame, after the summary page has painted, so the tap responds at once and the images
-    // drop in (the page shows their frames meanwhile)
-    const engine = engineRef.current;
-    if (engine) {
-      const views: CameraViewPreset[] = ['frontThreeQuarter', 'side', 'frontWheel'];
-      const token = ++stillsToken.current;
-      // Another build than the one in the stills on screen: show the empty frames, not the last build's
-      // photos under this build's title (and never in its PDF)
-      if (stillsKey.current !== key) setSummaryImages([]);
-      stillsKey.current = key;
-      const live = () => token === stillsToken.current && setSummaryImages(engine.captureViews(views));
-      const take = () => {
-        if (token !== stillsToken.current) return;
-        // Cars with pre-rendered bodies get stills made the way the configurator draws them (same body, tone curve and
-        // backdrop, live wheels on top); the others, or if that fails, the live 3D car
-        if (!hasBodies(renderedCars, selectedCar.id, views)) return live();
-        renderedStills(engine, selectedCar.id, selectedPaint, views)
-          .then((imgs) => (imgs.length === views.length ? token === stillsToken.current && setSummaryImages(imgs) : live()))
-          .catch(live);
-      };
-      // A drive, wheel swap or size change the visitor just started finishes first, else the stills show a
-      // half-way car or the previous wheel next to the new wheel's name and price
-      settled(engine).then(() => requestAnimationFrame(take));
-    }
-    if (configCode?.key !== key) saveCurrent(cfg, key);
-  }, [configCode, renderedCars, selectedCar, selectedPaint, selectedWheel, selectedFinish, selectedSize, region]);
-  // (popstate: only once the studio is up, else the configurator opens as on a direct visit)
-  const reenterSummaryRef = useRef<() => boolean>(() => false);
-  reenterSummaryRef.current = () => {
-    if (!booted || !engineRef.current) return false;
-    enterSummary();
-    return true;
-  };
-
-  const openSummary = useCallback(() => {
-    navigateTo({ name: 'summary' });
-    enterSummary();
-  }, [navigateTo, enterSummary]);
-
-  // ----------------------------------------------------
-  // Account and garage
-  // ----------------------------------------------------
-  /** The shared copy of the current code, once written (false when it could not be). */
-  const awaitShared = async (code: string, maxMs?: number) => {
-    const pending = pendingShared.current;
-    if (!pending || pending.code !== code) return true; // a loaded code: already on the server
-    return maxMs === undefined ? pending.shared : Promise.race([pending.shared, new Promise<boolean>((r) => setTimeout(() => r(true), maxMs))]);
-  };
-  /**
-   * Google sign-in. The round trip reloads the page, so a build in progress (showroom, configurator,
-   * summary) is kept under its configuration code and reopened through the /?config= link; from any
-   * other page the visitor simply comes back to it.
-   */
-  const signIn = async (): Promise<string | null> => {
-    let returnTo: string | undefined;
-    if (route.name === 'showroom' || route.name === 'configure' || route.name === 'summary') {
-      const cfg = currentConfig();
-      const key = configKey(cfg);
-      const code = configCode?.key === key ? configCode.code : saveCurrent(cfg, key).code;
-      await awaitShared(code, 4000); // give the shared copy a moment; the local copy opens it here regardless
-      returnTo = `/?config=${code}`;
-    }
-    return signInWithGoogle(returnTo);
-  };
-  /**
-   * "Save to garage" on the summary: always saves a NEW copy of the build under a fresh code owned by
-   * the signed-in customer (saveConfiguration stamps the id and the name itself), which the summary
-   * then shows. The code already on screen is never taken over: a share code opens a build, it is not
-   * proof of authorship, so a build reached through someone else's link stays theirs (and their link
-   * keeps working). True when it is in the garage; otherwise the message for the customer: the shared
-   * copy could not be written, or it was written without the owner (the live database has not had the
-   * accounts migration, so the row would never show in the garage).
-   */
-  const NOT_SHARED = 'This build is not on the server yet (saved on this device only). Check your connection and try again.';
-  const NO_GARAGE = 'Saving to a garage is not switched on for this site yet. Your build is kept under its code: copy the link to come back to it.';
-  const saveToGarage = async (name: string): Promise<true | string> => {
-    if (accountColumnsMissing()) return NO_GARAGE; // an earlier write already found the columns missing: no row to waste
-    const cfg = currentConfig();
-    const token = ++saveToken.current;
-    const { code, shared, stamped } = saveConfiguration(cfg, name);
-    pendingShared.current = { code, shared };
-    if (!(await shared)) return NOT_SHARED;
-    if (!(await stamped)) return NO_GARAGE;
-    if (token === saveToken.current) setConfigCode({ key: configKey(cfg), code, shared: true });
-    setGarageVersion((v) => v + 1);
-    return true;
-  };
-
-  const price = rimPrice(selectedWheel, selectedSize, selectedFinish.id);
-  const carPaints = useMemo(() => paintsForCar(catalog.paints, selectedCar), [catalog.paints, selectedCar]);
+  const signIn = (): Promise<string | null> => signInWithGoogle(route.name === 'showroom' ? configureHref({ selection: { car: selectedCar.id } }) : undefined);
 
   const menuLinks = [
     { label: 'Home', onClick: () => navigateTo({ name: 'welcome' }) },
     { label: 'Models', onClick: () => navigateTo({ name: 'showroom' }) },
-    { label: 'Configure', onClick: () => navigateTo({ name: 'configure' }) },
+    { label: 'Configure', onClick: buildThisCar },
     { label: 'The wheels', onClick: () => navigateTo({ name: 'forged' }) },
     { label: 'Enquire', onClick: () => setEnquiryOpen(true) },
     { label: 'Delivery & fitment', onClick: () => navigateTo({ name: 'delivery' }) },
@@ -763,32 +398,14 @@ export const App: React.FC = () => {
     { label: 'Credits', onClick: () => navigateTo({ name: 'credits' }) }
   ];
 
-  const enquirySummary = `${selectedCar.name} · ${selectedPaint.name} · ${selectedWheel.name} ${selectedSize} in ${selectedFinish.name}`;
-  const onJourney = ['welcome', 'showroom', 'configure'].includes(route.name);
+  const onJourney = ['welcome', 'showroom'].includes(route.name);
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-stage select-none">
       <ShowroomBackdrop car={selectedCar} visible={booted && route.name === 'showroom'} />
 
-      {/* The dark studio behind the pre-rendered car: charcoal, with the floor's pool of light under the car */}
-      <div
-        aria-hidden
-        className="absolute inset-0 z-[4] pointer-events-none transition-opacity duration-500"
-        style={{ background: backdropFrame ? backdropCss(backdropFrame, cameraView) : undefined, opacity: rendered && stage ? 1 : 0 }}
-      />
-
-      {rendered && stage && (
-        <div className="absolute z-[5] pointer-events-none" style={{ ...stage, ...stageEdgeFade(stage) }}>
-          <RenderedCarView carId={selectedCar.id} view={cameraView} paint={selectedPaint} />
-        </div>
-      )}
-
-      {/* The studio: transparent WebGL canvas over the backdrop (only the wheels in rendered mode) */}
-      <div
-        ref={containerRef}
-        style={rendered && stage ? stage : undefined}
-        className={`absolute ${rendered && stage ? '' : 'inset-0'} z-10 transition-opacity duration-700 ${route.name === 'configure' ? 'cursor-grab active:cursor-grabbing' : ''} ${onJourney ? 'opacity-100' : 'opacity-0'}`}
-      />
+      {/* The studio: transparent WebGL canvas over the backdrop */}
+      <div ref={containerRef} className={`absolute inset-0 z-10 transition-opacity duration-700 ${onJourney ? 'opacity-100' : 'opacity-0'}`} />
 
       {booted && route.name === 'welcome' && (
         <WelcomeGate
@@ -814,7 +431,7 @@ export const App: React.FC = () => {
             onLogo={() => navigateTo({ name: 'welcome' })}
             actions={
               <>
-                <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigateTo({ name: 'configure' })}>
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={buildThisCar}>
                   Configure
                 </Button>
                 {/* Phones: Enquire is in the menu (it overlapped the logo at 390 px) */}
@@ -822,8 +439,8 @@ export const App: React.FC = () => {
                   Enquire
                 </Button>
                 <IconButton label="Account" onClick={() => setAccountOpen(true)} className="ring-1 ring-line">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+                  {account.avatarUrl ? (
+                    <img src={account.avatarUrl} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
                   ) : (
                     <UserRound className="h-5 w-5" strokeWidth={1.6} />
                   )}
@@ -831,187 +448,36 @@ export const App: React.FC = () => {
               </>
             }
           />
-          <Showroom
-            cars={cars}
-            index={carIndex}
-            busy={driving}
-            onStep={(d) => stepCar(d)}
-            onJump={(i) => stepCar(i > carIndex ? 1 : -1, i)}
-            onBuild={() => {
-              setStep('overview');
-              setCameraView('frontThreeQuarter');
-              navigateTo({ name: 'configure' });
-            }}
-          />
+          <Showroom cars={cars} index={carIndex} busy={driving} onStep={(d) => stepCar(d)} onJump={(i) => stepCar(i > carIndex ? 1 : -1, i)} onBuild={buildThisCar} />
         </>
       )}
-
-      {booted && route.name === 'configure' && (
-        <Configurator
-          car={selectedCar}
-          cars={cars}
-          onSelectCar={(car) => {
-            const i = cars.findIndex((c) => c.id === car.id);
-            if (i >= 0) stepCar(i > carIndex ? 1 : -1, i);
-          }}
-          paints={carPaints}
-          wheels={catalog.wheels}
-          finishes={catalog.finishes}
-          paint={selectedPaint}
-          wheel={selectedWheel}
-          finish={selectedFinish}
-          size={selectedSize}
-          region={region}
-          step={step}
-          onStep={changeStep}
-          cameraView={cameraView}
-          autoRotate={autoRotate}
-          onCamera={(view) => {
-            // a view with a pre-rendered frame stops the turntable, so the frame shows
-            if (autoRotate && renderedCars[selectedCar.id]?.includes(view)) {
-              setAutoRotate(false);
-              engineRef.current?.setAutoRotate(false);
-            }
-            selectView(view);
-          }}
-          onToggleRotate={toggleRotate}
-          onPaint={choosePaint}
-          onWheel={chooseWheel}
-          onSize={chooseSize}
-          onFinish={chooseFinish}
-          onChangeModel={() => navigateTo({ name: 'showroom' })}
-          onSummary={openSummary}
-          onOpen360={(w) => navigateTo({ name: 'rim', rimId: w.id })}
-          onOpenMore={() => setMoreOpen(true)}
-        />
-      )}
-      {booted && route.name === 'configure' && (
-        /* Account and garage, in the stage's top corner next to the panel (top-right above the sheet on phones) */
-        <div className="absolute z-30 top-4 right-[calc(var(--panel-w)+8px)] sheet:right-4 animate-fade">
-          <IconButton label="Account" onClick={() => setAccountOpen(true)} className="bg-surface/70 ring-1 ring-line backdrop-blur hover:bg-surface">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
-            ) : (
-              <UserRound className="h-[18px] w-[18px]" strokeWidth={1.6} />
-            )}
-          </IconButton>
-        </div>
-      )}
-
-      {route.name === 'summary' && (
-        <SummaryPage
-          car={selectedCar}
-          paint={selectedPaint}
-          wheel={selectedWheel}
-          finish={selectedFinish}
-          size={selectedSize}
-          price={price}
-          region={region}
-          images={summaryImages}
-          code={configCode?.code ?? null}
-          codeShared={configCode?.shared}
-          onBack={() => navigateTo({ name: 'configure' })}
-          onEnquire={() => setEnquiryOpen(true)}
-          signedIn={!!user}
-          onSaveToGarage={saveToGarage}
-          onSignIn={() => setAccountOpen(true)}
-          contactPrefill={contactPrefill}
-          onDownloadPdf={async (contact) => {
-            // Saved as a lead first (never blocks the PDF: submitEnquiry keeps a local copy if offline;
-            // only a refusal from the server, e.g. the rate limit, stops it and is shown)
-            const lead = await submitEnquiry({
-              ...contact,
-              consultation: false,
-              source: 'pdf',
-              configCode: configCode?.code,
-              configuration: {
-                car: selectedCar.name,
-                paint: selectedPaint.name,
-                wheel: selectedWheel.name,
-                size: selectedSize,
-                finish: selectedFinish.name,
-                carId: selectedCar.id,
-                paintId: selectedPaint.id,
-                wheelId: selectedWheel.id,
-                finishId: selectedFinish.id
-              },
-              region: region.id
-            });
-            if (lead.status === 'rejected') throw new Error(lead.message);
-            await downloadBrochurePdf({
-              car: selectedCar,
-              paint: selectedPaint,
-              wheel: selectedWheel,
-              finish: selectedFinish,
-              size: selectedSize,
-              price,
-              region,
-              code: configCode?.code ?? '',
-              images: summaryImages
-            });
-          }}
-        />
-      )}
-
-      <MoreOptionsModal
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        region={region}
-        onRegion={changeRegion}
-        onLoadCode={loadCode}
-        onRestart={() => navigateTo({ name: 'welcome' })}
-        onOpenAccount={() => setAccountOpen(true)}
-      />
 
       <AccountSheet
         open={accountOpen}
         onClose={() => setAccountOpen(false)}
-        user={user}
-        profile={profile}
-        onProfile={setProfile}
+        user={account.user}
+        profile={account.profile}
+        onProfile={account.setProfile}
         onSignIn={signIn}
         onOpenBuild={async (code) => {
-          const ok = await loadCode(code);
-          if (ok) setAccountOpen(false);
-          return ok;
-        }}
-        onDeleted={(code) => {
-          // The summary must not keep showing a code whose shared copy is gone: while it is open, the build on
-          // screen gets a fresh code as on the way in (Share, PDF and Save to garage keep working); elsewhere the
-          // code is dropped and the summary makes one when it opens
-          if (configCode?.code !== code) return;
-          if (route.name !== 'summary') return setConfigCode(null);
-          const cfg = currentConfig();
-          saveCurrent(cfg, configKey(cfg));
+          // a saved build opens in the configurator, which looks the code up itself
+          const found = await findConfiguration(code).catch(() => null);
+          if (!found) return false;
+          openConfigurator({ code });
+          return true;
         }}
         cars={catalog.cars}
         paints={catalog.paints}
         wheels={catalog.wheels}
         finishes={catalog.finishes}
-        garageVersion={garageVersion}
       />
 
       <EnquiryModal
         open={enquiryOpen}
         onClose={() => setEnquiryOpen(false)}
-        summary={enquirySummary}
-        prefill={contactPrefill}
-        context={{
-          configCode: configCode?.code,
-          configuration: {
-            car: selectedCar.name,
-            paint: selectedPaint.name,
-            wheel: selectedWheel.name,
-            size: selectedSize,
-            finish: selectedFinish.name,
-            // Ids too: some paint names are shared by two BMW codes, so the lead email looks these up
-            carId: selectedCar.id,
-            paintId: selectedPaint.id,
-            wheelId: selectedWheel.id,
-            finishId: selectedFinish.id
-          },
-          region: region.id
-        }}
+        summary={selectedCar.name}
+        prefill={account.contactPrefill}
+        context={{ configuration: { car: selectedCar.name, carId: selectedCar.id }, region: region.id }}
       />
 
       <Suspense fallback={null}>
@@ -1023,12 +489,7 @@ export const App: React.FC = () => {
             region={region}
             onBack={goBack}
             onOpenRim={(rimId) => navigateTo({ name: 'rim', rimId })}
-            onConfigure={(wheel) => {
-              applyRim(wheel);
-              setStep('wheels');
-              setCameraView('frontWheel');
-              navigateTo({ name: 'configure' });
-            }}
+            onConfigure={(wheel) => openConfigurator({ selection: { wheel: wheel.id } })}
           />
         </div>
       )}
@@ -1041,17 +502,21 @@ export const App: React.FC = () => {
             finishes={catalog.finishes}
             wheelId={route.rimId}
             loading={!catalogLoaded}
-            initialFinishId={selectedFinish.id}
-            initialSize={selectedSize}
+            initialFinishId={buildAddress?.wanted.finish}
+            initialSize={buildAddress?.size}
             region={region}
-            backLabel={rimReturnRef.current.name === 'configure' ? 'Back to your build' : 'Back'}
-            onBack={() => navigateTo(rimReturnRef.current)}
+            backLabel={returnToBuild || !rimOpenedFromRef.current ? 'Back to your build' : 'Back'}
+            onBack={() => {
+              // to the build it was opened from; else to the page of this app that opened it; a direct link goes to the configurator
+              if (returnToBuild) goTo(returnToBuild);
+              else if (rimOpenedFromRef.current) navigateTo(rimOpenedFromRef.current);
+              else openConfigurator({ selection: { wheel: route.rimId } });
+            }}
             onOpenRim={(rimId) => navigateTo({ name: 'rim', rimId })}
             onConfigure={(wheel, finish, size) => {
-              applyRim(wheel, finish, size);
-              setStep('wheels');
-              setCameraView('frontWheel');
-              navigateTo({ name: 'configure' });
+              // this wheel, finish and size on the build the page was opened from (or on the default car)
+              const wanted: WantedSelection = { ...buildAddress?.wanted, wheel: wheel.id, finish: finish.id };
+              openConfigurator({ selection: wanted, size });
             }}
           />
         </div>
