@@ -191,16 +191,8 @@ export const DELIVERY: InfoPageContent = {
   ]
 };
 
-const CC_BY = 'CC BY 4.0 (creativecommons.org/licenses/by/4.0)';
-const SKETCHFAB = 'sketchfab.com/3d-models/';
-
-/** One CC BY 4.0 car credit: title, author, source, licence and the changes we made. */
-const ccByCar = (title: string, author: string, slug: string, changes: string) =>
-  `"${title}" by ${author}. Source: ${SKETCHFAB}${slug}. Licence: ${CC_BY}. Changes: ${changes}`;
-
 /**
- * Model credits page (/credits). Satisfies the attribution the CC BY 4.0 car models require and
- * records the source of everything else drawn in the configurator. Mirror of public/models/CREDITS.md.
+ * Model credits page (/credits). Records the source of everything drawn in the configurator. Mirror of public/models/CREDITS.md.
  */
 export const CREDITS: InfoPageContent = {
   path: '/credits',
@@ -234,29 +226,6 @@ export const CREDITS: InfoPageContent = {
         'BMW M4 CS (G82): supplied by FORGEDSA, licence to be confirmed.',
         'BMW M5 (G90): supplied by FORGEDSA, licence to be confirmed.',
         'BMW M5 Touring (G99): supplied by FORGEDSA, licence to be confirmed.'
-      ]
-    },
-    {
-      title: 'BMW cars from Sketchfab (Creative Commons Attribution 4.0)',
-      body: [
-        'These models are used under the Creative Commons Attribution 4.0 International licence, which allows commercial use provided the author is credited and changes are indicated. In every case we replaced the original wheels with FORGEDSA wheels and compressed the file for the web. Some of these cars are not currently offered in the configurator; the credit stands while the file is part of the site.'
-      ],
-      points: [
-        ccByCar('BMW M4 Competition M Package', 'SRT Performance', 'bmw-m4-competition-m-package-5c0a2dafb1ad408d9fc9eeef9aee531b', 'livery hidden, wheels replaced.'),
-        ccByCar('2025 BMW M4 CS VR46 Edition', "BMW'S Lost Proxy", '2025-bmw-m4-cs-vr46-edition-3d111a7ed0f544bc9215e3038db4c8dc', 'compressed, wheels replaced, calipers recoloured.'),
-        ccByCar('BMW M2 g87 [Free]', 'Black Snow', 'bmw-m2-g87-free-125412579b244790b27b2a7839527c6e', 'wheels replaced.'),
-        ccByCar('2021 BMW M3 Competition (G80)', 'DisneyCars', '2021-bmw-m3-competition-g80-a9027a26b7ee4da4b564d939b6c27559', 'wheels replaced.'),
-        ccByCar('BMW m3 Competition Tourning [g81]', 'Black Snow', 'bmw-m3-competition-tourning-g81-e2a4d608b2034e639c7eb6a2ef8dbfa1', 'wheels replaced.'),
-        ccByCar('BMW M8 F92 Coupé Competition', 'kevin (ケビン)', 'bmw-m8-f92-coupe-competition-25d5b4f6d13e4217afa09bbf89f8d993', 'wheels replaced.'),
-        ccByCar('BMW X5M F95 + Facelifted Versions', 'ZapupaNekra', 'bmw-x5m-f95-facelifted-versions-2f4b104aae8f4b59b05683a2a144902d', 'only the facelift X5 M Competition parts kept, materials rebuilt, plates and engine bay removed, wheels replaced.'),
-        ccByCar('BMW G90 M5', 'JUSTGAME', 'bmw-g90-m5-9dc9e5c88bec4faa94552fdd0b76ed21', 'body panels given their own paint material, wheels replaced.'),
-        ccByCar('2026 BMW X3', 'tonielpro520', '2026-bmw-x3-73212a0045524ca0804b82b813847a94', 'tyres separated from the trim mesh, wheels replaced.')
-      ]
-    },
-    {
-      title: 'BMW M235i Gran Coupé (Sketchfab Standard licence)',
-      body: [
-        `"BMW M235i Gran Coupé" by KOElkast1007 (sketchfab.com/koelkastasbers). Source: ${SKETCHFAB}bmw-m235i-gran-coupe-23aea45df6da44fab8785df6c3b09ecd. Licence: Sketchfab Standard (sketchfab.com/licenses), which permits use within this project but not redistribution of the model file. This car is not offered in the configurator and stays off unless re-licensed. Changes: skeleton baked out, wheels replaced.`
       ]
     },
     {

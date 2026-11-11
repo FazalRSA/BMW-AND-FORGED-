@@ -11,17 +11,6 @@
 
 All car files were compressed for the web (meshopt geometry, WebP textures up to 2048 px) with gltf-transform.
 
-Some of these community uploads appear to derive from game assets (naming and material
-conventions from racing games or GTA mods). The Sketchfab licence shown is what the uploader
-granted; a formal licence check is advisable before a large commercial launch.
-
-**No commercial-licence model found yet** (these cars stay on the procedural placeholder body):
-
-- **M4 Convertible (G83)**: the only commercial-licence convertibles are the older F83 or a
-  parts kit; the one G82/G83 upload found is a body-kitted parts set, not a stock assembled car.
-- **M5 Touring (G99)**: the only good G99 is Ddiaz Design's CC BY-NC-SA model; "CC BY" copies
-  of it by other accounts are unlicensed re-uploads, and the other results were parts kits or
-  drag builds.
 
 ## Rim models (`rims/`)
 
