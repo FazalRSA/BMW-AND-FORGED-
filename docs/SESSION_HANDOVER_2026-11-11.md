@@ -68,7 +68,7 @@ against its own screenshots (do not trust a report alone); cherry-pick onto `ccr
 ## 5. Decisions waiting for the owner
 
 1. **Merge PR #14** (menu links, GPU-restore fix, carousel fix, docs). Squash-merge is how earlier PRs were done; the PR body carries what to say.
-2. **Done 11 Nov (owner approved): the M2 name fix** applied to the live database: `20261111090000_car_m2_g87_name_m2_cs.sql` renames the `m2_g87` row from "BMW M2 Coupe" / "M2 G87" to "BMW M2 CS" / "M2 CS G87". Dry-run read-only against the live schema: it matches exactly one row; the only trigger on `cars` is `touch_updated_at`. Written, not applied, because it changes live data.
+2. **Done 11 Nov (owner approved): the M2 name fix** applied to the live database: `20261111090000_car_m2_g87_name_m2_cs.sql` renames the `m2_g87` row from "BMW M2 Coupe" / "M2 G87" to "BMW M2 CS" / "M2 CS G87". Dry-run read-only against the live schema: it matches exactly one row; the only trigger on `cars` is `touch_updated_at`. It is in the live migration list (`20261111065356 car_m2_g87_name_m2_cs`).
 3. **Deploy production.** The live site is the 8 October build. Either connect this repo to the Vercel project, or start a production deployment by hand from a `main` commit (`forgedsa-deploy-and-release` skill). Not done: it is the owner's call.
 4. **The photoreal route and BlendKit cars.**
    - The scene still does not match the Cycles still's fidelity. Matching it needs pre-rendered Cycles bodies with live wheels (mode C in `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`). That needs the reference studio file `BMW_M2_CS_G87_clean_studio.blend`, which is **not in the repo and not in the owner's Google Drive** (searched). The owner should upload it, plus any BlendKit `.blend` files.
@@ -134,7 +134,7 @@ Merged: #12, then #14 (menu links, GPU-restore fix, carousel, dark wheel stage).
 |---|---|
 | Admin login (`/admin`, email + password, allowlist) | built, plain form, redesign not done |
 | Customer login (Google via Supabase Auth, garage) | built; needs the owner's Google provider setup (docs/ACCOUNTS.md) |
-| Dealer login | BUILT on `claude/dealership-forged-admin-pages-cgw28j` (`/dealer`, Dealers tab in `/admin`, migration `20261111120000_dealers.sql` written, NOT applied); docs/DEALERS.md |
+| Dealer login | BUILT and merged (#22): `/dealer`, Dealers tab in `/admin`. Migration `20261111120000_dealers.sql` APPLIED to the live project on 11 Nov, index built, RLS checked in a rolled-back test. No real dealership or dealer sign-in exists yet; docs/DEALERS.md |
 | Magic link / password-less login | NOT BUILT (`signInWithOtp` is the route) |
 | FORGED wordmark | present (`public/brand/forgedsa-wordmark.png`) |
 | SixNine logo | NO ASSET in the repo; the owner must supply it |

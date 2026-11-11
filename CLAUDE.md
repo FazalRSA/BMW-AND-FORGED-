@@ -16,7 +16,7 @@
 - The cloud sandbox has no GPU: renders are SwiftShader on CPU (about 50 s a shot); never claim real-GPU or phone results
 - Commit messages: type(scope) subject, body says why and what was checked; never rewrite pushed history
 - Harness runs (journey.cjs, e2e.cjs) stub Supabase writes; never create real leads (each one emails the owner)
-- Prepared cars/rims go in with scripts/ingest-car.mjs / scripts/ingest-rim.mjs (docs/ADD_PREPARED_CAR.md); migrations are written, not applied (no Supabase access from the sandbox)
+- Prepared cars/rims go in with scripts/ingest-car.mjs / scripts/ingest-rim.mjs (docs/ADD_PREPARED_CAR.md); migrations can be applied from the sandbox with the Supabase connector (apply_migration) when the owner asks: read the live schema first, apply, read it back, never apply unasked
 
 ### Key Decisions
 - Decision: allow rules in .claude/settings.json for git, bun/npm, node, ffmpeg and basic file commands only — Reason: cut prompts without pre-approving credential lookups or external installs
