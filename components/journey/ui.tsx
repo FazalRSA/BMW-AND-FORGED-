@@ -18,7 +18,7 @@ export const Logo: React.FC<{ className?: string; size?: 'sm' | 'md' | 'lg' }> =
   // The wordmark is ~9.5:1, so heights stay small to keep it inside a phone header.
   const h = size === 'lg' ? 'h-6 sm:h-8' : size === 'sm' ? 'h-3.5 sm:h-4' : 'h-4 sm:h-5';
   if (BRAND.logoUrl)
-    return <img src={BRAND.logoUrl} alt={BRAND.name} draggable={false} className={cx(h, 'w-auto select-none', className)} />;
+    return <img src={BRAND.logoSvgUrl || BRAND.logoUrl} alt={BRAND.name} draggable={false} className={cx(h, 'w-auto select-none', className)} />;
   const text = size === 'lg' ? 'text-3xl' : size === 'sm' ? 'text-sm' : 'text-lg';
   return (
     <span className={cx('font-display font-extrabold tracking-[0.32em] text-ink select-none', text, className)}>
