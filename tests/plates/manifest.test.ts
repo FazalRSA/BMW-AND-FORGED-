@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadManifest, manifestUrl, parseManifest } from '../../services/plates/manifest';
+import { loadManifest, manifestUrl, parseManifest, primeManifest, takePrimedManifest } from '../../services/plates/manifest';
 import { rawManifest } from './fixtures';
 
 const parsed = (raw: unknown) => {
@@ -141,5 +141,42 @@ describe('loadManifest', () => {
     // JSON, but not a manifest
     assert.equal((await failure(respond(200, { hello: 'world' })))?.kind, 'shape');
     assert.equal((await failure(respond(200, [])))?.kind, 'shape');
+  });
+});
+
+describe('primeManifest', () => {
+  test('the request started ahead of the page is handed over once; a retry loads afresh', async () => {
+    const realFetch = globalThis.fetch;
+    let requests = 0;
+    globalThis.fetch = (async () => {
+      requests++;
+      return new Response(JSON.stringify(rawManifest()));
+    }) as unknown as typeof fetch;
+    try {
+      assert.equal(takePrimedManifest('/primed'), undefined, 'nothing primed yet');
+      primeManifest('/primed');
+      primeManifest('/primed');
+      assert.equal(requests, 1, 'priming twice asks once');
+      const result = await takePrimedManifest('/primed');
+      assert.equal(result?.ok, true);
+      assert.equal(takePrimedManifest('/primed'), undefined, 'taken: the next load is a new request');
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
+
+  test('a primed request that fails is a typed failure like any other', async () => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      throw new TypeError('offline');
+    }) as unknown as typeof fetch;
+    try {
+      primeManifest('/primed-offline');
+      const result = await takePrimedManifest('/primed-offline');
+      assert.equal(result?.ok, false);
+      if (result && result.ok === false) assert.equal(result.error.kind, 'network');
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 });

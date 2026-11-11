@@ -177,7 +177,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </section>
           )}
 
-          <section ref={(el) => (sections.current.paint = el)}>
+          <section ref={(el) => { sections.current.paint = el; }}>
             <H2 step="paint" onStep={p.onStep} aside={`${p.paint.name} · ${p.paint.code}`}>
               Paint
             </H2>
@@ -196,7 +196,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             ))}
           </section>
 
-          <section ref={(el) => (sections.current.wheels = el)}>
+          <section ref={(el) => { sections.current.wheels = el; }}>
             <H2 step="wheels" onStep={p.onStep} aside={p.wheel.name}>
               Wheels
             </H2>
@@ -225,7 +225,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </div>
           </section>
 
-          <section ref={(el) => (sections.current.size = el)}>
+          <section ref={(el) => { sections.current.size = el; }}>
             <H2 step="size" onStep={p.onStep} aside={formatMoney(price, p.region)}>
               Size
             </H2>
@@ -238,7 +238,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </div>
           </section>
 
-          <section ref={(el) => (sections.current.finish = el)}>
+          <section ref={(el) => { sections.current.finish = el; }}>
             <H2 step="finish" onStep={p.onStep} aside={p.finish.name}>
               Finish
             </H2>

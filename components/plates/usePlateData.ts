@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BRAND, DEFAULT_REGION, Region } from '../../config/brand';
 import { Catalog, STATIC_CATALOG, fetchCatalog } from '../../services/catalogService';
 import { chooseFormat } from '../../services/plates/format';
-import { ManifestError, PlateFormat, PlateManifest, loadManifest } from '../../services/plates/manifest';
+import { ManifestError, PlateFormat, PlateManifest, loadManifest, takePrimedManifest } from '../../services/plates/manifest';
 
 /** The manifest and the picture format this browser gets, or why there is none. */
 export type PlateData =
@@ -30,7 +30,8 @@ export function usePlateManifest(base: string): PlateData {
     let current = true;
     setData({ status: 'loading' });
     (async () => {
-      const result = await loadManifest(base, { signal: abort.signal });
+      // the request Root.tsx started while this code was downloading, when there is one
+      const result = await (takePrimedManifest(base) ?? loadManifest(base, { signal: abort.signal }));
       if (!current) return;
       if (result.ok === false) {
         console.warn(`Plates: ${result.error.message}`);

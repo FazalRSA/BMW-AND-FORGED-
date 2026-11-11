@@ -4,8 +4,10 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { PLATES_BASE } from './config/plates';
 import { appAddress } from './services/nav';
 import { isConfigureAddress } from './services/plates/address';
+import { primeManifest } from './services/plates/manifest';
 
 // Two halves, loaded on demand:
 // - the configurator, drawn from pre-rendered plates (no 3D engine, no three.js);
@@ -18,6 +20,9 @@ const onConfigurator = () => {
   const { path, search } = appAddress();
   return isConfigureAddress(path, search);
 };
+
+// Arriving on the configurator: its manifest is requested now, alongside its code, not after it
+if (typeof window !== 'undefined' && onConfigurator()) primeManifest(PLATES_BASE);
 
 /** Chooses the half of the site for the current address, and follows the address as it changes. */
 export const Root: React.FC = () => {

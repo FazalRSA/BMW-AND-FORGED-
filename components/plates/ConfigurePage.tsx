@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Menu, RotateCw, UserRound } from 'lucide-react';
 import { BRAND, LUXURY_THEME, applyTheme } from '../../config/brand';
 import { PLATES_BASE, PLATES_CROSS_ORIGIN } from '../../config/plates';
@@ -40,7 +40,7 @@ import {
 import { AccountSheet } from '../journey/AccountSheet';
 import { EnquiryModal } from '../journey/EnquiryModal';
 import { Button, IconButton, Logo, Status, cx } from '../journey/ui';
-import { Build, BuildSummary, leadConfiguration, savedConfiguration } from './BuildSummary';
+import { Build, leadConfiguration } from './build';
 import { OptionsMenu } from './OptionsMenu';
 import { OptionsPanel, PriceBar } from './OptionsPanel';
 import { PlateStage } from './PlateStage';
@@ -48,6 +48,10 @@ import { ViewTabs } from './ViewTabs';
 import { prefersLessData, useElementWidth } from './hooks';
 import { useBuildCode } from './useBuildCode';
 import { usePlateManifest, useRegion, useSiteCatalogue } from './usePlateData';
+
+// The summary step loads when it is first needed, and is fetched ahead once the first picture is showing
+const loadBuildSummary = () => import('./BuildSummary');
+const BuildSummary = lazy(loadBuildSummary);
 
 const NO_BROKEN_PLATES: ReadonlySet<string> = new Set();
 /** After this many pictures in a row fail to load, the page stops trying others and says so. */
@@ -108,7 +112,7 @@ const ConfigurePage: React.FC = () => {
   const finish = findFinish(wheel, selection?.finish);
   const sizes = useMemo(() => (wheel ? rimSizes(wheel.design) : []), [wheel]);
   const size = wheel ? nearestRimSize(wheel.design, wantedSize ?? DEFAULT_SIZE) : undefined;
-  const build: Build | null = car && paint && wheel && finish && size ? { car, paint, wheel, finish, size } : null;
+  const build = useMemo<Build | null>(() => (car && paint && wheel && finish && size ? { car, paint, wheel, finish, size } : null), [car, paint, wheel, finish, size]);
   const showSummary = step === 'summary' && !!build;
 
   // ----------------------------------------------------
@@ -151,6 +155,7 @@ const ConfigurePage: React.FC = () => {
   }, [notice]);
 
   const onShown = useCallback((shown: Frame) => {
+    if (!shownSelection.current && !prefersLessData()) void loadBuildSummary().catch(() => undefined); // the first picture is up: fetch the next step
     shownSelection.current = selectionOfFrame.current.get(shown) ?? null;
     setFailuresInARow(0);
   }, []);
@@ -437,6 +442,7 @@ const ConfigurePage: React.FC = () => {
       </aside>
 
       {showSummary && build && catalog && selection && source && (
+        <Suspense fallback={null}>
         <BuildSummary
           catalog={catalog}
           selection={selection}
@@ -453,6 +459,7 @@ const ConfigurePage: React.FC = () => {
           onEnquire={() => setEnquiryOpen(true)}
           onSignIn={() => setAccountOpen(true)}
         />
+        </Suspense>
       )}
 
       <OptionsMenu

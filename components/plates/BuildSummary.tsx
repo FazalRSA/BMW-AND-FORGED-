@@ -5,48 +5,16 @@
 
 import React, { useCallback, useEffect, useMemo } from 'react';
 import type { Region } from '../../config/brand';
-import type { WheelFinish } from '../../types';
 import { PdfContact, SavedConfiguration, configKey, submitEnquiry } from '../../services/journeyService';
 import { rimPrice } from '../../services/pricing';
-import { ConfigCar, ConfigWheel, PlateCatalog, paintAsCatalogue, paintDetail } from '../../services/plates/catalog';
+import { PlateCatalog, paintAsCatalogue, paintDetail } from '../../services/plates/catalog';
 import { composeJpeg } from '../../services/plates/compose';
 import { PlateSource, frameFor, pickSize } from '../../services/plates/frames';
-import type { PlatePaint } from '../../services/plates/manifest';
 import { Selection, describeSelection, summaryViews } from '../../services/plates/selection';
 import { SummaryPage } from '../journey/SummaryPage';
 import { PlateStill } from './PlateStage';
+import { Build, leadConfiguration, savedConfiguration } from './build';
 import type { BuildCode } from './useBuildCode';
-
-/** The build as the site's leads, PDF and share codes know it (catalogue ids; the paint by its plate id). */
-export interface Build {
-  car: ConfigCar;
-  paint: PlatePaint;
-  wheel: ConfigWheel;
-  finish: WheelFinish;
-  size: string;
-}
-
-/** The record the enquiry form, the PDF lead and the owner's email read (names for people, ids for lookups). */
-export const leadConfiguration = (build: Build): Record<string, string> => ({
-  car: build.car.model.name,
-  paint: build.paint.name,
-  wheel: build.wheel.design.name,
-  size: build.size,
-  finish: build.finish.name,
-  carId: build.car.model.id,
-  paintId: build.paint.id,
-  wheelId: build.wheel.design.id,
-  finishId: build.finish.id
-});
-
-export const savedConfiguration = (build: Build, region: Region): SavedConfiguration => ({
-  carId: build.car.model.id,
-  paintId: build.paint.id,
-  wheelId: build.wheel.design.id,
-  finishId: build.finish.id,
-  size: build.size,
-  regionId: region.id
-});
 
 /** The width the PDF's pictures are composed at (the brochure prints them about 18 cm wide). */
 const PDF_PICTURE_WIDTH = 1280;
@@ -74,7 +42,7 @@ export interface BuildSummaryProps {
  * fed from the plate configuration. The pictures are the build's rendered views; the PDF gets the same
  * views flattened to JPEG. The lead is saved before the PDF is made, exactly as before.
  */
-export const BuildSummary: React.FC<BuildSummaryProps> = (p) => {
+const BuildSummary: React.FC<BuildSummaryProps> = (p) => {
   const { build, region } = p;
   const price = rimPrice(build.wheel.design, build.size, build.finish.id);
   const paint = useMemo(() => paintAsCatalogue(build.paint), [build.paint]);
@@ -144,3 +112,5 @@ export const BuildSummary: React.FC<BuildSummaryProps> = (p) => {
     />
   );
 };
+
+export default BuildSummary;

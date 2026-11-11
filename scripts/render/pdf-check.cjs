@@ -1,13 +1,18 @@
 /**
- * PDF smoke test (see .claude/skills/forgedsa-pdf-brochure): drives the real app to the summary,
- * opens the PDF gate, fills it, and saves the brochure the browser generates, so the spec sheet can be
- * looked at page by page (`pdftoppm -png -r 80 out/brochure.pdf out/page`).
+ * PDF smoke test (see .claude/skills/forgedsa-pdf-brochure): opens the configurator, goes to the
+ * summary, opens the PDF gate, fills it, and saves the brochure the browser generates, so the spec
+ * sheet can be looked at page by page (pypdfium2, see the render-verification skill).
  *
  *   bunx vite --host 127.0.0.1 --port 5173            # dev server, in another shell
  *   node scripts/render/pdf-check.cjs <outDir> [desktop|phone]        # BASE=https://… runs it against a deployed site
+ *   CONFIG='car=m5_g90&wheel=sixnine_ff3&finish=black' …               # a configuration other than the default
+ *
+ * The PDF is the quote for a catalogue wheel, so one must be pictured on the car (the default
+ * configuration picks the first that is); the run fails with that message when none is.
  *
  * Nothing real is written: the lead insert and the saved configuration that the gate triggers are
- * answered here (every real lead emails the owner). Exit 0 with <outDir>/brochure.pdf, 2 on failure.
+ * answered here (every real lead emails the owner), and the lead that would have been sent is written
+ * to <outDir>/lead.json. Exit 0 with <outDir>/brochure.pdf, 2 on failure.
  */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'); const path = require('path');
@@ -16,7 +21,7 @@ const BASE = (process.env.BASE || 'http://127.0.0.1:5173').replace(/\/$/, '');
 const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }, desktop: { width: 1440, height: 900 } };
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const { width, height, ...dev } = SIZES[which] || SIZES.desktop;
   const ctx = await b.newContext({ viewport: { width, height }, ...dev, acceptDownloads: true });
   const p = await ctx.newPage();
@@ -31,41 +36,23 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     const m = r.request().method();
     if (m === 'GET' || m === 'HEAD') return process.env.STATIC ? r.abort('blockedbyclient') : r.continue();
     writes.push(`${m} ${new URL(r.request().url()).pathname}`);
+    if (/\/leads/.test(r.request().url())) fs.writeFileSync(path.join(OUT, 'lead.json'), r.request().postData() || '');
     return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' });
   });
   const shot = (tag) => p.screenshot({ path: path.join(OUT, `${which}-${tag}.png`), timeout: 120000 });
   try {
-    await p.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 240000 });
-    await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().waitFor({ timeout: 240000 });
-    note('welcome loaded');
-    // The boot screen can still cover the page under load: wait for it to fade before clicking
-    await p.locator('[aria-label="Loading"]').waitFor({ state: 'hidden', timeout: 120000 }).catch(() => {});
-    await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click({ timeout: 60000 });
-    await p.getByRole('button', { name: /^build$/i }).waitFor({ timeout: 60000 });
-    note('showroom loaded');
-    await p.getByRole('button', { name: /^build$/i }).click();
-    note('build clicked');
-    // The notice before the configurator (Confirm) is not shown for every car; take it when it appears
-    const confirm = p.getByRole('button', { name: /^confirm$/i });
-    if (await confirm.waitFor({ timeout: 8000 }).then(() => true, () => false)) {
-      // The notice closes as soon as it is confirmed; a click whose target vanishes mid-way is fine
-      await confirm.click({ timeout: 45000, noWaitAfter: true }).catch((e) => note('confirm click: ' + e.message.split('\n')[0]));
-      note('confirm clicked');
-    } else note('no confirm notice');
-    await p.getByRole('button', { name: /step 2|wheels/i }).first().waitFor({ timeout: 60000 });
-    await p.waitForTimeout(4000);
-    note('configure reached');
-    // Desktop: the "Summary" icon button; phones: the footer CTA "View your <car>" (the icon is hidden there)
-    const summaryBtn = p.getByRole('button', { name: /^summary$/i }).first();
-    if (await summaryBtn.isVisible().catch(() => false)) await summaryBtn.click();
-    else await p.getByRole('button', { name: /^view your /i }).first().click();
+    await p.goto(`${BASE}/configure${process.env.CONFIG ? `?${process.env.CONFIG}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 240000 });
+    await p.waitForFunction(() => (document.querySelector('[data-plate-stage]')?.getAttribute('data-plate-stage') || '').includes('/body/'), null, { timeout: 120000 });
+    note(`configure reached: ${await p.locator('[data-plate-stage]').first().getAttribute('data-plate-stage')}`);
+    const viewBuild = p.getByRole('button', { name: /^view build$/i });
+    if (!(await viewBuild.count())) throw new Error('no catalogue wheel is pictured on this car, so there is no build to quote');
+    await viewBuild.click();
     note('summary clicked');
     const pdfBtn = p.getByRole('button', { name: /^pdf$|download pdf/i }).first();
     await pdfBtn.waitFor({ timeout: 120000 });
-    await p.waitForTimeout(8000); // stills are captured from the live engine
+    await p.waitForTimeout(1500);
     await shot('summary');
-    const code = await p.evaluate(() => (document.body.innerText.match(/\b[A-Z0-9]{6,8}\b(?=\s*(?:Share|Copy|Open|$))/m) || [])[0] || '');
-    note(`summary reached; share code on page: ${code || '(not matched)'}`);
+    note(`summary reached: ${new URL(p.url()).pathname}${new URL(p.url()).search}`);
     await pdfBtn.click();
     const dialog = p.getByRole('dialog').filter({ hasText: /download your pdf/i }).first();
     await dialog.waitFor({ timeout: 30000 });

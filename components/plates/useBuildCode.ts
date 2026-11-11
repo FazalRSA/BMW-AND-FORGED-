@@ -25,12 +25,15 @@ const NO_GARAGE = 'Saving to a garage is not switched on for this site yet. Your
 export function useBuildCode() {
   const [buildCode, setBuildCode] = useState<BuildCode | null>(null);
   const latestSave = useRef(0);
+  /** The build the current code is for, known at once (the state follows a render later), so one build is never saved twice. */
+  const codedBuild = useRef<string | null>(null);
 
   /** Saves the build under a fresh code and shows the code at once. */
   const save = useCallback((build: SavedConfiguration, name?: string): SavedCode => {
     const token = ++latestSave.current;
     const saved = saveConfiguration(build, name);
     const key = configKey(build);
+    codedBuild.current = key;
     setBuildCode({ key, code: saved.code });
     saved.shared
       .then((shared) => token === latestSave.current && setBuildCode((current) => (current && current.code === saved.code ? { ...current, shared } : current)))
@@ -41,16 +44,25 @@ export function useBuildCode() {
   /** Makes sure the build on screen has a code (a build that already has one keeps it). */
   const ensure = useCallback(
     (build: SavedConfiguration) => {
-      if (buildCode?.key !== configKey(build)) save(build);
+      if (codedBuild.current !== configKey(build)) save(build);
     },
-    [buildCode?.key, save]
+    [save]
   );
 
   /** Takes over the code a build was opened with. */
-  const adopt = useCallback((build: SavedConfiguration, code: string, shared: boolean | undefined) => setBuildCode({ key: configKey(build), code, shared }), []);
+  const adopt = useCallback((build: SavedConfiguration, code: string, shared: boolean | undefined) => {
+    codedBuild.current = configKey(build);
+    setBuildCode({ key: codedBuild.current, code, shared });
+  }, []);
 
-  /** The code belongs to a build that was deleted (from the garage): it is no longer shown. */
-  const forget = useCallback((code: string) => setBuildCode((current) => (current?.code === code ? null : current)), []);
+  /** The code belongs to a build that was deleted (from the garage): it is no longer shown, and the build gets a new one when it is next needed. */
+  const forget = useCallback((code: string) => {
+    setBuildCode((current) => {
+      if (current?.code !== code) return current;
+      codedBuild.current = null;
+      return null;
+    });
+  }, []);
 
   /**
    * "Save to garage": a new copy of the build under a fresh code owned by the signed-in customer.

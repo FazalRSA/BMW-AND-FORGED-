@@ -293,3 +293,20 @@ export async function loadManifest(base: string, opts: { fetch?: typeof fetch; s
   }
   return parseManifest(body);
 }
+
+const primed = new Map<string, Promise<ManifestResult>>();
+
+/**
+ * Starts loading the manifest ahead of the page that will read it (Root.tsx calls this while the
+ * configurator's code is still downloading). `takePrimedManifest` hands the request over, once.
+ */
+export function primeManifest(base: string): void {
+  if (!primed.has(base)) primed.set(base, loadManifest(base));
+}
+
+/** The request `primeManifest` started for this base, if any; a second call (a retry) gets nothing and loads afresh. */
+export function takePrimedManifest(base: string): Promise<ManifestResult> | undefined {
+  const request = primed.get(base);
+  primed.delete(base);
+  return request;
+}
