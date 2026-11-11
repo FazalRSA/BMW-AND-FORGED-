@@ -1,0 +1,9 @@
+run: 42952776404 attempt 1
+commit: 70752af5aa55b0d8a83b1fa1b2c7e4efdb725bd5
+time: 2026-11-11T03:26:41Z
+dry_run: true
+target: modal environment main, app forgedsa-plates
+MODAL_TOKEN_ID: present
+MODAL_TOKEN_SECRET: present
+MODAL_TOKEN_ID shape: length 25 (trimmed 25, expected 25), starts with ak-: True, spaces or line breaks inside: False
+MODAL_TOKEN_SECRET shape: length 47 (trimmed 47, expected 25), starts with as-: True, spaces or line breaks inside: True
