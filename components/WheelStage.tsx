@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { Suspense, lazy, useState, type ComponentType } from 'react';
+import React, { Suspense, lazy, useMemo, useState, type ComponentType } from 'react';
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import type { WheelDesign, WheelFinish } from '../types';
+import type { StudioFinish } from '../shared/wheel-viewer';
+import { configuratorPaint } from '../services/wheelViewerPaint';
 import { RimFaceSvg } from './journey/RimFaceSvg';
 
 /**
@@ -28,8 +30,17 @@ function lazyWithRetry<P>(factory: () => Promise<{ default: ComponentType<P> }>,
   });
 }
 
-// The studio (and three's orbit controls) is only downloaded when a rim page shows a 3D model.
-const WheelStudio = lazyWithRetry(() => import('./WheelStudio').then((m) => ({ default: m.WheelStudio })));
+// The shared wheel viewer (shared/wheel-viewer, one copy for this app and the website) and three's orbit controls
+// are only downloaded when a rim page shows a 3D model.
+const WheelStudio = lazyWithRetry(() => import('../shared/wheel-viewer').then((m) => ({ default: m.WheelStudio })));
+
+/** A catalogue finish as the viewer's row. */
+const toStudioFinish = (f: WheelFinish): StudioFinish => ({
+  id: f.id,
+  name: f.name,
+  swatchHex: f.hex,
+  paint: { hex: f.hex, metalness: f.metalness, roughness: f.roughness, clearcoat: f.clearcoat }
+});
 
 export interface WheelStageProps {
   wheel: WheelDesign;
@@ -148,24 +159,27 @@ const PhotoStage = ({ wheel, finish, className }: { wheel: WheelDesign; finish?:
  * `rearModelUrl` on a staggered set), the wheel's photo for one that does not.
  */
 export const WheelStage = ({ wheel, finishes, finish, onSelectFinish, onEnquire, className = DEFAULT_SIZE }: WheelStageProps) => {
+  const studioFinishes = useMemo(() => finishes.map(toStudioFinish), [finishes]);
+  const selected = useMemo(() => (finish ? toStudioFinish(finish) : undefined), [finish]);
   if (!wheel.modelUrl) return <PhotoStage wheel={wheel} finish={finish} className={className} />;
-  // The stock sheet's fitment line (e.g. "PCD 5×112 · ET8/15 · CB 66.6") is one of the wheel's highlights.
-  const fitment = (wheel.highlights ?? []).find((h) => /\bPCD\b/i.test(h));
   return (
     <StageErrorBoundary className={className}>
       <Suspense fallback={<StageLoading className={className} />}>
         <WheelStudio
           wheelModel={wheel.name}
           wheelSeries={wheel.subtitle}
-          finishes={finishes}
-          selectedFinish={finish}
-          onSelectFinish={onSelectFinish}
+          finishes={studioFinishes}
+          selectedFinish={selected}
+          onSelectFinish={(f) => {
+            const row = finishes.find((x) => x.id === f.id);
+            if (row) onSelectFinish(row);
+          }}
           onEnquire={onEnquire}
           modelUrl={wheel.modelUrl}
           rearModelUrl={wheel.rearModelUrl}
           modelFlip={!!wheel.modelFlip}
-          specFront={fitment}
-          className={className}
+          paint={configuratorPaint}
+          className={`wheel-stage ${className}`}
         />
       </Suspense>
     </StageErrorBoundary>

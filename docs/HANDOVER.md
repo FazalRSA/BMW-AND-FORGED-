@@ -195,7 +195,7 @@ on the car being built.
 | Welcome carousel: the cars, their order and the paint each still shows | `HERO_SLIDES` in `components/journey/HeroStage.tsx`; images in `public/hero/` |
 | Configurator controls (Overview, then 1 Paint, 2 Wheels, 3 Size, 4 Finish; camera chips; turntable) | `StepDrawer` in `components/journey/Configurator.tsx`. The viewer's glass panel (`components/journey/ViewerPanel.tsx`) only shows with `?panel=viewer` |
 | More options dialog (region, load a code, account, links to the other pages, Start again) | `MoreOptionsModal` in `components/journey/Configurator.tsx`; its page links are `menuLinks` in `App.tsx`. It replaces the hamburger menu and top bar, which went with the showroom (`components/journey/TopBar.tsx` is deleted). There is no "Home", "Models" or "Configure" entry; the welcome keeps its own "The wheels" link and social icons |
-| Rim page (`/rims/<id>`) | `components/RimDetailPage.tsx`, `components/WheelStage.tsx`, `components/WheelStudio.tsx`, `services/wheelStudioParts.ts` |
+| Rim page (`/rims/<id>`) | `components/RimDetailPage.tsx`, `components/WheelStage.tsx`, `shared/wheel-viewer/WheelStudio.tsx`, `shared/wheel-viewer/wheelStudioParts.ts` |
 | Summary page | `components/journey/SummaryPage.tsx` |
 | PDF layout | `services/brochurePdf.ts` |
 | Enquiry form | `components/journey/EnquiryModal.tsx` |

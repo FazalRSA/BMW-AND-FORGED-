@@ -91,8 +91,8 @@ reflect, satin needs broad soft highlights. Comparison: `rim-template/finishes-b
 
 ### The rim detail page: the wheel studio (since 2026-11-11)
 The rim page (`/rims/<wheelId>`) draws the rim live in the wheel studio ported from the FORGED website:
-`components/RimDetailPage.tsx` → `components/WheelStage.tsx` → `components/WheelStudio.tsx` (a lazy
-chunk), with `services/wheelStudioParts.ts`. A wheel with a `modelUrl` gets the studio; one without
+`components/RimDetailPage.tsx` → `components/WheelStage.tsx` → `shared/wheel-viewer/WheelStudio.tsx` (a lazy
+chunk), with `shared/wheel-viewer/wheelStudioParts.ts`. A wheel with a `modelUrl` gets the studio; one without
 shows its photo.
 
 - It loads the same rim file the car uses (`public/models/rims/<wheelId>.glb`, plus the `-rear` file of

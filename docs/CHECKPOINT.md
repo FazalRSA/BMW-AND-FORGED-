@@ -33,9 +33,9 @@
   the paint finish table (`VIEWER_FINISH`) is shared with the viewer look. In the harness `?look=stage` is what /configure
   draws; `?look=viewer` draws the older grey viewer dome, for comparison only; `?look=studio` is the softbox studio. It is
   still the live WebGL car: it does not have the stills' path-traced reflections and soft shadows.
-- **Rim page (`/rims/<id>`) = the wheel studio ported from the FORGED website:** `components/WheelStudio.tsx` (lazy chunk),
+- **Rim page (`/rims/<id>`) = the wheel studio ported from the FORGED website:** `shared/wheel-viewer/WheelStudio.tsx` (lazy chunk),
   `components/WheelStage.tsx` (the studio for a wheel with a `modelUrl`, the wheel's photo for one without),
-  `services/wheelStudioParts.ts`. Views Face / 3/4 / Side / Back / Top; Front / Rear for a staggered set (FSA001); finish
+  `shared/wheel-viewer/wheelStudioParts.ts`. Views Face / 3/4 / Side / Back / Top; Front / Rear for a staggered set (FSA001); finish
   chips; Show toggles Orbit, Spin wheel, Exploded, Wireframe, Bolts, Cap, and Brake check when the model has brake meshes. It
   loads the same rim files the car uses (`public/models/rims/`) and draws finishes with `services/wheelFinish.ts`, so a finish
   is the same on the rim page and on the car.
@@ -115,7 +115,7 @@ the stock FSA003 GLB, not the photo-traced Kyalami 15.
 |---|---|
 | Car body (configurator) | **Prepared cars (M5, M5 Touring, M4 CS, M2 CS since 2026-11-10): the GLB live** (`docs/ADD_PREPARED_CAR.md`). **The M5 G90 also has Blender Cycles frames** (`public/renders/m5_g90/`, six views), which the configurator shows in those fixed views while the turntable is off, recoloured per paint in the browser (`scripts/prerender/`, `components/journey/RenderedCarView.tsx`); it is the only car with frames. The eight hidden cars have no body in the repo: commit `b62b126` (2026-11-11) removed their Sketchfab GLBs and the frames six of them had, so a hidden car needs a new model before it can be shown again. The frames since 2026-10-07: darker reflection panels in the `STUDIO=dark` studio (no milky haze), a third `flake_w` frame (metallic base) blended in for Metallic/Pearl paints (`flakeLook` in `services/renderedBody.ts`), `BODY_EXPOSURE` 1.25 |
 | Wheels on the car | live engine. **The six stocked wheels are 3D rim GLBs** (`modelUrl`, `rearModelUrl` for the staggered FSA001; `scripts/ingest-rim.mjs`; a GLB wins whenever `modelUrl` is set in `applyWheelDesign`), lit by the stage look on the live cars. The **2D photo/bar face** (`imageUrl`, `services/rimFaces.ts`, Blender studio HDR `public/env/forgedsa_studio.hdr`) applies only to the hidden legacy wheels |
-| Rim detail page | **The wheel studio** (since 2026-11-11): `components/WheelStudio.tsx` via `components/WheelStage.tsx` draws the wheel's rim GLB (the same file as on the car) live, with fixed views, finish chips and Show toggles; a wheel without a `modelUrl` shows its photo. The Blender 360° spin (`scripts/rim3d/turntable.py`, `RimSpinView.tsx`) is no longer part of the app |
+| Rim detail page | **The wheel studio** (since 2026-11-11): `shared/wheel-viewer/WheelStudio.tsx` via `components/WheelStage.tsx` draws the wheel's rim GLB (the same file as on the car) live, with fixed views, finish chips and Show toggles; a wheel without a `modelUrl` shows its photo. The Blender 360° spin (`scripts/rim3d/turntable.py`, `RimSpinView.tsx`) is no longer part of the app |
 | Finishes (legacy spin scripts) | `scripts/rim3d/finishes.json` + `materials.py`: Liquid Metal, Satin Bronze, Satin Gold, Gloss Black, Silver = brushed aluminium. Nothing in the app uses their output |
 | Finishes (car and rim page) | `services/wheelFinish.ts` (Satin Gold live in Supabase on every wheel since 2026-10-04) |
 
@@ -162,7 +162,7 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 - [ ] Owner: Supabase dashboard → Authentication → Providers → Google (client id/secret, redirect URLs) per `docs/ACCOUNTS.md`;
       then the manual sign-in → save → garage test on the preview URL.
 - [x] Rim-page spins for the six stocked wheels: dropped on 2026-11-11. The rim page draws the rim GLB in the wheel studio
-      (`components/WheelStudio.tsx`), so no spin frames are needed.
+      (`shared/wheel-viewer/WheelStudio.tsx`), so no spin frames are needed.
 - [ ] `scripts/render/e2e.cjs` still walks the showroom (Build, Confirm, `?panel=steps`): update it to the journey without one.
 - [ ] Regenerate the branded client PDF (`docs/handover/handover.html` → `docs/FORGEDSA-Client-Handover.pdf`): it still shows the showroom.
 - [ ] Owner: look at `docs/ingest/*.jpg` and `docs/ingest/stock-wheels.jpg`; decide live GLB vs `--render` Blender frames for the four prepared cars.

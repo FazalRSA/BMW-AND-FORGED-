@@ -245,10 +245,12 @@ leads and share codes also carry their `user_id`, so the garage and the admin ca
   soft cove), the viewer's finish table for Uni / Metallic / Pearl / Frozen paints (`VIEWER_FINISH`), and
   "FORGED" placeholder plates on the bumpers (`?plates=0` turns them off). The harness takes
   `?look=stage`; `?look=viewer` still draws the older grey viewer dome, for comparison only.
-- The rim page (`/rims/<id>`) is the wheel studio ported from the FORGED website
-  (`components/WheelStudio.tsx`, loaded on demand by `components/WheelStage.tsx`). It loads the same rim
-  files the car uses (`public/models/rims/`) and draws the finishes with `services/wheelFinish.ts`, so a
-  finish is the same on the rim page and on the car. A wheel without a `modelUrl` shows its photo.
+- The rim page (`/rims/<id>`) uses the wheel viewer shared with the FORGED website: `shared/wheel-viewer/` is a
+  byte-identical copy of the website's `src/wheel-viewer/` (edited there; `node scripts/wheel-viewer-sync.mjs pull`
+  copies it, `bun run lint` fails if the copy was edited here). `components/WheelStage.tsx` loads it on demand. It
+  loads the same rim files the car uses (`public/models/rims/`) and paints them through
+  `services/wheelViewerPaint.ts`, which reads each finish with `services/wheelFinish.ts`, so a finish is the same
+  coating on the rim page and on the car. A wheel without a `modelUrl` shows its photo.
 - Procedural wheel faces (used until a design has a real rim image or GLB) are generated in
   `services/proceduralRims.ts` and extruded in `services/rimExtrusion.ts`. A rim GLB
   (`modelUrl`, optional `rearModelUrl`) wins over both.
@@ -283,7 +285,8 @@ scripts/ingest-rim.mjs       One command: rim GLB (front, optional rear) → pac
 scripts/render/              Headless render harness (engine page + batch screenshots, journey/e2e/responsive;
                              e2e.cjs still walks the removed showroom and has not been updated)
 components/journey/          Welcome (car carousel) → configurator (StepDrawer in Configurator.tsx) → summary, AccountSheet
-components/WheelStudio.tsx   The rim page's 3D wheel studio (with WheelStage.tsx and services/wheelStudioParts.ts)
+shared/wheel-viewer/   The 3D wheel viewer on the rim page, one copy shared with the FORGED website (see its README; edit it there)
+components/WheelStage.tsx   The rim page's stage around it: lazy load, error and photo stand-ins, this app's finish rows
 components/admin/            /admin UI (AdminPage.tsx, entityConfig.ts defines every field)
 public/models/               Prepared car GLBs; public/models/rims/ the packed rim GLBs; CREDITS.md
 supabase/migrations/         Database schema, RLS policies, and catalogue changes over time

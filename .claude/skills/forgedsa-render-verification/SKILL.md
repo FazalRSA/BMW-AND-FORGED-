@@ -91,7 +91,7 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
   `node scripts/render/pdf-check.cjs <out>` (brochure, writes stubbed), and `shoot.cjs` sheets of
   the six stocked wheels (by id) on the live cars with `"q": "&look=stage"`. `qa-matrix.py` and
   `wheel-qa.cjs` cover the hidden photo wheels only.
-- The rim page (`/rims/<id>`) is the wheel studio (`components/WheelStudio.tsx`), not the engine: a
+- The rim page (`/rims/<id>`) is the wheel studio (`shared/wheel-viewer/WheelStudio.tsx`), not the engine: a
   finish or rim-file change that shows there needs its own screenshot of that page. Its root element
   carries `data-studio-state` (`loading`, `ready`, `error`, or `photo` for a wheel without a model).
 

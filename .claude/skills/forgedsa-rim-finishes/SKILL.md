@@ -77,10 +77,10 @@ shading.
 - **The flat-photo fallback** (a photo that could not be turned into 3D spokes, or a wheel with
   `imageExtrude: false`; `applyCustom2DSpokeTexture`): the finish's colour, metalness, roughness and
   clear coat only. Its material has no finish layers, so it has no flake and no flop.
-- **The rim page (`/rims/<id>`):** the wheel studio (`components/WheelStudio.tsx`) loads the same rim file as
+- **The rim page (`/rims/<id>`):** the wheel studio (`shared/wheel-viewer/WheelStudio.tsx`) loads the same rim file as
   the car and draws it with `finishLook()` / `applyFinishLook()` from `services/wheelFinish.ts`, so a finish
   is the same coating on the rim page and on the car. Its barrel, face and cap take the finish; bolts and
-  brake meshes keep their own materials (`FINISH_PARTS` in `services/wheelStudioParts.ts`). What differs is
+  brake meshes keep their own materials (`FINISH_PARTS` in `shared/wheel-viewer/wheelStudioParts.ts`). What differs is
   the room: a light product stage with its own generated reflections, and no wheel-arch shading.
 - **Not affected:** caliper colour (`applyCaliperColor`), tyre, disc, lug nuts, centre cap.
 
