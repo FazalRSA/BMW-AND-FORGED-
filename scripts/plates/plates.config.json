@@ -125,44 +125,65 @@
   "paint_finishes": {
     "solid": {
       "metalness": 0,
-      "roughness": 0.3,
+      "roughness": 0.35,
       "clearcoat": 1,
       "clearcoatRoughness": 0.02,
       "flake": 0,
-      "iridescence": 0
+      "iridescence": 0,
+      "flop": 0.2,
+      "flop_value": 0.7,
+      "flop_sat": 1.05,
+      "peel": 1.0
     },
     "metallic": {
       "metalness": 0.75,
       "roughness": 0.34,
       "clearcoat": 1,
-      "clearcoatRoughness": 0.03,
+      "clearcoatRoughness": 0.025,
       "flake": 0.32,
-      "iridescence": 0
+      "iridescence": 0,
+      "flop": 0.55,
+      "flop_value": 0.5,
+      "flop_sat": 1.15,
+      "peel": 1.0
     },
     "pearl": {
       "metalness": 0.45,
       "roughness": 0.3,
       "clearcoat": 1,
-      "clearcoatRoughness": 0.03,
+      "clearcoatRoughness": 0.025,
       "flake": 0.22,
       "iridescence": 0.5,
-      "iridescenceIOR": 1.6
+      "iridescenceIOR": 1.6,
+      "flop": 0.5,
+      "flop_value": 0.7,
+      "flop_sat": 1.1,
+      "flop_hue": 0.06,
+      "peel": 1.0
     },
     "frozen": {
-      "metalness": 0.55,
-      "roughness": 0.52,
-      "clearcoat": 0.35,
-      "clearcoatRoughness": 0.55,
-      "flake": 0.1,
-      "iridescence": 0
+      "metalness": 0.72,
+      "roughness": 0.45,
+      "clearcoat": 1.0,
+      "clearcoatRoughness": 0.38,
+      "flake": 0.12,
+      "iridescence": 0,
+      "flop": 0.35,
+      "flop_value": 0.6,
+      "flop_sat": 1.1,
+      "peel": 0.0
     },
     "satin": {
-      "metalness": 0.2,
-      "roughness": 0.5,
-      "clearcoat": 0.85,
-      "clearcoatRoughness": 0.38,
-      "flake": 0.04,
-      "iridescence": 0
+      "metalness": 0.3,
+      "roughness": 0.45,
+      "clearcoat": 1.0,
+      "clearcoatRoughness": 0.18,
+      "flake": 0.06,
+      "iridescence": 0,
+      "flop": 0.3,
+      "flop_value": 0.6,
+      "flop_sat": 1.1,
+      "peel": 0.4
     }
   },
   "paints": [
@@ -174,10 +195,10 @@
       "finish": "satin",
       "hex": "#606870",
       "o": {
-        "metalness": 0.357,
-        "roughness": 0.863,
-        "clearcoat": 0.618,
-        "clearcoatRoughness": 0.243
+        "metalness": 0.36,
+        "roughness": 0.5,
+        "clearcoat": 1.0,
+        "clearcoatRoughness": 0.2
       },
       "note": "matched to the reference render, not a BMW code"
     },
@@ -377,7 +398,13 @@
   ],
   "wheel_plate": {
     "paint": "brooklyn_grey_metallic",
-    "pad_px": 6
+    "pad_px": 6,
+    "edge_inset_px": 2,
+    "neutral_reflection": true,
+    "rim_card_watts": 260.0,
+    "rim_card_width": 5.0,
+    "rim_card_height": 2.2,
+    "rim_card_distance": 3.2
   },
   "wheel_finishes": {
     "black_matte": {
@@ -385,56 +412,160 @@
       "hex": "#26282b",
       "metalness": 0.0,
       "roughness": 0.5,
-      "clearcoat": 0.0
+      "clearcoat": 0.0,
+      "cycles": {
+        "base": [
+          0.016,
+          0.016,
+          0.018
+        ],
+        "metallic": 0.0,
+        "roughness": 0.58,
+        "coat": 0.0,
+        "sheen": 0.18,
+        "specular": 0.38,
+        "hardware": "dark"
+      }
     },
     "gold": {
       "name": "Gold",
       "hex": "#c9a24e",
       "metalness": 0.9,
       "roughness": 0.32,
-      "clearcoat": 0.85
+      "clearcoat": 0.85,
+      "cycles": {
+        "base": [
+          0.86,
+          0.63,
+          0.27
+        ],
+        "metallic": 1.0,
+        "roughness": 0.26,
+        "coat": 1.0,
+        "coat_roughness": 0.035,
+        "flake": 0.02,
+        "flop": 0.72,
+        "peel": 0.012
+      }
     },
     "hyper_black": {
       "name": "Hyper Black",
       "hex": "#3a3e44",
       "metalness": 0.9,
       "roughness": 0.24,
-      "clearcoat": 0.9
+      "clearcoat": 0.9,
+      "cycles": {
+        "base": [
+          0.26,
+          0.27,
+          0.29
+        ],
+        "metallic": 1.0,
+        "roughness": 0.2,
+        "coat": 1.0,
+        "coat_roughness": 0.03,
+        "flake": 0.015,
+        "flop": 0.5,
+        "peel": 0.01,
+        "hardware": "dark"
+      }
     },
     "polished_face": {
       "name": "Polished Face",
       "hex": "#e6e9ec",
       "metalness": 1.0,
       "roughness": 0.08,
-      "clearcoat": 0.6
+      "clearcoat": 0.6,
+      "cycles": {
+        "base": [
+          0.913,
+          0.921,
+          0.925
+        ],
+        "metallic": 1.0,
+        "roughness": 0.14,
+        "coat": 0.0,
+        "anisotropic": 0.3
+      }
     },
     "silver": {
       "name": "Silver",
       "hex": "#c3c8cd",
       "metalness": 0.9,
       "roughness": 0.28,
-      "clearcoat": 0.7
+      "clearcoat": 0.7,
+      "cycles": {
+        "base": [
+          0.7,
+          0.71,
+          0.72
+        ],
+        "metallic": 1.0,
+        "roughness": 0.32,
+        "coat": 1.0,
+        "coat_roughness": 0.03,
+        "flake": 0.02,
+        "flop": 0.65,
+        "peel": 0.012
+      }
     },
     "black": {
       "name": "Gloss Black",
       "hex": "#141618",
       "metalness": 0.7,
       "roughness": 0.15,
-      "clearcoat": 0.95
+      "clearcoat": 0.95,
+      "cycles": {
+        "base": [
+          0.012,
+          0.012,
+          0.014
+        ],
+        "metallic": 0.0,
+        "roughness": 0.35,
+        "coat": 1.0,
+        "coat_roughness": 0.02,
+        "peel": 0.012,
+        "hardware": "dark"
+      }
     },
     "pure_bronze": {
       "name": "Pure Bronze",
       "hex": "#9c6b3a",
       "metalness": 0.9,
       "roughness": 0.3,
-      "clearcoat": 0.85
+      "clearcoat": 0.85,
+      "cycles": {
+        "base": [
+          0.3,
+          0.165,
+          0.065
+        ],
+        "metallic": 1.0,
+        "roughness": 0.3,
+        "coat": 1.0,
+        "coat_roughness": 0.03,
+        "flake": 0.02,
+        "flop": 0.6,
+        "peel": 0.012
+      }
     },
     "liquid_metal": {
       "name": "Liquid Metal",
       "hex": "#dfe4e8",
       "metalness": 0.98,
       "roughness": 0.12,
-      "clearcoat": 1.0
+      "clearcoat": 1.0,
+      "cycles": {
+        "base": [
+          0.9,
+          0.91,
+          0.92
+        ],
+        "metallic": 1.0,
+        "roughness": 0.04,
+        "coat": 0.0
+      }
     }
   },
   "wheels": [
@@ -445,7 +576,28 @@
       "rear": "forged_fsa001-rear.glb",
       "finishes": [
         "black_matte"
-      ]
+      ],
+      "parts": {
+        "barrel": {
+          "base": [
+            0.8,
+            0.81,
+            0.83
+          ],
+          "metallic": 1.0,
+          "roughness": 0.2,
+          "anisotropic": 0.5
+        },
+        "bolts": {
+          "base": [
+            0.5,
+            0.012,
+            0.012
+          ],
+          "metallic": 1.0,
+          "roughness": 0.26
+        }
+      }
     },
     {
       "id": "forged_fsa002",
@@ -498,8 +650,11 @@
   ],
   "look": {
     "drl": {
-      "hex": "#FFBA00",
-      "strength": 6.0
+      "hex": "#FFC300",
+      "strength": 1.75,
+      "spill": 10.0,
+      "core": 2.3,
+      "ends": 0.7
     },
     "glass": {
       "ior": 1.52,
@@ -514,6 +669,37 @@
     "tyre": {
       "base": 0.025,
       "roughness": 0.68
+    },
+    "studio": {
+      "glass_reflector": {
+        "on": true,
+        "strength": 0.15,
+        "soft_edge": 0.45,
+        "scale": [
+          1.6,
+          1.2
+        ],
+        "offset": [
+          0.0,
+          0.0
+        ],
+        "power": 1.0
+      },
+      "cabin_fill": {
+        "watts": 160.0,
+        "width": 0.7,
+        "length": 0.45,
+        "y": 0.42,
+        "drop": 0.1,
+        "shadow": true
+      },
+      "follow": {
+        "default": 1.0
+      },
+      "fixed_floor_lights": true
+    },
+    "interior_lift": {
+      "m2_cs_g87": 0.72
     }
   }
 }
