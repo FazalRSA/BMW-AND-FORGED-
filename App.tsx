@@ -25,7 +25,7 @@ import { AccountSheet } from './components/journey/AccountSheet';
 import { Button, IconButton } from './components/journey/ui';
 import { UserRound } from 'lucide-react';
 import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
-import { backdropCss, hasBodies, renderedStills } from './services/renderedBody';
+import { backdropCss, hasBodies, loadStillsManifest, renderedStills } from './services/renderedBody';
 
 // Pages off the main journey load on demand
 const ForgedPage = lazy(() => import('./components/ForgedPage').then((m) => ({ default: m.ForgedPage })));
@@ -160,8 +160,11 @@ export const App: React.FC = () => {
   const [cameraView, setCameraView] = useState<CameraViewPreset>('frontThreeQuarter');
   // Cars with pre-rendered (Blender) bodies show those in the configurator; see RenderedCarView
   const [renderedCars, setRenderedCars] = useState<Record<string, string[]>>({});
+  // Cars whose summary and PDF stills are Blender renders: those above, plus the ones that only have stills (renders/stills.json)
+  const [stillCars, setStillCars] = useState<Record<string, string[]>>({});
   useEffect(() => {
     loadRenderManifest().then(setRenderedCars);
+    loadStillsManifest().then(setStillCars);
   }, []);
   const [stage, setStage] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -677,7 +680,7 @@ export const App: React.FC = () => {
         if (token !== stillsToken.current) return;
         // Cars with pre-rendered bodies get stills made the way the configurator draws them (same body, tone curve and
         // backdrop, live wheels on top); the others, or if that fails, the live 3D car
-        if (!hasBodies(renderedCars, selectedCar.id, views)) return live();
+        if (!hasBodies(stillCars, selectedCar.id, views)) return live();
         renderedStills(engine, selectedCar.id, selectedPaint, views)
           .then((imgs) => (imgs.length === views.length ? token === stillsToken.current && setSummaryImages(imgs) : live()))
           .catch(live);
@@ -687,7 +690,7 @@ export const App: React.FC = () => {
       settled(engine).then(() => requestAnimationFrame(take));
     }
     if (configCode?.key !== key) saveCurrent(cfg, key);
-  }, [configCode, renderedCars, selectedCar, selectedPaint, selectedWheel, selectedFinish, selectedSize, region]);
+  }, [configCode, stillCars, selectedCar, selectedPaint, selectedWheel, selectedFinish, selectedSize, region]);
   // (popstate: only once the studio is up, else the configurator opens as on a direct visit)
   const reenterSummaryRef = useRef<() => boolean>(() => false);
   reenterSummaryRef.current = () => {
