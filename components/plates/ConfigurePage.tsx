@@ -292,7 +292,9 @@ const ConfigurePage: React.FC = () => {
     if (!arrivalCode) return;
     let current = true;
     // a code that is unknown or cannot be looked up opens the default configuration, silently
-    openCode(arrivalCode).finally(() => current && setArrivalCode(undefined));
+    openCode(arrivalCode)
+      .catch(() => false) // a failed lookup opens the default configuration, as an unknown code does
+      .finally(() => current && setArrivalCode(undefined));
     return () => {
       current = false;
     };
