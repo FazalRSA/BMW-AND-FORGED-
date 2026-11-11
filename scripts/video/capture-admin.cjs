@@ -42,6 +42,7 @@ const session = {
     p.on('pageerror', (e) => log('PAGEERROR ' + e.message));
     const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
     await p.route(/supabase\.co\//, async (route) => {
+      try {
       const req = route.request(); const url = new URL(req.url()); const m = req.method();
       if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
       const table = (url.pathname.match(/\/rest\/v1\/([a-z_]+)/) || [])[1];
@@ -65,6 +66,7 @@ const session = {
       if (!rows) return json(route, []);
       if (url.searchParams.get('active') === 'eq.true') rows = rows.filter((r) => r.active !== false);
       return json(route, rows);
+      } catch (e) { console.error(`route handler failed for ${route.request().url()}: ${e.message}`); process.exit(4); }
     });
     return { ctx, p };
   };

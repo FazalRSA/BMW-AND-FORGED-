@@ -32,7 +32,10 @@ export function build({ ROOT, SCENES, cfg = {} }) {
     cardW: 700, cardFont: 58, cardOrder: ['tl', 'tr', 'br', 'bl'], push: 1.025, wps: 2.35, tail: 0.9, minBeatGap: 1.7,
     musicVolume: 0.1, endHold: 0, ...cfg
   };
-  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'assets/shots/manifest.json'), 'utf8'));
+  const manifestPath = path.join(ROOT, 'assets/shots/manifest.json');
+  let manifest;
+  try { manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')); }
+  catch (e) { throw new Error(`cannot read ${manifestPath} (run the capture scripts first): ${e.message}`); }
   const vmPath = path.join(ROOT, 'assets/voice/meta.json');
   const voiceMeta = fs.existsSync(vmPath) ? JSON.parse(fs.readFileSync(vmPath, 'utf8')) : {};
   const has = (f) => fs.existsSync(path.join(ROOT, f));

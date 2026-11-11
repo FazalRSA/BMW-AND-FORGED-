@@ -34,8 +34,10 @@ const RIM_ID = process.env.RIM_ID || 'sixnine_ff1';
   await p.route(/supabase\.co\/(rest|functions|auth)\//, (r) => (['GET', 'HEAD'].includes(r.request().method()) ? r.continue() : r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })));
   await p.route(/supabase\.co\/storage\//, (r) => {
     const f = RIMS && path.join(RIMS, path.basename(r.request().url().split('?')[0]));
-    if (f && fs.existsSync(f)) r.fulfill({ body: fs.readFileSync(f), contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } });
-    else r.continue();
+    try {
+      if (f && fs.existsSync(f)) r.fulfill({ body: fs.readFileSync(f), contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } });
+      else r.continue();
+    } catch (e) { console.error(`storage read failed for ${f}: ${e.message}`); r.abort(); }
   });
 
   const manifest = {};
