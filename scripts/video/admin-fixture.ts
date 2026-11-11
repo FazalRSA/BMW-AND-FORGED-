@@ -23,7 +23,7 @@ const ordered = (list: Record<string, unknown>[]) => {
   const live = rows.filter((r) => r.active !== false), hidden = rows.filter((r) => r.active === false);
   return [...live, ...hidden].map((r, i) => ({ ...r, sort_order: i + 1 }));
 };
-const fin = Object.values(WHEEL_FINISHES as Record<string, Record<string, unknown>>);
+const fin = Object.values(WHEEL_FINISHES as unknown as Record<string, Record<string, unknown>>);
 const day = (n: number) => new Date(Date.UTC(2026, 10, 11, 9, 0) - n * 86400000).toISOString();
 const cfg = (car: string, paint: string, wheel: string, size: string, finish: string) => ({ car, paint, wheel, size, finish });
 const leads = [
