@@ -1,0 +1,55 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 700px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 54px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="c13" data-width="1920" data-height="1080">
+    <div id="c13-cam" class="clip" data-start="0" data-duration="16.39" data-track-index="0"><div id="c13-fx" class="fx"><div id="c13-cami" class="cam"><img id="c13-img-0" class="shot" src="assets/shots/20-summary-top.png" alt="" style="opacity:1"><img id="c13-img-1" class="shot" src="assets/shots/21-summary-options.png" alt="" style="opacity:0"><img id="c13-img-2" class="shot" src="assets/shots/22-summary-standard.png" alt="" style="opacity:0"><div id="c13-ring-0" class="ring" style="left:408px;top:278px;width:1104px;height:634px"></div><div id="c13-ring-1" class="ring" style="left:402px;top:309px;width:714px;height:249px"></div><div id="c13-ring-2" class="ring" style="left:580px;top:248px;width:181px;height:65px"></div><div id="c13-click-2" class="click" style="left:611px;top:221px"></div><svg id="c13-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="c13-card-0" class="clip card-host" data-start="1.56" data-duration="4.58" data-track-index="2" style="left:72px;top:140px"><div id="c13-cardi-0" class="card"><div class="eye">SUMMARY</div><div class="line">Stills of your exact build</div></div></div><div id="c13-card-1" class="clip card-host" data-start="6.09" data-duration="1.75" data-track-index="2" style="left:1148px;top:140px"><div id="c13-cardi-1" class="card"><div class="eye">OPTIONS PICKED</div><div class="line">Paint, wheel, size, finish</div></div></div><div id="c13-card-2" class="clip card-host" data-start="7.79" data-duration="8.35" data-track-index="2" style="left:1148px;top:140px"><div id="c13-cardi-2" class="card"><div class="eye">STANDARD FEATURES</div><div class="line">The car's own specification</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#c13-cami",{transformOrigin:"960px 540px"});
+    tl.fromTo("#c13-cami",{scale:1},{scale:1.025,duration:16.39,ease:"sine.inOut"},0);
+    gsap.set("#c13-fx",{transformOrigin:"1880px 48px"});
+    tl.fromTo("#c13-fx",{opacity:0,scale:1.14,filter:"blur(8px)"},{opacity:1,scale:1,filter:"blur(0px)",duration:0.6,ease:"power3.out"},0);
+    gsap.set("#c13-cur",{x:960,y:1140,opacity:0});
+    tl.to("#c13-cur",{x:960,y:595,opacity:1,duration:0.8,ease:"power3.inOut"},1.31);
+    tl.fromTo("#c13-ring-0",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},1.81);
+    tl.to("#c13-ring-0",{opacity:0,duration:0.25,ease:"power2.in"},3.51);
+    tl.to("#c13-cur",{x:759,y:434,opacity:1,duration:0.8,ease:"power3.inOut"},5.84);
+    tl.fromTo("#c13-ring-1",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},6.34);
+    tl.to("#c13-ring-1",{opacity:0,duration:0.25,ease:"power2.in"},7.34);
+    tl.set("#c13-img-1",{zIndex:2,opacity:0},5.74);
+    tl.to("#c13-img-1",{opacity:1,duration:0.3,ease:"power1.inOut"},5.74);
+    tl.set("#c13-img-0",{opacity:0},6.06);
+    tl.to("#c13-cur",{x:671,y:281,opacity:1,duration:0.8,ease:"power3.inOut"},7.54);
+    tl.fromTo("#c13-ring-2",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},8.04);
+    tl.to("#c13-ring-2",{opacity:0,duration:0.25,ease:"power2.in"},9.44);
+    tl.fromTo("#c13-click-2",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},8.34);
+    tl.to("#c13-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},8.32);
+    tl.to("#c13-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},8.42);
+    tl.set("#c13-img-2",{zIndex:3,opacity:0},8.44);
+    tl.to("#c13-img-2",{opacity:1,duration:0.3,ease:"power1.inOut"},8.44);
+    tl.set("#c13-img-1",{opacity:0},8.76);
+    tl.fromTo("#c13-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},1.61);
+    tl.to("#c13-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},5.90);
+    tl.fromTo("#c13-cardi-1",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},6.14);
+    tl.to("#c13-cardi-1",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},7.60);
+    tl.fromTo("#c13-cardi-2",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},7.84);
+    tl.to("#c13-cardi-2",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},15.90);
+    window.__timelines["c13"] = tl;
+  </script>
+</template>

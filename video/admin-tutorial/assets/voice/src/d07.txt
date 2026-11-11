@@ -1,0 +1,1 @@
+At the bottom, the Visible box controls whether customers can see the item at all. Unticking it hides the car without deleting anything. Delete removes it for good, so it asks you to confirm first. And Save writes your changes to the database, which is what the configurator reads.

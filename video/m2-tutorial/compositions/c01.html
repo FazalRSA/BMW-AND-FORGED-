@@ -1,0 +1,46 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 700px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 54px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="c01" data-width="1920" data-height="1080">
+    <div id="c01-cam" class="clip" data-start="0" data-duration="30.88" data-track-index="0"><div id="c01-fx" class="fx"><div id="c01-cami" class="cam"><img id="c01-img-0" class="shot" src="assets/shots/01-welcome-m2.png" alt="" style="opacity:1"><div id="c01-ring-2" class="ring" style="left:628px;top:218px;width:1124px;height:494px"></div><div id="c01-ring-3" class="ring" style="left:1792px;top:968px;width:68px;height:68px"></div><div id="c01-click-3" class="click" style="left:1766px;top:942px"></div><svg id="c01-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="c01-card-0" class="clip card-host" data-start="1.47" data-duration="10.36" data-track-index="2" style="left:72px;top:140px"><div id="c01-cardi-0" class="card"><div class="eye">FORGEDSA CONFIGURATOR</div><div class="line">Forged wheels on a BMW M car</div></div></div><div id="c01-card-1" class="clip card-host" data-start="11.78" data-duration="10.44" data-track-index="2" style="left:72px;top:140px"><div id="c01-cardi-1" class="card"><div class="eye">WELCOME SCREEN</div><div class="line">Every visit starts here</div></div></div><div id="c01-card-2" class="clip card-host" data-start="22.17" data-duration="6.61" data-track-index="2" style="left:72px;top:140px"><div id="c01-cardi-2" class="card"><div class="eye">BMW M2 CS</div><div class="line">Coupe, inline-six engine</div></div></div><div id="c01-card-3" class="clip card-host" data-start="28.73" data-duration="1.90" data-track-index="2" style="left:72px;top:140px"><div id="c01-cardi-3" class="card"><div class="eye">ARROWS</div><div class="line">Move to the next car</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#c01-cami",{transformOrigin:"995px 555px"});
+    tl.fromTo("#c01-cami",{scale:1},{scale:1.025,duration:30.88,ease:"sine.inOut"},0);
+    gsap.set("#c01-cur",{x:960,y:1140,opacity:0});
+    tl.to("#c01-cur",{x:1190,y:465,opacity:1,duration:0.8,ease:"power3.inOut"},21.92);
+    tl.fromTo("#c01-ring-2",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},22.42);
+    tl.to("#c01-ring-2",{opacity:0,duration:0.25,ease:"power2.in"},24.12);
+    tl.to("#c01-cur",{x:1826,y:1002,opacity:1,duration:0.8,ease:"power3.inOut"},28.48);
+    tl.fromTo("#c01-ring-3",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},28.98);
+    tl.to("#c01-ring-3",{opacity:0,duration:0.25,ease:"power2.in"},30.38);
+    tl.fromTo("#c01-click-3",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},29.28);
+    tl.to("#c01-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},29.26);
+    tl.to("#c01-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},29.36);
+    tl.fromTo("#c01-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},1.52);
+    tl.to("#c01-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},11.59);
+    tl.fromTo("#c01-cardi-1",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},11.83);
+    tl.to("#c01-cardi-1",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},21.98);
+    tl.fromTo("#c01-cardi-2",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},22.22);
+    tl.to("#c01-cardi-2",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},28.54);
+    tl.fromTo("#c01-cardi-3",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},28.78);
+    tl.to("#c01-cardi-3",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},30.39);
+    window.__timelines["c01"] = tl;
+  </script>
+</template>

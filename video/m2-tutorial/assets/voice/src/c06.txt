@@ -1,0 +1,1 @@
+Now we're inside the configurator. The panel on the right is your build, and it has four parts: paint, wheels, wheel size and wheel finish. Whenever you change one, the car on the left updates straight away. The numbers across the top are the steps, and at the bottom is the price for a set of four wheels. We'll go through the steps in order, beginning with paint.

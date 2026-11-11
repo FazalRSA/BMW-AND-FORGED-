@@ -1,0 +1,1 @@
+Next is the car's 3D model, a G L B file. Uploading a new one replaces it. The rotation turns the model until the nose faces the camera, and the real length scales it to the true size of the car.

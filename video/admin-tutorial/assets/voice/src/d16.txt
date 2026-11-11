@@ -1,0 +1,1 @@
+That's the admin: five tabs, a list, an editor, and Save. Anything you save here is what customers see in the configurator.

@@ -1,0 +1,1 @@
+The summary begins with stills of your exact build, rendered from the same model. Below them are the options you picked, and a second tab lists the car's standard features: the engine, power, torque, acceleration, factory fitment and bolt pattern.

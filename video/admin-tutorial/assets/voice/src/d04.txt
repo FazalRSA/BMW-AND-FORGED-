@@ -1,0 +1,1 @@
+A car's details appear on the right: its name, badge and chassis code, the engine, power, torque and acceleration, and the factory wheel fitment. The configurator shows the engine, power and fitment on its summary page.

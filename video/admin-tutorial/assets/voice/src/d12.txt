@@ -1,0 +1,1 @@
+To change a price, type the new figure and press Save. A green message confirms it, and the configurator reloads its catalogue, so the new price shows up straight away.

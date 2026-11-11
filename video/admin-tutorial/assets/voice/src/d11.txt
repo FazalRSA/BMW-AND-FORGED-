@@ -1,0 +1,1 @@
+Then you choose which finishes this wheel is made in. If a finish costs more, like Polished Face or Liquid Metal, its higher set price goes underneath. Leave it blank and that finish costs the same as the others.

@@ -4,8 +4,8 @@
  *   bunx vite --host 127.0.0.1 --port 5173            # dev server, in another shell
  *   node scripts/video/capture-tutorial.cjs <outDir> [rimCacheDir]
  *
- * Walks the real app at 1920x1080: welcome carousel -> Enter -> Paint (Black Sapphire) -> Wheels (FF-3) ->
- * Size (21") -> Finish (Pure Bronze) -> camera chips -> More options -> Summary -> Share -> Enquire -> the
+ * Walks the real app at 1920x1080: welcome carousel -> Enter -> Paint (Black Sapphire) -> Wheels (FF-1) ->
+ * Size (21") -> Finish (Liquid Metal) -> camera chips -> More options -> Summary -> Share -> Enquire -> the
  * rim page. Writes <outDir>/NN-name.png and <outDir>/manifest.json (per shot: the box of each control the
  * film points at, in 1920x1080 pixels, so the cursor and callouts land on the real buttons).
  *
@@ -18,10 +18,10 @@ const [,, OUT, RIMS = ''] = process.argv;
 const BASE = process.env.BASE || 'http://127.0.0.1:5173';
 const CAR = process.env.CAR_MATCH || 'M2';
 const PAINT = process.env.PAINT || 'Black Sapphire';
-const WHEEL = process.env.WHEEL || 'FF-3';
+const WHEEL = process.env.WHEEL || 'FF-1';
 const SIZE = process.env.SIZE || '21"';
-const FINISH = process.env.FINISH || 'Pure Bronze';
-const RIM_ID = process.env.RIM_ID || 'sixnine_ff3';
+const FINISH = process.env.FINISH || 'Liquid Metal';
+const RIM_ID = process.env.RIM_ID || 'sixnine_ff1';
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -67,17 +67,19 @@ const RIM_ID = process.env.RIM_ID || 'sixnine_ff3';
   await enter.waitFor({ timeout: 240000 });
   await overlayGone();
   await settle(2500);
-  await shot('welcome-m2', { enter, region: p.locator('select').first() });
-  await p.keyboard.press('ArrowRight'); await settle(2500);
-  await shot('welcome-next', { enter });
-  await p.keyboard.press('ArrowLeft'); await settle(2500);
-  // make sure the M2 is on stage again
+  const nextCar = p.getByRole('button', { name: 'Next car' });
+  await shot('welcome-m2', { enter, region: p.locator('select').first(), next: nextCar, prev: p.getByRole('button', { name: 'Previous car' }), dots: p.getByRole('button', { name: /^BMW M2 CS$/ }), social: p.locator('a[href*="instagram"], button:has(svg)').first() });
+  for (const [label, name] of [['BMW M4 CS', 'welcome-m4'], ['BMW M5', 'welcome-m5'], ['BMW M5 Touring', 'welcome-m5t']]) {
+    await nextCar.click(); await p.waitForFunction(() => [...document.images].every((i) => i.complete), null, { timeout: 120000 }).catch(() => {}); await settle(5000); await finishCss();
+    await shot(name, { enter, next: nextCar, dot: p.getByRole('button', { name: new RegExp(`^${label}$`) }) });
+  }
+  await p.getByRole('button', { name: /^BMW M2 CS$/ }).click(); await settle(3500); await finishCss(); // back to the M2 (the dots jump to a car)
   log('welcome back on M2');
 
   // 2. Enter -> configurator
   await enter.click({ timeout: 60000 });
   await step('wheels').waitFor({ timeout: 240000 });
-  await settle(6000);
+  await overlayGone(); await calm(6000);
   await shot('configure-overview', { panel: aside, paintRow: aside.getByRole('button', { name: /^paint/i }), moreBtn: p.getByRole('button', { name: /more options/i }), summaryIcon: p.getByRole('button', { name: /^summary$/i }), price: aside.locator('.tabular-nums').last(), cta: aside.getByRole('button', { name: /^view your/i }), stepper: step('paint') });
 
   // 3. Paint
@@ -91,11 +93,14 @@ const RIM_ID = process.env.RIM_ID || 'sixnine_ff3';
   await step('wheels').click(); await aside.getByRole('heading', { name: /^wheels$/i }).waitFor({ timeout: 60000 }); await calm(5000);
   await shot('wheels-step', { list: aside.locator('ul').first(), info: aside.getByRole('button', { name: /wheel details/i }), rim360: aside.getByRole('button', { name: /360/i }) });
   const row = aside.locator('li > button', { hasText: new RegExp(`^\\s*.*${WHEEL}`) }).first();
-  await row.scrollIntoViewIfNeeded(); await row.click(); await settle(9000);
-  await shot('wheels-ff3', { row, info: aside.getByRole('button', { name: /wheel details/i }) });
-  await aside.getByRole('button', { name: /wheel details/i }).click(); await settle(1500);
+  await row.scrollIntoViewIfNeeded(); await calm(800);
+  await shot('wheels-scrolled', { row }); // the list scrolled to the wheel, before it is picked
+  await row.click(); await settle(9000);
+  await shot('wheels-pick', { row, info: aside.getByRole('button', { name: /wheel details/i }) });
+  await aside.getByRole('button', { name: /wheel details/i }).click(); await p.locator('[role="dialog"]').waitFor({ timeout: 120000 }); await calm(1500);
   await shot('wheel-info', { modal: p.locator('[role="dialog"]') });
   await p.keyboard.press('Escape'); await settle(800);
+  if (process.env.STOP_AFTER === 'wheel-info') { await b.close(); log('stopped after wheel-info'); return; }
 
   // 5. Size
   await step('size').click(); await aside.getByRole('heading', { name: /^wheel size$/i }).waitFor({ timeout: 60000 }); await calm(1500);
@@ -107,7 +112,7 @@ const RIM_ID = process.env.RIM_ID || 'sixnine_ff3';
   await step('finish').click(); await aside.getByRole('heading', { name: /^wheel finish$/i }).waitFor({ timeout: 60000 }); await calm(1500);
   const fin = aside.locator('li > button', { hasText: FINISH }).first();
   await fin.click(); await settle(9000); await finishCss();
-  await shot('finish-bronze', { finish: fin });
+  await shot('finish-pick', { finish: fin });
 
   // 7. Camera chips: back to the overview panel first, then each preset. Wait for the chip to take the gold highlight
   // (the UI lags a click under software rendering), then give the camera move time to land.

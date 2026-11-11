@@ -1,0 +1,1 @@
+To add something new, press New and give it an ID. That's a short unique name with no spaces, because cars and wheels refer to each other by it. Then add the pictures or the 3D file, set the sizes, and save. The ID can't be changed afterwards.

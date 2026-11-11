@@ -13,17 +13,104 @@
         "y": 892,
         "w": 266,
         "h": 56
+      },
+      "next": {
+        "x": 1804,
+        "y": 980,
+        "w": 44,
+        "h": 44
+      },
+      "prev": {
+        "x": 1586,
+        "y": 980,
+        "w": 44,
+        "h": 44
+      },
+      "dots": {
+        "x": 1667,
+        "y": 982,
+        "w": 40,
+        "h": 40
+      },
+      "social": {
+        "x": 1586,
+        "y": 980,
+        "w": 44,
+        "h": 44
       }
     }
   },
-  "welcome-next": {
-    "file": "02-welcome-next.png",
+  "welcome-m4": {
+    "file": "02-welcome-m4.png",
     "boxes": {
-      "enter": null
+      "enter": {
+        "x": 326,
+        "y": 892,
+        "w": 138,
+        "h": 56
+      },
+      "next": {
+        "x": 1803,
+        "y": 979,
+        "w": 46,
+        "h": 46
+      },
+      "dot": {
+        "x": 1687,
+        "y": 982,
+        "w": 40,
+        "h": 40
+      }
+    }
+  },
+  "welcome-m5": {
+    "file": "03-welcome-m5.png",
+    "boxes": {
+      "enter": {
+        "x": 326,
+        "y": 892,
+        "w": 138,
+        "h": 56
+      },
+      "next": {
+        "x": 1803,
+        "y": 979,
+        "w": 46,
+        "h": 46
+      },
+      "dot": {
+        "x": 1707,
+        "y": 982,
+        "w": 40,
+        "h": 40
+      }
+    }
+  },
+  "welcome-m5t": {
+    "file": "04-welcome-m5t.png",
+    "boxes": {
+      "enter": {
+        "x": 326,
+        "y": 892,
+        "w": 138,
+        "h": 56
+      },
+      "next": {
+        "x": 1803,
+        "y": 979,
+        "w": 46,
+        "h": 46
+      },
+      "dot": {
+        "x": 1727,
+        "y": 982,
+        "w": 40,
+        "h": 40
+      }
     }
   },
   "configure-overview": {
-    "file": "03-configure-overview.png",
+    "file": "05-configure-overview.png",
     "boxes": {
       "panel": {
         "x": 1460,
@@ -70,7 +157,7 @@
     }
   },
   "paint-step": {
-    "file": "04-paint-step.png",
+    "file": "06-paint-step.png",
     "boxes": {
       "panel": {
         "x": 1460,
@@ -87,7 +174,7 @@
     }
   },
   "paint-black": {
-    "file": "05-paint-black.png",
+    "file": "07-paint-black.png",
     "boxes": {
       "swatch": {
         "x": 1695,
@@ -98,7 +185,7 @@
     }
   },
   "wheels-step": {
-    "file": "06-wheels-step.png",
+    "file": "08-wheels-step.png",
     "boxes": {
       "list": {
         "x": 1489,
@@ -120,25 +207,25 @@
       }
     }
   },
-  "wheels-ff3": {
-    "file": "07-wheels-ff3.png",
+  "wheels-pick": {
+    "file": "10-wheels-pick.png",
     "boxes": {
       "row": {
         "x": 1489,
-        "y": 730,
+        "y": 852,
         "w": 403,
         "h": 78
       },
       "info": {
         "x": 1786,
-        "y": 260,
+        "y": 460,
         "w": 40,
         "h": 40
       }
     }
   },
   "wheel-info": {
-    "file": "08-wheel-info.png",
+    "file": "11-wheel-info.png",
     "boxes": {
       "modal": {
         "x": 0,
@@ -149,7 +236,7 @@
     }
   },
   "size-21": {
-    "file": "09-size-21.png",
+    "file": "11-size-21.png",
     "boxes": {
       "size": {
         "x": 1696,
@@ -159,19 +246,19 @@
       }
     }
   },
-  "finish-bronze": {
-    "file": "10-finish-bronze.png",
+  "finish-pick": {
+    "file": "12-finish-pick.png",
     "boxes": {
       "finish": {
         "x": 1489,
-        "y": 285,
+        "y": 357,
         "w": 403,
         "h": 66
       }
     }
   },
   "cam-side": {
-    "file": "11-cam-side.png",
+    "file": "13-cam-side.png",
     "boxes": {
       "chip": {
         "x": 608,
@@ -194,7 +281,7 @@
     }
   },
   "cam-rear": {
-    "file": "12-cam-rear.png",
+    "file": "14-cam-rear.png",
     "boxes": {
       "chip": {
         "x": 672,
@@ -217,7 +304,7 @@
     }
   },
   "cam-wheel": {
-    "file": "13-cam-wheel.png",
+    "file": "15-cam-wheel.png",
     "boxes": {
       "chip": {
         "x": 740,
@@ -240,7 +327,7 @@
     }
   },
   "cam-top": {
-    "file": "14-cam-top.png",
+    "file": "16-cam-top.png",
     "boxes": {
       "chip": {
         "x": 818,
@@ -263,7 +350,7 @@
     }
   },
   "cam-front": {
-    "file": "15-cam-front.png",
+    "file": "17-cam-front.png",
     "boxes": {
       "chip": {
         "x": 531,
@@ -286,7 +373,7 @@
     }
   },
   "turntable": {
-    "file": "16-turntable.png",
+    "file": "18-turntable.png",
     "boxes": {
       "turntable": {
         "x": 889,
@@ -297,7 +384,7 @@
     }
   },
   "more-options": {
-    "file": "17-more-options.png",
+    "file": "19-more-options.png",
     "boxes": {
       "modal": {
         "x": 0,
@@ -308,7 +395,7 @@
     }
   },
   "summary-top": {
-    "file": "18-summary-top.png",
+    "file": "20-summary-top.png",
     "boxes": {
       "share": {
         "x": 1719,
@@ -319,7 +406,7 @@
     }
   },
   "summary-options": {
-    "file": "19-summary-options.png",
+    "file": "21-summary-options.png",
     "boxes": {
       "price": {
         "x": 1144,
@@ -348,7 +435,7 @@
     }
   },
   "summary-standard": {
-    "file": "20-summary-standard.png",
+    "file": "22-summary-standard.png",
     "boxes": {
       "tab": {
         "x": 592,
@@ -359,7 +446,7 @@
     }
   },
   "share-modal": {
-    "file": "21-share-modal.png",
+    "file": "23-share-modal.png",
     "boxes": {
       "modal": {
         "x": 0,
@@ -370,7 +457,7 @@
     }
   },
   "enquire-modal": {
-    "file": "22-enquire-modal.png",
+    "file": "24-enquire-modal.png",
     "boxes": {
       "modal": {
         "x": 0,
@@ -381,7 +468,18 @@
     }
   },
   "rim-page": {
-    "file": "23-rim-page.png",
+    "file": "25-rim-page.png",
     "boxes": {}
+  },
+  "wheels-scrolled": {
+    "file": "09-wheels-scrolled.png",
+    "boxes": {
+      "row": {
+        "x": 1489,
+        "y": 852,
+        "w": 403,
+        "h": 78
+      }
+    }
   }
 }

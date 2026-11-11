@@ -1,0 +1,1 @@
+Finishes and paints have their own tabs. Each has a colour, then three numbers describing how the surface behaves in light: how metallic it is, how rough, and how glossy its clear coat is. Those numbers are what make a finish look like the real coating on screen.

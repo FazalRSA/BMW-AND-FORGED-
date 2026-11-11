@@ -1,0 +1,1 @@
+Every wheel also has its own page, with a three-dimensional viewer that you can spin, in each finish it's made in. Back in the configurator, the three dots open more options: your region, a place to load a saved configuration using its code, your account and garage, which uses Google sign-in, and links to delivery, fitment and the terms.

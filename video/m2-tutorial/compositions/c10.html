@@ -1,0 +1,48 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 700px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 54px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="c10" data-width="1920" data-height="1080">
+    <div id="c10-cam" class="clip" data-start="0" data-duration="22.07" data-track-index="0"><div id="c10-fx" class="fx"><div id="c10-cami" class="cam"><img id="c10-img-0" class="shot" src="assets/shots/11-size-21.png" alt="" style="opacity:1"><div id="c10-ring-0" class="ring" style="left:1477px;top:283px;width:427px;height:134px"></div><div id="c10-ring-1" class="ring" style="left:1477px;top:403px;width:427px;height:104px"></div><div id="c10-ring-2" class="ring" style="left:1684px;top:293px;width:221px;height:114px"></div><div id="c10-click-2" class="click" style="left:1735px;top:290px"></div><svg id="c10-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="c10-card-0" class="clip card-host" data-start="1.71" data-duration="6.12" data-track-index="2" style="left:72px;top:140px"><div id="c10-cardi-0" class="card"><div class="eye">WHEEL SIZE</div><div class="line">Diameter in inches</div></div></div><div id="c10-card-1" class="clip card-host" data-start="7.79" data-duration="11.49" data-track-index="2" style="left:72px;top:140px"><div id="c10-cardi-1" class="card"><div class="eye">FACTORY FITMENT</div><div class="line">What the car was built for</div></div></div><div id="c10-card-2" class="clip card-host" data-start="19.22" data-duration="2.60" data-track-index="2" style="left:72px;top:140px"><div id="c10-cardi-2" class="card"><div class="eye">21 INCH</div><div class="line">Set price shown per size</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#c10-cami",{transformOrigin:"1145px 505px"});
+    tl.fromTo("#c10-cami",{scale:1},{scale:1.025,duration:22.07,ease:"sine.inOut"},0);
+    tl.fromTo("#c10-fx",{opacity:0,filter:"blur(10px)"},{opacity:1,filter:"blur(0px)",duration:0.45,ease:"power2.out"},0);
+    gsap.set("#c10-cur",{x:960,y:1140,opacity:0});
+    tl.to("#c10-cur",{x:1691,y:350,opacity:1,duration:0.8,ease:"power3.inOut"},1.46);
+    tl.fromTo("#c10-ring-0",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},1.96);
+    tl.to("#c10-ring-0",{opacity:0,duration:0.25,ease:"power2.in"},3.66);
+    tl.to("#c10-cur",{x:1691,y:455,opacity:1,duration:0.8,ease:"power3.inOut"},7.54);
+    tl.fromTo("#c10-ring-1",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},8.04);
+    tl.to("#c10-ring-1",{opacity:0,duration:0.25,ease:"power2.in"},9.74);
+    tl.to("#c10-cur",{x:1795,y:350,opacity:1,duration:0.8,ease:"power3.inOut"},18.97);
+    tl.fromTo("#c10-ring-2",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},19.47);
+    tl.to("#c10-ring-2",{opacity:0,duration:0.25,ease:"power2.in"},20.87);
+    tl.fromTo("#c10-click-2",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},19.77);
+    tl.to("#c10-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},19.75);
+    tl.to("#c10-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},19.85);
+    tl.fromTo("#c10-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},1.76);
+    tl.to("#c10-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},7.60);
+    tl.fromTo("#c10-cardi-1",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},7.84);
+    tl.to("#c10-cardi-1",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},19.03);
+    tl.fromTo("#c10-cardi-2",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},19.27);
+    tl.to("#c10-cardi-2",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},21.58);
+    window.__timelines["c10"] = tl;
+  </script>
+</template>

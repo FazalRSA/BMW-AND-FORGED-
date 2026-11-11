@@ -1,0 +1,88 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 700px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 54px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="c12" data-width="1920" data-height="1080">
+    <div id="c12-cam" class="clip" data-start="0" data-duration="18.5" data-track-index="0"><div id="c12-fx" class="fx"><div id="c12-cami" class="cam"><img id="c12-img-0" class="shot" src="assets/shots/17-cam-front.png" alt="" style="opacity:1"><img id="c12-img-1" class="shot" src="assets/shots/13-cam-side.png" alt="" style="opacity:0"><img id="c12-img-2" class="shot" src="assets/shots/14-cam-rear.png" alt="" style="opacity:0"><img id="c12-img-3" class="shot" src="assets/shots/15-cam-wheel.png" alt="" style="opacity:0"><img id="c12-img-4" class="shot" src="assets/shots/16-cam-top.png" alt="" style="opacity:0"><img id="c12-img-5" class="shot" src="assets/shots/18-turntable.png" alt="" style="opacity:0"><div id="c12-ring-0" class="ring" style="left:596px;top:992px;width:86px;height:64px"></div><div id="c12-click-0" class="click" style="left:579px;top:964px"></div><div id="c12-ring-1" class="ring" style="left:660px;top:992px;width:90px;height:64px"></div><div id="c12-click-1" class="click" style="left:645px;top:964px"></div><div id="c12-ring-2" class="ring" style="left:728px;top:992px;width:101px;height:64px"></div><div id="c12-click-2" class="click" style="left:719px;top:964px"></div><div id="c12-ring-3" class="ring" style="left:806px;top:992px;width:82px;height:64px"></div><div id="c12-click-3" class="click" style="left:787px;top:964px"></div><div id="c12-ring-4" class="ring" style="left:877px;top:992px;width:64px;height:64px"></div><div id="c12-click-4" class="click" style="left:849px;top:964px"></div><div id="c12-ring-5" class="ring" style="left:1848px;top:16px;width:64px;height:64px"></div><div id="c12-click-5" class="click" style="left:1820px;top:-12px"></div><svg id="c12-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="c12-card-0" class="clip card-host" data-start="5.98" data-duration="4.75" data-track-index="2" style="left:72px;top:140px"><div id="c12-cardi-0" class="card"><div class="eye">CAMERA</div><div class="line">Five viewpoints</div></div></div><div id="c12-card-4" class="clip card-host" data-start="10.68" data-duration="5.72" data-track-index="2" style="left:72px;top:140px"><div id="c12-cardi-4" class="card"><div class="eye">TURNTABLE</div><div class="line">A continuous rotation</div></div></div><div id="c12-card-5" class="clip card-host" data-start="16.35" data-duration="1.90" data-track-index="2" style="left:72px;top:140px"><div id="c12-cardi-5" class="card"><div class="eye">SUMMARY</div><div class="line">The build on one page</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#c12-cami",{transformOrigin:"960px 640px"});
+    tl.fromTo("#c12-cami",{scale:1},{scale:1.025,duration:18.5,ease:"sine.inOut"},0);
+    tl.fromTo("#c12-fx",{opacity:0,filter:"blur(10px)"},{opacity:1,filter:"blur(0px)",duration:0.45,ease:"power2.out"},0);
+    tl.to("#c12-fx",{scale:1.5,filter:"blur(7px)",transformOrigin:"1880px 48px",duration:0.6,ease:"power3.in"},17.90);
+    gsap.set("#c12-cur",{x:960,y:1140,opacity:0});
+    tl.to("#c12-cur",{x:639,y:1024,opacity:1,duration:0.8,ease:"power3.inOut"},5.73);
+    tl.fromTo("#c12-ring-0",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},6.23);
+    tl.to("#c12-ring-0",{opacity:0,duration:0.25,ease:"power2.in"},7.03);
+    tl.fromTo("#c12-click-0",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},6.53);
+    tl.to("#c12-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},6.51);
+    tl.to("#c12-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},6.61);
+    tl.set("#c12-img-1",{zIndex:2,opacity:0},6.63);
+    tl.to("#c12-img-1",{opacity:1,duration:0.3,ease:"power1.inOut"},6.63);
+    tl.set("#c12-img-0",{opacity:0},6.95);
+    tl.to("#c12-cur",{x:705,y:1024,opacity:1,duration:0.8,ease:"power3.inOut"},6.73);
+    tl.fromTo("#c12-ring-1",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},7.23);
+    tl.to("#c12-ring-1",{opacity:0,duration:0.25,ease:"power2.in"},8.03);
+    tl.fromTo("#c12-click-1",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},7.53);
+    tl.to("#c12-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},7.51);
+    tl.to("#c12-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},7.61);
+    tl.set("#c12-img-2",{zIndex:3,opacity:0},7.63);
+    tl.to("#c12-img-2",{opacity:1,duration:0.3,ease:"power1.inOut"},7.63);
+    tl.set("#c12-img-1",{opacity:0},7.95);
+    tl.to("#c12-cur",{x:779,y:1024,opacity:1,duration:0.8,ease:"power3.inOut"},7.73);
+    tl.fromTo("#c12-ring-2",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},8.23);
+    tl.to("#c12-ring-2",{opacity:0,duration:0.25,ease:"power2.in"},9.03);
+    tl.fromTo("#c12-click-2",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},8.53);
+    tl.to("#c12-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},8.51);
+    tl.to("#c12-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},8.61);
+    tl.set("#c12-img-3",{zIndex:4,opacity:0},8.63);
+    tl.to("#c12-img-3",{opacity:1,duration:0.3,ease:"power1.inOut"},8.63);
+    tl.set("#c12-img-2",{opacity:0},8.95);
+    tl.to("#c12-cur",{x:847,y:1024,opacity:1,duration:0.8,ease:"power3.inOut"},8.73);
+    tl.fromTo("#c12-ring-3",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},9.23);
+    tl.to("#c12-ring-3",{opacity:0,duration:0.25,ease:"power2.in"},10.23);
+    tl.fromTo("#c12-click-3",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},9.53);
+    tl.to("#c12-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},9.51);
+    tl.to("#c12-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},9.61);
+    tl.set("#c12-img-4",{zIndex:5,opacity:0},9.63);
+    tl.to("#c12-img-4",{opacity:1,duration:0.3,ease:"power1.inOut"},9.63);
+    tl.set("#c12-img-3",{opacity:0},9.95);
+    tl.to("#c12-cur",{x:909,y:1024,opacity:1,duration:0.8,ease:"power3.inOut"},10.43);
+    tl.fromTo("#c12-ring-4",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},10.93);
+    tl.to("#c12-ring-4",{opacity:0,duration:0.25,ease:"power2.in"},12.63);
+    tl.fromTo("#c12-click-4",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},11.23);
+    tl.to("#c12-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},11.21);
+    tl.to("#c12-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},11.31);
+    tl.set("#c12-img-5",{zIndex:6,opacity:0},11.33);
+    tl.to("#c12-img-5",{opacity:1,duration:0.3,ease:"power1.inOut"},11.33);
+    tl.set("#c12-img-4",{opacity:0},11.65);
+    tl.to("#c12-cur",{x:1880,y:48,opacity:1,duration:0.8,ease:"power3.inOut"},16.10);
+    tl.fromTo("#c12-ring-5",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},16.60);
+    tl.to("#c12-ring-5",{opacity:0,duration:0.25,ease:"power2.in"},18.00);
+    tl.fromTo("#c12-click-5",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},16.90);
+    tl.to("#c12-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},16.88);
+    tl.to("#c12-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},16.98);
+    tl.fromTo("#c12-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},6.03);
+    tl.to("#c12-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},10.49);
+    tl.fromTo("#c12-cardi-4",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},10.73);
+    tl.to("#c12-cardi-4",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},16.16);
+    tl.fromTo("#c12-cardi-5",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},16.40);
+    tl.to("#c12-cardi-5",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},18.01);
+    window.__timelines["c12"] = tl;
+  </script>
+</template>

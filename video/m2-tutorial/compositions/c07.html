@@ -1,0 +1,48 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 700px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 54px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="c07" data-width="1920" data-height="1080">
+    <div id="c07-cam" class="clip" data-start="0" data-duration="22.49" data-track-index="0"><div id="c07-fx" class="fx"><div id="c07-cami" class="cam"><img id="c07-img-0" class="shot" src="assets/shots/06-paint-step.png" alt="" style="opacity:1"><img id="c07-img-1" class="shot" src="assets/shots/07-paint-black.png" alt="" style="opacity:0"><div id="c07-ring-0" class="ring" style="left:1448px;top:-12px;width:484px;height:1104px"></div><div id="c07-ring-2" class="ring" style="left:1683px;top:300px;width:119px;height:104px"></div><div id="c07-click-2" class="click" style="left:1683px;top:292px"></div><svg id="c07-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="c07-card-0" class="clip card-host" data-start="1.22" data-duration="11.22" data-track-index="2" style="left:72px;top:140px"><div id="c07-cardi-0" class="card"><div class="eye">FACTORY COLOURS</div><div class="line">Sorted into families</div></div></div><div id="c07-card-1" class="clip card-host" data-start="12.39" data-duration="6.32" data-track-index="2" style="left:72px;top:140px"><div id="c07-cardi-1" class="card"><div class="eye">PAINT TYPES</div><div class="line">Metallic has flake, Frozen is matte</div></div></div><div id="c07-card-2" class="clip card-host" data-start="18.66" data-duration="3.58" data-track-index="2" style="left:72px;top:140px"><div id="c07-cardi-2" class="card"><div class="eye">BLACK SAPPHIRE</div><div class="line">Metallic, paint code 475</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#c07-cami",{transformOrigin:"1145px 530px"});
+    tl.fromTo("#c07-cami",{scale:1},{scale:1.025,duration:22.49,ease:"sine.inOut"},0);
+    tl.fromTo("#c07-fx",{clipPath:"circle(0px at 1740px 122px)"},{clipPath:"circle(2400px at 1740px 122px)",duration:0.5,ease:"power2.inOut"},0);
+    gsap.set("#c07-cur",{x:960,y:1140,opacity:0});
+    tl.to("#c07-cur",{x:1690,y:540,opacity:1,duration:0.8,ease:"power3.inOut"},0.97);
+    tl.fromTo("#c07-ring-0",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},1.47);
+    tl.to("#c07-ring-0",{opacity:0,duration:0.25,ease:"power2.in"},3.17);
+    tl.to("#c07-cur",{x:1743,y:352,opacity:1,duration:0.8,ease:"power3.inOut"},18.41);
+    tl.fromTo("#c07-ring-2",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},18.91);
+    tl.to("#c07-ring-2",{opacity:0,duration:0.25,ease:"power2.in"},20.31);
+    tl.fromTo("#c07-click-2",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},19.21);
+    tl.to("#c07-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},19.19);
+    tl.to("#c07-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},19.29);
+    tl.set("#c07-img-1",{zIndex:2,opacity:0},19.31);
+    tl.to("#c07-img-1",{opacity:1,duration:0.3,ease:"power1.inOut"},19.31);
+    tl.set("#c07-img-0",{opacity:0},19.63);
+    tl.fromTo("#c07-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},1.27);
+    tl.to("#c07-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},12.20);
+    tl.fromTo("#c07-cardi-1",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},12.44);
+    tl.to("#c07-cardi-1",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},18.47);
+    tl.fromTo("#c07-cardi-2",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},18.71);
+    tl.to("#c07-cardi-2",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},22.00);
+    window.__timelines["c07"] = tl;
+  </script>
+</template>

@@ -1,0 +1,1 @@
+Further down, you choose which factory paints the car is offered in, which is why each car's palette is different. If you tick none, the car is offered every visible paint.

@@ -1,0 +1,1 @@
+The wheels tab works the same way. A wheel has a code, a name, a style such as monoblock or two-piece, and a rim picture. The configurator turns that picture into three-dimensional spokes automatically.

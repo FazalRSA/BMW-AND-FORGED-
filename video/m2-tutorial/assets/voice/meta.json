@@ -1,2060 +1,4788 @@
 {
- "s01": {
-  "duration": 11.593,
+ "c01": {
+  "duration": 29.454,
   "words": [
    {
-    "text": "What",
+    "text": "This",
     "start": 0.0,
-    "end": 0.417
-   },
-   {
-    "text": "would",
-    "start": 0.417,
-    "end": 0.916
-   },
-   {
-    "text": "your",
-    "start": 0.916,
-    "end": 1.333
-   },
-   {
-    "text": "M",
-    "start": 1.333,
-    "end": 1.499
-   },
-   {
-    "text": "two",
-    "start": 1.499,
-    "end": 1.833
-   },
-   {
-    "text": "look",
-    "start": 1.833,
-    "end": 2.249
-   },
-   {
-    "text": "like",
-    "start": 2.249,
-    "end": 2.666
-   },
-   {
-    "text": "on",
-    "start": 2.666,
-    "end": 2.916
-   },
-   {
-    "text": "a",
-    "start": 2.916,
-    "end": 3.082
-   },
-   {
-    "text": "set",
-    "start": 3.082,
-    "end": 3.415
-   },
-   {
-    "text": "of",
-    "start": 3.415,
-    "end": 3.665
-   },
-   {
-    "text": "forged",
-    "start": 3.665,
-    "end": 4.248
-   },
-   {
-    "text": "wheels?",
-    "start": 4.248,
-    "end": 4.915
-   },
-   {
-    "text": "You",
-    "start": 5.035,
-    "end": 5.266
-   },
-   {
-    "text": "don't",
-    "start": 5.266,
-    "end": 5.614
-   },
-   {
-    "text": "have",
-    "start": 5.614,
-    "end": 5.904
-   },
-   {
-    "text": "to",
-    "start": 5.904,
-    "end": 6.077
-   },
-   {
-    "text": "wait",
-    "start": 6.077,
-    "end": 6.367
-   },
-   {
-    "text": "for",
-    "start": 6.367,
-    "end": 6.599
-   },
-   {
-    "text": "a",
-    "start": 6.599,
-    "end": 6.715
-   },
-   {
-    "text": "fitting",
-    "start": 6.715,
-    "end": 7.178
-   },
-   {
-    "text": "to",
-    "start": 7.178,
-    "end": 7.352
-   },
-   {
-    "text": "find",
-    "start": 7.352,
-    "end": 7.641
-   },
-   {
-    "text": "out.",
-    "start": 7.641,
-    "end": 7.931
-   },
-   {
-    "text": "So",
-    "start": 8.051,
-    "end": 8.284
-   },
-   {
-    "text": "here's",
-    "start": 8.284,
-    "end": 8.829
-   },
-   {
-    "text": "the",
-    "start": 8.829,
-    "end": 9.14
-   },
-   {
-    "text": "whole",
-    "start": 9.14,
-    "end": 9.607
-   },
-   {
-    "text": "thing,",
-    "start": 9.607,
-    "end": 10.151
-   },
-   {
-    "text": "start",
-    "start": 10.151,
-    "end": 10.618
-   },
-   {
-    "text": "to",
-    "start": 10.618,
-    "end": 10.851
-   },
-   {
-    "text": "finish.",
-    "start": 10.851,
-    "end": 11.473
-   }
-  ],
-  "transcript": "What would your M two look like on a set of forged wheels? You don't have to wait for a fitting to find out. So here's the whole thing, start to finish."
- },
- "s02": {
-  "duration": 12.575,
-  "words": [
-   {
-    "text": "We'll",
-    "start": 0.0,
-    "end": 0.339
-   },
-   {
-    "text": "start",
-    "start": 0.339,
-    "end": 0.679
-   },
-   {
-    "text": "on",
-    "start": 0.679,
-    "end": 0.848
-   },
-   {
-    "text": "the",
-    "start": 0.848,
-    "end": 1.074
-   },
-   {
-    "text": "welcome",
-    "start": 1.074,
-    "end": 1.527
-   },
-   {
-    "text": "screen.",
-    "start": 1.527,
-    "end": 1.979
-   },
-   {
-    "text": "The",
-    "start": 2.099,
-    "end": 2.358
-   },
-   {
-    "text": "arrows",
-    "start": 2.358,
-    "end": 2.812
-   },
-   {
-    "text": "flick",
-    "start": 2.812,
-    "end": 3.201
-   },
-   {
-    "text": "between",
-    "start": 3.201,
-    "end": 3.719
-   },
-   {
-    "text": "the",
-    "start": 3.719,
-    "end": 3.978
-   },
-   {
-    "text": "cars",
-    "start": 3.978,
-    "end": 4.302
-   },
-   {
-    "text": "we've",
-    "start": 4.302,
-    "end": 4.691
-   },
-   {
-    "text": "prepared,",
-    "start": 4.691,
-    "end": 5.338
-   },
-   {
-    "text": "and",
-    "start": 5.338,
-    "end": 5.598
-   },
-   {
-    "text": "the",
-    "start": 5.598,
-    "end": 5.857
-   },
-   {
-    "text": "region",
-    "start": 5.857,
-    "end": 6.31
-   },
-   {
-    "text": "picker",
-    "start": 6.31,
-    "end": 6.764
-   },
-   {
-    "text": "sets",
-    "start": 6.764,
-    "end": 7.088
-   },
-   {
-    "text": "your",
-    "start": 7.088,
-    "end": 7.411
-   },
-   {
-    "text": "currency,",
-    "start": 7.411,
-    "end": 8.059
-   },
-   {
-    "text": "so",
-    "start": 8.059,
-    "end": 8.254
-   },
-   {
-    "text": "every",
-    "start": 8.254,
-    "end": 8.642
-   },
-   {
-    "text": "price",
-    "start": 8.642,
-    "end": 9.031
+    "end": 0.32
    },
    {
     "text": "is",
-    "start": 9.031,
-    "end": 9.225
-   },
-   {
-    "text": "in",
-    "start": 9.225,
-    "end": 9.42
-   },
-   {
-    "text": "your",
-    "start": 9.42,
-    "end": 9.744
-   },
-   {
-    "text": "own",
-    "start": 9.744,
-    "end": 10.003
-   },
-   {
-    "text": "money.",
-    "start": 10.003,
-    "end": 10.456
-   },
-   {
-    "text": "Found",
-    "start": 10.576,
-    "end": 11.016
-   },
-   {
-    "text": "your",
-    "start": 11.016,
-    "end": 11.382
-   },
-   {
-    "text": "car?",
-    "start": 11.382,
-    "end": 11.748
-   },
-   {
-    "text": "Hit",
-    "start": 11.868,
-    "end": 12.082
-   },
-   {
-    "text": "Enter.",
-    "start": 12.082,
-    "end": 12.455
-   }
-  ],
-  "transcript": "We'll start on the welcome screen. The arrows flick between the cars we've prepared, and the region picker sets your currency, so every price is in your own money. Found your car? Hit Enter."
- },
- "s03": {
-  "duration": 13.297,
-  "words": [
-   {
-    "text": "And",
-    "start": 0.0,
-    "end": 0.359
-   },
-   {
-    "text": "you're",
-    "start": 0.359,
-    "end": 0.986
-   },
-   {
-    "text": "in.",
-    "start": 0.986,
-    "end": 1.345
-   },
-   {
-    "text": "Everything",
-    "start": 1.465,
-    "end": 2.126
-   },
-   {
-    "text": "you",
-    "start": 2.126,
-    "end": 2.367
-   },
-   {
-    "text": "choose",
-    "start": 2.367,
-    "end": 2.788
-   },
-   {
-    "text": "lives",
-    "start": 2.788,
-    "end": 3.149
-   },
-   {
-    "text": "in",
-    "start": 3.149,
-    "end": 3.329
-   },
-   {
-    "text": "this",
-    "start": 3.329,
-    "end": 3.63
-   },
-   {
-    "text": "panel,",
-    "start": 3.63,
-    "end": 4.051
-   },
-   {
-    "text": "and",
-    "start": 4.051,
-    "end": 4.291
+    "start": 0.32,
+    "end": 0.512
    },
    {
     "text": "the",
-    "start": 4.291,
-    "end": 4.532
+    "start": 0.512,
+    "end": 0.768
    },
    {
-    "text": "car",
-    "start": 4.532,
-    "end": 4.772
+    "text": "Forged",
+    "start": 0.768,
+    "end": 1.216
    },
    {
-    "text": "changes",
-    "start": 4.772,
-    "end": 5.254
-   },
-   {
-    "text": "the",
-    "start": 5.254,
-    "end": 5.494
-   },
-   {
-    "text": "second",
-    "start": 5.494,
-    "end": 5.915
-   },
-   {
-    "text": "you",
-    "start": 5.915,
-    "end": 6.156
-   },
-   {
-    "text": "make",
-    "start": 6.156,
-    "end": 6.456
-   },
-   {
-    "text": "a",
-    "start": 6.456,
-    "end": 6.577
-   },
-   {
-    "text": "choice.",
-    "start": 6.577,
-    "end": 7.058
-   },
-   {
-    "text": "Down",
-    "start": 7.178,
-    "end": 7.494
-   },
-   {
-    "text": "at",
-    "start": 7.494,
-    "end": 7.684
-   },
-   {
-    "text": "the",
-    "start": 7.684,
-    "end": 7.937
-   },
-   {
-    "text": "bottom,",
-    "start": 7.937,
-    "end": 8.444
-   },
-   {
-    "text": "the",
-    "start": 8.444,
-    "end": 8.697
-   },
-   {
-    "text": "price",
-    "start": 8.697,
-    "end": 9.077
-   },
-   {
-    "text": "for",
-    "start": 9.077,
-    "end": 9.33
-   },
-   {
-    "text": "a",
-    "start": 9.33,
-    "end": 9.457
-   },
-   {
-    "text": "set",
-    "start": 9.457,
-    "end": 9.71
-   },
-   {
-    "text": "of",
-    "start": 9.71,
-    "end": 9.9
-   },
-   {
-    "text": "four",
-    "start": 9.9,
-    "end": 10.216
-   },
-   {
-    "text": "wheels",
-    "start": 10.216,
-    "end": 10.659
-   },
-   {
-    "text": "keeps",
-    "start": 10.659,
-    "end": 11.039
-   },
-   {
-    "text": "up",
-    "start": 11.039,
-    "end": 11.229
-   },
-   {
-    "text": "as",
-    "start": 11.229,
-    "end": 11.419
-   },
-   {
-    "text": "you",
-    "start": 11.419,
-    "end": 11.672
-   },
-   {
-    "text": "go.",
-    "start": 11.672,
-    "end": 11.925
-   },
-   {
-    "text": "Let's",
-    "start": 12.045,
-    "end": 12.328
-   },
-   {
-    "text": "start",
-    "start": 12.328,
-    "end": 12.611
-   },
-   {
-    "text": "with",
-    "start": 12.611,
-    "end": 12.847
-   },
-   {
-    "text": "paint.",
-    "start": 12.847,
-    "end": 13.177
-   }
-  ],
-  "transcript": "And you're in. Everything you choose lives in this panel, and the car changes the second you make a choice. Down at the bottom, the price for a set of four wheels keeps up as you go. Let's start with paint."
- },
- "s04": {
-  "duration": 11.746,
-  "words": [
-   {
-    "text": "Step",
-    "start": 0.0,
-    "end": 0.352
-   },
-   {
-    "text": "one,",
-    "start": 0.352,
-    "end": 0.704
-   },
-   {
-    "text": "paint.",
-    "start": 0.704,
-    "end": 1.197
-   },
-   {
-    "text": "These",
-    "start": 1.317,
-    "end": 1.765
-   },
-   {
-    "text": "are",
-    "start": 1.765,
-    "end": 2.063
-   },
-   {
-    "text": "BMW's",
-    "start": 2.063,
-    "end": 2.511
-   },
-   {
-    "text": "factory",
-    "start": 2.511,
-    "end": 3.107
-   },
-   {
-    "text": "colours,",
-    "start": 3.107,
-    "end": 3.779
-   },
-   {
-    "text": "grouped",
-    "start": 3.779,
-    "end": 4.375
-   },
-   {
-    "text": "by",
-    "start": 4.375,
-    "end": 4.599
-   },
-   {
-    "text": "family.",
-    "start": 4.599,
-    "end": 5.196
-   },
-   {
-    "text": "I'm",
-    "start": 5.316,
-    "end": 5.628
-   },
-   {
-    "text": "going",
-    "start": 5.628,
-    "end": 6.095
-   },
-   {
-    "text": "with",
-    "start": 6.095,
-    "end": 6.484
-   },
-   {
-    "text": "Black",
-    "start": 6.484,
-    "end": 6.952
-   },
-   {
-    "text": "Sapphire,",
-    "start": 6.952,
-    "end": 7.731
-   },
-   {
-    "text": "and",
-    "start": 7.731,
-    "end": 8.042
-   },
-   {
-    "text": "the",
-    "start": 8.042,
-    "end": 8.354
-   },
-   {
-    "text": "whole",
-    "start": 8.354,
-    "end": 8.821
-   },
-   {
-    "text": "car",
-    "start": 8.821,
-    "end": 9.133
-   },
-   {
-    "text": "repaints",
-    "start": 9.133,
-    "end": 9.834
-   },
-   {
-    "text": "right",
-    "start": 9.834,
-    "end": 10.301
-   },
-   {
-    "text": "in",
-    "start": 10.301,
-    "end": 10.535
-   },
-   {
-    "text": "front",
-    "start": 10.535,
-    "end": 11.002
-   },
-   {
-    "text": "of",
-    "start": 11.002,
-    "end": 11.236
-   },
-   {
-    "text": "you.",
-    "start": 11.236,
-    "end": 11.626
-   }
-  ],
-  "transcript": "Step one, paint. These are BMW's factory colours, grouped by family. I'm going with Black Sapphire, and the whole car repaints right in front of you."
- },
- "s05": {
-  "duration": 14.705,
-  "words": [
-   {
-    "text": "Step",
-    "start": 0.0,
-    "end": 0.254
-   },
-   {
-    "text": "two,",
-    "start": 0.254,
-    "end": 0.507
-   },
-   {
-    "text": "the",
-    "start": 0.507,
-    "end": 0.71
-   },
-   {
-    "text": "wheels.",
-    "start": 0.71,
-    "end": 1.116
-   },
-   {
-    "text": "Every",
-    "start": 1.236,
-    "end": 1.749
-   },
-   {
-    "text": "design",
-    "start": 1.749,
-    "end": 2.347
-   },
-   {
-    "text": "here",
-    "start": 2.347,
-    "end": 2.774
-   },
-   {
-    "text": "is",
-    "start": 2.774,
-    "end": 3.03
-   },
-   {
-    "text": "a",
-    "start": 3.03,
-    "end": 3.201
-   },
-   {
-    "text": "set",
-    "start": 3.201,
-    "end": 3.543
-   },
-   {
-    "text": "that's",
-    "start": 3.543,
-    "end": 4.141
-   },
-   {
-    "text": "actually",
-    "start": 4.141,
-    "end": 4.909
-   },
-   {
-    "text": "in",
-    "start": 4.909,
-    "end": 5.166
-   },
-   {
-    "text": "stock,",
-    "start": 5.166,
-    "end": 5.764
-   },
-   {
-    "text": "with",
-    "start": 5.764,
-    "end": 6.191
-   },
-   {
-    "text": "its",
-    "start": 6.191,
-    "end": 6.532
-   },
-   {
-    "text": "real",
-    "start": 6.532,
-    "end": 6.959
-   },
-   {
-    "text": "name",
-    "start": 6.959,
-    "end": 7.386
-   },
-   {
-    "text": "and",
-    "start": 7.386,
-    "end": 7.728
-   },
-   {
-    "text": "its",
-    "start": 7.728,
-    "end": 8.07
-   },
-   {
-    "text": "real",
-    "start": 8.07,
-    "end": 8.497
-   },
-   {
-    "text": "price.",
-    "start": 8.497,
-    "end": 9.095
-   },
-   {
-    "text": "I'll",
-    "start": 9.215,
-    "end": 9.598
-   },
-   {
-    "text": "take",
-    "start": 9.598,
-    "end": 9.982
-   },
-   {
-    "text": "the",
-    "start": 9.982,
-    "end": 10.289
-   },
-   {
-    "text": "F",
-    "start": 10.289,
-    "end": 10.442
-   },
-   {
-    "text": "F",
-    "start": 10.442,
-    "end": 10.596
-   },
-   {
-    "text": "three,",
-    "start": 10.596,
-    "end": 11.133
-   },
-   {
-    "text": "a",
-    "start": 11.133,
-    "end": 11.286
-   },
-   {
-    "text": "twin",
-    "start": 11.286,
-    "end": 11.669
-   },
-   {
-    "text": "five-spoke,",
-    "start": 11.669,
-    "end": 12.59
-   },
-   {
-    "text": "three-piece",
-    "start": 12.59,
-    "end": 13.511
-   },
-   {
-    "text": "forged",
-    "start": 13.511,
-    "end": 14.048
-   },
-   {
-    "text": "wheel.",
-    "start": 14.048,
-    "end": 14.585
-   }
-  ],
-  "transcript": "Step two, the wheels. Every design here is a set that's actually in stock, with its real name and its real price. I'll take the F F three, a twin five-spoke, three-piece forged wheel."
- },
- "s06": {
-  "duration": 6.856,
-  "words": [
-   {
-    "text": "Tap",
-    "start": 0.0,
-    "end": 0.284
-   },
-   {
-    "text": "the",
-    "start": 0.284,
-    "end": 0.567
-   },
-   {
-    "text": "info",
-    "start": 0.567,
-    "end": 0.922
-   },
-   {
-    "text": "button",
-    "start": 0.922,
-    "end": 1.418
-   },
-   {
-    "text": "for",
-    "start": 1.418,
-    "end": 1.702
-   },
-   {
-    "text": "the",
-    "start": 1.702,
-    "end": 1.985
-   },
-   {
-    "text": "full",
-    "start": 1.985,
-    "end": 2.34
-   },
-   {
-    "text": "picture:",
-    "start": 2.34,
-    "end": 2.978
-   },
-   {
-    "text": "the",
-    "start": 2.978,
-    "end": 3.261
-   },
-   {
-    "text": "specs,",
-    "start": 3.261,
-    "end": 3.758
-   },
-   {
-    "text": "the",
-    "start": 3.758,
-    "end": 4.041
-   },
-   {
-    "text": "fitment,",
-    "start": 4.041,
-    "end": 4.679
-   },
-   {
-    "text": "and",
-    "start": 4.679,
-    "end": 4.963
-   },
-   {
-    "text": "the",
-    "start": 4.963,
-    "end": 5.247
-   },
-   {
-    "text": "price",
-    "start": 5.247,
-    "end": 5.672
-   },
-   {
-    "text": "at",
-    "start": 5.672,
-    "end": 5.885
-   },
-   {
-    "text": "every",
-    "start": 5.885,
-    "end": 6.31
-   },
-   {
-    "text": "size.",
-    "start": 6.31,
-    "end": 6.736
-   }
-  ],
-  "transcript": "Tap the info button for the full picture: the specs, the fitment, and the price at every size."
- },
- "s07": {
-  "duration": 14.096,
-  "words": [
-   {
-    "text": "Step",
-    "start": 0.0,
-    "end": 0.268
-   },
-   {
-    "text": "three,",
-    "start": 0.268,
-    "end": 0.644
-   },
-   {
-    "text": "size.",
-    "start": 0.644,
-    "end": 0.966
+    "text": "S",
+    "start": 1.216,
+    "end": 1.344
    },
    {
     "text": "A",
-    "start": 1.086,
-    "end": 1.222
+    "start": 1.344,
+    "end": 1.472
    },
    {
-    "text": "bigger",
-    "start": 1.222,
-    "end": 1.7
-   },
-   {
-    "text": "wheel",
-    "start": 1.7,
-    "end": 2.109
-   },
-   {
-    "text": "means",
-    "start": 2.109,
-    "end": 2.518
+    "text": "configurator,",
+    "start": 1.472,
+    "end": 2.368
    },
    {
     "text": "a",
-    "start": 2.518,
-    "end": 2.654
+    "start": 2.368,
+    "end": 2.496
    },
    {
-    "text": "slimmer",
-    "start": 2.654,
-    "end": 3.2
-   },
-   {
-    "text": "tyre,",
-    "start": 3.2,
-    "end": 3.609
-   },
-   {
-    "text": "and",
-    "start": 3.609,
-    "end": 3.881
-   },
-   {
-    "text": "each",
-    "start": 3.881,
-    "end": 4.222
-   },
-   {
-    "text": "size",
-    "start": 4.222,
-    "end": 4.563
-   },
-   {
-    "text": "shows",
-    "start": 4.563,
-    "end": 4.972
-   },
-   {
-    "text": "its",
-    "start": 4.972,
-    "end": 5.245
-   },
-   {
-    "text": "price",
-    "start": 5.245,
-    "end": 5.654
+    "text": "tool",
+    "start": 2.496,
+    "end": 2.816
    },
    {
     "text": "for",
-    "start": 5.654,
-    "end": 5.927
+    "start": 2.816,
+    "end": 3.072
    },
    {
-    "text": "the",
-    "start": 5.927,
-    "end": 6.199
+    "text": "trying",
+    "start": 3.072,
+    "end": 3.52
    },
    {
-    "text": "set",
-    "start": 6.199,
-    "end": 6.472
+    "text": "forged",
+    "start": 3.52,
+    "end": 3.968
+   },
+   {
+    "text": "wheels",
+    "start": 3.968,
+    "end": 4.416
+   },
+   {
+    "text": "on",
+    "start": 4.416,
+    "end": 4.608
+   },
+   {
+    "text": "a",
+    "start": 4.608,
+    "end": 4.736
+   },
+   {
+    "text": "BMW",
+    "start": 4.736,
+    "end": 4.992
+   },
+   {
+    "text": "M",
+    "start": 4.992,
+    "end": 5.12
+   },
+   {
+    "text": "car",
+    "start": 5.12,
+    "end": 5.376
+   },
+   {
+    "text": "before",
+    "start": 5.376,
+    "end": 5.824
+   },
+   {
+    "text": "anything",
+    "start": 5.824,
+    "end": 6.4
+   },
+   {
+    "text": "is",
+    "start": 6.4,
+    "end": 6.592
+   },
+   {
+    "text": "fitted.",
+    "start": 6.592,
+    "end": 7.104
+   },
+   {
+    "text": "In",
+    "start": 7.2,
+    "end": 7.376
+   },
+   {
+    "text": "this",
+    "start": 7.376,
+    "end": 7.67
+   },
+   {
+    "text": "video",
+    "start": 7.67,
+    "end": 8.022
+   },
+   {
+    "text": "we'll",
+    "start": 8.022,
+    "end": 8.375
+   },
+   {
+    "text": "go",
+    "start": 8.375,
+    "end": 8.552
+   },
+   {
+    "text": "through",
+    "start": 8.552,
+    "end": 9.022
+   },
+   {
+    "text": "every",
+    "start": 9.022,
+    "end": 9.374
+   },
+   {
+    "text": "part",
+    "start": 9.374,
+    "end": 9.668
    },
    {
     "text": "of",
-    "start": 6.472,
-    "end": 6.677
+    "start": 9.668,
+    "end": 9.845
    },
    {
-    "text": "four,",
-    "start": 6.677,
-    "end": 7.086
+    "text": "it,",
+    "start": 9.845,
+    "end": 10.08
+   },
+   {
+    "text": "in",
+    "start": 10.08,
+    "end": 10.256
+   },
+   {
+    "text": "order,",
+    "start": 10.256,
+    "end": 10.667
+   },
+   {
+    "text": "beginning",
+    "start": 10.667,
+    "end": 11.255
    },
    {
     "text": "with",
-    "start": 7.086,
-    "end": 7.427
+    "start": 11.255,
+    "end": 11.549
    },
    {
     "text": "the",
-    "start": 7.427,
-    "end": 7.699
+    "start": 11.549,
+    "end": 11.784
    },
    {
-    "text": "car's",
-    "start": 7.699,
-    "end": 8.109
+    "text": "welcome",
+    "start": 11.784,
+    "end": 12.254
+   },
+   {
+    "text": "screen.",
+    "start": 12.254,
+    "end": 12.724
+   },
+   {
+    "text": "The",
+    "start": 12.82,
+    "end": 13.082
+   },
+   {
+    "text": "car",
+    "start": 13.082,
+    "end": 13.346
+   },
+   {
+    "text": "on",
+    "start": 13.346,
+    "end": 13.542
+   },
+   {
+    "text": "stage",
+    "start": 13.542,
+    "end": 13.936
+   },
+   {
+    "text": "is",
+    "start": 13.936,
+    "end": 14.133
+   },
+   {
+    "text": "the",
+    "start": 14.133,
+    "end": 14.395
+   },
+   {
+    "text": "one",
+    "start": 14.395,
+    "end": 14.658
+   },
+   {
+    "text": "you'll",
+    "start": 14.658,
+    "end": 15.118
+   },
+   {
+    "text": "configure,",
+    "start": 15.118,
+    "end": 15.839
+   },
+   {
+    "text": "and",
+    "start": 15.839,
+    "end": 16.102
+   },
+   {
+    "text": "each",
+    "start": 16.102,
+    "end": 16.43
+   },
+   {
+    "text": "car",
+    "start": 16.43,
+    "end": 16.693
+   },
+   {
+    "text": "is",
+    "start": 16.693,
+    "end": 16.89
+   },
+   {
+    "text": "shown",
+    "start": 16.89,
+    "end": 17.283
+   },
+   {
+    "text": "in",
+    "start": 17.283,
+    "end": 17.48
+   },
+   {
+    "text": "one",
+    "start": 17.48,
+    "end": 17.743
+   },
+   {
+    "text": "of",
+    "start": 17.743,
+    "end": 17.94
+   },
+   {
+    "text": "its",
+    "start": 17.94,
+    "end": 18.202
+   },
+   {
+    "text": "own",
+    "start": 18.202,
+    "end": 18.465
    },
    {
     "text": "factory",
-    "start": 8.109,
-    "end": 8.654
+    "start": 18.465,
+    "end": 18.99
    },
    {
-    "text": "fitment",
-    "start": 8.654,
-    "end": 9.199
+    "text": "colours.",
+    "start": 18.99,
+    "end": 19.581
    },
    {
-    "text": "underneath,",
-    "start": 9.199,
-    "end": 10.018
+    "text": "This",
+    "start": 19.677,
+    "end": 20.005
    },
    {
-    "text": "so",
-    "start": 10.018,
-    "end": 10.222
+    "text": "first",
+    "start": 20.005,
+    "end": 20.398
    },
    {
-    "text": "you",
-    "start": 10.222,
-    "end": 10.495
+    "text": "one",
+    "start": 20.398,
+    "end": 20.661
    },
    {
-    "text": "know",
-    "start": 10.495,
-    "end": 10.836
-   },
-   {
-    "text": "where",
-    "start": 10.836,
-    "end": 11.245
-   },
-   {
-    "text": "you're",
-    "start": 11.245,
-    "end": 11.722
-   },
-   {
-    "text": "starting",
-    "start": 11.722,
-    "end": 12.336
-   },
-   {
-    "text": "from.",
-    "start": 12.336,
-    "end": 12.745
-   },
-   {
-    "text": "Twenty-one",
-    "start": 12.865,
-    "end": 13.374
-   },
-   {
-    "text": "inch",
-    "start": 13.374,
-    "end": 13.606
-   },
-   {
-    "text": "for",
-    "start": 13.606,
-    "end": 13.791
-   },
-   {
-    "text": "me.",
-    "start": 13.791,
-    "end": 13.976
-   }
-  ],
-  "transcript": "Step three, size. A bigger wheel means a slimmer tyre, and each size shows its price for the set of four, with the car's factory fitment underneath, so you know where you're starting from. Twenty-one inch for me."
- },
- "s08": {
-  "duration": 10.118,
-  "words": [
-   {
-    "text": "Step",
-    "start": 0.0,
-    "end": 0.229
-   },
-   {
-    "text": "four,",
-    "start": 0.229,
-    "end": 0.504
+    "text": "is",
+    "start": 20.661,
+    "end": 20.858
    },
    {
     "text": "the",
-    "start": 0.504,
-    "end": 0.687
+    "start": 20.858,
+    "end": 21.12
    },
    {
-    "text": "finish.",
-    "start": 0.687,
-    "end": 1.053
+    "text": "BMW",
+    "start": 21.12,
+    "end": 21.382
+   },
+   {
+    "text": "M",
+    "start": 21.382,
+    "end": 21.514
+   },
+   {
+    "text": "two",
+    "start": 21.514,
+    "end": 21.776
+   },
+   {
+    "text": "CS,",
+    "start": 21.776,
+    "end": 22.038
+   },
+   {
+    "text": "a",
+    "start": 22.038,
+    "end": 22.17
+   },
+   {
+    "text": "compact",
+    "start": 22.17,
+    "end": 22.695
+   },
+   {
+    "text": "coupe",
+    "start": 22.695,
+    "end": 23.089
+   },
+   {
+    "text": "with",
+    "start": 23.089,
+    "end": 23.417
+   },
+   {
+    "text": "a",
+    "start": 23.417,
+    "end": 23.548
+   },
+   {
+    "text": "three-litre",
+    "start": 23.548,
+    "end": 24.335
+   },
+   {
+    "text": "twin-turbo",
+    "start": 24.335,
+    "end": 25.057
+   },
+   {
+    "text": "straight-six,",
+    "start": 25.057,
+    "end": 25.976
+   },
+   {
+    "text": "here",
+    "start": 25.976,
+    "end": 26.304
+   },
+   {
+    "text": "in",
+    "start": 26.304,
+    "end": 26.501
+   },
+   {
+    "text": "Portimao",
+    "start": 26.501,
+    "end": 27.091
+   },
+   {
+    "text": "Blue",
+    "start": 27.091,
+    "end": 27.419
+   },
+   {
+    "text": "Metallic.",
+    "start": 27.419,
+    "end": 28.075
+   },
+   {
+    "text": "Now,",
+    "start": 28.171,
+    "end": 28.484
+   },
+   {
+    "text": "the",
+    "start": 28.484,
+    "end": 28.734
+   },
+   {
+    "text": "next",
+    "start": 28.734,
+    "end": 29.046
+   },
+   {
+    "text": "car.",
+    "start": 29.046,
+    "end": 29.358
+   }
+  ],
+  "transcript": "This is the Forged S A configurator, a tool for trying forged wheels on a BMW M car before anything is fitted. In this video we'll go through every part of it, in order, beginning with the welcome screen. The car on stage is the one you'll configure, and each car is shown in one of its own factory colours. This first one is the BMW M two CS, a compact coupe with a three-litre twin-turbo straight-six, here in Portimao Blue Metallic. Now, the next car."
+ },
+ "c02": {
+  "duration": 16.688,
+  "words": [
+   {
+    "text": "Second",
+    "start": 0.0,
+    "end": 0.41
+   },
+   {
+    "text": "is",
+    "start": 0.41,
+    "end": 0.586
+   },
+   {
+    "text": "the",
+    "start": 0.586,
+    "end": 0.821
+   },
+   {
+    "text": "BMW",
+    "start": 0.821,
+    "end": 1.055
+   },
+   {
+    "text": "M",
+    "start": 1.055,
+    "end": 1.173
+   },
+   {
+    "text": "four",
+    "start": 1.173,
+    "end": 1.466
+   },
+   {
+    "text": "CS,",
+    "start": 1.466,
+    "end": 1.7
+   },
+   {
+    "text": "also",
+    "start": 1.7,
+    "end": 1.994
+   },
+   {
+    "text": "a",
+    "start": 1.994,
+    "end": 2.11
+   },
+   {
+    "text": "coupe",
+    "start": 2.11,
+    "end": 2.462
+   },
+   {
+    "text": "with",
+    "start": 2.462,
+    "end": 2.756
+   },
+   {
+    "text": "a",
+    "start": 2.756,
+    "end": 2.873
+   },
+   {
+    "text": "three-litre",
+    "start": 2.873,
+    "end": 3.577
+   },
+   {
+    "text": "straight-six,",
+    "start": 3.577,
+    "end": 4.398
+   },
+   {
+    "text": "here",
+    "start": 4.398,
+    "end": 4.69
+   },
+   {
+    "text": "in",
+    "start": 4.69,
+    "end": 4.866
+   },
+   {
+    "text": "S\u00e3o",
+    "start": 4.866,
+    "end": 5.101
+   },
+   {
+    "text": "Paulo",
+    "start": 5.101,
+    "end": 5.453
+   },
+   {
+    "text": "Yellow.",
+    "start": 5.453,
+    "end": 5.922
    },
    {
     "text": "Each",
-    "start": 1.173,
-    "end": 1.635
+    "start": 6.018,
+    "end": 6.376
+   },
+   {
+    "text": "car",
+    "start": 6.376,
+    "end": 6.662
+   },
+   {
+    "text": "has",
+    "start": 6.662,
+    "end": 6.949
+   },
+   {
+    "text": "its",
+    "start": 6.949,
+    "end": 7.234
+   },
+   {
+    "text": "own",
+    "start": 7.234,
+    "end": 7.521
+   },
+   {
+    "text": "palette",
+    "start": 7.521,
+    "end": 8.094
+   },
+   {
+    "text": "of",
+    "start": 8.094,
+    "end": 8.309
+   },
+   {
+    "text": "factory",
+    "start": 8.309,
+    "end": 8.882
+   },
+   {
+    "text": "colours",
+    "start": 8.882,
+    "end": 9.454
+   },
+   {
+    "text": "and",
+    "start": 9.454,
+    "end": 9.741
+   },
+   {
+    "text": "its",
+    "start": 9.741,
+    "end": 10.027
+   },
+   {
+    "text": "own",
+    "start": 10.027,
+    "end": 10.314
    },
    {
     "text": "wheel",
-    "start": 1.635,
-    "end": 2.19
+    "start": 10.314,
+    "end": 10.743
    },
    {
-    "text": "only",
-    "start": 2.19,
-    "end": 2.653
+    "text": "fitment,",
+    "start": 10.743,
+    "end": 11.387
    },
    {
-    "text": "lists",
-    "start": 2.653,
-    "end": 3.208
-   },
-   {
-    "text": "the",
-    "start": 3.208,
-    "end": 3.578
-   },
-   {
-    "text": "finishes",
-    "start": 3.578,
-    "end": 4.41
-   },
-   {
-    "text": "it",
-    "start": 4.41,
-    "end": 4.688
-   },
-   {
-    "text": "actually",
-    "start": 4.688,
-    "end": 5.52
-   },
-   {
-    "text": "comes",
-    "start": 5.52,
-    "end": 6.075
-   },
-   {
-    "text": "in.",
-    "start": 6.075,
-    "end": 6.445
-   },
-   {
-    "text": "And",
-    "start": 6.565,
-    "end": 6.844
-   },
-   {
-    "text": "Pure",
-    "start": 6.844,
-    "end": 7.192
-   },
-   {
-    "text": "Bronze",
-    "start": 7.192,
-    "end": 7.68
-   },
-   {
-    "text": "against",
-    "start": 7.68,
-    "end": 8.237
-   },
-   {
-    "text": "black",
-    "start": 8.237,
-    "end": 8.655
-   },
-   {
-    "text": "paint?",
-    "start": 8.655,
-    "end": 9.143
-   },
-   {
-    "text": "That's",
-    "start": 9.263,
-    "end": 9.584
+    "text": "so",
+    "start": 11.387,
+    "end": 11.602
    },
    {
     "text": "the",
-    "start": 9.584,
-    "end": 9.768
+    "start": 11.602,
+    "end": 11.889
+   },
+   {
+    "text": "choices",
+    "start": 11.889,
+    "end": 12.462
+   },
+   {
+    "text": "you'll",
+    "start": 12.462,
+    "end": 12.962
+   },
+   {
+    "text": "see",
+    "start": 12.962,
+    "end": 13.249
+   },
+   {
+    "text": "later",
+    "start": 13.249,
+    "end": 13.678
+   },
+   {
+    "text": "depend",
+    "start": 13.678,
+    "end": 14.18
+   },
+   {
+    "text": "on",
+    "start": 14.18,
+    "end": 14.394
+   },
+   {
+    "text": "which",
+    "start": 14.394,
+    "end": 14.824
+   },
+   {
+    "text": "car",
+    "start": 14.824,
+    "end": 15.11
+   },
+   {
+    "text": "you",
+    "start": 15.11,
+    "end": 15.397
+   },
+   {
+    "text": "pick.",
+    "start": 15.397,
+    "end": 15.826
+   },
+   {
+    "text": "On",
+    "start": 15.922,
+    "end": 16.023
+   },
+   {
+    "text": "to",
+    "start": 16.023,
+    "end": 16.123
+   },
+   {
+    "text": "the",
+    "start": 16.123,
+    "end": 16.258
+   },
+   {
+    "text": "next",
+    "start": 16.258,
+    "end": 16.425
    },
    {
     "text": "one.",
-    "start": 9.768,
-    "end": 9.998
+    "start": 16.425,
+    "end": 16.592
    }
   ],
-  "transcript": "Step four, the finish. Each wheel only lists the finishes it actually comes in. And Pure Bronze against black paint? That's the one."
+  "transcript": "Second is the BMW M four CS, also a coupe with a three-litre straight-six, here in S\u00e3o Paulo Yellow. Each car has its own palette of factory colours and its own wheel fitment, so the choices you'll see later depend on which car you pick. On to the next one."
  },
- "s09": {
-  "duration": 14.821,
+ "c03": {
+  "duration": 13.104,
+  "words": [
+   {
+    "text": "Third",
+    "start": 0.0,
+    "end": 0.372
+   },
+   {
+    "text": "is",
+    "start": 0.372,
+    "end": 0.558
+   },
+   {
+    "text": "the",
+    "start": 0.558,
+    "end": 0.806
+   },
+   {
+    "text": "BMW",
+    "start": 0.806,
+    "end": 1.054
+   },
+   {
+    "text": "M",
+    "start": 1.054,
+    "end": 1.178
+   },
+   {
+    "text": "five,",
+    "start": 1.178,
+    "end": 1.55
+   },
+   {
+    "text": "a",
+    "start": 1.55,
+    "end": 1.674
+   },
+   {
+    "text": "saloon",
+    "start": 1.674,
+    "end": 2.109
+   },
+   {
+    "text": "with",
+    "start": 2.109,
+    "end": 2.419
+   },
+   {
+    "text": "a",
+    "start": 2.419,
+    "end": 2.543
+   },
+   {
+    "text": "four-point-four-litre",
+    "start": 2.543,
+    "end": 3.908
+   },
+   {
+    "text": "twin-turbo",
+    "start": 3.908,
+    "end": 4.59
+   },
+   {
+    "text": "V",
+    "start": 4.59,
+    "end": 4.714
+   },
+   {
+    "text": "eight",
+    "start": 4.714,
+    "end": 5.086
+   },
+   {
+    "text": "and",
+    "start": 5.086,
+    "end": 5.334
+   },
+   {
+    "text": "a",
+    "start": 5.334,
+    "end": 5.458
+   },
+   {
+    "text": "hybrid",
+    "start": 5.458,
+    "end": 5.893
+   },
+   {
+    "text": "system,",
+    "start": 5.893,
+    "end": 6.389
+   },
+   {
+    "text": "in",
+    "start": 6.389,
+    "end": 6.575
+   },
+   {
+    "text": "Fire",
+    "start": 6.575,
+    "end": 6.886
+   },
+   {
+    "text": "Red",
+    "start": 6.886,
+    "end": 7.134
+   },
+   {
+    "text": "Metallic.",
+    "start": 7.134,
+    "end": 7.754
+   },
+   {
+    "text": "Notice",
+    "start": 7.85,
+    "end": 8.262
+   },
+   {
+    "text": "that",
+    "start": 8.262,
+    "end": 8.557
+   },
+   {
+    "text": "the",
+    "start": 8.557,
+    "end": 8.792
+   },
+   {
+    "text": "lighting",
+    "start": 8.792,
+    "end": 9.322
+   },
+   {
+    "text": "and",
+    "start": 9.322,
+    "end": 9.558
+   },
+   {
+    "text": "framing",
+    "start": 9.558,
+    "end": 10.03
+   },
+   {
+    "text": "are",
+    "start": 10.03,
+    "end": 10.265
+   },
+   {
+    "text": "the",
+    "start": 10.265,
+    "end": 10.501
+   },
+   {
+    "text": "same",
+    "start": 10.501,
+    "end": 10.795
+   },
+   {
+    "text": "for",
+    "start": 10.795,
+    "end": 11.03
+   },
+   {
+    "text": "every",
+    "start": 11.03,
+    "end": 11.384
+   },
+   {
+    "text": "car.",
+    "start": 11.384,
+    "end": 11.678
+   },
+   {
+    "text": "Next,",
+    "start": 11.775,
+    "end": 12.145
+   },
+   {
+    "text": "the",
+    "start": 12.145,
+    "end": 12.391
+   },
+   {
+    "text": "last",
+    "start": 12.391,
+    "end": 12.7
+   },
+   {
+    "text": "one.",
+    "start": 12.7,
+    "end": 13.008
+   }
+  ],
+  "transcript": "Third is the BMW M five, a saloon with a four-point-four-litre twin-turbo V eight and a hybrid system, in Fire Red Metallic. Notice that the lighting and framing are the same for every car. Next, the last one."
+ },
+ "c04": {
+  "duration": 20.759,
+  "words": [
+   {
+    "text": "The",
+    "start": 0.0,
+    "end": 0.253
+   },
+   {
+    "text": "last",
+    "start": 0.253,
+    "end": 0.568
+   },
+   {
+    "text": "car",
+    "start": 0.568,
+    "end": 0.821
+   },
+   {
+    "text": "is",
+    "start": 0.821,
+    "end": 1.01
+   },
+   {
+    "text": "the",
+    "start": 1.01,
+    "end": 1.262
+   },
+   {
+    "text": "M",
+    "start": 1.262,
+    "end": 1.389
+   },
+   {
+    "text": "five",
+    "start": 1.389,
+    "end": 1.705
+   },
+   {
+    "text": "Touring:",
+    "start": 1.705,
+    "end": 2.273
+   },
+   {
+    "text": "the",
+    "start": 2.273,
+    "end": 2.526
+   },
+   {
+    "text": "same",
+    "start": 2.526,
+    "end": 2.841
+   },
+   {
+    "text": "V",
+    "start": 2.841,
+    "end": 2.967
+   },
+   {
+    "text": "eight",
+    "start": 2.967,
+    "end": 3.346
+   },
+   {
+    "text": "hybrid",
+    "start": 3.346,
+    "end": 3.788
+   },
+   {
+    "text": "drivetrain",
+    "start": 3.788,
+    "end": 4.482
+   },
+   {
+    "text": "as",
+    "start": 4.482,
+    "end": 4.672
+   },
+   {
+    "text": "the",
+    "start": 4.672,
+    "end": 4.925
+   },
+   {
+    "text": "saloon,",
+    "start": 4.925,
+    "end": 5.43
+   },
+   {
+    "text": "in",
+    "start": 5.43,
+    "end": 5.619
+   },
+   {
+    "text": "an",
+    "start": 5.619,
+    "end": 5.808
+   },
+   {
+    "text": "estate",
+    "start": 5.808,
+    "end": 6.25
+   },
+   {
+    "text": "body,",
+    "start": 6.25,
+    "end": 6.629
+   },
+   {
+    "text": "shown",
+    "start": 6.629,
+    "end": 7.008
+   },
+   {
+    "text": "in",
+    "start": 7.008,
+    "end": 7.198
+   },
+   {
+    "text": "Frozen",
+    "start": 7.198,
+    "end": 7.639
+   },
+   {
+    "text": "Pure",
+    "start": 7.639,
+    "end": 7.955
+   },
+   {
+    "text": "Grey",
+    "start": 7.955,
+    "end": 8.27
+   },
+   {
+    "text": "Metallic.",
+    "start": 8.27,
+    "end": 8.902
+   },
+   {
+    "text": "Frozen",
+    "start": 8.998,
+    "end": 9.423
+   },
+   {
+    "text": "is",
+    "start": 9.423,
+    "end": 9.605
+   },
+   {
+    "text": "one",
+    "start": 9.605,
+    "end": 9.848
+   },
+   {
+    "text": "of",
+    "start": 9.848,
+    "end": 10.03
+   },
+   {
+    "text": "BMW's",
+    "start": 10.03,
+    "end": 10.394
+   },
+   {
+    "text": "matte",
+    "start": 10.394,
+    "end": 10.758
+   },
+   {
+    "text": "paint",
+    "start": 10.758,
+    "end": 11.122
+   },
+   {
+    "text": "families.",
+    "start": 11.122,
+    "end": 11.73
+   },
+   {
+    "text": "You",
+    "start": 11.826,
+    "end": 12.078
+   },
+   {
+    "text": "can",
+    "start": 12.078,
+    "end": 12.33
+   },
+   {
+    "text": "move",
+    "start": 12.33,
+    "end": 12.646
+   },
+   {
+    "text": "between",
+    "start": 12.646,
+    "end": 13.151
+   },
+   {
+    "text": "the",
+    "start": 13.151,
+    "end": 13.404
+   },
+   {
+    "text": "cars",
+    "start": 13.404,
+    "end": 13.719
+   },
+   {
+    "text": "with",
+    "start": 13.719,
+    "end": 14.035
+   },
+   {
+    "text": "the",
+    "start": 14.035,
+    "end": 14.288
+   },
+   {
+    "text": "arrow",
+    "start": 14.288,
+    "end": 14.666
+   },
+   {
+    "text": "buttons,",
+    "start": 14.666,
+    "end": 15.234
+   },
+   {
+    "text": "the",
+    "start": 15.234,
+    "end": 15.487
+   },
+   {
+    "text": "dots",
+    "start": 15.487,
+    "end": 15.802
+   },
+   {
+    "text": "underneath,",
+    "start": 15.802,
+    "end": 16.56
+   },
+   {
+    "text": "the",
+    "start": 16.56,
+    "end": 16.813
+   },
+   {
+    "text": "keyboard",
+    "start": 16.813,
+    "end": 17.381
+   },
+   {
+    "text": "arrows,",
+    "start": 17.381,
+    "end": 17.886
+   },
+   {
+    "text": "the",
+    "start": 17.886,
+    "end": 18.138
+   },
+   {
+    "text": "scroll",
+    "start": 18.138,
+    "end": 18.58
+   },
+   {
+    "text": "wheel,",
+    "start": 18.58,
+    "end": 19.022
+   },
+   {
+    "text": "or",
+    "start": 19.022,
+    "end": 19.211
+   },
+   {
+    "text": "by",
+    "start": 19.211,
+    "end": 19.401
+   },
+   {
+    "text": "swiping",
+    "start": 19.401,
+    "end": 19.906
+   },
+   {
+    "text": "on",
+    "start": 19.906,
+    "end": 20.095
+   },
+   {
+    "text": "a",
+    "start": 20.095,
+    "end": 20.222
+   },
+   {
+    "text": "phone.",
+    "start": 20.222,
+    "end": 20.663
+   }
+  ],
+  "transcript": "The last car is the M five Touring: the same V eight hybrid drivetrain as the saloon, in an estate body, shown in Frozen Pure Grey Metallic. Frozen is one of BMW's matte paint families. You can move between the cars with the arrow buttons, the dots underneath, the keyboard arrows, the scroll wheel, or by swiping on a phone."
+ },
+ "c05": {
+  "duration": 18.356,
+  "words": [
+   {
+    "text": "Before",
+    "start": 0.0,
+    "end": 0.41
+   },
+   {
+    "text": "you",
+    "start": 0.41,
+    "end": 0.644
+   },
+   {
+    "text": "enter,",
+    "start": 0.644,
+    "end": 1.054
+   },
+   {
+    "text": "the",
+    "start": 1.054,
+    "end": 1.289
+   },
+   {
+    "text": "region",
+    "start": 1.289,
+    "end": 1.699
+   },
+   {
+    "text": "picker",
+    "start": 1.699,
+    "end": 2.109
+   },
+   {
+    "text": "sets",
+    "start": 2.109,
+    "end": 2.402
+   },
+   {
+    "text": "your",
+    "start": 2.402,
+    "end": 2.694
+   },
+   {
+    "text": "language",
+    "start": 2.694,
+    "end": 3.222
+   },
+   {
+    "text": "and",
+    "start": 3.222,
+    "end": 3.456
+   },
+   {
+    "text": "currency.",
+    "start": 3.456,
+    "end": 4.042
+   },
+   {
+    "text": "Prices",
+    "start": 4.138,
+    "end": 4.57
+   },
+   {
+    "text": "are",
+    "start": 4.57,
+    "end": 4.816
+   },
+   {
+    "text": "stored",
+    "start": 4.816,
+    "end": 5.247
+   },
+   {
+    "text": "in",
+    "start": 5.247,
+    "end": 5.433
+   },
+   {
+    "text": "US",
+    "start": 5.433,
+    "end": 5.618
+   },
+   {
+    "text": "dollars",
+    "start": 5.618,
+    "end": 6.11
+   },
+   {
+    "text": "and",
+    "start": 6.11,
+    "end": 6.357
+   },
+   {
+    "text": "converted,",
+    "start": 6.357,
+    "end": 7.035
+   },
+   {
+    "text": "so",
+    "start": 7.035,
+    "end": 7.22
+   },
+   {
+    "text": "South",
+    "start": 7.22,
+    "end": 7.59
+   },
+   {
+    "text": "Africa",
+    "start": 7.59,
+    "end": 8.021
+   },
+   {
+    "text": "shows",
+    "start": 8.021,
+    "end": 8.391
+   },
+   {
+    "text": "rand",
+    "start": 8.391,
+    "end": 8.699
+   },
+   {
+    "text": "and",
+    "start": 8.699,
+    "end": 8.946
+   },
+   {
+    "text": "the",
+    "start": 8.946,
+    "end": 9.192
+   },
+   {
+    "text": "United",
+    "start": 9.192,
+    "end": 9.624
+   },
+   {
+    "text": "Kingdom",
+    "start": 9.624,
+    "end": 10.117
+   },
+   {
+    "text": "shows",
+    "start": 10.117,
+    "end": 10.486
+   },
+   {
+    "text": "pounds.",
+    "start": 10.486,
+    "end": 10.98
+   },
+   {
+    "text": "I'll",
+    "start": 11.076,
+    "end": 11.38
+   },
+   {
+    "text": "jump",
+    "start": 11.38,
+    "end": 11.685
+   },
+   {
+    "text": "back",
+    "start": 11.685,
+    "end": 11.989
+   },
+   {
+    "text": "to",
+    "start": 11.989,
+    "end": 12.171
+   },
+   {
+    "text": "the",
+    "start": 12.171,
+    "end": 12.415
+   },
+   {
+    "text": "M",
+    "start": 12.415,
+    "end": 12.537
+   },
+   {
+    "text": "two",
+    "start": 12.537,
+    "end": 12.78
+   },
+   {
+    "text": "with",
+    "start": 12.78,
+    "end": 13.085
+   },
+   {
+    "text": "the",
+    "start": 13.085,
+    "end": 13.328
+   },
+   {
+    "text": "dots,",
+    "start": 13.328,
+    "end": 13.694
+   },
+   {
+    "text": "then",
+    "start": 13.694,
+    "end": 13.998
+   },
+   {
+    "text": "press",
+    "start": 13.998,
+    "end": 14.363
+   },
+   {
+    "text": "Enter,",
+    "start": 14.363,
+    "end": 14.79
+   },
+   {
+    "text": "which",
+    "start": 14.79,
+    "end": 15.154
+   },
+   {
+    "text": "opens",
+    "start": 15.154,
+    "end": 15.52
+   },
+   {
+    "text": "the",
+    "start": 15.52,
+    "end": 15.763
+   },
+   {
+    "text": "configurator",
+    "start": 15.763,
+    "end": 16.555
+   },
+   {
+    "text": "on",
+    "start": 16.555,
+    "end": 16.738
+   },
+   {
+    "text": "the",
+    "start": 16.738,
+    "end": 16.981
+   },
+   {
+    "text": "car",
+    "start": 16.981,
+    "end": 17.225
+   },
+   {
+    "text": "that's",
+    "start": 17.225,
+    "end": 17.651
+   },
+   {
+    "text": "on",
+    "start": 17.651,
+    "end": 17.834
+   },
+   {
+    "text": "stage.",
+    "start": 17.834,
+    "end": 18.26
+   }
+  ],
+  "transcript": "Before you enter, the region picker sets your language and currency. Prices are stored in US dollars and converted, so South Africa shows rand and the United Kingdom shows pounds. I'll jump back to the M two with the dots, then press Enter, which opens the configurator on the car that's on stage."
+ },
+ "c06": {
+  "duration": 21.041,
   "words": [
    {
     "text": "Now",
     "start": 0.0,
-    "end": 0.301
+    "end": 0.235
    },
    {
-    "text": "have",
-    "start": 0.301,
-    "end": 0.676
+    "text": "we're",
+    "start": 0.235,
+    "end": 0.589
    },
    {
-    "text": "a",
-    "start": 0.676,
-    "end": 0.827
+    "text": "inside",
+    "start": 0.589,
+    "end": 1.002
    },
    {
-    "text": "proper",
-    "start": 0.827,
-    "end": 1.353
+    "text": "the",
+    "start": 1.002,
+    "end": 1.237
    },
    {
-    "text": "look",
-    "start": 1.353,
-    "end": 1.728
+    "text": "configurator.",
+    "start": 1.237,
+    "end": 2.062
    },
    {
-    "text": "around",
-    "start": 1.728,
-    "end": 2.254
+    "text": "The",
+    "start": 2.158,
+    "end": 2.372
    },
    {
-    "text": "it.",
-    "start": 2.254,
-    "end": 2.555
-   },
-   {
-    "text": "Side,",
-    "start": 2.675,
-    "end": 3.117
-   },
-   {
-    "text": "rear,",
-    "start": 3.117,
-    "end": 3.559
-   },
-   {
-    "text": "a",
-    "start": 3.559,
-    "end": 3.706
-   },
-   {
-    "text": "close-up",
-    "start": 3.706,
-    "end": 4.369
+    "text": "panel",
+    "start": 2.372,
+    "end": 2.694
    },
    {
     "text": "on",
-    "start": 4.369,
-    "end": 4.59
+    "start": 2.694,
+    "end": 2.854
    },
    {
     "text": "the",
-    "start": 4.59,
-    "end": 4.885
+    "start": 2.854,
+    "end": 3.069
    },
    {
-    "text": "wheel,",
-    "start": 4.885,
-    "end": 5.4
+    "text": "right",
+    "start": 3.069,
+    "end": 3.39
    },
    {
-    "text": "and",
-    "start": 5.4,
-    "end": 5.695
-   },
-   {
-    "text": "a",
-    "start": 5.695,
-    "end": 5.842
-   },
-   {
-    "text": "view",
-    "start": 5.842,
-    "end": 6.21
-   },
-   {
-    "text": "from",
-    "start": 6.21,
-    "end": 6.579
-   },
-   {
-    "text": "above.",
-    "start": 6.579,
-    "end": 7.094
-   },
-   {
-    "text": "Or",
-    "start": 7.214,
-    "end": 7.472
-   },
-   {
-    "text": "press",
-    "start": 7.472,
-    "end": 7.987
-   },
-   {
-    "text": "the",
-    "start": 7.987,
-    "end": 8.33
-   },
-   {
-    "text": "turntable,",
-    "start": 8.33,
-    "end": 9.274
-   },
-   {
-    "text": "and",
-    "start": 9.274,
-    "end": 9.618
-   },
-   {
-    "text": "let",
-    "start": 9.618,
-    "end": 9.961
-   },
-   {
-    "text": "the",
-    "start": 9.961,
-    "end": 10.305
-   },
-   {
-    "text": "car",
-    "start": 10.305,
-    "end": 10.648
-   },
-   {
-    "text": "turn",
-    "start": 10.648,
-    "end": 11.077
-   },
-   {
-    "text": "while",
-    "start": 11.077,
-    "end": 11.592
-   },
-   {
-    "text": "you",
-    "start": 11.592,
-    "end": 11.935
-   },
-   {
-    "text": "watch.",
-    "start": 11.935,
-    "end": 12.536
-   },
-   {
-    "text": "When",
-    "start": 12.656,
-    "end": 12.933
-   },
-   {
-    "text": "you're",
-    "start": 12.933,
-    "end": 13.319
-   },
-   {
-    "text": "happy,",
-    "start": 13.319,
-    "end": 13.706
-   },
-   {
-    "text": "open",
-    "start": 13.706,
-    "end": 13.982
-   },
-   {
-    "text": "the",
-    "start": 13.982,
-    "end": 14.203
-   },
-   {
-    "text": "summary.",
-    "start": 14.203,
-    "end": 14.701
-   }
-  ],
-  "transcript": "Now have a proper look around it. Side, rear, a close-up on the wheel, and a view from above. Or press the turntable, and let the car turn while you watch. When you're happy, open the summary."
- },
- "s10": {
-  "duration": 4.689,
-  "words": [
-   {
-    "text": "Here's",
-    "start": 0.0,
-    "end": 0.485
+    "text": "is",
+    "start": 3.39,
+    "end": 3.551
    },
    {
     "text": "your",
-    "start": 0.485,
-    "end": 0.831
-   },
-   {
-    "text": "exact",
-    "start": 0.831,
-    "end": 1.246
+    "start": 3.551,
+    "end": 3.819
    },
    {
     "text": "build,",
-    "start": 1.246,
-    "end": 1.731
+    "start": 3.819,
+    "end": 4.194
    },
    {
-    "text": "in",
-    "start": 1.731,
-    "end": 1.939
+    "text": "and",
+    "start": 4.194,
+    "end": 4.409
    },
    {
-    "text": "stills,",
-    "start": 1.939,
-    "end": 2.492
+    "text": "it",
+    "start": 4.409,
+    "end": 4.57
    },
    {
-    "text": "with",
-    "start": 2.492,
-    "end": 2.839
+    "text": "has",
+    "start": 4.57,
+    "end": 4.784
    },
    {
-    "text": "every",
-    "start": 2.839,
-    "end": 3.254
+    "text": "four",
+    "start": 4.784,
+    "end": 5.052
    },
    {
-    "text": "option",
-    "start": 3.254,
-    "end": 3.739
+    "text": "parts:",
+    "start": 5.052,
+    "end": 5.427
+   },
+   {
+    "text": "paint,",
+    "start": 5.427,
+    "end": 5.802
+   },
+   {
+    "text": "wheels,",
+    "start": 5.802,
+    "end": 6.231
+   },
+   {
+    "text": "wheel",
+    "start": 6.231,
+    "end": 6.553
+   },
+   {
+    "text": "size",
+    "start": 6.553,
+    "end": 6.821
+   },
+   {
+    "text": "and",
+    "start": 6.821,
+    "end": 7.035
+   },
+   {
+    "text": "wheel",
+    "start": 7.035,
+    "end": 7.357
+   },
+   {
+    "text": "finish.",
+    "start": 7.357,
+    "end": 7.786
+   },
+   {
+    "text": "Whenever",
+    "start": 7.882,
+    "end": 8.407
    },
    {
     "text": "you",
-    "start": 3.739,
-    "end": 4.016
+    "start": 8.407,
+    "end": 8.641
    },
    {
-    "text": "picked.",
-    "start": 4.016,
-    "end": 4.569
-   }
-  ],
-  "transcript": "Here's your exact build, in stills, with every option you picked."
- },
- "s11": {
-  "duration": 16.44,
-  "words": [
-   {
-    "text": "Underneath,",
-    "start": 0.0,
-    "end": 1.126
+    "text": "change",
+    "start": 8.641,
+    "end": 9.05
    },
    {
-    "text": "your",
-    "start": 1.126,
-    "end": 1.595
-   },
-   {
-    "text": "price.",
-    "start": 1.595,
-    "end": 2.252
-   },
-   {
-    "text": "Enquire",
-    "start": 2.372,
-    "end": 3.047
-   },
-   {
-    "text": "sends",
-    "start": 3.047,
-    "end": 3.553
-   },
-   {
-    "text": "your",
-    "start": 3.553,
-    "end": 3.974
-   },
-   {
-    "text": "build",
-    "start": 3.974,
-    "end": 4.48
-   },
-   {
-    "text": "to",
-    "start": 4.48,
-    "end": 4.733
+    "text": "one,",
+    "start": 9.05,
+    "end": 9.342
    },
    {
     "text": "the",
-    "start": 4.733,
-    "end": 5.07
+    "start": 9.342,
+    "end": 9.575
    },
    {
-    "text": "Forged",
-    "start": 5.07,
-    "end": 5.66
+    "text": "car",
+    "start": 9.575,
+    "end": 9.809
    },
    {
-    "text": "S",
-    "start": 5.66,
-    "end": 5.828
+    "text": "on",
+    "start": 9.809,
+    "end": 9.984
    },
    {
-    "text": "A",
-    "start": 5.828,
-    "end": 5.997
+    "text": "the",
+    "start": 9.984,
+    "end": 10.218
    },
    {
-    "text": "team.",
-    "start": 5.997,
-    "end": 6.503
+    "text": "left",
+    "start": 10.218,
+    "end": 10.51
    },
    {
-    "text": "Share",
-    "start": 6.623,
-    "end": 7.081
+    "text": "updates",
+    "start": 10.51,
+    "end": 10.977
    },
    {
-    "text": "gives",
-    "start": 7.081,
-    "end": 7.539
+    "text": "straight",
+    "start": 10.977,
+    "end": 11.502
    },
    {
-    "text": "you",
-    "start": 7.539,
-    "end": 7.845
+    "text": "away.",
+    "start": 11.502,
+    "end": 11.853
    },
    {
-    "text": "a",
-    "start": 7.845,
-    "end": 7.997
+    "text": "The",
+    "start": 11.949,
+    "end": 12.175
    },
    {
-    "text": "short",
-    "start": 7.997,
-    "end": 8.456
-   },
-   {
-    "text": "code",
-    "start": 8.456,
-    "end": 8.838
-   },
-   {
-    "text": "that",
-    "start": 8.838,
-    "end": 9.22
-   },
-   {
-    "text": "reopens",
-    "start": 9.22,
-    "end": 9.831
-   },
-   {
-    "text": "exactly",
-    "start": 9.831,
-    "end": 10.442
-   },
-   {
-    "text": "this",
-    "start": 10.442,
-    "end": 10.824
-   },
-   {
-    "text": "configuration.",
-    "start": 10.824,
-    "end": 11.969
-   },
-   {
-    "text": "And",
-    "start": 12.089,
-    "end": 12.449
-   },
-   {
-    "text": "P",
-    "start": 12.449,
+    "text": "numbers",
+    "start": 12.175,
     "end": 12.629
    },
    {
-    "text": "D",
+    "text": "across",
     "start": 12.629,
-    "end": 12.809
+    "end": 13.026
    },
    {
-    "text": "F",
-    "start": 12.809,
-    "end": 12.989
+    "text": "the",
+    "start": 13.026,
+    "end": 13.253
    },
    {
-    "text": "downloads",
-    "start": 12.989,
-    "end": 13.889
+    "text": "top",
+    "start": 13.253,
+    "end": 13.48
+   },
+   {
+    "text": "are",
+    "start": 13.48,
+    "end": 13.707
+   },
+   {
+    "text": "the",
+    "start": 13.707,
+    "end": 13.934
+   },
+   {
+    "text": "steps,",
+    "start": 13.934,
+    "end": 14.331
+   },
+   {
+    "text": "and",
+    "start": 14.331,
+    "end": 14.558
+   },
+   {
+    "text": "at",
+    "start": 14.558,
+    "end": 14.728
+   },
+   {
+    "text": "the",
+    "start": 14.728,
+    "end": 14.955
+   },
+   {
+    "text": "bottom",
+    "start": 14.955,
+    "end": 15.352
+   },
+   {
+    "text": "is",
+    "start": 15.352,
+    "end": 15.522
+   },
+   {
+    "text": "the",
+    "start": 15.522,
+    "end": 15.749
+   },
+   {
+    "text": "price",
+    "start": 15.749,
+    "end": 16.09
+   },
+   {
+    "text": "for",
+    "start": 16.09,
+    "end": 16.316
    },
    {
     "text": "a",
-    "start": 13.889,
-    "end": 14.069
+    "start": 16.316,
+    "end": 16.43
    },
    {
-    "text": "spec",
-    "start": 14.069,
-    "end": 14.519
+    "text": "set",
+    "start": 16.43,
+    "end": 16.657
    },
    {
-    "text": "sheet",
-    "start": 14.519,
-    "end": 15.059
+    "text": "of",
+    "start": 16.657,
+    "end": 16.827
+   },
+   {
+    "text": "four",
+    "start": 16.827,
+    "end": 17.11
+   },
+   {
+    "text": "wheels.",
+    "start": 17.11,
+    "end": 17.564
+   },
+   {
+    "text": "We'll",
+    "start": 17.66,
+    "end": 17.994
+   },
+   {
+    "text": "go",
+    "start": 17.994,
+    "end": 18.162
+   },
+   {
+    "text": "through",
+    "start": 18.162,
+    "end": 18.606
+   },
+   {
+    "text": "the",
+    "start": 18.606,
+    "end": 18.83
+   },
+   {
+    "text": "steps",
+    "start": 18.83,
+    "end": 19.163
+   },
+   {
+    "text": "in",
+    "start": 19.163,
+    "end": 19.33
+   },
+   {
+    "text": "order,",
+    "start": 19.33,
+    "end": 19.72
+   },
+   {
+    "text": "beginning",
+    "start": 19.72,
+    "end": 20.277
+   },
+   {
+    "text": "with",
+    "start": 20.277,
+    "end": 20.555
+   },
+   {
+    "text": "paint.",
+    "start": 20.555,
+    "end": 20.945
+   }
+  ],
+  "transcript": "Now we're inside the configurator. The panel on the right is your build, and it has four parts: paint, wheels, wheel size and wheel finish. Whenever you change one, the car on the left updates straight away. The numbers across the top are the steps, and at the bottom is the price for a set of four wheels. We'll go through the steps in order, beginning with paint."
+ },
+ "c07": {
+  "duration": 20.994,
+  "words": [
+   {
+    "text": "Step",
+    "start": 0.0,
+    "end": 0.199
+   },
+   {
+    "text": "one",
+    "start": 0.199,
+    "end": 0.358
+   },
+   {
+    "text": "is",
+    "start": 0.358,
+    "end": 0.478
+   },
+   {
+    "text": "paint.",
+    "start": 0.478,
+    "end": 0.756
+   },
+   {
+    "text": "The",
+    "start": 0.852,
+    "end": 1.122
+   },
+   {
+    "text": "colours",
+    "start": 1.122,
+    "end": 1.662
+   },
+   {
+    "text": "are",
+    "start": 1.662,
+    "end": 1.932
+   },
+   {
+    "text": "BMW's",
+    "start": 1.932,
+    "end": 2.338
+   },
+   {
+    "text": "factory",
+    "start": 2.338,
+    "end": 2.878
+   },
+   {
+    "text": "colours,",
+    "start": 2.878,
+    "end": 3.486
+   },
+   {
+    "text": "sorted",
+    "start": 3.486,
+    "end": 3.958
+   },
+   {
+    "text": "into",
+    "start": 3.958,
+    "end": 4.295
+   },
+   {
+    "text": "families,",
+    "start": 4.295,
+    "end": 4.97
+   },
+   {
+    "text": "and",
+    "start": 4.97,
+    "end": 5.241
+   },
+   {
+    "text": "each",
+    "start": 5.241,
+    "end": 5.578
+   },
+   {
+    "text": "car",
+    "start": 5.578,
+    "end": 5.849
+   },
+   {
+    "text": "is",
+    "start": 5.849,
+    "end": 6.051
+   },
+   {
+    "text": "only",
+    "start": 6.051,
+    "end": 6.389
+   },
+   {
+    "text": "offered",
+    "start": 6.389,
+    "end": 6.929
+   },
+   {
+    "text": "the",
+    "start": 6.929,
+    "end": 7.199
+   },
+   {
+    "text": "ones",
+    "start": 7.199,
+    "end": 7.537
+   },
+   {
+    "text": "in",
+    "start": 7.537,
+    "end": 7.739
+   },
+   {
+    "text": "its",
+    "start": 7.739,
+    "end": 8.01
+   },
+   {
+    "text": "own",
+    "start": 8.01,
+    "end": 8.279
+   },
+   {
+    "text": "palette.",
+    "start": 8.279,
+    "end": 8.887
+   },
+   {
+    "text": "That's",
+    "start": 8.983,
+    "end": 9.358
+   },
+   {
+    "text": "why",
+    "start": 9.358,
+    "end": 9.573
+   },
+   {
+    "text": "the",
+    "start": 9.573,
+    "end": 9.786
+   },
+   {
+    "text": "M",
+    "start": 9.786,
+    "end": 9.894
+   },
+   {
+    "text": "two",
+    "start": 9.894,
+    "end": 10.108
+   },
+   {
+    "text": "shows",
+    "start": 10.108,
+    "end": 10.43
+   },
+   {
+    "text": "more",
+    "start": 10.43,
+    "end": 10.698
+   },
+   {
+    "text": "colours",
+    "start": 10.698,
+    "end": 11.126
+   },
+   {
+    "text": "than",
+    "start": 11.126,
+    "end": 11.394
+   },
+   {
+    "text": "the",
+    "start": 11.394,
+    "end": 11.608
+   },
+   {
+    "text": "M",
+    "start": 11.608,
+    "end": 11.715
+   },
+   {
+    "text": "four",
+    "start": 11.715,
+    "end": 11.983
+   },
+   {
+    "text": "CS.",
+    "start": 11.983,
+    "end": 12.198
+   },
+   {
+    "text": "Metallic",
+    "start": 12.294,
+    "end": 12.892
+   },
+   {
+    "text": "paints",
+    "start": 12.892,
+    "end": 13.358
+   },
+   {
+    "text": "have",
+    "start": 13.358,
+    "end": 13.69
+   },
+   {
+    "text": "fine",
+    "start": 13.69,
+    "end": 14.022
+   },
+   {
+    "text": "metal",
+    "start": 14.022,
+    "end": 14.421
+   },
+   {
+    "text": "flakes",
+    "start": 14.421,
+    "end": 14.886
+   },
+   {
+    "text": "in",
+    "start": 14.886,
+    "end": 15.086
+   },
+   {
+    "text": "the",
+    "start": 15.086,
+    "end": 15.352
+   },
+   {
+    "text": "clear",
+    "start": 15.352,
+    "end": 15.75
+   },
+   {
+    "text": "coat,",
+    "start": 15.75,
+    "end": 16.15
+   },
+   {
+    "text": "while",
+    "start": 16.15,
+    "end": 16.548
+   },
+   {
+    "text": "Frozen",
+    "start": 16.548,
+    "end": 17.014
+   },
+   {
+    "text": "paints",
+    "start": 17.014,
+    "end": 17.479
+   },
+   {
+    "text": "are",
+    "start": 17.479,
+    "end": 17.745
+   },
+   {
+    "text": "matte.",
+    "start": 17.745,
+    "end": 18.21
+   },
+   {
+    "text": "I'll",
+    "start": 18.306,
+    "end": 18.561
+   },
+   {
+    "text": "choose",
+    "start": 18.561,
+    "end": 18.916
+   },
+   {
+    "text": "Black",
+    "start": 18.916,
+    "end": 19.221
+   },
+   {
+    "text": "Sapphire,",
+    "start": 19.221,
+    "end": 19.729
+   },
+   {
+    "text": "a",
+    "start": 19.729,
+    "end": 19.83
+   },
+   {
+    "text": "deep",
+    "start": 19.83,
+    "end": 20.085
+   },
+   {
+    "text": "metallic",
+    "start": 20.085,
+    "end": 20.542
+   },
+   {
+    "text": "black.",
+    "start": 20.542,
+    "end": 20.898
+   }
+  ],
+  "transcript": "Step one is paint. The colours are BMW's factory colours, sorted into families, and each car is only offered the ones in its own palette. That's why the M two shows more colours than the M four CS. Metallic paints have fine metal flakes in the clear coat, while Frozen paints are matte. I'll choose Black Sapphire, a deep metallic black."
+ },
+ "c08": {
+  "duration": 28.944,
+  "words": [
+   {
+    "text": "Step",
+    "start": 0.0,
+    "end": 0.186
+   },
+   {
+    "text": "two",
+    "start": 0.186,
+    "end": 0.334
+   },
+   {
+    "text": "is",
+    "start": 0.334,
+    "end": 0.446
+   },
+   {
+    "text": "the",
+    "start": 0.446,
+    "end": 0.594
+   },
+   {
+    "text": "wheels.",
+    "start": 0.594,
+    "end": 0.892
+   },
+   {
+    "text": "The",
+    "start": 0.988,
+    "end": 1.265
+   },
+   {
+    "text": "camera",
+    "start": 1.265,
+    "end": 1.75
+   },
+   {
+    "text": "moves",
+    "start": 1.75,
+    "end": 2.166
+   },
+   {
+    "text": "in",
+    "start": 2.166,
+    "end": 2.374
+   },
+   {
+    "text": "on",
+    "start": 2.374,
+    "end": 2.582
+   },
+   {
+    "text": "the",
+    "start": 2.582,
+    "end": 2.858
+   },
+   {
+    "text": "wheel,",
+    "start": 2.858,
+    "end": 3.343
+   },
+   {
+    "text": "and",
+    "start": 3.343,
+    "end": 3.62
+   },
+   {
+    "text": "the",
+    "start": 3.62,
+    "end": 3.898
+   },
+   {
+    "text": "list",
+    "start": 3.898,
+    "end": 4.243
+   },
+   {
+    "text": "shows",
+    "start": 4.243,
+    "end": 4.659
+   },
+   {
+    "text": "the",
+    "start": 4.659,
+    "end": 4.936
+   },
+   {
+    "text": "real",
+    "start": 4.936,
+    "end": 5.282
+   },
+   {
+    "text": "stock:",
+    "start": 5.282,
+    "end": 5.767
+   },
+   {
+    "text": "six",
+    "start": 5.767,
+    "end": 6.045
+   },
+   {
+    "text": "designs,",
+    "start": 6.045,
+    "end": 6.668
+   },
+   {
+    "text": "each",
+    "start": 6.668,
+    "end": 7.014
+   },
+   {
+    "text": "with",
+    "start": 7.014,
+    "end": 7.361
+   },
+   {
+    "text": "its",
+    "start": 7.361,
+    "end": 7.638
+   },
+   {
+    "text": "name",
+    "start": 7.638,
+    "end": 7.984
+   },
+   {
+    "text": "and",
+    "start": 7.984,
+    "end": 8.261
+   },
+   {
+    "text": "a",
+    "start": 8.261,
+    "end": 8.399
+   },
+   {
+    "text": "starting",
+    "start": 8.399,
+    "end": 9.023
+   },
+   {
+    "text": "price.",
+    "start": 9.023,
+    "end": 9.508
+   },
+   {
+    "text": "The",
+    "start": 9.604,
+    "end": 9.856
+   },
+   {
+    "text": "second",
+    "start": 9.856,
+    "end": 10.297
+   },
+   {
+    "text": "line",
+    "start": 10.297,
+    "end": 10.612
+   },
+   {
+    "text": "tells",
+    "start": 10.612,
+    "end": 10.99
    },
    {
     "text": "you",
-    "start": 15.059,
-    "end": 15.42
+    "start": 10.99,
+    "end": 11.242
+   },
+   {
+    "text": "how",
+    "start": 11.242,
+    "end": 11.494
+   },
+   {
+    "text": "the",
+    "start": 11.494,
+    "end": 11.746
+   },
+   {
+    "text": "wheel",
+    "start": 11.746,
+    "end": 12.123
+   },
+   {
+    "text": "is",
+    "start": 12.123,
+    "end": 12.312
+   },
+   {
+    "text": "built.",
+    "start": 12.312,
+    "end": 12.754
+   },
+   {
+    "text": "A",
+    "start": 12.85,
+    "end": 12.977
+   },
+   {
+    "text": "monoblock",
+    "start": 12.977,
+    "end": 13.614
+   },
+   {
+    "text": "is",
+    "start": 13.614,
+    "end": 13.806
+   },
+   {
+    "text": "machined",
+    "start": 13.806,
+    "end": 14.379
+   },
+   {
+    "text": "from",
+    "start": 14.379,
+    "end": 14.698
+   },
+   {
+    "text": "a",
+    "start": 14.698,
+    "end": 14.825
+   },
+   {
+    "text": "single",
+    "start": 14.825,
+    "end": 15.271
+   },
+   {
+    "text": "piece",
+    "start": 15.271,
+    "end": 15.654
+   },
+   {
+    "text": "of",
+    "start": 15.654,
+    "end": 15.845
+   },
+   {
+    "text": "forged",
+    "start": 15.845,
+    "end": 16.291
+   },
+   {
+    "text": "aluminium.",
+    "start": 16.291,
+    "end": 16.992
+   },
+   {
+    "text": "Two-piece",
+    "start": 17.088,
+    "end": 17.785
+   },
+   {
+    "text": "and",
+    "start": 17.785,
+    "end": 18.064
+   },
+   {
+    "text": "three-piece",
+    "start": 18.064,
+    "end": 18.9
+   },
+   {
+    "text": "wheels",
+    "start": 18.9,
+    "end": 19.388
+   },
+   {
+    "text": "are",
+    "start": 19.388,
+    "end": 19.666
+   },
+   {
+    "text": "assembled",
+    "start": 19.666,
+    "end": 20.363
+   },
+   {
+    "text": "from",
+    "start": 20.363,
+    "end": 20.712
+   },
+   {
+    "text": "separate",
+    "start": 20.712,
+    "end": 21.339
+   },
+   {
+    "text": "parts:",
+    "start": 21.339,
+    "end": 21.827
+   },
+   {
+    "text": "a",
+    "start": 21.827,
+    "end": 21.966
+   },
+   {
+    "text": "face,",
+    "start": 21.966,
+    "end": 22.385
+   },
+   {
+    "text": "and",
+    "start": 22.385,
+    "end": 22.663
+   },
+   {
+    "text": "one",
+    "start": 22.663,
+    "end": 22.942
+   },
+   {
+    "text": "or",
+    "start": 22.942,
+    "end": 23.151
+   },
+   {
+    "text": "two",
+    "start": 23.151,
+    "end": 23.43
+   },
+   {
+    "text": "barrel",
+    "start": 23.43,
+    "end": 23.918
+   },
+   {
+    "text": "sections.",
+    "start": 23.918,
+    "end": 24.614
+   },
+   {
+    "text": "I'll",
+    "start": 24.71,
+    "end": 24.994
+   },
+   {
+    "text": "choose",
+    "start": 24.994,
+    "end": 25.39
+   },
+   {
+    "text": "the",
+    "start": 25.39,
+    "end": 25.618
+   },
+   {
+    "text": "F",
+    "start": 25.618,
+    "end": 25.73
+   },
+   {
+    "text": "F",
+    "start": 25.73,
+    "end": 25.844
+   },
+   {
+    "text": "one,",
+    "start": 25.844,
+    "end": 26.127
+   },
+   {
+    "text": "a",
+    "start": 26.127,
+    "end": 26.241
+   },
+   {
+    "text": "two-piece",
+    "start": 26.241,
+    "end": 26.807
+   },
+   {
+    "text": "wheel",
+    "start": 26.807,
+    "end": 27.148
+   },
+   {
+    "text": "with",
+    "start": 27.148,
+    "end": 27.431
+   },
+   {
+    "text": "a",
+    "start": 27.431,
+    "end": 27.544
+   },
+   {
+    "text": "split",
+    "start": 27.544,
+    "end": 27.885
+   },
+   {
+    "text": "five-spoke",
+    "start": 27.885,
+    "end": 28.508
+   },
+   {
+    "text": "face.",
+    "start": 28.508,
+    "end": 28.848
+   }
+  ],
+  "transcript": "Step two is the wheels. The camera moves in on the wheel, and the list shows the real stock: six designs, each with its name and a starting price. The second line tells you how the wheel is built. A monoblock is machined from a single piece of forged aluminium. Two-piece and three-piece wheels are assembled from separate parts: a face, and one or two barrel sections. I'll choose the F F one, a two-piece wheel with a split five-spoke face."
+ },
+ "c09": {
+  "duration": 16.387,
+  "words": [
+   {
+    "text": "The",
+    "start": 0.0,
+    "end": 0.25
+   },
+   {
+    "text": "info",
+    "start": 0.25,
+    "end": 0.562
+   },
+   {
+    "text": "button",
+    "start": 0.562,
+    "end": 1.0
+   },
+   {
+    "text": "opens",
+    "start": 1.0,
+    "end": 1.375
+   },
+   {
+    "text": "the",
+    "start": 1.375,
+    "end": 1.626
+   },
+   {
+    "text": "details",
+    "start": 1.626,
+    "end": 2.126
+   },
+   {
+    "text": "for",
+    "start": 2.126,
+    "end": 2.375
+   },
+   {
+    "text": "a",
+    "start": 2.375,
+    "end": 2.501
+   },
+   {
+    "text": "wheel:",
+    "start": 2.501,
+    "end": 2.938
+   },
+   {
+    "text": "how",
+    "start": 2.938,
+    "end": 3.188
+   },
+   {
+    "text": "it's",
+    "start": 3.188,
+    "end": 3.501
+   },
+   {
+    "text": "built,",
+    "start": 3.501,
+    "end": 3.938
+   },
+   {
+    "text": "every",
+    "start": 3.938,
+    "end": 4.314
+   },
+   {
+    "text": "size",
+    "start": 4.314,
+    "end": 4.626
+   },
+   {
+    "text": "it",
+    "start": 4.626,
+    "end": 4.814
+   },
+   {
+    "text": "comes",
+    "start": 4.814,
+    "end": 5.189
+   },
+   {
+    "text": "in",
+    "start": 5.189,
+    "end": 5.376
+   },
+   {
+    "text": "with",
+    "start": 5.376,
+    "end": 5.689
+   },
+   {
+    "text": "the",
+    "start": 5.689,
+    "end": 5.939
+   },
+   {
+    "text": "price",
+    "start": 5.939,
+    "end": 6.314
+   },
+   {
+    "text": "for",
+    "start": 6.314,
+    "end": 6.564
+   },
+   {
+    "text": "each,",
+    "start": 6.564,
+    "end": 6.939
+   },
+   {
+    "text": "and",
+    "start": 6.939,
+    "end": 7.189
+   },
+   {
+    "text": "its",
+    "start": 7.189,
+    "end": 7.439
+   },
+   {
+    "text": "fitment.",
+    "start": 7.439,
+    "end": 8.002
+   },
+   {
+    "text": "Fitment",
+    "start": 8.098,
+    "end": 8.598
+   },
+   {
+    "text": "means",
+    "start": 8.598,
+    "end": 8.974
+   },
+   {
+    "text": "the",
+    "start": 8.974,
+    "end": 9.223
+   },
+   {
+    "text": "bolt",
+    "start": 9.223,
+    "end": 9.536
+   },
+   {
+    "text": "pattern,",
+    "start": 9.536,
+    "end": 10.099
+   },
+   {
+    "text": "the",
+    "start": 10.099,
+    "end": 10.35
+   },
+   {
+    "text": "offset",
+    "start": 10.35,
+    "end": 10.787
+   },
+   {
+    "text": "and",
+    "start": 10.787,
+    "end": 11.038
+   },
+   {
+    "text": "the",
+    "start": 11.038,
+    "end": 11.287
+   },
+   {
+    "text": "centre",
+    "start": 11.287,
+    "end": 11.726
+   },
+   {
+    "text": "bore",
+    "start": 11.726,
+    "end": 12.038
+   },
+   {
+    "text": "the",
+    "start": 12.038,
+    "end": 12.288
+   },
+   {
+    "text": "wheel",
+    "start": 12.288,
+    "end": 12.663
+   },
+   {
+    "text": "is",
+    "start": 12.663,
+    "end": 12.851
+   },
+   {
+    "text": "made",
+    "start": 12.851,
+    "end": 13.164
+   },
+   {
+    "text": "for,",
+    "start": 13.164,
+    "end": 13.477
+   },
+   {
+    "text": "and",
+    "start": 13.477,
+    "end": 13.726
+   },
+   {
+    "text": "they",
+    "start": 13.726,
+    "end": 14.039
+   },
+   {
+    "text": "have",
+    "start": 14.039,
+    "end": 14.352
+   },
+   {
+    "text": "to",
+    "start": 14.352,
+    "end": 14.54
+   },
+   {
+    "text": "match",
+    "start": 14.54,
+    "end": 14.915
+   },
+   {
+    "text": "the",
+    "start": 14.915,
+    "end": 15.165
+   },
+   {
+    "text": "hubs",
+    "start": 15.165,
+    "end": 15.478
+   },
+   {
+    "text": "on",
+    "start": 15.478,
+    "end": 15.666
+   },
+   {
+    "text": "your",
+    "start": 15.666,
+    "end": 15.978
+   },
+   {
+    "text": "car.",
+    "start": 15.978,
+    "end": 16.291
+   }
+  ],
+  "transcript": "The info button opens the details for a wheel: how it's built, every size it comes in with the price for each, and its fitment. Fitment means the bolt pattern, the offset and the centre bore the wheel is made for, and they have to match the hubs on your car."
+ },
+ "c10": {
+  "duration": 20.623,
+  "words": [
+   {
+    "text": "Step",
+    "start": 0.0,
+    "end": 0.26
+   },
+   {
+    "text": "three",
+    "start": 0.26,
+    "end": 0.572
+   },
+   {
+    "text": "is",
+    "start": 0.572,
+    "end": 0.728
+   },
+   {
+    "text": "size:",
+    "start": 0.728,
+    "end": 1.04
+   },
+   {
+    "text": "the",
+    "start": 1.04,
+    "end": 1.248
+   },
+   {
+    "text": "wheel's",
+    "start": 1.248,
+    "end": 1.664
+   },
+   {
+    "text": "diameter,",
+    "start": 1.664,
+    "end": 2.184
+   },
+   {
+    "text": "in",
+    "start": 2.184,
+    "end": 2.34
+   },
+   {
+    "text": "inches.",
+    "start": 2.34,
+    "end": 2.756
+   },
+   {
+    "text": "A",
+    "start": 2.852,
+    "end": 2.948
+   },
+   {
+    "text": "larger",
+    "start": 2.948,
+    "end": 3.284
+   },
+   {
+    "text": "wheel",
+    "start": 3.284,
+    "end": 3.572
+   },
+   {
+    "text": "has",
+    "start": 3.572,
+    "end": 3.764
+   },
+   {
+    "text": "a",
+    "start": 3.764,
+    "end": 3.86
+   },
+   {
+    "text": "shorter",
+    "start": 3.86,
+    "end": 4.244
+   },
+   {
+    "text": "tyre",
+    "start": 4.244,
+    "end": 4.484
+   },
+   {
+    "text": "sidewall,",
+    "start": 4.484,
+    "end": 4.964
+   },
+   {
+    "text": "and",
+    "start": 4.964,
+    "end": 5.156
+   },
+   {
+    "text": "each",
+    "start": 5.156,
+    "end": 5.396
+   },
+   {
+    "text": "size",
+    "start": 5.396,
+    "end": 5.636
+   },
+   {
+    "text": "shows",
+    "start": 5.636,
+    "end": 5.924
+   },
+   {
+    "text": "its",
+    "start": 5.924,
+    "end": 6.116
+   },
+   {
+    "text": "price",
+    "start": 6.116,
+    "end": 6.404
+   },
+   {
+    "text": "for",
+    "start": 6.404,
+    "end": 6.596
+   },
+   {
+    "text": "the",
+    "start": 6.596,
+    "end": 6.788
+   },
+   {
+    "text": "set",
+    "start": 6.788,
+    "end": 6.98
+   },
+   {
+    "text": "of",
+    "start": 6.98,
+    "end": 7.124
+   },
+   {
+    "text": "four.",
+    "start": 7.124,
+    "end": 7.412
+   },
+   {
+    "text": "The",
+    "start": 7.508,
+    "end": 7.738
+   },
+   {
+    "text": "note",
+    "start": 7.738,
+    "end": 8.026
+   },
+   {
+    "text": "underneath",
+    "start": 8.026,
+    "end": 8.659
+   },
+   {
+    "text": "gives",
+    "start": 8.659,
+    "end": 9.004
+   },
+   {
+    "text": "the",
+    "start": 9.004,
+    "end": 9.234
+   },
+   {
+    "text": "car's",
+    "start": 9.234,
+    "end": 9.579
+   },
+   {
+    "text": "own",
+    "start": 9.579,
+    "end": 9.81
+   },
+   {
+    "text": "factory",
+    "start": 9.81,
+    "end": 10.27
+   },
+   {
+    "text": "fitment.",
+    "start": 10.27,
+    "end": 10.787
+   },
+   {
+    "text": "On",
+    "start": 10.883,
+    "end": 11.042
+   },
+   {
+    "text": "the",
+    "start": 11.042,
+    "end": 11.254
+   },
+   {
+    "text": "M",
+    "start": 11.254,
+    "end": 11.36
+   },
+   {
+    "text": "two",
+    "start": 11.36,
+    "end": 11.571
+   },
+   {
+    "text": "that's",
+    "start": 11.571,
+    "end": 11.942
+   },
+   {
+    "text": "a",
+    "start": 11.942,
+    "end": 12.048
+   },
+   {
+    "text": "nineteen-inch",
+    "start": 12.048,
+    "end": 12.789
+   },
+   {
+    "text": "wheel",
+    "start": 12.789,
+    "end": 13.106
+   },
+   {
+    "text": "at",
+    "start": 13.106,
+    "end": 13.266
+   },
+   {
+    "text": "the",
+    "start": 13.266,
+    "end": 13.478
+   },
+   {
+    "text": "front",
+    "start": 13.478,
+    "end": 13.795
+   },
+   {
+    "text": "and",
+    "start": 13.795,
+    "end": 14.006
+   },
+   {
+    "text": "a",
+    "start": 14.006,
+    "end": 14.113
+   },
+   {
+    "text": "twenty-inch",
+    "start": 14.113,
+    "end": 14.748
+   },
+   {
+    "text": "at",
+    "start": 14.748,
+    "end": 14.906
+   },
+   {
+    "text": "the",
+    "start": 14.906,
+    "end": 15.118
+   },
+   {
+    "text": "rear,",
+    "start": 15.118,
+    "end": 15.436
+   },
+   {
+    "text": "with",
+    "start": 15.436,
+    "end": 15.701
+   },
+   {
+    "text": "five",
+    "start": 15.701,
+    "end": 15.966
+   },
+   {
+    "text": "bolts",
+    "start": 15.966,
+    "end": 16.283
+   },
+   {
+    "text": "on",
+    "start": 16.283,
+    "end": 16.442
+   },
+   {
+    "text": "a",
+    "start": 16.442,
+    "end": 16.548
+   },
+   {
+    "text": "one-hundred-and-twelve",
+    "start": 16.548,
+    "end": 17.766
+   },
+   {
+    "text": "millimetre",
+    "start": 17.766,
+    "end": 18.347
+   },
+   {
+    "text": "circle.",
+    "start": 18.347,
+    "end": 18.771
+   },
+   {
+    "text": "I'll",
+    "start": 18.867,
+    "end": 19.174
+   },
+   {
+    "text": "pick",
+    "start": 19.174,
+    "end": 19.482
+   },
+   {
+    "text": "twenty-one",
+    "start": 19.482,
+    "end": 20.158
+   },
+   {
+    "text": "inch.",
+    "start": 20.158,
+    "end": 20.527
+   }
+  ],
+  "transcript": "Step three is size: the wheel's diameter, in inches. A larger wheel has a shorter tyre sidewall, and each size shows its price for the set of four. The note underneath gives the car's own factory fitment. On the M two that's a nineteen-inch wheel at the front and a twenty-inch at the rear, with five bolts on a one-hundred-and-twelve millimetre circle. I'll pick twenty-one inch."
+ },
+ "c11": {
+  "duration": 16.955,
+  "words": [
+   {
+    "text": "Step",
+    "start": 0.0,
+    "end": 0.26
+   },
+   {
+    "text": "four",
+    "start": 0.26,
+    "end": 0.521
+   },
+   {
+    "text": "is",
+    "start": 0.521,
+    "end": 0.677
+   },
+   {
+    "text": "finish,",
+    "start": 0.677,
+    "end": 1.093
+   },
+   {
+    "text": "the",
+    "start": 1.093,
+    "end": 1.302
+   },
+   {
+    "text": "surface",
+    "start": 1.302,
+    "end": 1.718
+   },
+   {
+    "text": "treatment",
+    "start": 1.718,
+    "end": 2.238
+   },
+   {
+    "text": "on",
+    "start": 2.238,
+    "end": 2.394
+   },
+   {
+    "text": "the",
+    "start": 2.394,
+    "end": 2.602
+   },
+   {
+    "text": "wheel.",
+    "start": 2.602,
+    "end": 2.967
+   },
+   {
+    "text": "Each",
+    "start": 3.063,
+    "end": 3.322
+   },
+   {
+    "text": "design",
+    "start": 3.322,
+    "end": 3.684
+   },
+   {
+    "text": "offers",
+    "start": 3.684,
+    "end": 4.046
+   },
+   {
+    "text": "only",
+    "start": 4.046,
+    "end": 4.305
+   },
+   {
+    "text": "the",
+    "start": 4.305,
+    "end": 4.511
+   },
+   {
+    "text": "finishes",
+    "start": 4.511,
+    "end": 4.977
+   },
+   {
+    "text": "it's",
+    "start": 4.977,
+    "end": 5.236
+   },
+   {
+    "text": "made",
+    "start": 5.236,
+    "end": 5.494
+   },
+   {
+    "text": "in.",
+    "start": 5.494,
+    "end": 5.702
+   },
+   {
+    "text": "The",
+    "start": 5.798,
+    "end": 6.032
+   },
+   {
+    "text": "F",
+    "start": 6.032,
+    "end": 6.15
+   },
+   {
+    "text": "F",
+    "start": 6.15,
+    "end": 6.267
+   },
+   {
+    "text": "one",
+    "start": 6.267,
+    "end": 6.502
+   },
+   {
+    "text": "comes",
+    "start": 6.502,
+    "end": 6.854
+   },
+   {
+    "text": "in",
+    "start": 6.854,
+    "end": 7.03
+   },
+   {
+    "text": "Silver",
+    "start": 7.03,
+    "end": 7.441
+   },
+   {
+    "text": "and",
+    "start": 7.441,
+    "end": 7.676
+   },
+   {
+    "text": "Liquid",
+    "start": 7.676,
+    "end": 8.086
+   },
+   {
+    "text": "Metal.",
+    "start": 8.086,
+    "end": 8.498
+   },
+   {
+    "text": "Liquid",
+    "start": 8.594,
+    "end": 8.927
+   },
+   {
+    "text": "Metal",
+    "start": 8.927,
+    "end": 9.213
+   },
+   {
+    "text": "is",
+    "start": 9.213,
+    "end": 9.355
+   },
+   {
+    "text": "a",
+    "start": 9.355,
+    "end": 9.45
+   },
+   {
+    "text": "mirror-chrome",
+    "start": 9.45,
+    "end": 10.118
+   },
+   {
+    "text": "finish",
+    "start": 10.118,
+    "end": 10.45
+   },
+   {
+    "text": "with",
+    "start": 10.45,
+    "end": 10.689
+   },
+   {
+    "text": "deep",
+    "start": 10.689,
+    "end": 10.926
+   },
+   {
+    "text": "reflections,",
+    "start": 10.926,
+    "end": 11.546
+   },
+   {
+    "text": "and",
+    "start": 11.546,
+    "end": 11.736
+   },
+   {
+    "text": "it",
+    "start": 11.736,
+    "end": 11.879
+   },
+   {
+    "text": "costs",
+    "start": 11.879,
+    "end": 12.165
+   },
+   {
+    "text": "more",
+    "start": 12.165,
+    "end": 12.403
+   },
+   {
+    "text": "than",
+    "start": 12.403,
+    "end": 12.641
+   },
+   {
+    "text": "Silver,",
+    "start": 12.641,
+    "end": 13.022
+   },
+   {
+    "text": "because",
+    "start": 13.022,
+    "end": 13.402
+   },
+   {
+    "text": "a",
+    "start": 13.402,
+    "end": 13.498
+   },
+   {
+    "text": "finish",
+    "start": 13.498,
+    "end": 13.831
    },
    {
     "text": "can",
-    "start": 15.42,
-    "end": 15.78
+    "start": 13.831,
+    "end": 14.022
    },
    {
-    "text": "keep.",
-    "start": 15.78,
-    "end": 16.32
+    "text": "carry",
+    "start": 14.022,
+    "end": 14.307
+   },
+   {
+    "text": "its",
+    "start": 14.307,
+    "end": 14.498
+   },
+   {
+    "text": "own",
+    "start": 14.498,
+    "end": 14.688
+   },
+   {
+    "text": "price.",
+    "start": 14.688,
+    "end": 15.022
+   },
+   {
+    "text": "I'll",
+    "start": 15.118,
+    "end": 15.453
+   },
+   {
+    "text": "choose",
+    "start": 15.453,
+    "end": 15.922
+   },
+   {
+    "text": "Liquid",
+    "start": 15.922,
+    "end": 16.39
+   },
+   {
+    "text": "Metal.",
+    "start": 16.39,
+    "end": 16.859
    }
   ],
-  "transcript": "Underneath, your price. Enquire sends your build to the Forged S A team. Share gives you a short code that reopens exactly this configuration. And P D F downloads a spec sheet you can keep."
+  "transcript": "Step four is finish, the surface treatment on the wheel. Each design offers only the finishes it's made in. The F F one comes in Silver and Liquid Metal. Liquid Metal is a mirror-chrome finish with deep reflections, and it costs more than Silver, because a finish can carry its own price. I'll choose Liquid Metal."
  },
- "s12": {
-  "duration": 15.852,
+ "c12": {
+  "duration": 16.766,
+  "words": [
+   {
+    "text": "Now",
+    "start": 0.0,
+    "end": 0.242
+   },
+   {
+    "text": "check",
+    "start": 0.242,
+    "end": 0.605
+   },
+   {
+    "text": "the",
+    "start": 0.605,
+    "end": 0.846
+   },
+   {
+    "text": "result",
+    "start": 0.846,
+    "end": 1.27
+   },
+   {
+    "text": "from",
+    "start": 1.27,
+    "end": 1.572
+   },
+   {
+    "text": "every",
+    "start": 1.572,
+    "end": 1.934
+   },
+   {
+    "text": "angle.",
+    "start": 1.934,
+    "end": 2.358
+   },
+   {
+    "text": "The",
+    "start": 2.454,
+    "end": 2.664
+   },
+   {
+    "text": "camera",
+    "start": 2.664,
+    "end": 3.033
+   },
+   {
+    "text": "buttons",
+    "start": 3.033,
+    "end": 3.454
+   },
+   {
+    "text": "move",
+    "start": 3.454,
+    "end": 3.717
+   },
+   {
+    "text": "between",
+    "start": 3.717,
+    "end": 4.138
+   },
+   {
+    "text": "the",
+    "start": 4.138,
+    "end": 4.348
+   },
+   {
+    "text": "front",
+    "start": 4.348,
+    "end": 4.663
+   },
+   {
+    "text": "three-quarter",
+    "start": 4.663,
+    "end": 5.4
+   },
+   {
+    "text": "view,",
+    "start": 5.4,
+    "end": 5.716
+   },
+   {
+    "text": "the",
+    "start": 5.716,
+    "end": 5.926
+   },
+   {
+    "text": "side,",
+    "start": 5.926,
+    "end": 6.242
+   },
+   {
+    "text": "the",
+    "start": 6.242,
+    "end": 6.453
+   },
+   {
+    "text": "rear,",
+    "start": 6.453,
+    "end": 6.768
+   },
+   {
+    "text": "a",
+    "start": 6.768,
+    "end": 6.874
+   },
+   {
+    "text": "close-up",
+    "start": 6.874,
+    "end": 7.347
+   },
+   {
+    "text": "of",
+    "start": 7.347,
+    "end": 7.505
+   },
+   {
+    "text": "the",
+    "start": 7.505,
+    "end": 7.715
+   },
+   {
+    "text": "wheel,",
+    "start": 7.715,
+    "end": 8.083
+   },
+   {
+    "text": "and",
+    "start": 8.083,
+    "end": 8.294
+   },
+   {
+    "text": "a",
+    "start": 8.294,
+    "end": 8.399
+   },
+   {
+    "text": "view",
+    "start": 8.399,
+    "end": 8.662
+   },
+   {
+    "text": "from",
+    "start": 8.662,
+    "end": 8.926
+   },
+   {
+    "text": "above.",
+    "start": 8.926,
+    "end": 9.294
+   },
+   {
+    "text": "The",
+    "start": 9.39,
+    "end": 9.594
+   },
+   {
+    "text": "turntable",
+    "start": 9.594,
+    "end": 10.103
+   },
+   {
+    "text": "button",
+    "start": 10.103,
+    "end": 10.459
+   },
+   {
+    "text": "rotates",
+    "start": 10.459,
+    "end": 10.867
+   },
+   {
+    "text": "the",
+    "start": 10.867,
+    "end": 11.071
+   },
+   {
+    "text": "car",
+    "start": 11.071,
+    "end": 11.274
+   },
+   {
+    "text": "continuously,",
+    "start": 11.274,
+    "end": 11.988
+   },
+   {
+    "text": "so",
+    "start": 11.988,
+    "end": 12.141
+   },
+   {
+    "text": "you",
+    "start": 12.141,
+    "end": 12.345
+   },
+   {
+    "text": "can",
+    "start": 12.345,
+    "end": 12.548
+   },
+   {
+    "text": "look",
+    "start": 12.548,
+    "end": 12.803
+   },
+   {
+    "text": "all",
+    "start": 12.803,
+    "end": 13.006
+   },
+   {
+    "text": "the",
+    "start": 13.006,
+    "end": 13.21
+   },
+   {
+    "text": "way",
+    "start": 13.21,
+    "end": 13.414
+   },
+   {
+    "text": "round",
+    "start": 13.414,
+    "end": 13.72
+   },
+   {
+    "text": "without",
+    "start": 13.72,
+    "end": 14.127
+   },
+   {
+    "text": "touching",
+    "start": 14.127,
+    "end": 14.586
+   },
+   {
+    "text": "anything.",
+    "start": 14.586,
+    "end": 15.095
+   },
+   {
+    "text": "When",
+    "start": 15.191,
+    "end": 15.397
+   },
+   {
+    "text": "you're",
+    "start": 15.397,
+    "end": 15.685
+   },
+   {
+    "text": "done,",
+    "start": 15.685,
+    "end": 15.931
+   },
+   {
+    "text": "open",
+    "start": 15.931,
+    "end": 16.137
+   },
+   {
+    "text": "the",
+    "start": 16.137,
+    "end": 16.301
+   },
+   {
+    "text": "summary.",
+    "start": 16.301,
+    "end": 16.67
+   }
+  ],
+  "transcript": "Now check the result from every angle. The camera buttons move between the front three-quarter view, the side, the rear, a close-up of the wheel, and a view from above. The turntable button rotates the car continuously, so you can look all the way round without touching anything. When you're done, open the summary."
+ },
+ "c13": {
+  "duration": 14.794,
+  "words": [
+   {
+    "text": "The",
+    "start": 0.0,
+    "end": 0.227
+   },
+   {
+    "text": "summary",
+    "start": 0.227,
+    "end": 0.682
+   },
+   {
+    "text": "begins",
+    "start": 0.682,
+    "end": 1.08
+   },
+   {
+    "text": "with",
+    "start": 1.08,
+    "end": 1.364
+   },
+   {
+    "text": "stills",
+    "start": 1.364,
+    "end": 1.762
+   },
+   {
+    "text": "of",
+    "start": 1.762,
+    "end": 1.932
+   },
+   {
+    "text": "your",
+    "start": 1.932,
+    "end": 2.216
+   },
+   {
+    "text": "exact",
+    "start": 2.216,
+    "end": 2.558
+   },
+   {
+    "text": "build,",
+    "start": 2.558,
+    "end": 2.955
+   },
+   {
+    "text": "rendered",
+    "start": 2.955,
+    "end": 3.466
+   },
+   {
+    "text": "from",
+    "start": 3.466,
+    "end": 3.75
+   },
+   {
+    "text": "the",
+    "start": 3.75,
+    "end": 3.978
+   },
+   {
+    "text": "same",
+    "start": 3.978,
+    "end": 4.262
+   },
+   {
+    "text": "model.",
+    "start": 4.262,
+    "end": 4.66
+   },
+   {
+    "text": "Below",
+    "start": 4.756,
+    "end": 5.115
+   },
+   {
+    "text": "them",
+    "start": 5.115,
+    "end": 5.415
+   },
+   {
+    "text": "are",
+    "start": 5.415,
+    "end": 5.654
+   },
+   {
+    "text": "the",
+    "start": 5.654,
+    "end": 5.894
+   },
+   {
+    "text": "options",
+    "start": 5.894,
+    "end": 6.373
+   },
+   {
+    "text": "you",
+    "start": 6.373,
+    "end": 6.613
+   },
+   {
+    "text": "picked,",
+    "start": 6.613,
+    "end": 7.092
+   },
+   {
+    "text": "and",
+    "start": 7.092,
+    "end": 7.331
+   },
+   {
+    "text": "a",
+    "start": 7.331,
+    "end": 7.451
+   },
+   {
+    "text": "second",
+    "start": 7.451,
+    "end": 7.87
+   },
+   {
+    "text": "tab",
+    "start": 7.87,
+    "end": 8.11
+   },
+   {
+    "text": "lists",
+    "start": 8.11,
+    "end": 8.47
+   },
+   {
+    "text": "the",
+    "start": 8.47,
+    "end": 8.709
+   },
+   {
+    "text": "car's",
+    "start": 8.709,
+    "end": 9.068
+   },
+   {
+    "text": "standard",
+    "start": 9.068,
+    "end": 9.607
+   },
+   {
+    "text": "features:",
+    "start": 9.607,
+    "end": 10.206
+   },
+   {
+    "text": "the",
+    "start": 10.206,
+    "end": 10.446
+   },
+   {
+    "text": "engine,",
+    "start": 10.446,
+    "end": 10.925
+   },
+   {
+    "text": "power,",
+    "start": 10.925,
+    "end": 11.344
+   },
+   {
+    "text": "torque,",
+    "start": 11.344,
+    "end": 11.823
+   },
+   {
+    "text": "acceleration,",
+    "start": 11.823,
+    "end": 12.662
+   },
+   {
+    "text": "factory",
+    "start": 12.662,
+    "end": 13.141
+   },
+   {
+    "text": "fitment",
+    "start": 13.141,
+    "end": 13.62
+   },
+   {
+    "text": "and",
+    "start": 13.62,
+    "end": 13.859
+   },
+   {
+    "text": "bolt",
+    "start": 13.859,
+    "end": 14.159
+   },
+   {
+    "text": "pattern.",
+    "start": 14.159,
+    "end": 14.698
+   }
+  ],
+  "transcript": "The summary begins with stills of your exact build, rendered from the same model. Below them are the options you picked, and a second tab lists the car's standard features: the engine, power, torque, acceleration, factory fitment and bolt pattern."
+ },
+ "c14": {
+  "duration": 25.12,
+  "words": [
+   {
+    "text": "The",
+    "start": 0.0,
+    "end": 0.236
+   },
+   {
+    "text": "price",
+    "start": 0.236,
+    "end": 0.589
+   },
+   {
+    "text": "card",
+    "start": 0.589,
+    "end": 0.883
+   },
+   {
+    "text": "shows",
+    "start": 0.883,
+    "end": 1.237
+   },
+   {
+    "text": "the",
+    "start": 1.237,
+    "end": 1.473
+   },
+   {
+    "text": "wheel",
+    "start": 1.473,
+    "end": 1.826
+   },
+   {
+    "text": "set",
+    "start": 1.826,
+    "end": 2.062
+   },
+   {
+    "text": "price",
+    "start": 2.062,
+    "end": 2.415
+   },
+   {
+    "text": "in",
+    "start": 2.415,
+    "end": 2.592
+   },
+   {
+    "text": "your",
+    "start": 2.592,
+    "end": 2.886
+   },
+   {
+    "text": "currency.",
+    "start": 2.886,
+    "end": 3.475
+   },
+   {
+    "text": "Enquire",
+    "start": 3.571,
+    "end": 4.006
+   },
+   {
+    "text": "opens",
+    "start": 4.006,
+    "end": 4.334
+   },
+   {
+    "text": "a",
+    "start": 4.334,
+    "end": 4.442
+   },
+   {
+    "text": "short",
+    "start": 4.442,
+    "end": 4.769
+   },
+   {
+    "text": "form",
+    "start": 4.769,
+    "end": 5.041
+   },
+   {
+    "text": "that",
+    "start": 5.041,
+    "end": 5.313
+   },
+   {
+    "text": "sends",
+    "start": 5.313,
+    "end": 5.64
+   },
+   {
+    "text": "your",
+    "start": 5.64,
+    "end": 5.912
+   },
+   {
+    "text": "build",
+    "start": 5.912,
+    "end": 6.238
+   },
+   {
+    "text": "and",
+    "start": 6.238,
+    "end": 6.456
+   },
+   {
+    "text": "your",
+    "start": 6.456,
+    "end": 6.728
+   },
+   {
+    "text": "contact",
+    "start": 6.728,
+    "end": 7.164
+   },
+   {
+    "text": "details",
+    "start": 7.164,
+    "end": 7.599
+   },
+   {
+    "text": "to",
+    "start": 7.599,
+    "end": 7.762
+   },
+   {
+    "text": "the",
+    "start": 7.762,
+    "end": 7.98
+   },
+   {
+    "text": "team.",
+    "start": 7.98,
+    "end": 8.306
+   },
+   {
+    "text": "Share",
+    "start": 8.402,
+    "end": 8.689
+   },
+   {
+    "text": "gives",
+    "start": 8.689,
+    "end": 8.975
+   },
+   {
+    "text": "you",
+    "start": 8.975,
+    "end": 9.166
+   },
+   {
+    "text": "a",
+    "start": 9.166,
+    "end": 9.262
+   },
+   {
+    "text": "configuration",
+    "start": 9.262,
+    "end": 9.929
+   },
+   {
+    "text": "code",
+    "start": 9.929,
+    "end": 10.167
+   },
+   {
+    "text": "that",
+    "start": 10.167,
+    "end": 10.406
+   },
+   {
+    "text": "reopens",
+    "start": 10.406,
+    "end": 10.788
+   },
+   {
+    "text": "exactly",
+    "start": 10.788,
+    "end": 11.17
+   },
+   {
+    "text": "this",
+    "start": 11.17,
+    "end": 11.408
+   },
+   {
+    "text": "build.",
+    "start": 11.408,
+    "end": 11.742
+   },
+   {
+    "text": "The",
+    "start": 11.838,
+    "end": 12.054
+   },
+   {
+    "text": "P",
+    "start": 12.054,
+    "end": 12.162
+   },
+   {
+    "text": "D",
+    "start": 12.162,
+    "end": 12.27
+   },
+   {
+    "text": "F",
+    "start": 12.27,
+    "end": 12.378
+   },
+   {
+    "text": "button",
+    "start": 12.378,
+    "end": 12.756
+   },
+   {
+    "text": "downloads",
+    "start": 12.756,
+    "end": 13.296
+   },
+   {
+    "text": "a",
+    "start": 13.296,
+    "end": 13.404
+   },
+   {
+    "text": "two-page",
+    "start": 13.404,
+    "end": 13.89
+   },
+   {
+    "text": "spec",
+    "start": 13.89,
+    "end": 14.16
+   },
+   {
+    "text": "sheet,",
+    "start": 14.16,
+    "end": 14.538
+   },
+   {
+    "text": "after",
+    "start": 14.538,
+    "end": 14.862
+   },
+   {
+    "text": "asking",
+    "start": 14.862,
+    "end": 15.241
+   },
+   {
+    "text": "for",
+    "start": 15.241,
+    "end": 15.457
+   },
+   {
+    "text": "your",
+    "start": 15.457,
+    "end": 15.726
+   },
+   {
+    "text": "email",
+    "start": 15.726,
+    "end": 16.05
+   },
+   {
+    "text": "and",
+    "start": 16.05,
+    "end": 16.266
+   },
+   {
+    "text": "mobile",
+    "start": 16.266,
+    "end": 16.645
+   },
+   {
+    "text": "number.",
+    "start": 16.645,
+    "end": 17.077
+   },
+   {
+    "text": "And",
+    "start": 17.173,
+    "end": 17.391
+   },
+   {
+    "text": "the",
+    "start": 17.391,
+    "end": 17.609
+   },
+   {
+    "text": "notice",
+    "start": 17.609,
+    "end": 17.99
+   },
+   {
+    "text": "at",
+    "start": 17.99,
+    "end": 18.154
+   },
+   {
+    "text": "the",
+    "start": 18.154,
+    "end": 18.372
+   },
+   {
+    "text": "bottom",
+    "start": 18.372,
+    "end": 18.754
+   },
+   {
+    "text": "reminds",
+    "start": 18.754,
+    "end": 19.19
+   },
+   {
+    "text": "you",
+    "start": 19.19,
+    "end": 19.408
+   },
+   {
+    "text": "that",
+    "start": 19.408,
+    "end": 19.681
+   },
+   {
+    "text": "these",
+    "start": 19.681,
+    "end": 20.008
+   },
+   {
+    "text": "images",
+    "start": 20.008,
+    "end": 20.39
+   },
+   {
+    "text": "are",
+    "start": 20.39,
+    "end": 20.608
+   },
+   {
+    "text": "visualisations:",
+    "start": 20.608,
+    "end": 21.48
+   },
+   {
+    "text": "the",
+    "start": 21.48,
+    "end": 21.698
+   },
+   {
+    "text": "final",
+    "start": 21.698,
+    "end": 22.026
+   },
+   {
+    "text": "specification",
+    "start": 22.026,
+    "end": 22.789
+   },
+   {
+    "text": "and",
+    "start": 22.789,
+    "end": 23.007
+   },
+   {
+    "text": "fitment",
+    "start": 23.007,
+    "end": 23.443
+   },
+   {
+    "text": "are",
+    "start": 23.443,
+    "end": 23.661
+   },
+   {
+    "text": "confirmed",
+    "start": 23.661,
+    "end": 24.206
+   },
+   {
+    "text": "with",
+    "start": 24.206,
+    "end": 24.479
+   },
+   {
+    "text": "the",
+    "start": 24.479,
+    "end": 24.697
+   },
+   {
+    "text": "team.",
+    "start": 24.697,
+    "end": 25.024
+   }
+  ],
+  "transcript": "The price card shows the wheel set price in your currency. Enquire opens a short form that sends your build and your contact details to the team. Share gives you a configuration code that reopens exactly this build. The P D F button downloads a two-page spec sheet, after asking for your email and mobile number. And the notice at the bottom reminds you that these images are visualisations: the final specification and fitment are confirmed with the team."
+ },
+ "c15": {
+  "duration": 21.207,
   "words": [
    {
     "text": "Every",
     "start": 0.0,
-    "end": 0.464
+    "end": 0.389
    },
    {
     "text": "wheel",
-    "start": 0.464,
-    "end": 0.929
+    "start": 0.389,
+    "end": 0.778
    },
    {
     "text": "also",
-    "start": 0.929,
-    "end": 1.316
+    "start": 0.778,
+    "end": 1.102
    },
    {
     "text": "has",
-    "start": 1.316,
-    "end": 1.626
+    "start": 1.102,
+    "end": 1.362
    },
    {
     "text": "its",
-    "start": 1.626,
-    "end": 1.935
+    "start": 1.362,
+    "end": 1.621
    },
    {
     "text": "own",
-    "start": 1.935,
-    "end": 2.245
+    "start": 1.621,
+    "end": 1.88
    },
    {
     "text": "page,",
-    "start": 2.245,
-    "end": 2.709
+    "start": 1.88,
+    "end": 2.269
    },
    {
     "text": "with",
-    "start": 2.709,
-    "end": 3.096
+    "start": 2.269,
+    "end": 2.594
    },
    {
     "text": "a",
-    "start": 3.096,
-    "end": 3.251
+    "start": 2.594,
+    "end": 2.723
    },
    {
-    "text": "3D",
-    "start": 3.251,
-    "end": 3.484
+    "text": "three-dimensional",
+    "start": 2.723,
+    "end": 3.89
    },
    {
-    "text": "viewer,",
-    "start": 3.484,
-    "end": 4.103
+    "text": "viewer",
+    "start": 3.89,
+    "end": 4.344
    },
    {
-    "text": "so",
-    "start": 4.103,
-    "end": 4.335
+    "text": "that",
+    "start": 4.344,
+    "end": 4.668
    },
    {
     "text": "you",
-    "start": 4.335,
-    "end": 4.645
+    "start": 4.668,
+    "end": 4.927
    },
    {
     "text": "can",
-    "start": 4.645,
-    "end": 4.954
+    "start": 4.927,
+    "end": 5.186
    },
    {
-    "text": "spin",
-    "start": 4.954,
-    "end": 5.341
-   },
-   {
-    "text": "it",
-    "start": 5.341,
-    "end": 5.574
-   },
-   {
-    "text": "and",
-    "start": 5.574,
-    "end": 5.883
-   },
-   {
-    "text": "see",
-    "start": 5.883,
-    "end": 6.193
-   },
-   {
-    "text": "it",
-    "start": 6.193,
-    "end": 6.425
+    "text": "spin,",
+    "start": 5.186,
+    "end": 5.575
    },
    {
     "text": "in",
-    "start": 6.425,
-    "end": 6.657
+    "start": 5.575,
+    "end": 5.77
    },
    {
     "text": "each",
-    "start": 6.657,
-    "end": 7.044
+    "start": 5.77,
+    "end": 6.094
    },
    {
-    "text": "finish.",
-    "start": 7.044,
-    "end": 7.664
+    "text": "finish",
+    "start": 6.094,
+    "end": 6.548
    },
    {
-    "text": "And",
-    "start": 7.784,
-    "end": 8.044
+    "text": "it's",
+    "start": 6.548,
+    "end": 6.872
    },
    {
-    "text": "back",
-    "start": 8.044,
-    "end": 8.37
+    "text": "made",
+    "start": 6.872,
+    "end": 7.196
+   },
+   {
+    "text": "in.",
+    "start": 7.196,
+    "end": 7.456
+   },
+   {
+    "text": "Back",
+    "start": 7.552,
+    "end": 7.853
    },
    {
     "text": "in",
-    "start": 8.37,
-    "end": 8.566
+    "start": 7.853,
+    "end": 8.034
    },
    {
     "text": "the",
-    "start": 8.566,
-    "end": 8.826
+    "start": 8.034,
+    "end": 8.275
    },
    {
     "text": "configurator,",
-    "start": 8.826,
-    "end": 9.738
+    "start": 8.275,
+    "end": 9.118
    },
    {
     "text": "the",
-    "start": 9.738,
-    "end": 9.999
+    "start": 9.118,
+    "end": 9.36
    },
    {
     "text": "three",
-    "start": 9.999,
-    "end": 10.39
+    "start": 9.36,
+    "end": 9.722
    },
    {
     "text": "dots",
-    "start": 10.39,
-    "end": 10.716
+    "start": 9.722,
+    "end": 10.022
    },
    {
-    "text": "hold",
-    "start": 10.716,
-    "end": 11.041
+    "text": "open",
+    "start": 10.022,
+    "end": 10.324
+   },
+   {
+    "text": "more",
+    "start": 10.324,
+    "end": 10.626
+   },
+   {
+    "text": "options:",
+    "start": 10.626,
+    "end": 11.168
    },
    {
     "text": "your",
-    "start": 11.041,
-    "end": 11.367
+    "start": 11.168,
+    "end": 11.469
    },
    {
     "text": "region,",
-    "start": 11.367,
-    "end": 11.888
+    "start": 11.469,
+    "end": 11.951
    },
    {
     "text": "a",
-    "start": 11.888,
-    "end": 12.019
+    "start": 11.951,
+    "end": 12.072
    },
    {
     "text": "place",
-    "start": 12.019,
-    "end": 12.409
+    "start": 12.072,
+    "end": 12.434
    },
    {
     "text": "to",
-    "start": 12.409,
-    "end": 12.605
+    "start": 12.434,
+    "end": 12.614
    },
    {
     "text": "load",
-    "start": 12.605,
-    "end": 12.931
+    "start": 12.614,
+    "end": 12.915
    },
    {
     "text": "a",
-    "start": 12.931,
-    "end": 13.061
+    "start": 12.915,
+    "end": 13.036
    },
    {
     "text": "saved",
-    "start": 13.061,
-    "end": 13.452
+    "start": 13.036,
+    "end": 13.398
+   },
+   {
+    "text": "configuration",
+    "start": 13.398,
+    "end": 14.242
+   },
+   {
+    "text": "using",
+    "start": 14.242,
+    "end": 14.603
+   },
+   {
+    "text": "its",
+    "start": 14.603,
+    "end": 14.844
    },
    {
     "text": "code,",
-    "start": 13.452,
-    "end": 13.843
-   },
-   {
-    "text": "and",
-    "start": 13.843,
-    "end": 14.103
+    "start": 14.844,
+    "end": 15.206
    },
    {
     "text": "your",
-    "start": 14.103,
-    "end": 14.429
+    "start": 15.206,
+    "end": 15.507
    },
    {
     "text": "account",
-    "start": 14.429,
-    "end": 14.95
+    "start": 15.507,
+    "end": 15.989
    },
    {
     "text": "and",
-    "start": 14.95,
-    "end": 15.211
+    "start": 15.989,
+    "end": 16.23
    },
    {
-    "text": "garage.",
-    "start": 15.211,
-    "end": 15.732
-   }
-  ],
-  "transcript": "Every wheel also has its own page, with a 3D viewer, so you can spin it and see it in each finish. And back in the configurator, the three dots hold your region, a place to load a saved code, and your account and garage."
- },
- "s13": {
-  "duration": 10.012,
-  "words": [
-   {
-    "text": "And",
-    "start": 0.0,
-    "end": 0.353
+    "text": "garage,",
+    "start": 16.23,
+    "end": 16.712
    },
    {
-    "text": "that's",
-    "start": 0.353,
-    "end": 0.971
+    "text": "which",
+    "start": 16.712,
+    "end": 17.074
    },
    {
-    "text": "all",
-    "start": 0.971,
-    "end": 1.325
+    "text": "uses",
+    "start": 17.074,
+    "end": 17.375
    },
    {
-    "text": "there",
-    "start": 1.325,
-    "end": 1.855
+    "text": "Google",
+    "start": 17.375,
+    "end": 17.797
    },
    {
-    "text": "is",
-    "start": 1.855,
-    "end": 2.12
+    "text": "sign-in,",
+    "start": 17.797,
+    "end": 18.339
+   },
+   {
+    "text": "and",
+    "start": 18.339,
+    "end": 18.58
+   },
+   {
+    "text": "links",
+    "start": 18.58,
+    "end": 18.942
    },
    {
     "text": "to",
-    "start": 2.12,
-    "end": 2.385
+    "start": 18.942,
+    "end": 19.122
    },
    {
-    "text": "it.",
-    "start": 2.385,
-    "end": 2.738
+    "text": "delivery,",
+    "start": 19.122,
+    "end": 19.726
    },
    {
-    "text": "Paint,",
-    "start": 2.858,
-    "end": 3.535
-   },
-   {
-    "text": "wheels,",
-    "start": 3.535,
-    "end": 4.308
-   },
-   {
-    "text": "size,",
-    "start": 4.308,
-    "end": 4.888
-   },
-   {
-    "text": "finish,",
-    "start": 4.888,
-    "end": 5.662
+    "text": "fitment",
+    "start": 19.726,
+    "end": 20.207
    },
    {
     "text": "and",
-    "start": 5.662,
-    "end": 6.049
+    "start": 20.207,
+    "end": 20.449
    },
    {
-    "text": "you",
-    "start": 6.049,
-    "end": 6.436
+    "text": "the",
+    "start": 20.449,
+    "end": 20.69
    },
    {
-    "text": "see",
-    "start": 6.436,
-    "end": 6.822
-   },
-   {
-    "text": "your",
-    "start": 6.822,
-    "end": 7.306
-   },
-   {
-    "text": "car",
-    "start": 7.306,
-    "end": 7.693
-   },
-   {
-    "text": "before",
-    "start": 7.693,
-    "end": 8.369
-   },
-   {
-    "text": "you",
-    "start": 8.369,
-    "end": 8.756
-   },
-   {
-    "text": "buy.",
-    "start": 8.756,
-    "end": 9.24
-   },
-   {
-    "text": "Forged",
-    "start": 9.36,
-    "end": 9.67
-   },
-   {
-    "text": "S",
-    "start": 9.67,
-    "end": 9.759
-   },
-   {
-    "text": "A.",
-    "start": 9.759,
-    "end": 9.892
+    "text": "terms.",
+    "start": 20.69,
+    "end": 21.111
    }
   ],
-  "transcript": "And that's all there is to it. Paint, wheels, size, finish, and you see your car before you buy. Forged S A."
+  "transcript": "Every wheel also has its own page, with a three-dimensional viewer that you can spin, in each finish it's made in. Back in the configurator, the three dots open more options: your region, a place to load a saved configuration using its code, your account and garage, which uses Google sign-in, and links to delivery, fitment and the terms."
+ },
+ "c16": {
+  "duration": 10.31,
+  "words": [
+   {
+    "text": "That's",
+    "start": 0.0,
+    "end": 0.402
+   },
+   {
+    "text": "the",
+    "start": 0.402,
+    "end": 0.631
+   },
+   {
+    "text": "whole",
+    "start": 0.631,
+    "end": 0.975
+   },
+   {
+    "text": "journey.",
+    "start": 0.975,
+    "end": 1.492
+   },
+   {
+    "text": "Choose",
+    "start": 1.588,
+    "end": 1.99
+   },
+   {
+    "text": "a",
+    "start": 1.99,
+    "end": 2.106
+   },
+   {
+    "text": "car,",
+    "start": 2.106,
+    "end": 2.393
+   },
+   {
+    "text": "then",
+    "start": 2.393,
+    "end": 2.681
+   },
+   {
+    "text": "the",
+    "start": 2.681,
+    "end": 2.91
+   },
+   {
+    "text": "paint,",
+    "start": 2.91,
+    "end": 3.314
+   },
+   {
+    "text": "the",
+    "start": 3.314,
+    "end": 3.543
+   },
+   {
+    "text": "wheels,",
+    "start": 3.543,
+    "end": 4.003
+   },
+   {
+    "text": "the",
+    "start": 4.003,
+    "end": 4.234
+   },
+   {
+    "text": "size",
+    "start": 4.234,
+    "end": 4.521
+   },
+   {
+    "text": "and",
+    "start": 4.521,
+    "end": 4.751
+   },
+   {
+    "text": "the",
+    "start": 4.751,
+    "end": 4.981
+   },
+   {
+    "text": "finish,",
+    "start": 4.981,
+    "end": 5.441
+   },
+   {
+    "text": "check",
+    "start": 5.441,
+    "end": 5.786
+   },
+   {
+    "text": "it",
+    "start": 5.786,
+    "end": 5.958
+   },
+   {
+    "text": "from",
+    "start": 5.958,
+    "end": 6.246
+   },
+   {
+    "text": "every",
+    "start": 6.246,
+    "end": 6.591
+   },
+   {
+    "text": "angle,",
+    "start": 6.591,
+    "end": 6.994
+   },
+   {
+    "text": "and",
+    "start": 6.994,
+    "end": 7.224
+   },
+   {
+    "text": "keep",
+    "start": 7.224,
+    "end": 7.511
+   },
+   {
+    "text": "the",
+    "start": 7.511,
+    "end": 7.742
+   },
+   {
+    "text": "summary",
+    "start": 7.742,
+    "end": 8.202
+   },
+   {
+    "text": "as",
+    "start": 8.202,
+    "end": 8.374
+   },
+   {
+    "text": "a",
+    "start": 8.374,
+    "end": 8.489
+   },
+   {
+    "text": "code,",
+    "start": 8.489,
+    "end": 8.834
+   },
+   {
+    "text": "a",
+    "start": 8.834,
+    "end": 8.95
+   },
+   {
+    "text": "P",
+    "start": 8.95,
+    "end": 9.064
+   },
+   {
+    "text": "D",
+    "start": 9.064,
+    "end": 9.179
+   },
+   {
+    "text": "F,",
+    "start": 9.179,
+    "end": 9.352
+   },
+   {
+    "text": "or",
+    "start": 9.352,
+    "end": 9.524
+   },
+   {
+    "text": "an",
+    "start": 9.524,
+    "end": 9.697
+   },
+   {
+    "text": "enquiry.",
+    "start": 9.697,
+    "end": 10.214
+   }
+  ],
+  "transcript": "That's the whole journey. Choose a car, then the paint, the wheels, the size and the finish, check it from every angle, and keep the summary as a code, a P D F, or an enquiry."
  }
 }

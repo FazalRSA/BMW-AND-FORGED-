@@ -1,0 +1,1 @@
+The info button opens the details for a wheel: how it's built, every size it comes in with the price for each, and its fitment. Fitment means the bolt pattern, the offset and the centre bore the wheel is made for, and they have to match the hubs on your car.

@@ -1,0 +1,1 @@
+Before you enter, the region picker sets your language and currency. Prices are stored in US dollars and converted, so South Africa shows rand and the United Kingdom shows pounds. I'll jump back to the M two with the dots, then press Enter, which opens the configurator on the car that's on stage.

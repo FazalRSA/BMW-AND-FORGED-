@@ -1,0 +1,35 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 560px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 48px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="d05" data-width="1920" data-height="1080">
+    <div id="d05-cam" class="clip" data-start="0" data-duration="11" data-track-index="0"><div id="d05-fx" class="fx"><div id="d05-cami" class="cam"><img id="d05-img-0" class="shot" src="assets/shots/05-cars-paints.png" alt="" style="opacity:1"><div id="d05-ring-0" class="ring" style="left:608px;top:-135px;width:1161px;height:991px"></div><svg id="d05-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="d05-card-0" class="clip card-host" data-start="1.02" data-duration="9.73" data-track-index="2" style="left:72px;top:818px"><div id="d05-cardi-0" class="card"><div class="eye">PAINTS PER CAR</div><div class="line">Its own palette</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#d05-cami",{transformOrigin:"970px 540px"});
+    tl.fromTo("#d05-cami",{scale:1},{scale:1.025,duration:11,ease:"sine.inOut"},0);
+    tl.fromTo("#d05-fx",{opacity:0,filter:"blur(10px)"},{opacity:1,filter:"blur(0px)",duration:0.45,ease:"power2.out"},0);
+    gsap.set("#d05-cur",{x:960,y:1140,opacity:0});
+    tl.to("#d05-cur",{x:1189,y:361,opacity:1,duration:0.8,ease:"power3.inOut"},0.77);
+    tl.fromTo("#d05-ring-0",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},1.27);
+    tl.to("#d05-ring-0",{opacity:0,duration:0.25,ease:"power2.in"},2.67);
+    tl.fromTo("#d05-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},1.07);
+    tl.to("#d05-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},10.51);
+    window.__timelines["d05"] = tl;
+  </script>
+</template>

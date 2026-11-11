@@ -1,0 +1,55 @@
+<template>
+  <style>
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'Satoshi'; src: url('assets/fonts/satoshi-900.woff2') format('woff2'); font-weight: 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #root .fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .shot { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .ring { position: absolute; border: 4px solid #CF9F52; border-radius: 14px; opacity: 0; box-shadow: 0 0 0 2px rgba(11,11,12,.55); box-sizing: border-box; }
+    #root .click { position: absolute; width: 120px; height: 120px; border: 4px solid #CF9F52; border-radius: 50%; opacity: 0; }
+    #root .cur { position: absolute; left: 0; top: 0; opacity: 0; filter: drop-shadow(0 1.5px 1.5px rgba(0,0,0,.5)); }
+    #root .dip { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; opacity: 0; }
+    #root .card-host { position: absolute; width: 560px; }
+    #root .card { background: #0b0b0c; border-left: 10px solid #CF9F52; border-radius: 6px; padding: 22px 28px 26px 26px; box-shadow: 0 24px 60px rgba(0,0,0,.45); font-family: 'Satoshi', sans-serif; }
+    #root .eye { color: #CF9F52; font-weight: 700; font-size: 28px; letter-spacing: .16em; }
+    #root .line { margin-top: 10px; color: #fff; font-weight: 900; font-size: 48px; line-height: 1.06; letter-spacing: -.015em; }
+  </style>
+  <div id="root" data-composition-id="d01" data-width="1920" data-height="1080">
+    <div id="d01-cam" class="clip" data-start="0" data-duration="35.1" data-track-index="0"><div id="d01-fx" class="fx"><div id="d01-cami" class="cam"><img id="d01-img-0" class="shot" src="assets/shots/01-login.png" alt="" style="opacity:1"><img id="d01-img-1" class="shot" src="assets/shots/02-login-reset.png" alt="" style="opacity:0"><div id="d01-ring-0" class="ring" style="left:660px;top:173px;width:600px;height:570px"></div><div id="d01-ring-1" class="ring" style="left:698px;top:372px;width:525px;height:81px"></div><div id="d01-ring-2" class="ring" style="left:698px;top:654px;width:525px;height:48px"></div><div id="d01-click-2" class="click" style="left:901px;top:618px"></div><div id="d01-ring-3" class="ring" style="left:698px;top:515px;width:525px;height:78px"></div><svg id="d01-cur" class="cur" viewBox="0 0 24 24" width="40" height="40"><path d="M3 2 L3 19 L8 14.5 L11.2 21.5 L14 20.3 L10.9 13.4 L17.5 13 Z" fill="#fff" stroke="#0b0b0c" stroke-width="1.6" stroke-linejoin="round"/></svg></div></div></div><div id="d01-card-0" class="clip card-host" data-start="16.34" data-duration="4.63" data-track-index="2" style="left:72px;top:818px"><div id="d01-cardi-0" class="card"><div class="eye">ADMIN SIGN-IN</div><div class="line">Found at /admin</div></div></div><div id="d01-card-1" class="clip card-host" data-start="20.92" data-duration="9.15" data-track-index="2" style="left:72px;top:818px"><div id="d01-cardi-1" class="card"><div class="eye">ALLOWLIST</div><div class="line">Only trusted emails get in</div></div></div><div id="d01-card-2" class="clip card-host" data-start="30.02" data-duration="1.76" data-track-index="2" style="left:72px;top:818px"><div id="d01-cardi-2" class="card"><div class="eye">FIRST TIME?</div><div class="line">Set or reset a password</div></div></div><div id="d01-card-3" class="clip card-host" data-start="31.73" data-duration="3.12" data-track-index="2" style="left:72px;top:818px"><div id="d01-cardi-3" class="card"><div class="eye">ONE-TIME LINK</div><div class="line">Sent to the admin email</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set("#d01-cami",{transformOrigin:"960px 540px"});
+    tl.fromTo("#d01-cami",{scale:1},{scale:1.025,duration:35.1,ease:"sine.inOut"},0);
+    gsap.set("#d01-cur",{x:960,y:1140,opacity:0});
+    tl.to("#d01-cur",{x:960,y:458,opacity:1,duration:0.8,ease:"power3.inOut"},16.09);
+    tl.fromTo("#d01-ring-0",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},16.59);
+    tl.to("#d01-ring-0",{opacity:0,duration:0.25,ease:"power2.in"},18.29);
+    tl.to("#d01-cur",{x:961,y:413,opacity:1,duration:0.8,ease:"power3.inOut"},20.67);
+    tl.fromTo("#d01-ring-1",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},21.17);
+    tl.to("#d01-ring-1",{opacity:0,duration:0.25,ease:"power2.in"},22.87);
+    tl.to("#d01-cur",{x:961,y:678,opacity:1,duration:0.8,ease:"power3.inOut"},29.77);
+    tl.fromTo("#d01-ring-2",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},30.27);
+    tl.to("#d01-ring-2",{opacity:0,duration:0.25,ease:"power2.in"},31.28);
+    tl.fromTo("#d01-click-2",{opacity:1,scale:0.3},{opacity:0,scale:1,duration:0.4,ease:"power2.out"},30.57);
+    tl.to("#d01-cur",{scale:0.86,duration:0.08,ease:"power1.in",transformOrigin:"3px 2px"},30.55);
+    tl.to("#d01-cur",{scale:1,duration:0.14,ease:"power2.out",transformOrigin:"3px 2px"},30.65);
+    tl.set("#d01-img-1",{zIndex:2,opacity:0},30.67);
+    tl.to("#d01-img-1",{opacity:1,duration:0.3,ease:"power1.inOut"},30.67);
+    tl.set("#d01-img-0",{opacity:0},30.99);
+    tl.to("#d01-cur",{x:961,y:554,opacity:1,duration:0.8,ease:"power3.inOut"},31.48);
+    tl.fromTo("#d01-ring-3",{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.25,ease:"power4.out"},31.98);
+    tl.to("#d01-ring-3",{opacity:0,duration:0.25,ease:"power2.in"},33.38);
+    tl.fromTo("#d01-cardi-0",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},16.39);
+    tl.to("#d01-cardi-0",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},20.73);
+    tl.fromTo("#d01-cardi-1",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},20.97);
+    tl.to("#d01-cardi-1",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},29.83);
+    tl.fromTo("#d01-cardi-2",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},30.07);
+    tl.to("#d01-cardi-2",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},31.54);
+    tl.fromTo("#d01-cardi-3",{opacity:0,x:-24},{opacity:1,x:0,duration:0.33,ease:"power4.out"},31.78);
+    tl.to("#d01-cardi-3",{opacity:0,x:-10,duration:0.2,ease:"power2.in"},34.61);
+    window.__timelines["d01"] = tl;
+  </script>
+</template>

@@ -1,0 +1,1 @@
+For the best quality you can upload the manufacturer's own 3D file instead. If it's in a CAD format such as STEP, IGES, S T L or O B J, it's converted to G L B in your browser first. There's also a separate rear file, for staggered sets that use a different wheel at the back.

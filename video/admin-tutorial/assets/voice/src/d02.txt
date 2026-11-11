@@ -1,0 +1,1 @@
+Once you're signed in, you'll see five tabs: cars, wheels, finishes, paints and enquiries. The first four are the catalogue, the same data the configurator reads, and the fifth collects the leads. When you save a change in any tab, the configurator picks it up straight away.

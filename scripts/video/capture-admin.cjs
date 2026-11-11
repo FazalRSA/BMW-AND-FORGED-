@@ -47,7 +47,8 @@ const session = {
       if (url.pathname.includes('/auth/v1/user')) return json(route, session.user);
       if (url.pathname.includes('/auth/v1/')) return json(route, {});
       if (url.pathname.includes('/storage/')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{"Key":"demo"}' });
-      if (!table) return route.abort();
+      if (!table) { log(`unhandled Supabase call: ${req.method()} ${url.pathname}`); return route.abort(); }
+      if (m !== 'GET' && m !== 'HEAD') { log(`write swallowed locally: ${m} ${table}`); }
       if (m !== 'GET' && m !== 'HEAD') return route.fulfill({ status: 201, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '[]' }); // writes: swallowed
       if (table === 'admin_users') return json(route, { email: EMAIL });
       let rows = FX[table];
