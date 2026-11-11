@@ -125,3 +125,21 @@ Order of work for the next session:
 2. Collect the in-flight helpers' results (section 4), review, land.
 3. Ask the owner about the decisions in section 5 that block further work (the `.blend` files above all).
 4. Update `docs/CHECKPOINT.md` and this file's section 1 whenever the state changes.
+
+## Update 11 Nov, later: checklist and direction
+
+Merged: #12, then #14 (menu links, GPU-restore fix, carousel, dark wheel stage). Dark everywhere now: `.bg-stage` and `.wheel-stage` are the black stills backdrop; `.stage-light` is gone. The wheel studio no longer auto-orbits on load.
+
+| Feature | State |
+|---|---|
+| Admin login (`/admin`, email + password, allowlist) | built, plain form, redesign not done |
+| Customer login (Google via Supabase Auth, garage) | built; needs the owner's Google provider setup (docs/ACCOUNTS.md) |
+| Dealer login | NOT BUILT (needs a role in `profiles` and a policy decision) |
+| Magic link / password-less login | NOT BUILT (`signInWithOtp` is the route) |
+| FORGED wordmark | present (`public/brand/forgedsa-wordmark.png`) |
+| SixNine logo | NO ASSET in the repo; the owner must supply it |
+| PDF "renders beautifully" | check was interrupted (helper hit its usage limit); rerun `scripts/render/pdf-check.cjs` |
+| Fonts | Satoshi + Inter now; a better pairing from an OFL source is not chosen yet |
+| Wheels | stage darkened; the wheel itself was not judged on a real GPU; owner to say which wheel/view looks wrong |
+| Modal | token ID was pasted in chat and is NOT stored; the secret goes in environment settings; PR #13 already holds a Modal render service |
+| e2e harness rewrite | unfinished in `.claude/worktrees/agent-ac88c4d6470d43611` |
