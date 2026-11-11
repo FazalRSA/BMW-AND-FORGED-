@@ -125,7 +125,7 @@ python3 scripts/render/qa-matrix.py $OUT $RIMS            # A + B + C, ~100 shot
 python3 scripts/render/qa-matrix.py $OUT $RIMS --quick    # A only, ~36 shots
 ```
 
-**Scope (Nov 2026): the hidden photo wheels only, on car indexes that are now hidden.** The script
+**Scope (Nov 2026): obsolete until a new photo wheel is added. The legacy photo wheels and cars it was written for were deleted on 2026-11-11, so its wheel and car indexes below no longer exist; update them before using it.** The script
 still takes `W = range(QA_WHEELS=9)` (wheel indexes 0-8: the hidden photo wheels; none of the six
 stocked wheels, indexes 11-16), the old four finishes (`liquid_metal`, `black`, `bronze`, `silver`),
 and `CARS = {0, 2, 3, 6, 8}` written when those indexes meant M4, M3, M3 Touring, M5, M8. The

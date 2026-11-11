@@ -36,7 +36,7 @@ export const ENTITIES: EntitySpec[] = [
     table: 'cars',
     label: 'Cars',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text', hint: 'Unique, e.g. m4_g82. Cannot be changed after saving.' },
+      { key: 'id', label: 'ID (slug)', type: 'text', hint: 'Unique, e.g. m5_g90. Cannot be changed after saving.' },
       { key: 'name', label: 'Name', type: 'text' },
       { key: 'badge', label: 'Badge', type: 'text' },
       { key: 'generation', label: 'Generation', type: 'text' },
