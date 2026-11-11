@@ -111,7 +111,7 @@ export function buildGlossCove(): THREE.Scene {
  * match. A black backdrop, a pale studio floor lit by a pool of light that fades out, and a black cove with one
  * large overhead softbox for the paint to mirror (the white sweep over bonnet and roof in the stills). The numbers
  * can be overridden from the URL for comparison renders: ?stagePeak= ?stageRx= ?stageRz= ?stageOver= ?stageRails=
- * ?stageRing= ?stageFloorEnv= ?stageExp=
+ * ?stageRing= ?stageFloorEnv= ?stageExp= ?stageParts=
  */
 const urlNum = (key: string, fallback: number) => {
   if (typeof window === 'undefined') return fallback;
@@ -120,7 +120,9 @@ const urlNum = (key: string, fallback: number) => {
   return Number.isFinite(n) ? n : fallback;
 };
 // Chosen against public/hero/m2_g87-1600.webp (M2 CS, Portimao Blue, front three-quarter), Nov 2026. A ring above
-// about 2 lit the body evenly and flattened it; the stills' contrast is one strong overhead key over a black room.
+// about 2 lit the body evenly and flattened it; the stills' contrast is one overhead key over a black room.
+// Overhead 12, 18 and 32 look the same from the front three-quarter; from above, 18 and 32 wash the bonnet and
+// roof paint out to pale blue, so the key stays at 12.
 export const STAGE = {
   /** Floor brightness at the centre of the pool, as an sRGB level (0..1). */
   peak: urlNum('stagePeak', 0.97),
@@ -128,12 +130,18 @@ export const STAGE = {
   rx: urlNum('stageRx', 2.2),
   rz: urlNum('stageRz', 3.4),
   /** Overhead softbox, the two light rails, and the wrap ring in the reflection cove. */
-  overhead: urlNum('stageOver', 32),
-  rails: urlNum('stageRails', 10),
+  overhead: urlNum('stageOver', 12),
+  rails: urlNum('stageRails', 6),
   ring: urlNum('stageRing', 1),
   /** The lit floor as the paint sees it in the cove (sills and lower doors pick it up). */
   floorEnv: urlNum('stageFloorEnv', 0.5),
   exposure: urlNum('stageExp', 1.2),
+  /**
+   * How much of the cove the non-paint parts mirror (glass, carbon, chrome, trim, lamps). Paint needs the strong
+   * overhead key to read; a mirror-like part shows the same box at full strength and clips to white (the M2 CS's
+   * windscreen and carbon roof, seen from above). 0.35 of the key leaves the carbon roof a grey, as in the stills.
+   */
+  parts: urlNum('stageParts', 0.35),
   /** Floor plane size (m); the pool has faded out well before its edge. */
   size: 40
 };

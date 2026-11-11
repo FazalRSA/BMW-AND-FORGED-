@@ -2784,7 +2784,8 @@ export class CarConfiguratorEngine {
     const studio = this.studioEnvironment();
     const viewer = this.look !== 'studio'; // the viewer and stage looks: the active cove
     const map = viewer ? this.scene.environment : studio.map;
-    const intensity = viewer ? this.scene.environmentIntensity : studio.intensity;
+    // On the stage the mirror-like parts take a share of the cove (STAGE.parts), or they clip to white
+    const intensity = viewer ? this.scene.environmentIntensity * (this.look === 'stage' ? STAGE.parts : 1) : studio.intensity;
     if (!map) return;
     const seen = new Set<THREE.Material>();
     this.bodyMeshGroup.traverse((o) => {
