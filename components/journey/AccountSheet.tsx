@@ -23,7 +23,7 @@ import {
 } from '../../services/authService';
 import { forgetLocalConfiguration } from '../../services/journeyService';
 import { Alert, Button, Divider, Eyebrow, Modal, Status, cx } from './ui';
-import { shortModelName } from './Showroom';
+import { shortModelName } from './carNames';
 import { HERO_SLIDES } from './HeroStage';
 
 export interface AccountSheetProps {

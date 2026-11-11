@@ -23,7 +23,7 @@ import { finishSurcharge, rimFromPrice, rimPrice, rimSizes } from '../../service
 import { PAINT_FAMILIES, PaintFamily, paintFamily } from '../../services/journeyService';
 import { Button, Eyebrow, FinishChip, IconButton, Modal, PaintChip, RimThumb, cx } from './ui';
 import { RimFaceSvg } from './RimFaceSvg';
-import { shortModelName } from './Showroom';
+import { shortModelName } from './carNames';
 import { ViewerPanel } from './ViewerPanel';
 
 export type ConfigStep = 'overview' | 'paint' | 'wheels' | 'size' | 'finish';
@@ -72,14 +72,14 @@ export interface ConfiguratorProps {
 }
 
 /**
- * The configurator screen: the stage controls laid out like the owner's vehicle spec viewer (ViewerPanel)
- * plus the wheel detail sheet. The stepped panel below (LegacyConfigurator) is kept for reference and for
- * the `?panel=steps` comparison switch; it is not rendered otherwise.
+ * The configurator screen. The controls are the stepped drawer (StepDrawer below: Overview, Paint, Wheels, Size,
+ * Finish; a bottom sheet on phones, a side panel on wider screens), which the owner chose over the vehicle spec
+ * viewer's glass panel (Nov 2026). ViewerPanel is kept behind the `?panel=viewer` comparison switch only.
  */
 export const Configurator: React.FC<ConfiguratorProps> = (p) => {
   const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
-  const legacy = typeof window !== 'undefined' && /[?&]panel=steps/.test(window.location.search);
-  if (legacy) return <LegacyConfigurator {...p} />;
+  const viewerPanel = typeof window !== 'undefined' && /[?&]panel=viewer/.test(window.location.search);
+  if (!viewerPanel) return <StepDrawer {...p} />;
   const infoFinish = sheetFinish(infoWheel, p.wheel, p.finish);
   return (
     <>
@@ -104,7 +104,7 @@ export const Configurator: React.FC<ConfiguratorProps> = (p) => {
 const sheetFinish = (wheel: WheelDesign | null, selected: WheelDesign, finish: WheelFinish): WheelFinish | undefined =>
   wheel && (wheel.id === selected.id || wheel.availableVariants.includes(finish.id)) ? finish : undefined;
 
-const LegacyConfigurator: React.FC<ConfiguratorProps> = (p) => {
+const StepDrawer: React.FC<ConfiguratorProps> = (p) => {
   const [infoWheel, setInfoWheel] = useState<WheelDesign | null>(null);
   const infoFinish = sheetFinish(infoWheel, p.wheel, p.finish);
   const price = rimPrice(p.wheel, p.size, p.finish.id);
@@ -112,7 +112,7 @@ const LegacyConfigurator: React.FC<ConfiguratorProps> = (p) => {
 
   return (
     <>
-      {/* Top-left: back to the showroom */}
+      {/* Top-left: back to the welcome carousel, where the cars are chosen */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 animate-fade">
         <Button variant="light" size="sm" onClick={p.onChangeModel} icon={null} className="pl-3">
           <ChevronLeft className="h-4 w-4 -ml-0.5" strokeWidth={1.8} />

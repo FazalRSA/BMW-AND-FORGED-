@@ -12,7 +12,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { applyPaintLayers, installPaintLayers } from './paintShader';
 import { buildSoftboxStudio, ROOM_DARK, ROOM_LIGHT, ROOM_WALLS, ROOM_WHITE } from './studioSoftbox';
 import { bindEnvironment, blackenGrilleChrome, glassReflectionMaterial, passMaterial } from './carMaterials';
-import { DOME_HORIZON, GLOSS_COVE, VIEWER_FINISH, buildDome, buildFloor, buildGlossCove, buildPool, buildSoftCove, disposeCove, floorColorFor, isGlossPaint, poolTexture, studioExposure } from './viewerStudio';
+import { DOME_HORIZON, GLOSS_COVE, STAGE, VIEWER_FINISH, buildDome, buildFloor, buildGlossCove, buildPool, buildSoftCove, buildStageCove, buildStageDome, buildStageFloor, disposeCove, floorColorFor, isGlossPaint, poolTexture, studioExposure } from './viewerStudio';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 import { traceRimShapes, buildRimFaceGeometry } from './rimExtrusion';
@@ -58,6 +58,9 @@ import {
  */
 export const proceduralShape = (style: CarModel['bodyStyle']): 'coupe' | 'sedan' | 'suv' =>
   style === 'convertible' ? 'coupe' : style === 'touring' || style === 'gran_coupe' ? 'sedan' : style;
+
+/** The stage around the car: the softbox studio, the four-car viewer's grey dome, or the Cycles stills' black stage. */
+export type StageLook = 'studio' | 'viewer' | 'stage';
 
 export class CarConfiguratorEngine {
   private container: HTMLElement;
@@ -216,8 +219,13 @@ export class CarConfiguratorEngine {
     const m = typeof window !== 'undefined' ? /[?&]exposure=([0-9.]+)/.exec(window.location.search) : null;
     return m ? +m[1] : undefined;
   })();
-  /** Stage look at start: 'studio' (softbox studio over the page backdrop) or 'viewer' (the four-car viewer's dome, floor and coves, services/viewerStudio.ts); ?look=viewer compares. */
-  static LOOK: 'studio' | 'viewer' = typeof window !== 'undefined' && /[?&]look=viewer/.test(window.location.search) ? 'viewer' : 'studio';
+  /**
+   * Stage look at start: 'studio' (softbox studio over the page backdrop), 'viewer' (the four-car viewer's grey dome,
+   * floor and coves) or 'stage' (the Cycles hero stills: black backdrop, pool of light on the floor); all three in
+   * services/viewerStudio.ts. ?look=viewer|stage compares.
+   */
+  static LOOK: StageLook =
+    typeof window !== 'undefined' ? ((/[?&]look=(viewer|stage)\b/.exec(window.location.search)?.[1] as StageLook | undefined) ?? 'studio') : 'studio';
   /** "FORGED" placeholder plates on live GLB bodies (the viewer's idea); `?plates=0` turns them off for comparisons. */
   static PLATES = typeof window === 'undefined' || !/[?&]plates=0/.test(window.location.search);
   private plates: THREE.Mesh[] = [];
@@ -335,7 +343,7 @@ export class CarConfiguratorEngine {
 
     // Generate procedural studio environment reflection
     this.generateStudioEnvironment();
-    if (CarConfiguratorEngine.LOOK === 'viewer') this.setLook('viewer');
+    if (CarConfiguratorEngine.LOOK !== 'studio') this.setLook(CarConfiguratorEngine.LOOK);
 
     // Start loop
     this.animate = this.animate.bind(this);
@@ -2285,10 +2293,10 @@ export class CarConfiguratorEngine {
     this.currentPaint = paint;
     for (const m of [this.carBodyMaterial, ...this.paintVariants]) {
       applyPaintLayers(m, paint);
-      m.envMapIntensity = this.look === 'viewer' ? 1 : CarConfiguratorEngine.BODY_ENV_INTENSITY; // the viewer's coves are built for full reflections
+      m.envMapIntensity = this.look !== 'studio' ? 1 : CarConfiguratorEngine.BODY_ENV_INTENSITY; // the coves are built for full reflections
       m.color.set(paint.hex);
-      if (this.look === 'viewer') {
-        // The viewer's finish table by paint type (its coves were tuned for these values)
+      if (this.look !== 'studio') {
+        // The viewer's finish table by paint type (its coves, and the stage's, were tuned for these values)
         const f = VIEWER_FINISH[paint.type] ?? VIEWER_FINISH.Metallic;
         m.metalness = f.metalness;
         m.roughness = f.roughness;
@@ -2553,9 +2561,19 @@ export class CarConfiguratorEngine {
   private static DEPTH_ONLY = new THREE.MeshBasicMaterial({ colorWrite: false });
   private renderedBody = false;
   // The stage look (setLook): the viewer's dome, floor, pool and reflection coves are built on first use and stay in the scene, hidden when the softbox studio is on
-  private lookWanted: 'studio' | 'viewer' = 'studio';
-  private look: 'studio' | 'viewer' = 'studio';
-  private viewer: { dome: THREE.Mesh; floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshStandardMaterial>; pool: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>; gloss: THREE.WebGLRenderTarget | null; soft: THREE.WebGLRenderTarget | null } | null = null;
+  private lookWanted: StageLook = 'studio';
+  private look: StageLook = 'studio';
+  private viewer: {
+    dome: THREE.Mesh;
+    floor: THREE.Mesh<THREE.CircleGeometry, THREE.MeshStandardMaterial>;
+    pool: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+    gloss: THREE.WebGLRenderTarget | null;
+    soft: THREE.WebGLRenderTarget | null;
+    /** The stage look's black dome, lit floor and reflection cove (built on first use) */
+    stageDome: THREE.Mesh | null;
+    stageFloor: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null;
+    stage: THREE.WebGLRenderTarget | null;
+  } | null = null;
   private carFootprint = { halfL: 2.4, halfW: 1.32 };
   private renderEnvTarget: THREE.WebGLRenderTarget | null = null;
   private renderEnvLoading: Promise<THREE.WebGLRenderTarget | null> | null = null;
@@ -2648,7 +2666,7 @@ export class CarConfiguratorEngine {
    * paint); 'studio' is the softbox studio over the page backdrop. While a pre-rendered body is shown the stage
    * stays 'studio' and the wanted look returns when rendered mode ends.
    */
-  public setLook(look: 'studio' | 'viewer') {
+  public setLook(look: StageLook) {
     this.lookWanted = look;
     this.applyLook();
   }
@@ -2656,20 +2674,35 @@ export class CarConfiguratorEngine {
     const want = this.renderedBody ? 'studio' : this.lookWanted;
     if (want === this.look && !force) return; // force: the same look again (after a WebGL context restore)
     this.look = want;
-    if (want === 'viewer') {
+    if (want !== 'studio') {
       if (!this.viewer) {
         const dome = buildDome(), floor = buildFloor(), pool = buildPool(this.carFootprint.halfL, this.carFootprint.halfW);
         this.scene.add(dome, floor, pool);
-        this.viewer = { dome, floor, pool, gloss: null, soft: null };
+        this.viewer = { dome, floor, pool, gloss: null, soft: null, stageDome: null, stageFloor: null, stage: null };
       }
-      this.viewer.dome.visible = this.viewer.floor.visible = this.viewer.pool.visible = true;
+      const stage = want === 'stage';
+      if (stage && !this.viewer.stageDome) {
+        this.viewer.stageDome = buildStageDome();
+        this.viewer.stageFloor = buildStageFloor();
+        this.scene.add(this.viewer.stageDome, this.viewer.stageFloor);
+      }
+      // The viewer's grey dome and floor, or the stage's black dome and lit floor; the shadow pool serves both
+      this.viewer.dome.visible = this.viewer.floor.visible = !stage;
+      if (this.viewer.stageDome) this.viewer.stageDome.visible = stage;
+      if (this.viewer.stageFloor) this.viewer.stageFloor.visible = stage;
+      this.viewer.pool.visible = true;
       this.studioLightsGroup.visible = false; // the coves light the car on their own, as in the viewer
-      this.scene.fog = new THREE.Fog(DOME_HORIZON, 7, 24); // the floor melts into the dome's horizon
+      // The viewer's floor melts into the dome's horizon; the stage floor fades out on its own
+      this.scene.fog = stage ? null : new THREE.Fog(DOME_HORIZON, 7, 24);
       this.renderer.toneMapping = THREE.NeutralToneMapping;
       this.scene.environmentRotation.set(0, 0, 0);
       this.scene.environmentIntensity = 1.0;
     } else {
-      if (this.viewer) this.viewer.dome.visible = this.viewer.floor.visible = this.viewer.pool.visible = false;
+      if (this.viewer) {
+        this.viewer.dome.visible = this.viewer.floor.visible = this.viewer.pool.visible = false;
+        if (this.viewer.stageDome) this.viewer.stageDome.visible = false;
+        if (this.viewer.stageFloor) this.viewer.stageFloor.visible = false;
+      }
       this.studioLightsGroup.visible = true;
       this.scene.fog = null;
       this.setGlassForCove(null);
@@ -2693,21 +2726,24 @@ export class CarConfiguratorEngine {
     this.markShadowDirty();
     this.requestRender();
   }
-  /** The cove, exposure and floor colour for a paint in the viewer look: glossy paints get the gloss cove, Frozen the soft one. */
+  /**
+   * The cove, exposure and floor colour for a paint in the viewer and stage looks: glossy paints get the gloss cove
+   * (the stage cove on the stage), Frozen the soft one.
+   */
   private applyViewerPaint(paint: PaintColor) {
-    if (this.look !== 'viewer' || !this.viewer) return;
+    if (this.look === 'studio' || !this.viewer) return;
     const gloss = isGlossPaint(paint);
-    if ((gloss && !this.viewer.gloss) || (!gloss && !this.viewer.soft)) {
+    const kind = !gloss ? 'soft' : this.look === 'stage' ? 'stage' : 'gloss';
+    if (!this.viewer[kind]) {
       const pmrem = new THREE.PMREMGenerator(this.renderer);
-      const env = gloss ? buildGlossCove() : buildSoftCove();
-      const target = gloss ? pmrem.fromScene(env, 0.0, 0.1, 100, { size: 512 }) : pmrem.fromScene(env, 0.02);
+      const env = kind === 'soft' ? buildSoftCove() : kind === 'stage' ? buildStageCove() : buildGlossCove();
+      const target = kind === 'soft' ? pmrem.fromScene(env, 0.02) : pmrem.fromScene(env, 0.0, 0.1, 100, { size: 512 });
       disposeCove(env);
       pmrem.dispose();
-      if (gloss) this.viewer.gloss = target;
-      else this.viewer.soft = target;
+      this.viewer[kind] = target;
     }
-    this.scene.environment = (gloss ? this.viewer.gloss : this.viewer.soft)!.texture;
-    const exposure = studioExposure(paint);
+    this.scene.environment = this.viewer[kind]!.texture;
+    const exposure = studioExposure(paint) * (this.look === 'stage' ? STAGE.exposure : 1);
     this.renderer.toneMappingExposure = exposure;
     this.viewer.floor.material.color.copy(floorColorFor(gloss, exposure));
     this.setGlassForCove(gloss);
@@ -2746,9 +2782,10 @@ export class CarConfiguratorEngine {
    */
   private syncBoundEnvironment() {
     const studio = this.studioEnvironment();
-    const viewer = this.look === 'viewer';
+    const viewer = this.look !== 'studio'; // the viewer and stage looks: the active cove
     const map = viewer ? this.scene.environment : studio.map;
-    const intensity = viewer ? this.scene.environmentIntensity : studio.intensity;
+    // On the stage the mirror-like parts take a share of the cove (STAGE.parts), or they clip to white
+    const intensity = viewer ? this.scene.environmentIntensity * (this.look === 'stage' ? STAGE.parts : 1) : studio.intensity;
     if (!map) return;
     const seen = new Set<THREE.Material>();
     this.bodyMeshGroup.traverse((o) => {

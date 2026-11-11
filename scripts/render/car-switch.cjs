@@ -17,10 +17,8 @@ const NOISE = /supabase|ERR_|Failed to load resource|favicon|net::|CORS|blocked/
   await p.goto('' + (process.env.BASE || 'http://127.0.0.1:5173/') + '', { waitUntil: 'domcontentloaded', timeout: 240000 });
   await p.locator('[aria-label="Loading"]').waitFor({ state: 'hidden', timeout: 180000 }).catch(() => {});
   await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click({ timeout: 120000 });
-  await p.getByRole('button', { name: /^build$/i }).first().waitFor({ timeout: 120000 });
-  await p.getByRole('button', { name: /^build$/i }).first().click();
-  const confirm = p.getByRole('button', { name: /^confirm$/i });
-  if (await confirm.waitFor({ timeout: 8000 }).then(() => true, () => false)) await confirm.click({ timeout: 45000, noWaitAfter: true }).catch(() => {});
+  // Enter opens the configurator directly (the showroom model picker is gone). The car chips are the viewer
+  // panel's, so this check needs BASE to end in ?panel=viewer.
   const car = p.locator('section').filter({ hasText: /^Car/ }).first();
   await car.waitFor({ timeout: 120000 });
   console.log('car chips:', await car.locator('button').allTextContents());

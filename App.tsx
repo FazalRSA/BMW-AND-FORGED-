@@ -17,7 +17,7 @@ import { IN_APP_STATE, cameFromApp } from './services/nav';
 import { controlsInset, layoutMode } from './services/layout';
 import { BootLoader } from './components/journey/BootLoader';
 import { WelcomeGate } from './components/journey/WelcomeGate';
-import { Showroom, ShowroomBackdrop } from './components/journey/Showroom';
+import { HERO_SLIDES } from './components/journey/HeroStage';
 import { TopBar } from './components/journey/TopBar';
 import { ConfigStep, Configurator, MoreOptionsModal } from './components/journey/Configurator';
 import { SummaryPage } from './components/journey/SummaryPage';
@@ -34,12 +34,11 @@ const RimDetailPage = lazy(() => import('./components/RimDetailPage').then((m) =
 const InfoPage = lazy(() => import('./components/InfoPage').then((m) => ({ default: m.InfoPage })));
 const AdminPage = lazy(() => import('./components/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
 
-// Journey: welcome -> showroom (choose the car) -> configure (paint, wheel design, size, finish) -> summary.
+// Journey: welcome (choose the car on the carousel) -> configure (paint, wheel design, size, finish) -> summary.
 // One 3D studio lives behind every stage; the camera moves between them instead of the page changing.
 
 type Route =
   | { name: 'welcome' }
-  | { name: 'showroom' }
   | { name: 'configure' }
   | { name: 'summary' }
   | { name: 'forged' }
@@ -53,7 +52,7 @@ const routeFromLocation = (): Route => {
   if (typeof window === 'undefined') return { name: 'welcome' };
   const hash = window.location.hash.replace(/^#/, '');
   const path = (hash.startsWith('/') ? hash : window.location.pathname).toLowerCase().replace(/\/+$/, '');
-  if (path === '/models') return { name: 'showroom' };
+  if (path === '/models') return { name: 'welcome' }; // the old model picker: its cars are on the welcome carousel now
   if (path === '/configure') return { name: 'configure' };
   if (path === '/summary') return { name: 'configure' }; // stills are captured on the way in
   if (path === '/forged' || hash === 'forged') return { name: 'forged' };
@@ -69,7 +68,6 @@ const routeFromLocation = (): Route => {
 const routePath = (route: Route) =>
   ({
     welcome: '/',
-    showroom: '/models',
     configure: '/configure',
     summary: '/summary',
     forged: '/forged',
@@ -89,15 +87,22 @@ const pickFinish = (catalog: Catalog, wheel: WheelDesign, current?: WheelFinish)
   catalog.finishes[wheel.defaultVariant] ||
   Object.values(catalog.finishes)[0];
 
-/** Cars with a real 3D body make the showroom; the simple procedural bodies are only a fallback. */
-const showroomCars = (cars: CarModel[]) => {
+/** Cars with a real 3D body make the line-up; the simple procedural bodies are only a fallback. */
+const lineUpCars = (cars: CarModel[]) => {
   const active = cars.filter((c) => c.active !== false);
   const withModels = active.filter((c) => c.modelUrl);
   return withModels.length ? withModels : active.length ? active : cars;
 };
 
-/** First-visit paint when the car offers it (otherwise the car's first factory paint). */
-const DEFAULT_PAINT_ID = 'isle_of_man_green';
+/**
+ * The car and paint a first visit starts on: the welcome carousel's first slide, so the engine has that car ready
+ * behind the still and Enter has nothing to load. The paint is the still's when the car offers it (otherwise the
+ * car's first factory paint).
+ */
+const firstCar = (cars: CarModel[]) => {
+  const lineUp = lineUpCars(cars);
+  return lineUp.find((c) => c.id === HERO_SLIDES[0].carId) ?? lineUp[0];
+};
 
 /** Fades the pre-rendered stage's edges that stop short of the space around it (8 % of its size). */
 const stageEdgeFade = (st: { left: number; top: number }): React.CSSProperties => {
@@ -125,12 +130,12 @@ export const App: React.FC = () => {
     reloadCatalog();
   }, [reloadCatalog]);
 
-  const cars = useMemo(() => showroomCars(catalog.cars), [catalog.cars]);
+  const cars = useMemo(() => lineUpCars(catalog.cars), [catalog.cars]);
 
   // The five choices
-  const [selectedCar, setSelectedCar] = useState<CarModel>(() => showroomCars(STATIC_CATALOG.cars)[0]);
+  const [selectedCar, setSelectedCar] = useState<CarModel>(() => firstCar(STATIC_CATALOG.cars));
   const [selectedPaint, setSelectedPaint] = useState<PaintColor>(
-    () => pickPaintForCar(STATIC_CATALOG.paints, showroomCars(STATIC_CATALOG.cars)[0], DEFAULT_PAINT_ID)!
+    () => pickPaintForCar(STATIC_CATALOG.paints, firstCar(STATIC_CATALOG.cars), HERO_SLIDES[0].paintId)!
   );
   const [selectedWheel, setSelectedWheel] = useState<WheelDesign>(STATIC_CATALOG.wheels[0]);
   const [selectedFinish, setSelectedFinish] = useState<WheelFinish>(STATIC_CATALOG.finishes.liquid_metal);
@@ -148,6 +153,8 @@ export const App: React.FC = () => {
   const [booted, setBooted] = useState(false);
   const [bootProgress, setBootProgress] = useState(0.08);
   const [driving, setDriving] = useState(false);
+  /** A car chosen on the welcome is still loading: the stage stays dark until it is in. */
+  const [arriving, setArriving] = useState(false);
   const [step, setStep] = useState<ConfigStep>('overview');
   const [cameraView, setCameraView] = useState<CameraViewPreset>('frontThreeQuarter');
   // Cars with pre-rendered (Blender) bodies show those in the configurator; see RenderedCarView
@@ -297,7 +304,7 @@ export const App: React.FC = () => {
 
   // After a catalogue load or admin edit, point selections at the fresh rows and push them to the engine.
   useEffect(() => {
-    const car = catalog.cars.find((c) => c.id === selectedCar.id) ?? showroomCars(catalog.cars)[0];
+    const car = catalog.cars.find((c) => c.id === selectedCar.id) ?? lineUpCars(catalog.cars)[0];
     const paint = pickPaintForCar(catalog.paints, car, selectedPaint.id);
     const wheel = catalog.wheels.find((w) => w.id === selectedWheel.id) ?? catalog.wheels[0];
     if (!car || !paint || !wheel) return;
@@ -322,7 +329,7 @@ export const App: React.FC = () => {
     engine.setRimSize(size);
   }, [catalog]);
 
-  // Warm the neighbouring cars so showroom changes don't wait on downloads
+  // Warm the neighbouring cars so car changes don't wait on downloads
   useEffect(() => {
     if (!booted || cars.length < 2) return;
     const engine = engineRef.current;
@@ -372,9 +379,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
-    // The configurator screen looks like the four-car viewer (dome, floor, coves) for cars drawn live; the
-    // showroom keeps its own backdrop (the giant model name sits behind the transparent canvas)
-    engine.setLook(route.name === 'configure' && !rendered ? 'viewer' : 'studio');
+    // The configurator screen is the Cycles stills' stage (black backdrop, a pool of light on the floor) for cars
+    // drawn live. The welcome's stills cover the canvas, so the stage is built there already, out of sight: its
+    // reflections and shaders are ready when Enter shows it
+    engine.setLook((route.name === 'configure' || route.name === 'welcome') && !rendered ? 'stage' : 'studio');
     engine.setRenderedBody(rendered);
     if (route.name === 'configure') engine.setAutoRotate(autoRotate); // the engine refuses to turn while a frame is showing
     engine.handleResize();
@@ -389,17 +397,11 @@ export const App: React.FC = () => {
     if (!engine) return;
     if (renderedRef.current) {
       engine.setViewInset(0, 0);
-    } else if (route.name === 'configure') {
-      // the same sheet/panel rule and sizes as the CSS (services/layout.ts)
+    } else if (route.name === 'configure' || route.name === 'welcome') {
+      // the same sheet/panel rule and sizes as the CSS (services/layout.ts); the welcome's hidden canvas is
+      // framed as the configurator, so Enter shows the car where it will stay
       const inset = controlsInset();
       engine.setViewInset(inset.right, inset.bottom);
-    } else if (route.name === 'welcome') {
-      // Car to the right of the welcome copy (above it when the copy sits underneath)
-      if (layoutMode() === 'sheet') engine.setViewInset(0, window.innerHeight * 0.42);
-      else engine.setViewInset(-window.innerWidth * 0.34, 0);
-    } else if (route.name === 'showroom' && window.innerHeight < 520) {
-      // a phone on its side: the model card takes the lower third, the car sits above it
-      engine.setViewInset(0, window.innerHeight * 0.32);
     } else engine.setViewInset(0, 0);
   };
   // The current stage's camera preset (re-applied when the layout changes)
@@ -407,32 +409,30 @@ export const App: React.FC = () => {
   applyCameraRef.current = () => {
     const engine = engineRef.current;
     if (!engine || !booted) return;
-    if (route.name === 'welcome') engine.setCameraPreset('hero');
-    else if (route.name === 'showroom') engine.setCameraPreset('showroom');
-    else if (route.name === 'configure') engine.setCameraPreset(cameraView);
+    if (route.name === 'welcome' || route.name === 'configure') engine.setCameraPreset(cameraView);
   };
 
   // Camera choreography per stage
   const revealedRef = useRef(false);
+  /** The visitor has been in the configurator: their paint is theirs, and Enter on the same car keeps it. */
+  const configuredRef = useRef(false);
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine || !booted) return;
-    engine.setPaused(!['welcome', 'showroom', 'configure'].includes(route.name));
+    engine.setPaused(!['welcome', 'configure'].includes(route.name));
     applyInsetRef.current();
     if (route.name === 'welcome') {
-      engine.setCameraPreset('hero');
-      engine.setAutoRotate(true);
-      if (!revealedRef.current) engine.playReveal();
-    } else if (route.name === 'showroom') {
+      // The stills cover the canvas: the engine stands ready in the configurator's framing and draws only when
+      // something changes (no turntable behind the still)
       engine.setAutoRotate(false);
-      engine.setCameraPreset('showroom');
-      if (!revealedRef.current) engine.playReveal();
+      engine.setCameraPreset(cameraView, { instant: true });
     } else if (route.name === 'configure') {
+      configuredRef.current = true;
       engine.setAutoRotate(autoRotate);
       engine.setCameraPreset(cameraView);
-      if (!revealedRef.current) engine.playReveal();
+      if (!revealedRef.current) engine.playReveal(); // the first time the stage is seen
+      revealedRef.current = true;
     }
-    revealedRef.current = true;
   }, [route.name, booted]);
 
   const selectView = useCallback((view: CameraViewPreset) => {
@@ -567,7 +567,7 @@ export const App: React.FC = () => {
 
   const applyConfig = useCallback(
     (cfg: SavedConfiguration) => {
-      // Cars are looked up in the showroom list (active, with a body), the same with the bundled catalogue
+      // Cars are looked up in the line-up (active, with a body), the same with the bundled catalogue
       // (whose cars are not filtered) and Supabase's (which are): a saved car that was hidden falls back to
       // the first car on offer, like a retired wheel, so the car drawn is always one the panel can show
       let car = cars.find((c) => c.id === cfg.carId);
@@ -710,13 +710,13 @@ export const App: React.FC = () => {
     return maxMs === undefined ? pending.shared : Promise.race([pending.shared, new Promise<boolean>((r) => setTimeout(() => r(true), maxMs))]);
   };
   /**
-   * Google sign-in. The round trip reloads the page, so a build in progress (showroom, configurator,
-   * summary) is kept under its configuration code and reopened through the /?config= link; from any
-   * other page the visitor simply comes back to it.
+   * Google sign-in. The round trip reloads the page, so a build in progress (configurator, summary) is
+   * kept under its configuration code and reopened through the /?config= link; from any other page the
+   * visitor simply comes back to it.
    */
   const signIn = async (): Promise<string | null> => {
     let returnTo: string | undefined;
-    if (route.name === 'showroom' || route.name === 'configure' || route.name === 'summary') {
+    if (route.name === 'configure' || route.name === 'summary') {
       const cfg = currentConfig();
       const key = configKey(cfg);
       const code = configCode?.key === key ? configCode.code : saveCurrent(cfg, key).code;
@@ -754,7 +754,6 @@ export const App: React.FC = () => {
 
   const menuLinks = [
     { label: 'Home', onClick: () => navigateTo({ name: 'welcome' }) },
-    { label: 'Models', onClick: () => navigateTo({ name: 'showroom' }) },
     { label: 'Configure', onClick: () => navigateTo({ name: 'configure' }) },
     { label: 'The wheels', onClick: () => navigateTo({ name: 'forged' }) },
     { label: 'Enquire', onClick: () => setEnquiryOpen(true) },
@@ -764,12 +763,10 @@ export const App: React.FC = () => {
   ];
 
   const enquirySummary = `${selectedCar.name} · ${selectedPaint.name} · ${selectedWheel.name} ${selectedSize} in ${selectedFinish.name}`;
-  const onJourney = ['welcome', 'showroom', 'configure'].includes(route.name);
+  const onJourney = ['welcome', 'configure'].includes(route.name);
 
   return (
     <div className="relative w-screen h-[100dvh] overflow-hidden bg-stage select-none">
-      <ShowroomBackdrop car={selectedCar} visible={booted && route.name === 'showroom'} />
-
       {/* The dark studio behind the pre-rendered car: charcoal, with the floor's pool of light under the car */}
       <div
         aria-hidden
@@ -787,63 +784,51 @@ export const App: React.FC = () => {
       <div
         ref={containerRef}
         style={rendered && stage ? stage : undefined}
-        className={`absolute ${rendered && stage ? '' : 'inset-0'} z-10 transition-opacity duration-700 ${route.name === 'configure' ? 'cursor-grab active:cursor-grabbing' : ''} ${onJourney ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute ${rendered && stage ? '' : 'inset-0'} z-10 transition-opacity duration-700 ${route.name === 'configure' ? 'cursor-grab active:cursor-grabbing' : ''} ${onJourney && !arriving ? 'opacity-100' : 'opacity-0'}`}
       />
 
       {booted && route.name === 'welcome' && (
         <WelcomeGate
           region={region}
           onRegionChange={changeRegion}
-          onEnter={(carId) => {
-            navigateTo({ name: 'showroom' });
-            // Open the showroom on the car that was on stage, when it is in the line-up
-            const i = cars.findIndex((c) => c.id === carId);
-            if (i >= 0 && i !== carIndex) {
-              // A failed drive leaves the showroom on the current car; it must not surface as an unhandled rejection
-              stepCar(i > carIndex ? 1 : -1, i).catch((e) => console.warn('Could not open the showroom on that car:', e));
+          startCarId={selectedCar.id}
+          onSlide={(carId) => {
+            // Fetch and parse the car on stage now, so Enter only has to mount it
+            const car = cars.find((c) => c.id === carId);
+            if (car && car.id !== selectedCar.id) engineRef.current?.preloadCar(car);
+          }}
+          onEnter={(carId, paintId) => {
+            // Straight into the configurator on the car that was on stage, when it is in the line-up
+            const car = cars.find((c) => c.id === carId) ?? selectedCar;
+            const carChanged = car.id !== selectedCar.id;
+            if (carChanged) {
+              mountCar(car);
+              // The stage stays dark until the new car is in (never the previous car for a moment). A failed
+              // load keeps the current car; it must not surface as an unhandled rejection
+              const engine = engineRef.current;
+              if (engine) {
+                setArriving(true);
+                engine
+                  .loadCar(car)
+                  .catch((e) => console.warn('Could not open that car:', e))
+                  .finally(() => setArriving(false));
+              }
             }
+            // The car arrives as it stood on the welcome stage: in the still's paint, when the car offers it.
+            // A build already made on this car keeps its paint
+            if (carChanged || !configuredRef.current) {
+              const paint = paintsForCar(catalog.paints, car).find((x) => x.id === paintId);
+              if (paint) {
+                setSelectedPaint(paint);
+                engineRef.current?.applyPaintColor(paint);
+              }
+            }
+            setStep('overview');
+            setCameraView('frontThreeQuarter');
+            navigateTo({ name: 'configure' });
           }}
           onOpenForged={() => navigateTo({ name: 'forged' })}
         />
-      )}
-
-      {booted && route.name === 'showroom' && (
-        <>
-          <TopBar
-            links={menuLinks}
-            onLogo={() => navigateTo({ name: 'welcome' })}
-            actions={
-              <>
-                <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigateTo({ name: 'configure' })}>
-                  Configure
-                </Button>
-                {/* Phones: Enquire is in the menu (it overlapped the logo at 390 px) */}
-                <Button variant="secondary" size="sm" className="hidden sm:inline-flex" onClick={() => setEnquiryOpen(true)}>
-                  Enquire
-                </Button>
-                <IconButton label="Account" onClick={() => setAccountOpen(true)} className="ring-1 ring-line">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
-                  ) : (
-                    <UserRound className="h-5 w-5" strokeWidth={1.6} />
-                  )}
-                </IconButton>
-              </>
-            }
-          />
-          <Showroom
-            cars={cars}
-            index={carIndex}
-            busy={driving}
-            onStep={(d) => stepCar(d)}
-            onJump={(i) => stepCar(i > carIndex ? 1 : -1, i)}
-            onBuild={() => {
-              setStep('overview');
-              setCameraView('frontThreeQuarter');
-              navigateTo({ name: 'configure' });
-            }}
-          />
-        </>
       )}
 
       {booted && route.name === 'configure' && (
@@ -879,7 +864,7 @@ export const App: React.FC = () => {
           onWheel={chooseWheel}
           onSize={chooseSize}
           onFinish={chooseFinish}
-          onChangeModel={() => navigateTo({ name: 'showroom' })}
+          onChangeModel={() => navigateTo({ name: 'welcome' })}
           onSummary={openSummary}
           onOpen360={(w) => navigateTo({ name: 'rim', rimId: w.id })}
           onOpenMore={() => setMoreOpen(true)}
@@ -1053,6 +1038,11 @@ export const App: React.FC = () => {
               setStep('wheels');
               setCameraView('frontWheel');
               navigateTo({ name: 'configure' });
+            }}
+            // the enquiry form sends the current build, so the rim on this page goes onto it first
+            onEnquire={(wheel, finish, size) => {
+              applyRim(wheel, finish, size);
+              setEnquiryOpen(true);
             }}
           />
         </div>

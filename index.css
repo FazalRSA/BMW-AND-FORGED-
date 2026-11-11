@@ -56,6 +56,14 @@ body {
   /* White studio behind the 3D car: a bright seamless backdrop (the car's reflections are a white room too) */
   background: radial-gradient(120% 85% at 50% 58%, #ffffff 0%, #f1f1f1 55%, #dedede 100%);
 }
+/* Wheel studio stage on the rim page (components/WheelStudio.tsx, WheelStage.tsx): the website's light
+   product-photography backdrop in a rounded frame. Pair it with .stage-light for dark-on-light text. */
+.wheel-stage {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: radial-gradient(120% 90% at 50% 35%, #f6f7f9 0%, #e3e6eb 60%, #cfd3da 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
 /* Welcome stage: the Cycles hero stills (16:9, black backdrop, a pool of light under the car).
    Portrait: the car sits above the text, wider than the screen so it fills it. Landscape: the car sits
    right of the text. The floor fades out at the sides and bottom so the frame never shows. */

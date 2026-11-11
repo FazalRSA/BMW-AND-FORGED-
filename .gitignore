@@ -38,3 +38,6 @@ docs/ingest/**/*.png
 
 # CTO toolkit turn-stats log (rewritten by a hook every turn)
 .cto-toolkit/learning/patterns.jsonl
+
+# Agent worktrees (isolated checkouts made by Claude Code; never part of the repo)
+.claude/worktrees/

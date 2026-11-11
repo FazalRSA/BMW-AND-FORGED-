@@ -9,13 +9,13 @@ import { Region, formatMoney } from '../../config/brand';
 import { CameraViewPreset, CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import { finishSurcharge, rimPrice, rimSizes } from '../../services/pricing';
 import { Button, FinishChip, IconButton, PaintChip, RimThumb, cx } from './ui';
-import { shortModelName } from './Showroom';
+import { shortModelName } from './carNames';
 import type { ConfigStep } from './Configurator';
 
 /**
  * The configurator's controls laid out like the owner's vehicle spec viewer (car_viewer_web): one
  * glass panel with small uppercase section headings, round swatches in a six-column grid, pill chips
- * for views and motion, and the paint's name over the stage. The journey around it (showroom, summary,
+ * for views and motion, and the paint's name over the stage. The journey around it (welcome, summary,
  * PDF, enquiry) is untouched: every handler is the one App.tsx already passes to the configurator.
  */
 export interface ViewerPanelProps {
