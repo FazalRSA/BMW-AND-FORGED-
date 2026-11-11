@@ -305,7 +305,8 @@ export class CarConfiguratorEngine {
     this.boundOnContextRestored = () => {
       this.environmentTarget = null; // its GPU objects died with the old context; nothing to free
       this.renderEnvTarget = null;
-      if (this.viewer) this.viewer.gloss = this.viewer.soft = null; // rebuilt by the next applyViewerPaint
+      // rebuilt by the next applyViewerPaint (every cove: a missed one leaves the car black on the stage)
+      if (this.viewer) this.viewer.gloss = this.viewer.soft = this.viewer.stage = null;
       this.generateStudioEnvironment();
       if (this.renderedBody) {
         this.liveEnv = null; // the studio just generated is the live one to come back to
@@ -3178,7 +3179,9 @@ export class CarConfiguratorEngine {
     if (this.viewer) {
       this.viewer.gloss?.dispose();
       this.viewer.soft?.dispose();
-      for (const m of [this.viewer.dome, this.viewer.floor, this.viewer.pool]) {
+      this.viewer.stage?.dispose();
+      const stageMeshes = [this.viewer.stageDome, this.viewer.stageFloor].filter((m): m is THREE.Mesh => !!m);
+      for (const m of [this.viewer.dome, this.viewer.floor, this.viewer.pool, ...stageMeshes]) {
         m.geometry.dispose();
         const mat = m.material as THREE.MeshBasicMaterial;
         mat.map?.dispose();
