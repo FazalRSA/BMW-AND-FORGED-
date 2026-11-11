@@ -598,7 +598,9 @@ export const MoreOptionsModal: React.FC<{
   onRestart: () => void;
   /** Opens the account sheet (sign-in, profile, garage). */
   onOpenAccount?: () => void;
-}> = ({ open, onClose, region, onRegion, onLoadCode, onRestart, onOpenAccount }) => {
+  /** The site's other pages and the enquiry (the menu the showroom's top bar used to hold). */
+  links?: { label: string; onClick: () => void }[];
+}> = ({ open, onClose, region, onRegion, onLoadCode, onRestart, onOpenAccount, links }) => {
   const [code, setCode] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
   return (
@@ -666,6 +668,27 @@ export const MoreOptionsModal: React.FC<{
             <span className="font-medium">Account &amp; garage</span>
             <span className="text-mute">Sign in · saved builds</span>
           </button>
+        </>
+      )}
+
+      {links && links.length > 0 && (
+        <>
+          <Eyebrow className="mt-7 mb-3">More</Eyebrow>
+          <nav aria-label="More pages" className="grid gap-1.5">
+            {links.map((l) => (
+              <button
+                key={l.label}
+                onClick={() => {
+                  onClose();
+                  l.onClick();
+                }}
+                className="flex w-full items-center justify-between rounded-xl bg-ink/[0.035] px-4 py-3 text-left text-[13px] font-medium transition hover:bg-ink/[0.06]"
+              >
+                {l.label}
+                <ChevronRight className="h-4 w-4 text-mute" strokeWidth={1.8} />
+              </button>
+            ))}
+          </nav>
         </>
       )}
 
