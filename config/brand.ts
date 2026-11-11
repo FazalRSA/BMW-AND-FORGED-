@@ -30,6 +30,8 @@ export const BRAND = {
   name: 'FORGEDSA',
   /** Logo image on a transparent background (the gold wordmark). Replaces the text when set. */
   logoUrl: '/brand/forgedsa-wordmark.png' as string,
+  /** The same wordmark as a vector (traced from the PNG): sharp at any size on screen. The PDF still embeds the PNG. */
+  logoSvgUrl: '/brand/forgedsa-wordmark.svg' as string,
   /** Small line under the wordmark on the welcome screen. */
   descriptor: 'Forged wheels for BMW M',
   tagline: 'Precision. Forged.',
