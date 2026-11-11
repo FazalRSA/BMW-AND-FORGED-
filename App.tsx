@@ -1039,6 +1039,11 @@ export const App: React.FC = () => {
               setCameraView('frontWheel');
               navigateTo({ name: 'configure' });
             }}
+            // the enquiry form sends the current build, so the rim on this page goes onto it first
+            onEnquire={(wheel, finish, size) => {
+              applyRim(wheel, finish, size);
+              setEnquiryOpen(true);
+            }}
           />
         </div>
       )}
