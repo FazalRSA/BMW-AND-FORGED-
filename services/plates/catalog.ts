@@ -13,7 +13,9 @@ import { PaintFinish, PlateBox, PlateCar, PlateManifest, PlatePaint, PlateView, 
  * which price. The configurator shows the join, so it can never disagree with the rest of the site:
  *
  * - **Cars** come from the manifest and take their specs from the catalogue car. A plate car without a
- *   catalogue car (or with a hidden one) is not shown.
+ *   catalogue car (or with a hidden one) is not shown. The car is named as the plates name it: the
+ *   picture is of that model, so when the catalogue row says otherwise the difference is reported and
+ *   the picture's name is shown.
  * - **Wheels** are the catalogue's active wheels, in catalogue order, with the catalogue's names, sizes,
  *   finishes and prices. A catalogue wheel without plates is shown as "not rendered yet"; a plate wheel
  *   or finish the catalogue does not offer is not shown.
@@ -35,8 +37,13 @@ export interface ConfigCar {
   /** The plate id: used in plate URLs and in the page's address. */
   id: string;
   plate: PlateCar;
-  /** The catalogue car: name, specs, and the id saved with builds and leads. */
+  /**
+   * The catalogue car: specs, and the id saved with builds and leads. Its `name` and `badge` say what
+   * the plates show (see joinCatalog), so the summary and the PDF name the car in the picture.
+   */
   model: CarModel;
+  /** The name without the make, for chips: "M2 CS". */
+  shortName: string;
 }
 
 export interface ConfigWheel {
@@ -88,7 +95,11 @@ export function joinCatalog(manifest: PlateManifest, catalog: CatalogSource): Pl
     const model = findCatalogCar(plate, catalog.cars);
     if (!model) warnings.push(`car ${plate.id}: no catalogue car, not shown`);
     else if (model.active === false) warnings.push(`car ${plate.id}: catalogue car ${model.id} is hidden, not shown`);
-    else cars.push({ id: plate.id, plate, model });
+    else {
+      if (!same(model.name, plate.label)) warnings.push(`car ${plate.id}: the catalogue calls ${model.id} "${model.name}", the plates show "${plate.label}"; the plates' name is used`);
+      const shortName = plate.label.replace(/^BMW\s+/i, '');
+      cars.push({ id: plate.id, plate, shortName, model: { ...model, name: plate.label, badge: [shortName, plate.chassis].filter(Boolean).join(' ') } });
+    }
   }
 
   // The plate wheel of a catalogue wheel: the same id, or the id the wheel's 3D file is named after

@@ -20,6 +20,8 @@ export interface BrochureInput {
   code: string;
   /** JPEG data URLs: [front three-quarter, side, wheel close-up] */
   images: string[];
+  /** The line beside the paint's name, e.g. "Satin" or "Metallic · C31" (default: the catalogue type and code). */
+  paintDetail?: string;
 }
 
 type RGB = [number, number, number];
@@ -200,7 +202,7 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   // Blank specs (cars listed without them) leave the detail column empty rather than "Front  · Rear "
   const rows: [string, string, string, string?][] = [
     ['Vehicle', input.car.name, [input.car.chassisCode, input.car.power].filter((v) => v?.trim()).join(' · ')],
-    ['Paint', input.paint.name, `${input.paint.type} · ${input.paint.code}`],
+    ['Paint', input.paint.name, input.paintDetail ?? `${input.paint.type} · ${input.paint.code}`],
     ['Wheel design', input.wheel.name, [input.wheel.code, input.wheel.style].filter((v) => v?.trim()).join(' · ')],
     ['Wheel size', input.size, pdfText(wheelFitment), money(Math.max(0, input.price - surcharge))],
     ['Wheel finish', input.finish.name, input.finish.colorName, surcharge > 0 ? `+${money(surcharge)}` : undefined]

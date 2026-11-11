@@ -33,3 +33,16 @@ export const linkTo = (path: string) => (e: { preventDefault: () => void; metaKe
   e.preventDefault();
   goTo(path);
 };
+
+/**
+ * The address the app is on: the path and query, or the `#/path?query` form used where pushState is
+ * not allowed (goTo falls back to it).
+ */
+export const appAddress = (): { path: string; search: string } => {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (hash.startsWith('/')) {
+    const [path, search = ''] = hash.split('?');
+    return { path, search: search ? `?${search}` : '' };
+  }
+  return { path: window.location.pathname, search: window.location.search };
+};

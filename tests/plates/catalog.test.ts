@@ -15,6 +15,17 @@ describe('joinCatalog', () => {
     assert.equal(cat.cars[0].model.name, 'BMW M2 CS');
   });
 
+  test('the car is named as the plates name it, even when the catalogue row says otherwise', () => {
+    // the live database still calls m2_g87 "BMW M2 Coupe" (badge "M2 G87"); the plates are of the M2 CS
+    const stale = { ...CATALOG, cars: CATALOG.cars.map((c) => (c.id === 'm2_g87' ? { ...c, name: 'BMW M2 Coupe', badge: 'M2 G87' } : c)) };
+    const cat = joinCatalog(manifest(), stale);
+    assert.deepEqual([cat.cars[0].model.name, cat.cars[0].model.badge, cat.cars[0].shortName], ['BMW M2 CS', 'M2 CS G87', 'M2 CS']);
+    assert.equal(cat.cars[0].model.id, 'm2_g87', 'builds and leads still carry the catalogue id');
+    assert.equal(cat.cars[0].model.engine, CATALOG.cars.find((c) => c.id === 'm2_g87')!.engine, 'specs are the catalogue\'s');
+    assert.ok(cat.warnings.some((w) => /M2 Coupe/.test(w)));
+    assert.equal(catalog().warnings.some((w) => /calls/.test(w)), false, 'no report when the names agree');
+  });
+
   test('a plate car without a catalogue car is hidden and reported', () => {
     const cat = catalog();
     assert.equal(cat.cars.some((c) => c.id === 'm9_x99'), false);

@@ -10,3 +10,15 @@
  * A bucket on another origin must send CORS headers: the PDF draws the plates onto a canvas.
  */
 export const PLATES_BASE: string = (import.meta.env.VITE_PLATES_BASE || '/plates').replace(/\/+$/, '');
+
+/**
+ * 'anonymous' when the plates are on another origin, so the browser fetches them with CORS (once, for
+ * the page and the PDF alike); undefined for plates on this site.
+ */
+export const PLATES_CROSS_ORIGIN: 'anonymous' | undefined = (() => {
+  try {
+    return typeof window !== 'undefined' && new URL(PLATES_BASE, window.location.href).origin !== window.location.origin ? ('anonymous' as const) : undefined;
+  } catch {
+    return undefined; // not a URL the browser understands: treated as this site
+  }
+})();

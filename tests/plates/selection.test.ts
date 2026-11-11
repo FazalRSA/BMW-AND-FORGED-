@@ -15,6 +15,7 @@ import {
   previewSelection,
   reconcileSelection,
   selectionParams,
+  summaryViews,
   viewOptions,
   wheelLayer,
   wheelOptions
@@ -229,5 +230,21 @@ describe('a plate that failed to load', () => {
     assert.equal(selection.car, 'm5_g90');
     assert.equal(isRendered(broken, selection), false);
     assert.equal(carOptions(broken, selection).find((o) => o.id === 'm5_g90')?.available, false);
+  });
+});
+
+describe('summaryViews', () => {
+  test('the rendered views of the build, in the manifest order', () => {
+    assert.deepEqual(summaryViews(cat, sel()).map((s) => s.view), ['front34', 'side', 'rear34']);
+    assert.deepEqual(summaryViews(cat, sel({ view: 'side', wheel: 'forged_fsa002', finish: 'gold' })).map((s) => s.view), ['front34', 'side']);
+    assert.deepEqual(summaryViews(cat, sel({ car: 'm5_g90', paint: 'alpine_white' })).map((s) => s.view), ['front34']);
+  });
+
+  test('with more views than fit, the first two and the last (the close-up) are kept', () => {
+    const raw = rawManifest();
+    for (const view of ['side', 'rear34', 'wheel'] as const) raw.cars[0].plates[view].body = ['portimao_blue_metallic'];
+    const parsed = parseManifest(raw);
+    assert.equal(parsed.ok, true);
+    if (parsed.ok === true) assert.deepEqual(summaryViews(joinCatalog(parsed.manifest, CATALOG), sel()).map((s) => s.view), ['front34', 'side', 'wheel']);
   });
 });

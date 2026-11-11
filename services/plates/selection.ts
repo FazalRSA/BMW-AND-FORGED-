@@ -262,6 +262,21 @@ export function previewSelection(catalog: PlateCatalog, selection: Selection, ch
 }
 
 // ----------------------------------------------------
+// The finished build
+// ----------------------------------------------------
+
+/**
+ * The views a finished build is shown in (summary, PDF): the rendered views of the combination in the
+ * manifest's order, the current view's place taken by the first. With more than `limit`, the first two
+ * and the last are kept (the last view is the wheel close-up).
+ */
+export function summaryViews(catalog: PlateCatalog, selection: Selection, limit = 3): Selection[] {
+  const rendered = catalog.views.map((view) => ({ ...selection, view: view.id })).filter((candidate) => isRendered(catalog, candidate));
+  if (rendered.length <= limit) return rendered;
+  return [...rendered.slice(0, limit - 1), rendered[rendered.length - 1]];
+}
+
+// ----------------------------------------------------
 // Words
 // ----------------------------------------------------
 

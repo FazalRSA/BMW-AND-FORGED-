@@ -9,7 +9,7 @@ import { BRAND, Region, formatMoney } from '../../config/brand';
 import { CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import { PdfContact, rememberPdfContact, rememberedPdfContact, shareUrl } from '../../services/journeyService';
 import { finishSurcharge, rimPrice } from '../../services/pricing';
-import { Alert, Button, Eyebrow, FinishChip, Logo, Modal, PaintChip, RimThumb, Status, cx } from './ui';
+import { Alert, Button, Eyebrow, FinishChip, Logo, Modal, PaintChip, RimPhotoThumb, Status, cx } from './ui';
 import { SiteFooter } from '../SiteFooter';
 import { shortModelName } from './Showroom';
 
@@ -21,7 +21,12 @@ export interface SummaryProps {
   size: string;
   price: number;
   region: Region;
+  /** Picture URLs: the first is the hero, the rest sit in a row under it. Ignored when `stills` is given. */
   images: string[];
+  /** The pictures as elements (the plate configurator draws each as a body plate with the wheel plate over it), in place of `images`. */
+  stills?: React.ReactNode[];
+  /** The line under the paint's name, e.g. "Satin" or "Metallic · C31" (default: the catalogue type and code). */
+  paintDetail?: string;
   code: string | null;
   /** undefined: the shared copy is still being saved; false: it could not be (the code works on this device only). */
   codeShared?: boolean;
@@ -134,8 +139,8 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
   // p.price, is finish-inclusive), so the two line items add up to the total card
   const surcharge = finishSurcharge(p.wheel, p.size, p.finish.id);
   const options = [
-    { label: 'Paint', value: p.paint.name, detail: `${p.paint.type} · ${p.paint.code}`, visual: <PaintChip paint={p.paint} size={52} />, price: 'Included' },
-    { label: 'Wheel design', value: p.wheel.name, detail: p.wheel.style, visual: <RimThumb wheel={p.wheel} finish={p.finish} size={60} />, price: null },
+    { label: 'Paint', value: p.paint.name, detail: p.paintDetail ?? `${p.paint.type} · ${p.paint.code}`, visual: <PaintChip paint={p.paint} size={52} />, price: 'Included' },
+    { label: 'Wheel design', value: p.wheel.name, detail: p.wheel.style, visual: <RimPhotoThumb wheel={p.wheel} finish={p.finish} size={60} />, price: null },
     { label: 'Wheel size', value: p.size, detail: 'Set of four', visual: <span className="font-display text-[18px] font-extrabold">{p.size}</span>, price: formatMoney(rimPrice(p.wheel, p.size), p.region) },
     { label: 'Wheel finish', value: p.finish.name, detail: p.finish.colorName, visual: <FinishChip finish={p.finish} size={52} />, price: surcharge > 0 ? `+${formatMoney(surcharge, p.region)}` : 'Included' }
   ];
@@ -182,17 +187,33 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
         </section>
 
         <div className="mt-8 overflow-hidden rounded-[28px] bg-studio animate-rise delay-200">
-          {p.images[0] ? <img src={p.images[0]} alt={`Your ${p.car.name}`} className="w-full aspect-[16/9] object-cover" /> : <div className="aspect-[16/9]" />}
+          {p.stills ? (
+            <div className="aspect-[16/9]">{p.stills[0]}</div>
+          ) : p.images[0] ? (
+            <img src={p.images[0]} alt={`Your ${p.car.name}`} className="w-full aspect-[16/9] object-cover" />
+          ) : (
+            <div className="aspect-[16/9]" />
+          )}
         </div>
-        {p.images.length > 1 && (
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {p.images.slice(1).map((src, i) => (
-              <div key={i} className="overflow-hidden rounded-[22px] bg-studio animate-rise" style={{ animationDelay: `${300 + i * 100}ms` }}>
-                <img src={src} alt="" className="w-full aspect-[16/10] object-cover" />
+        {p.stills
+          ? p.stills.length > 1 && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {p.stills.slice(1).map((still, i) => (
+                  <div key={i} className="aspect-[16/9] overflow-hidden rounded-[22px] bg-studio animate-rise" style={{ animationDelay: `${300 + i * 100}ms` }}>
+                    {still}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )
+          : p.images.length > 1 && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {p.images.slice(1).map((src, i) => (
+                  <div key={i} className="overflow-hidden rounded-[22px] bg-studio animate-rise" style={{ animationDelay: `${300 + i * 100}ms` }}>
+                    <img src={src} alt="" className="w-full aspect-[16/10] object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
 
         <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div>
@@ -257,7 +278,8 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
             <div className="mt-1 text-[12px] text-white/60">
               {p.wheel.name} · {p.size} · {p.finish.name}
             </div>
-            <Button variant="secondary" size="lg" className="mt-7 w-full ring-0" onClick={p.onEnquire} icon={<Mail className="h-4 w-4" strokeWidth={1.8} />}>
+            {/* the one main action of the summary */}
+            <Button size="lg" className="mt-7 w-full" onClick={p.onEnquire} icon={<Mail className="h-4 w-4" strokeWidth={1.8} />}>
               Enquire
             </Button>
             <div className="mt-3 grid grid-cols-2 gap-2">
