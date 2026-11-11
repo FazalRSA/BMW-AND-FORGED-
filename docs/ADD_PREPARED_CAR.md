@@ -82,6 +82,26 @@ GLB, and so does the turntable, because a frame is a fixed camera.
   Nothing else changes: the same GLB is still what the turntable and any view without a frame draw, and the
   wheels stay live.
 
+### Stills-only frames (the summary page and the PDF)
+
+The summary page and the PDF show **Cycles-rendered bodies with the live wheels on top** for the M2 CS, M4 CS and
+M5 Touring too, but the configurator's stage still draws those cars live. Their frames are listed in
+`public/renders/stills.json` (read by `loadStillsManifest` in `services/renderedBody.ts`), not in `manifest.json`: a
+view in `manifest.json` would also replace the live car on the stage. Only the three views the summary uses are
+rendered (`frontThreeQuarter`, `side`, `frontWheel`). A car with no entry gets live raster stills as before.
+
+```bash
+bunx vite --host 127.0.0.1 --port 5173 &
+IDLE_FRAMES=1000 node scripts/prerender/export-scene.cjs <carIndex> /tmp/prerender/<carId>.glb   # m2_g87 = 5, m4_cs_g82 = 1, m5_touring_g99 = 8
+python3 scripts/prerender/render_car.py /tmp/prerender/<carId>.glb /tmp/prerender/<carId> --car <carId> \
+  --studio dark --samples 12 --width 1440 --views frontThreeQuarter,side,frontWheel      # about 3 minutes on 4 cores
+scripts/prerender/stills-frames.sh <carId> /tmp/prerender/<carId>                         # webp frames + stills.json
+```
+
+Needs `pip install bpy` (Blender 5.3 worked with the script as it is; do not install `rembg` in the same command, pip
+backtracks for many minutes) and `apt-get install libegl1` (Blender aborts without it). Re-render a car after its GLB
+changes. The paint recolouring, the lamps and the wheels need nothing else.
+
 ### What the frames of a prepared car need
 
 - **Its own normals** (`keep_normals` in `CAR_FIXES`, `scripts/prerender/render_car.py`). The script welds, smooths
