@@ -21,7 +21,7 @@ It is written so that one person can run it. Every step names the command, the f
 | Hidden wheels | Eleven photo-traced designs (FSA-01, 02, 04 to 09, 12, 13, 14). |
 | How a car is chosen | On the welcome carousel (`HERO_SLIDES` in `components/journey/HeroStage.tsx`). **Enter** opens the configurator on the car on stage. There is no showroom page (removed 2026-11-11). |
 | How a car is drawn | Live from its GLB for all four, in the stage look on `/configure` (`engine.setLook('stage')`, `services/viewerStudio.ts`). Only the M5 G90 also has Blender frames (dark studio). |
-| Rim page (`/rims/<id>`) | The wheel studio (`components/WheelStudio.tsx`) draws the same rim file the car uses. The pre-rendered 360 spin is no longer part of the app. |
+| Rim page (`/rims/<id>`) | The wheel studio (`shared/wheel-viewer/WheelStudio.tsx`) draws the same rim file the car uses. The pre-rendered 360 spin is no longer part of the app. |
 | Cycles bodies in the configurator | **Planned.** Wheel-less Cycles bodies exist for the M2 CS only, in files outside the app, and are not wired in. |
 | Licences | Not confirmed for the four prepared cars (game-derived). Prototype use until resolved. |
 
@@ -287,7 +287,7 @@ A new finish needs a recipe in `services/wheelFinish.ts` and a row in `wheel_fin
 - Contact sheet `docs/ingest/rims/<wheelId>.jpg` read by a person: spokes face outward (else `--flip`), no tyre or barrel showing through, spokes not fat, thin or broken against the source, correct in every offered finish and size, staggered front and rear if offered.
 - The wheel on at least two different cars (the M4 CS and the M5 are the harness defaults).
 - `bun run lint`, `bun run build`, `journey.cjs both`, and `pdf-check.cjs` if price or spec fields changed.
-- The rim page: open `/rims/<wheelId>`. The wheel studio (`components/WheelStudio.tsx`) draws the same rim file the car uses, with the same finish recipe (`services/wheelFinish.ts`). Check each offered finish, the Front / Rear switch on a staggered set, and the Exploded, Bolts and Cap toggles (offered only when the file has those parts). The pre-rendered 360 spin is no longer part of the app; `scripts/rim3d/turntable.py` and `spin-manifest.py` are legacy scripts whose output nothing uses.
+- The rim page: open `/rims/<wheelId>`. The wheel studio (`shared/wheel-viewer/WheelStudio.tsx`) draws the same rim file the car uses, with the same finish recipe (`services/wheelFinish.ts`). Check each offered finish, the Front / Rear switch on a staggered set, and the Exploded, Bolts and Cap toggles (offered only when the file has those parts). The pre-rendered 360 spin is no longer part of the app; `scripts/rim3d/turntable.py` and `spin-manifest.py` are legacy scripts whose output nothing uses.
 
 ---
 

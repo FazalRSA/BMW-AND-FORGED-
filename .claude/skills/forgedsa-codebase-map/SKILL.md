@@ -17,7 +17,7 @@ description: Orientation for the FORGEDSA BMW M forged-wheel configurator (React
 | `/configure` the stepped drawer: Overview, then 1 Paint, 2 Wheels, 3 Size, 4 Finish (a bottom sheet on phones, a side panel on wider screens); camera chips Front / Side / Rear / Wheel / Top and a turntable button over the stage; "Change model" goes back to the welcome | `StepDrawer` in `components/journey/Configurator.tsx`, which also holds the wheel-info and More options modals. `components/journey/ViewerPanel.tsx` (the viewer's glass panel) only shows with `?panel=viewer`; `?panel=steps` no longer exists |
 | `/summary` stills, share code, PDF gate, enquiry, the visualisation notice (`BRAND.visualisationNotice`) | `components/journey/SummaryPage.tsx`, `EnquiryModal.tsx` |
 | `/forged` collection | `components/ForgedPage.tsx` |
-| `/rims/<id>` one wheel in the 3D wheel studio | `components/RimDetailPage.tsx`, `components/WheelStage.tsx`, `components/WheelStudio.tsx` (lazy chunk), `services/wheelStudioParts.ts` |
+| `/rims/<id>` one wheel in the 3D wheel studio | `components/RimDetailPage.tsx`, `components/WheelStage.tsx`, `shared/wheel-viewer/WheelStudio.tsx` (lazy chunk), `shared/wheel-viewer/wheelStudioParts.ts` |
 | `/terms`, `/delivery` | `components/InfoPage.tsx` + `config/pages.ts` (`LEGAL_DRAFT`) |
 | `/?config=CODE` reopen a build | share codes via `services/journeyService.ts` |
 | `/admin` | `components/admin/*` |
@@ -110,8 +110,8 @@ keeps its own "The wheels" link and social icons.
   `STAGE` in `services/viewerStudio.ts`; URL overrides `?stagePeak= ?stageRx= ?stageRz= ?stageOver= ?stageRails=
   ?stageRing= ?stageFloorEnv= ?stageExp= ?stageParts=`). `?panel=viewer` = the viewer's glass panel; in the harness
   `?look=stage` is what customers see, `?look=viewer` the older grey dome, `?look=studio` the softbox studio.
-- Rim page = the wheel studio ported from the FORGED website (`components/WheelStudio.tsx`, `WheelStage.tsx`,
-  `services/wheelStudioParts.ts`). It loads the rim files the car uses (`public/models/rims/`) and draws finishes with
+- Rim page = the wheel studio ported from the FORGED website (`shared/wheel-viewer/WheelStudio.tsx`, `WheelStage.tsx`,
+  `shared/wheel-viewer/wheelStudioParts.ts`). It loads the rim files the car uses (`public/models/rims/`) and draws finishes with
   `services/wheelFinish.ts`. `components/RimSpinView.tsx` and `public/renders/rims/manifest.json` are removed;
   `scripts/rim3d/turntable.py` and `spin-manifest.py` are legacy (nothing in the app uses their output).
 - Harnesses: `journey.cjs` (welcome → Enter → wheels step → three wheels → size → finish → summary), `car-switch.cjs`

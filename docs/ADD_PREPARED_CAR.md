@@ -146,7 +146,7 @@ for `public.wheels`, and with `--check` shoots the wheel on the two prepared car
 `1` (M4 CS, `m4_cs_g82`: close-up in Liquid Metal and Black Gloss, front three-quarter in Silver) and `7`
 (M5, `m5_g90`: 21" in Bronze) into `docs/ingest/rims/<wheelId>/` with a contact sheet
 `docs/ingest/rims/<wheelId>.jpg`. On the car the 3D rim replaces the wheel's photo face; the rim page
-(`/rims/<wheelId>`) loads the same file in the wheel studio (`components/WheelStudio.tsx`). Spokes facing into the car: run again with `--flip`. Back to the photo face: remove
+(`/rims/<wheelId>`) loads the same file in the wheel studio (`shared/wheel-viewer/WheelStudio.tsx`). Spokes facing into the car: run again with `--flip`. Back to the photo face: remove
 `modelUrl` (or clear "Rim 3D model" in `/admin`). `--dry-run` prints the rim check and the plan and changes
 nothing (no pack, no catalogue edit, no migration, no thumbnail copy); `--port` points at a dev server on
 another port; `node scripts/ingest-rim.mjs --help` lists every option.
@@ -180,7 +180,7 @@ Website rims in the configurator on 2026-11-10, named and priced from the owner'
 `forged_fsa004` (FSA004), `ff-1.glb` → `sixnine_ff1` (FF-1), `ff-3.glb` → `sixnine_ff3` (FF-3). Brake
 calipers and rotors inside a rim file are dropped when packing (`scripts/rim3d/pack.mjs`; the engine draws
 its own). Since 2026-11-11 the rim page draws these same files in the wheel studio
-(`components/WheelStudio.tsx`); the pre-rendered spins (`scripts/rim3d/turntable.py`, `spin-manifest.py`) are
+(`shared/wheel-viewer/WheelStudio.tsx`); the pre-rendered spins (`scripts/rim3d/turntable.py`, `spin-manifest.py`) are
 legacy scripts whose output nothing in the app uses.
 A thumbnail for a rim that has no website photo: `python3 scripts/rim3d/preview.py out.png <uncompressed
 rim.glb> --size 1024x1024 --angle 0`, cut out with `rembg`, saved as WebP with alpha (FSA001 was done this

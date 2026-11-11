@@ -34,8 +34,8 @@ Rim photos come from Supabase storage; the harnesses fetch them with curl (pass 
   `sixnine_ff1`, `sixnine_ff3`) are GLBs (`scripts/ingest-rim.mjs`). The photo/bar-face 2D route (`imageUrl`,
   `services/rimFaces.ts`) remains for wheels without a model: today the hidden legacy wheels. Never strip a stock wheel's
   `modelUrl` to "fix" it back to a photo face.
-- **Rim page = the wheel studio** ported from the FORGED website (`components/WheelStudio.tsx`, `WheelStage.tsx`,
-  `services/wheelStudioParts.ts`). It loads the same rim files the car uses (`public/models/rims/`) and draws finishes with
+- **Rim page = the wheel studio** ported from the FORGED website (`shared/wheel-viewer/WheelStudio.tsx`, `WheelStage.tsx`,
+  `shared/wheel-viewer/wheelStudioParts.ts`). It loads the same rim files the car uses (`public/models/rims/`) and draws finishes with
   `services/wheelFinish.ts`, so a finish is the same on the rim page and on the car; a wheel without a `modelUrl` shows its
   photo. The pre-rendered 360° spin is no longer part of the app: `RimSpinView.tsx` and `public/renders/rims/manifest.json`
   are removed, and no spin frames existed for the six stocked wheels. Do not render spins for the rim page.

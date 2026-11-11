@@ -1,43 +1,39 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { ChevronDown, ChevronUp, AlertTriangle, Loader2 } from 'lucide-react';
-import type { WheelFinish } from '../types';
-import { FINISH_FLAKE_SCALE, applyFinishLook, finishLook, installFinishLayers, type FinishLook } from '../services/wheelFinish';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { AlertTriangle, Loader2, X } from 'lucide-react';
 import {
   BRAKE_PARTS,
   FINISH_PARTS,
   cameraDistanceScale,
   classifyStudioPart,
   explodeOffsets,
-  type StudioPart
-} from '../services/wheelStudioParts';
+  prefersReducedMotion,
+  type StudioPart,
+} from './wheelStudioParts';
+import { NEUTRAL_FINISH, defaultPaintRenderer, type PaintRenderer, type StudioFinish } from './paint';
+import './wheel-viewer.css';
 
 /**
- * 3D wheel studio for wheels that have a real .glb model (the rim page, /rims/<id>). Ported from
- * the FORGED website's WheelStudio, so both show a wheel the same way.
+ * The FORGED 3D wheel viewer, shared by the website and the BMW configurator.
  *
- * A light product-photography stage: studio reflections built in code (no HDR download),
- * a soft contact shadow, fixed camera views, an exploded view and, when the model carries brake
- * meshes, a brake clearance check that ghosts the barrel. Wheels with a second model (staggered
- * rear size) get a Front / Rear switch.
+ * ONE SOURCE: this folder is edited in the website repo (src/wheel-viewer/) and copied, unchanged, into
+ * the configurator (shared/wheel-viewer/) by scripts/wheel-viewer-sync.mjs. Do not edit the copy; see
+ * README.md in this folder.
  *
- * Differences from the website's copy:
- * - the finishes are this catalogue's (`WheelFinish` rows) and are drawn by services/wheelFinish.ts,
- *   the same recipe the car's wheels use, so a finish is the same coating here and on the car;
- * - the rim files in public/models/rims are meshopt-compressed and quantized, so the loader carries
- *   the decoders the car engine uses, and the flake grain is scaled per mesh;
- * - a file in other units or lying on another axis is stood up and sized like the engine does;
- * - the Exploded, Bolts and Cap toggles are only offered when the model has the parts for them;
- * - the stage is only drawn when something changed.
+ * A light product-photography stage: studio reflections built in code (no HDR download), a soft contact
+ * shadow, physically based paint, fixed camera views, an exploded view, and a Front / Rear switch for
+ * wheels with a second model. It knows nothing about either app's catalogue: finishes arrive as
+ * `StudioFinish` rows and the paint is made by a `PaintRenderer` (see paint.ts).
+ *
+ * The default (simple) stage is for customers: views, Front / Rear, the exploded view and an optional
+ * Close 3D button. `advanced` adds the wireframe, bolts, cap and brake-check toggles.
+ *
+ * Rim files may be meshopt-compressed, quantized or Draco-compressed, in metres or in other units, and
+ * stand on any axis: the loader carries the decoders and the rig stands the wheel up and sizes it.
  */
 
 export type StudioViewId = 'face' | 'three' | 'side' | 'back' | 'top';
@@ -53,35 +49,51 @@ export interface StudioToggles {
 }
 
 export const DEFAULT_STUDIO_TOGGLES: StudioToggles = {
-  orbit: false,
+  orbit: true,
   spin: false,
   explode: false,
   wire: false,
   bolts: true,
   cap: true,
-  brakes: false
+  brakes: false,
 };
 
 export interface WheelStudioProps {
   wheelModel: string;
-  wheelSeries: string;
-  /** The finishes this wheel is offered in (catalogue rows), in the order they are listed. */
-  finishes: WheelFinish[];
-  selectedFinish?: WheelFinish;
-  onSelectFinish: (finish: WheelFinish) => void;
-  onEnquire?: () => void;
-  /** Served path to the wheel's .glb, e.g. "/models/rims/forged_fsa002.glb". */
+  /** Shown under the name on the advanced stage only. */
+  wheelSeries?: string;
+  /**
+   * The paint choices offered. Fewer than two shows no finish row, which is how a page keeps the stage
+   * to the one finish that is actually in stock.
+   */
+  finishes: StudioFinish[];
+  selectedFinish?: StudioFinish;
+  onSelectFinish: (finish: StudioFinish) => void;
+  /** Served path to the wheel's .glb, e.g. "/models/wheels/stf399-front.glb". */
   modelUrl: string;
   /** Optional second model for the rear axle of a staggered set. */
   rearModelUrl?: string | null;
-  /** The catalogue's modelFlip: only read when the file does not say which side is the face. */
+  /** Only read when the file does not say which side is the face (unnamed meshes). */
   modelFlip?: boolean;
-  /** One-line spec shown in the badge, e.g. "PCD 5×112 · ET8/15 · CB 66.6". */
+  /** One-line spec shown in the badge on the advanced stage, e.g. "19 × 9.5 · ET 17 · 5×112". */
   specFront?: string;
   specRear?: string;
   initialView?: StudioViewId;
   initialToggles?: Partial<StudioToggles>;
-  /** Size of the stage. The default is the website's: 76% of the screen height, 540 to 860 px. */
+  /** Shows a visible "Close 3D" button (and closes on Escape) when given. */
+  onClose?: () => void;
+  /** Shows an accent "Enquire" button beside the Front / Rear switch when given. */
+  onEnquire?: () => void;
+  /** Adds the wireframe, bolts, cap and brake toggles (the exploded view is on both stages). */
+  advanced?: boolean;
+  /**
+   * Makes the paint. Pass a module-level constant: it is read once, when the stage is created.
+   * Defaults to plain physically based paint.
+   */
+  paint?: PaintRenderer;
+  /** Where the Draco decoder files are served. Only fetched if a model is Draco-compressed. */
+  dracoDecoderPath?: string;
+  /** Sizing and theme classes for the stage (the --wv-* variables in wheel-viewer.css). */
   className?: string;
 }
 
@@ -96,11 +108,9 @@ interface LoadedModelInfo {
   canExplode: boolean;
 }
 
-type FinishValues = Pick<WheelFinish, 'hex' | 'metalness' | 'roughness' | 'clearcoat'>;
-
 interface StudioEngine {
   load: (url: string, flip: boolean) => void;
-  setFinish: (finish: FinishValues) => void;
+  setFinish: (finish: StudioFinish) => void;
   setToggles: (toggles: StudioToggles) => void;
   goView: (view: StudioViewId, instant?: boolean) => void;
   /** Height in CSS pixels of the control panel covering the bottom of the stage. */
@@ -114,12 +124,18 @@ interface EngineCallbacks {
   onUserDrag: () => void;
 }
 
+interface EngineOptions {
+  ariaLabel: string;
+  paint: PaintRenderer;
+  dracoDecoderPath: string;
+}
+
 const VIEWS: { id: StudioViewId; label: string }[] = [
   { id: 'face', label: 'Face' },
   { id: 'three', label: '3/4' },
   { id: 'side', label: 'Side' },
   { id: 'back', label: 'Back' },
-  { id: 'top', label: 'Top' }
+  { id: 'top', label: 'Top' },
 ];
 
 const TOGGLE_LABELS: { id: keyof StudioToggles; label: string }[] = [
@@ -129,18 +145,12 @@ const TOGGLE_LABELS: { id: keyof StudioToggles; label: string }[] = [
   { id: 'wire', label: 'Wireframe' },
   { id: 'bolts', label: 'Bolts' },
   { id: 'cap', label: 'Cap' },
-  { id: 'brakes', label: 'Brake check' }
+  { id: 'brakes', label: 'Brake check' },
 ];
-
-/** Shown until the page hands over a finish: the catalogue's Silver. */
-const NEUTRAL_FINISH: FinishValues = { hex: '#c3c8cd', metalness: 0.9, roughness: 0.28, clearcoat: 0.7 };
-
-/** How strongly the stage's softboxes show in the paint (the website's setting for its stage). */
-const STAGE_ENV_INTENSITY = 1.1;
 
 /** A rim between these diameters is taken to be in metres (a 17" to 24" rim is 0.45 to 0.65 m across). */
 const METRE_RANGE: [number, number] = [0.25, 1.2];
-/** Diameter given to a file in other units: a 20" rim, the engine's base size. */
+/** Diameter given to a file in other units: a 20" rim. */
 const FALLBACK_DIAMETER = 0.52;
 
 /** Studio reflections: a gradient dome with bright softboxes and dark flags, prefiltered once. */
@@ -194,7 +204,9 @@ function buildStudioEnvironment(renderer: THREE.WebGLRenderer): THREE.Texture {
   return texture;
 }
 
-function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): StudioEngine {
+function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks, options: EngineOptions): StudioEngine {
+  const reduceMotion = prefersReducedMotion();
+  const paint = options.paint;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -203,7 +215,11 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.domElement.style.display = 'block';
+  // Dragging the picture must not scroll the page. A page that mounts the viewer only on request (the
+  // website's "View in 3D") keeps this safe; a page that always shows it should leave room to scroll past.
   renderer.domElement.style.touchAction = 'none';
+  renderer.domElement.setAttribute('role', 'img');
+  renderer.domElement.setAttribute('aria-label', options.ariaLabel);
   mount.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -212,19 +228,20 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
 
   const camera = new THREE.PerspectiveCamera(32, 1, 0.02, 20);
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
+  controls.enableDamping = !reduceMotion;
   controls.dampingFactor = 0.08;
   controls.minDistance = 0.35;
   controls.maxDistance = 4;
   controls.maxPolarAngle = Math.PI * 0.62;
   controls.enablePan = false;
-  controls.autoRotate = false;
+  controls.autoRotate = !reduceMotion;
   controls.autoRotateSpeed = 1.2;
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
   keyLight.position.set(1.2, 2.2, 1.0);
   keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(2048, 2048);
+  const shadowSize = window.innerWidth < 768 ? 1024 : 2048; // lighter on phones
+  keyLight.shadow.mapSize.set(shadowSize, shadowSize);
   keyLight.shadow.camera.left = -0.9;
   keyLight.shadow.camera.right = 0.9;
   keyLight.shadow.camera.top = 0.9;
@@ -243,21 +260,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
   floor.receiveShadow = true;
   scene.add(floor);
 
-  // The finish, read the way the car's wheels read it (services/wheelFinish.ts).
-  let currentLook: FinishLook = finishLook(NEUTRAL_FINISH);
-
-  /**
-   * A paint material for one part of the rim: the current finish with its face/flop and flake
-   * layers. `unitScale` is the mesh's own unit in metres (the packed rim files are quantized, so
-   * each mesh has its own), which keeps the flake cells about 1 mm, as on the car.
-   */
-  const makeFinishMaterial = (side: THREE.Side, unitScale: number) => {
-    const material = new THREE.MeshPhysicalMaterial({ side });
-    material.envMapIntensity = STAGE_ENV_INTENSITY;
-    installFinishLayers(material).uFinishFlakeScale.value = FINISH_FLAKE_SCALE * (unitScale > 0 ? unitScale : 1);
-    applyFinishLook(material, currentLook);
-    return material;
-  };
+  let currentFinish: StudioFinish = NEUTRAL_FINISH;
 
   interface Rig {
     spinGroup: THREE.Group;
@@ -274,7 +277,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
 
   // The same decoders as the car engine, so every rim file the car accepts opens here too.
   const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('/draco/');
+  dracoLoader.setDecoderPath(options.dracoDecoderPath);
   const loader = new GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -337,7 +340,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
 
   const applyToggles = () => {
     dirty = true;
-    controls.autoRotate = toggles.orbit;
+    controls.autoRotate = toggles.orbit && !reduceMotion;
     if (!rig) return;
     rig.parts.bolts.forEach((m) => (m.visible = toggles.bolts));
     rig.parts.cap.forEach((m) => (m.visible = toggles.cap));
@@ -384,7 +387,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
     if (!rig) return;
     const pose = viewPose(view);
     dirty = true;
-    if (instant) {
+    if (instant || reduceMotion) {
       tween = null;
       camera.position.copy(pose.pos);
       controls.target.copy(pose.target);
@@ -483,7 +486,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
           const side = old?.side ?? THREE.FrontSide;
           const group = part === 'barrel' ? 'barrel' : 'face';
           if (old?.map || old?.normalMap) {
-            const material = makeFinishMaterial(side, unitScale);
+            const material = paint.create(side, unitScale, currentFinish);
             material.map = old.map ?? null;
             material.normalMap = old.normalMap ?? null;
             finishMaterials.push({ material, part });
@@ -493,7 +496,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
           const key = `${group}|${side}|${unitScale.toFixed(4)}`;
           let material = shared.get(key);
           if (!material) {
-            material = makeFinishMaterial(side, unitScale);
+            material = paint.create(side, unitScale, currentFinish);
             shared.set(key, material);
             finishMaterials.push({ material, part });
           }
@@ -615,7 +618,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
     }
     const explodeTarget = toggles.explode ? 1 : 0;
     if (Math.abs(explodeTarget - explodeNow) > 0.001) {
-      explodeNow += (explodeTarget - explodeNow) * Math.min(1, dt * 6);
+      explodeNow = reduceMotion ? explodeTarget : explodeNow + (explodeTarget - explodeNow) * Math.min(1, dt * 6);
       applyExplode();
       moving = true;
     }
@@ -636,8 +639,8 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
     load,
     goView,
     setFinish: (finish) => {
-      currentLook = finishLook(finish);
-      rig?.finishMaterials.forEach(({ material }) => applyFinishLook(material, currentLook));
+      currentFinish = finish;
+      rig?.finishMaterials.forEach(({ material }) => paint.apply(material, finish));
       dirty = true;
     },
     setToggles: (next) => {
@@ -688,14 +691,6 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
   };
 }
 
-// The stage is dark like the rest of the app (index.css .wheel-stage); the chips and cards below use the app's tokens.
-const chipBase =
-  'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px] leading-none transition-colors cursor-pointer';
-const chipOff = 'border-line bg-surface/70 text-ink hover:bg-surface';
-const chipOn = 'border-ink bg-ink text-surface';
-
-/** A phone on its side (the app's `short` layout): the stage is too low for the open control card. */
-const startsCollapsed = () => typeof matchMedia === 'function' && matchMedia('(max-height: 519px)').matches;
 
 export const WheelStudio = ({
   wheelModel,
@@ -703,7 +698,6 @@ export const WheelStudio = ({
   finishes,
   selectedFinish,
   onSelectFinish,
-  onEnquire,
   modelUrl,
   rearModelUrl,
   modelFlip = false,
@@ -711,7 +705,12 @@ export const WheelStudio = ({
   specRear,
   initialView = 'three',
   initialToggles,
-  className = 'h-[76vh] min-h-[540px] max-h-[860px]'
+  onClose,
+  onEnquire,
+  advanced = false,
+  paint = defaultPaintRenderer,
+  dracoDecoderPath = '/draco/',
+  className = 'h-[76vh] min-h-[540px] max-h-[860px]',
 }: WheelStudioProps) => {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -719,11 +718,11 @@ export const WheelStudio = ({
 
   const [axle, setAxle] = useState<'front' | 'rear'>('front');
   const [view, setView] = useState<StudioViewId>(initialView);
-  const [toggles, setToggles] = useState<StudioToggles>({
+  const [toggles, setToggles] = useState<StudioToggles>(() => ({
     ...DEFAULT_STUDIO_TOGGLES,
-    ...initialToggles
-  });
-  const [collapsed, setCollapsed] = useState(startsCollapsed);
+    orbit: !prefersReducedMotion(),
+    ...initialToggles,
+  }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<LoadedModelInfo | null>(null);
@@ -739,21 +738,29 @@ export const WheelStudio = ({
     if (!mount) return;
     let engine: StudioEngine;
     try {
-      engine = createStudioEngine(mount, {
-        onLoaded: (loaded) => {
-          setInfo(loaded);
-          setLoading(false);
-          setError(null);
+      engine = createStudioEngine(
+        mount,
+        {
+          onLoaded: (loaded) => {
+            setInfo(loaded);
+            setLoading(false);
+            setError(null);
+          },
+          onError: (message) => {
+            setError(message);
+            setLoading(false);
+          },
+          onUserDrag: () => {
+            setHintVisible(false);
+            setToggles((t) => (t.orbit ? { ...t, orbit: false } : t));
+          },
         },
-        onError: (message) => {
-          setError(message);
-          setLoading(false);
-        },
-        onUserDrag: () => {
-          setHintVisible(false);
-          setToggles((t) => (t.orbit ? { ...t, orbit: false } : t));
+        {
+          ariaLabel: `Interactive 3D view of ${wheelModel}. Drag to rotate, pinch to zoom.`,
+          paint,
+          dracoDecoderPath,
         }
-      });
+      );
     } catch (err) {
       console.error('WheelStudio: WebGL is not available', err);
       setError('3D view is not available on this device.');
@@ -777,8 +784,18 @@ export const WheelStudio = ({
       engine.dispose();
       engineRef.current = null;
     };
-    // initialView is read once on mount by design
+    // initialView, the label, the paint renderer and the decoder path are read once on mount by design
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The finish has to be on the engine before a model is built from it, so it is set first.
+  const finish = selectedFinish ?? NEUTRAL_FINISH;
+  const paintKey = JSON.stringify([finish.name, finish.paint]);
+  useEffect(() => {
+    engineRef.current?.setFinish(finish);
+    // by value: a catalogue reload hands over new objects with the same numbers
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paintKey]);
 
   // Load (or switch) the model.
   useEffect(() => {
@@ -788,12 +805,6 @@ export const WheelStudio = ({
     setError(null);
     engine.load(activeUrl, modelFlip);
   }, [activeUrl, modelFlip, retryCount]);
-
-  // The four numbers, not the row: a catalogue reload hands over new objects with the same values.
-  const { hex, metalness, roughness, clearcoat } = selectedFinish ?? NEUTRAL_FINISH;
-  useEffect(() => {
-    engineRef.current?.setFinish({ hex, metalness, roughness, clearcoat });
-  }, [hex, metalness, roughness, clearcoat]);
 
   useEffect(() => {
     engineRef.current?.setToggles(toggles);
@@ -809,183 +820,167 @@ export const WheelStudio = ({
 
   const specLine = axle === 'rear' && hasRear ? specRear ?? specFront : specFront;
   // A toggle is only offered when the model has the parts it acts on.
-  const visibleToggles = TOGGLE_LABELS.filter(
-    (t) =>
-      (t.id !== 'brakes' || info?.hasBrakes) &&
-      (t.id !== 'bolts' || !info || info.hasBolts) &&
-      (t.id !== 'cap' || !info || info.hasCap) &&
-      (t.id !== 'explode' || !info || info.canExplode)
-  );
+  const canShow = (id: keyof StudioToggles) =>
+    (id !== 'brakes' || !!info?.hasBrakes) &&
+    (id !== 'bolts' || !info || info.hasBolts) &&
+    (id !== 'cap' || !info || info.hasCap) &&
+    (id !== 'explode' || !info || info.canExplode);
+  const visibleToggles = TOGGLE_LABELS.filter((t) => canShow(t.id));
   const measured = info && info.diameterMm !== null && info.widthMm !== null;
+  const showWheelRow = hasRear || !!onEnquire || (!advanced && canShow('explode'));
 
   return (
     <div
-      className={`wheel-stage relative w-full select-none text-ink ${className}`}
+      className={`wv-stage ${className}`}
       data-studio-state={error ? 'error' : loading ? 'loading' : 'ready'}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && onClose) onClose();
+      }}
     >
-      <div
-        ref={mountRef}
-        role="img"
-        aria-label={`Interactive 3D view of ${wheelModel}`}
-        className="absolute inset-0 cursor-grab active:cursor-grabbing"
-      />
+      <div ref={mountRef} className="wv-mount" />
 
-      {/* Title and spec badge */}
-      <div className="absolute top-0 inset-x-0 z-10 flex items-start justify-between gap-3 p-4 pointer-events-none">
-        <div className="min-w-0">
-          <div className="font-display text-lg font-extrabold tracking-wide truncate">{wheelModel}</div>
-          <div className="hidden sm:block text-xs text-mute mt-0.5 truncate">{wheelSeries}</div>
+      {/* Name, spec badge (advanced only) and the always-visible Close 3D button */}
+      <div className="wv-top">
+        <div className="wv-title">
+          <div className="wv-name">{wheelModel}</div>
+          {advanced && wheelSeries && <div className="wv-series">{wheelSeries}</div>}
         </div>
-        {(specLine || hasRear || measured) && (
-          <div className="max-w-[68%] rounded-xl border border-line bg-surface/85 backdrop-blur px-2.5 py-2 text-right text-[11px] leading-relaxed text-mute">
-            {(specLine || hasRear) && (
-              <div>
-                {hasRear && <b className="font-semibold text-ink">{axle === 'rear' ? 'Rear ' : 'Front '}</b>}
-                {specLine}
-              </div>
-            )}
-            {measured && (
-              <div className="whitespace-nowrap">
-                Model: ⌀{info.diameterMm} × {info.widthMm} mm
-              </div>
-            )}
-          </div>
-        )}
+        <div className="wv-badges">
+          {advanced && (specLine || measured) && (
+            <div className="wv-spec">
+              {specLine && (
+                <div>
+                  {hasRear && <b>{axle === 'rear' ? 'Rear ' : 'Front '}</b>}
+                  {specLine}
+                </div>
+              )}
+              {measured && (
+                <div className="wv-nowrap">
+                  Model: ⌀{info.diameterMm} × {info.widthMm} mm
+                </div>
+              )}
+            </div>
+          )}
+          {onClose && (
+            <button type="button" onClick={onClose} autoFocus className="wv-close">
+              <X className="wv-icon" style={{ color: 'inherit' }} aria-hidden="true" />
+              Close 3D
+            </button>
+          )}
+        </div>
       </div>
 
       {hintVisible && !loading && !error && (
-        // (on a pill: the top of the wheel can reach this line, and the text was lost on a dark or gold rim)
-        <div className="hidden sm:block absolute inset-x-0 top-16 z-10 text-center text-xs text-mute pointer-events-none">
-          <span className="inline-block rounded-full bg-surface/80 backdrop-blur px-3 py-1">Drag to rotate · pinch or scroll to zoom</span>
+        <div className="wv-hint">
+          <span>Drag to rotate · pinch or scroll to zoom</span>
         </div>
       )}
 
       {/* Controls */}
-      <div
-        ref={panelRef}
-        className="absolute inset-x-2 bottom-2 z-20 mx-auto max-w-3xl rounded-2xl border border-line bg-surface/85 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.12)] overflow-hidden"
-      >
-        <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-          <div className="flex items-center gap-2">
-            {hasRear && (
-              <div className="inline-flex rounded-full bg-ink/[0.07] p-[3px]" role="group" aria-label="Axle">
-                {(['front', 'rear'] as const).map((a) => (
+      <div ref={panelRef} role="group" aria-label="3D view controls" className="wv-panel">
+        <div className="wv-panel-body">
+          {showWheelRow && (
+            <ControlRow label="Wheel" showLabel={advanced}>
+              {hasRear &&
+                (['front', 'rear'] as const).map((a) => (
                   <button
                     key={a}
                     type="button"
                     aria-pressed={axle === a}
                     onClick={() => setAxle(a)}
-                    className={`rounded-full px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors ${
-                      axle === a ? 'bg-ink text-surface' : 'text-ink'
-                    }`}
+                    className="wv-chip"
                   >
                     {a === 'front' ? 'Front' : 'Rear'}
                   </button>
                 ))}
-              </div>
-            )}
-            {onEnquire && (
-              <button
-                type="button"
-                onClick={onEnquire}
-                className="rounded-full bg-ember hover:bg-ember-light px-4 py-1.5 text-[13px] font-semibold text-white cursor-pointer transition-colors"
-              >
-                Enquire
-              </button>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-expanded={!collapsed}
-            className="inline-flex items-center gap-1 text-xs text-mute cursor-pointer"
-          >
-            Controls {collapsed ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {!collapsed && (
-          <div className="px-3.5 pb-3 max-h-[42vh] overflow-y-auto">
-            <ControlRow label="View">
-              {VIEWS.map((v) => (
+              {onEnquire && (
+                <button type="button" onClick={onEnquire} className="wv-chip wv-chip--primary">
+                  Enquire
+                </button>
+              )}
+              {/* The simple stage offers the exploded view on its own; the advanced stage keeps it
+                  with the other toggles in the Show row. */}
+              {!advanced && canShow('explode') && (
                 <button
-                  key={v.id}
                   type="button"
-                  aria-pressed={view === v.id}
-                  onClick={() => chooseView(v.id)}
-                  className={`${chipBase} ${view === v.id ? chipOn : chipOff}`}
+                  aria-pressed={toggles.explode}
+                  onClick={() => flipToggle('explode')}
+                  className={`wv-chip ${hasRear || onEnquire ? 'wv-chip--end' : ''}`}
                 >
-                  {v.label}
+                  <span className="wv-dot" />
+                  Exploded
+                </button>
+              )}
+            </ControlRow>
+          )}
+
+          <ControlRow label="View" showLabel={advanced}>
+            {VIEWS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                aria-pressed={view === v.id}
+                onClick={() => chooseView(v.id)}
+                className="wv-chip"
+              >
+                {v.label}
+              </button>
+            ))}
+          </ControlRow>
+
+          {finishes.length > 1 && (
+            <ControlRow label="Finish" showLabel={advanced}>
+              {finishes.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  aria-pressed={selectedFinish?.id === f.id}
+                  aria-label={`Select ${f.name} finish`}
+                  onClick={() => onSelectFinish(f)}
+                  className="wv-chip"
+                >
+                  <span className="wv-swatch" style={{ background: f.swatchHex }} />
+                  {f.name}
                 </button>
               ))}
             </ControlRow>
+          )}
 
-            {finishes.length > 0 && (
-              <ControlRow label="Finish">
-                {finishes.map((finish) => {
-                  const active = selectedFinish?.id === finish.id;
-                  return (
-                    <button
-                      key={finish.id}
-                      type="button"
-                      aria-pressed={active}
-                      aria-label={`Select ${finish.name} finish`}
-                      onClick={() => onSelectFinish(finish)}
-                      className={`${chipBase} ${active ? chipOn : chipOff}`}
-                    >
-                      <span
-                        className="inline-block w-2.5 h-2.5 rounded-full mr-1.5 align-[-1px] border border-black/25"
-                        style={{ background: finish.hex }}
-                      />
-                      {finish.name}
-                    </button>
-                  );
-                })}
-              </ControlRow>
-            )}
-
-            <ControlRow label="Show">
+          {advanced && (
+            <ControlRow label="Show" showLabel>
               {visibleToggles.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   aria-pressed={toggles[t.id]}
                   onClick={() => flipToggle(t.id)}
-                  className={`${chipBase} ${toggles[t.id] ? chipOn : chipOff}`}
+                  className="wv-chip"
                 >
-                  <span
-                    className={`inline-block w-[7px] h-[7px] rounded-full mr-1.5 ${
-                      toggles[t.id] ? 'bg-emerald-400' : 'bg-neutral-400'
-                    }`}
-                  />
+                  <span className="wv-dot" />
                   {t.label}
                 </button>
               ))}
             </ControlRow>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {loading && !error && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#f0f2f5]/90">
-          <div className="flex items-center gap-2 text-sm font-semibold tracking-wide text-mute">
-            <Loader2 className="w-4 h-4 animate-spin text-ember" />
+        <div role="status" className="wv-veil">
+          <div className="wv-status">
+            <Loader2 className="wv-icon wv-spin" />
             Loading wheel…
           </div>
         </div>
       )}
 
       {error && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#f0f2f5]/95 px-6">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <AlertTriangle className="w-6 h-6 text-ember" />
-            <p className="text-sm text-ink/80 max-w-xs">{error}</p>
+        <div role="alert" className="wv-veil">
+          <div className="wv-error">
+            <AlertTriangle className="wv-icon" />
+            <p>{error}</p>
             {engineRef.current && (
-              <button
-                type="button"
-                onClick={() => setRetryCount((n) => n + 1)}
-                className="rounded-full border border-ink/15 bg-surface px-4 py-1.5 text-[13px] cursor-pointer hover:bg-ink/[0.04]"
-              >
+              <button type="button" onClick={() => setRetryCount((n) => n + 1)} className="wv-chip">
                 Try again
               </button>
             )}
@@ -996,11 +991,10 @@ export const WheelStudio = ({
   );
 };
 
-const ControlRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="flex items-center gap-2 mt-2">
-    <div className="w-12 sm:w-14 shrink-0 text-[11px] uppercase tracking-wider text-mute">{label}</div>
-    <div className="flex min-w-0 flex-1 gap-1.5 flex-wrap">
-      {children}
-    </div>
+// (typed arrow functions, not React.FC: the configurator has no React type package, and this file is shared)
+const ControlRow = ({ label, showLabel, children }: { label: string; showLabel: boolean; children: React.ReactNode }) => (
+  <div className="wv-row">
+    {showLabel && <div className="wv-row-label">{label}</div>}
+    <div className="wv-chips">{children}</div>
   </div>
 );

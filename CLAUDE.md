@@ -11,7 +11,7 @@
 - Scratchpad is session-scoped; do not rely on it persisting
 - Wheel catalogue = the owner's stock sheet (docs/WHEEL_INVENTORY.md): real names FSA001-004/FF-1/FF-3, ZAR prices stored as USD/18.2; hide (active=false), never delete
 - Journey is welcome carousel -> /configure -> /summary (no showroom); /configure is the stage look (services/viewerStudio.ts STAGE, engine.setLook('stage')) + the stepped drawer (StepDrawer in Configurator.tsx); verify visual work with scripts/render/shoot.cjs and ?look=stage before claiming done
-- Rim page /rims/<id> is components/WheelStudio.tsx (ported from the FORGED website); no spin frames
+- Rim page /rims/<id> shows the ONE wheel viewer shared with the FORGED website: shared/wheel-viewer/ is a byte-identical copy of Forgedwebsite src/wheel-viewer/ (edit it there, then `node scripts/wheel-viewer-sync.mjs pull ../Forgedwebsite`; `bun run lint` fails if the copy was edited here). This app's bits are components/WheelStage.tsx (finish rows, photo fallback) and services/wheelViewerPaint.ts (the car's finish recipe as the viewer's paint plug-in); no spin frames
 - The cloud sandbox has no GPU: renders are SwiftShader on CPU (about 50 s a shot); never claim real-GPU or phone results
 - Commit messages: type(scope) subject, body says why and what was checked; never rewrite pushed history
 - Harness runs (journey.cjs, e2e.cjs) stub Supabase writes; never create real leads (each one emails the owner)
@@ -22,6 +22,7 @@
 - Decision: build video with local /hyperframes skill, not hosted MCP — Reason: user chose skill; hosted compose disabled for CLI
 - Decision: 16:9, about 90s, British female VO with best voice model — Reason: user spec for BMW pitch
 - Decision: customer accounts via Google on Supabase Auth with a garage; admin allowlist untouched — Reason: owner's choice (2026-11-10 plan)
+- Decision: one wheel viewer for the website and this app, owned by the website repo and copied here with a hash check, not forked — Reason: owner asked for one shared viewer; no package registry between the two private repos yet
 - Decision: legacy Sketchfab cars and photo-traced wheels hidden, not removed — Reason: reactivation in /admin when packages/stock arrive
 - Decision: showroom removed, stepped drawer over the viewer's glass panel, scenes modelled on the Cycles hero stills — Reason: owner's direction (2026-11-11)
 - Decision: BlendKit Royalty Free cars only as pre-rendered images, never as a live GLB — Reason: its licence FAQ forbids assets that are directly extractable from the distribution
