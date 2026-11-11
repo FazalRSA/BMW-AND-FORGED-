@@ -55,6 +55,8 @@ def main():
             bpy.data.objects.remove(o, do_unlink=True)
 
     paints = bs.load_paints(bs.PAINTS_JSON)
+    if not 1 <= PAINT_INDEX <= len(paints):
+        sys.exit(f"paint index {PAINT_INDEX} is outside the paint table ({len(paints)} paints)")
     p = paints[PAINT_INDEX - 1]
     rig_mat = bpy.data.materials.get("Paint")
     if rig_mat is None:
