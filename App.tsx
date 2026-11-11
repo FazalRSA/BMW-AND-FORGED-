@@ -31,6 +31,7 @@ import { backdropCss, hasBodies, loadStillsManifest, renderedStills } from './se
 const ForgedPage = lazy(() => import('./components/ForgedPage').then((m) => ({ default: m.ForgedPage })));
 const RimDetailPage = lazy(() => import('./components/RimDetailPage').then((m) => ({ default: m.RimDetailPage })));
 const InfoPage = lazy(() => import('./components/InfoPage').then((m) => ({ default: m.InfoPage })));
+const DealerPage = lazy(() => import('./components/dealer/DealerPage').then((m) => ({ default: m.DealerPage })));
 const AdminPage = lazy(() => import('./components/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
 
 // Journey: welcome (choose the car on the carousel) -> configure (paint, wheel design, size, finish) -> summary.
@@ -42,6 +43,7 @@ type Route =
   | { name: 'summary' }
   | { name: 'forged' }
   | { name: 'admin' }
+  | { name: 'dealer' }
   | { name: 'terms' }
   | { name: 'credits' }
   | { name: 'delivery' }
@@ -56,6 +58,7 @@ const routeFromLocation = (): Route => {
   if (path === '/summary') return { name: 'configure' }; // stills are captured on the way in
   if (path === '/forged' || hash === 'forged') return { name: 'forged' };
   if (path === '/admin' || hash === 'admin') return { name: 'admin' };
+  if (path === '/dealer') return { name: 'dealer' };
   if (path === '/terms') return { name: 'terms' };
   if (path === '/delivery') return { name: 'delivery' };
   if (path === '/credits') return { name: 'credits' };
@@ -71,6 +74,7 @@ const routePath = (route: Route) =>
     summary: '/summary',
     forged: '/forged',
     admin: '/admin',
+    dealer: '/dealer',
     terms: '/terms',
     delivery: '/delivery',
     credits: '/credits',
@@ -1068,6 +1072,11 @@ export const App: React.FC = () => {
       {route.name === 'admin' && (
         <div className="absolute inset-0 z-[60] animate-fadeIn">
           <AdminPage onBack={() => navigateTo({ name: 'welcome' })} onCatalogChanged={reloadCatalog} />
+        </div>
+      )}
+      {route.name === 'dealer' && (
+        <div className="absolute inset-0 z-[60] animate-fadeIn">
+          <DealerPage onBack={() => navigateTo({ name: 'welcome' })} />
         </div>
       )}
       </Suspense>
