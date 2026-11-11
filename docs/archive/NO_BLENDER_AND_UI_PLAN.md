@@ -1,5 +1,12 @@
 # Plan: Custom Assets Without Blender + New UI
 
+> **Archived (2026-11-11).** Written for the first handover, before Blender (`bpy`) was adopted as
+> a standard tool in this repo and before the UI direction (the stepped drawer, no showroom) was
+> decided. Kept for its still-useful tips (checking GLB part names in a browser viewer, the free
+> three.js editor rename trick, `gltf.report` compression). Current process:
+> [`../PRODUCT_SPEC_CARS_AND_WHEELS.md`](../PRODUCT_SPEC_CARS_AND_WHEELS.md) (cars and wheels),
+> [`../MAP.md`](../MAP.md) (navigation).
+
 Companion to `HANDOVER.md`. This covers:
 1. Getting your car GLBs and rim PNGs in **without Blender**
 2. Where **OpenRouter, n8n and Firecrawl** fit

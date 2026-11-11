@@ -203,6 +203,10 @@ The configurator offers **exactly the wheels on the owner's stock sheet** (`docs
 | A straight-on product photo only | **B. Photo to 3D** | Good for flat and medium spoke designs. Depth is inferred, so deeply concave or layered designs come out wrong. Ask the maker for CAD. |
 | A photo and no 3D time | **C. Flat photo face** | Fallback for the hidden legacy wheels. Spokes are traced from the cut-out. |
 
+Before route B, see [`RIM_PHOTO_TO_3D_SPEC.md`](RIM_PHOTO_TO_3D_SPEC.md): a Nov 2026 researched
+comparison against manufacturer CAD, multi-image AI reconstruction and photogrammetry, with a
+decision table and a recommended low-risk pilot.
+
 ### 5.2 Route A: a rim file
 
 **The file** (website convention):
