@@ -84,15 +84,15 @@ GLB, and so does the turntable, because a frame is a fixed camera.
 
 ### Stills-only frames (the summary page and the PDF)
 
-The summary page and the PDF show **Cycles-rendered bodies with the live wheels on top** for the M2 CS, M4 CS and
-M5 Touring too, but the configurator's stage still draws those cars live. Their frames are listed in
+The summary page and the PDF show **Cycles-rendered bodies with the live wheels on top** for the M2 CS, M4 CS, M5 G90 and
+M5 Touring, but the configurator's stage still draws those cars live. Their frames are listed in
 `public/renders/stills.json` (read by `loadStillsManifest` in `services/renderedBody.ts`), not in `manifest.json`: a
 view in `manifest.json` would also replace the live car on the stage. Only the three views the summary uses are
 rendered (`frontThreeQuarter`, `side`, `frontWheel`). A car with no entry gets live raster stills as before.
 
 ```bash
 bunx vite --host 127.0.0.1 --port 5173 &
-IDLE_FRAMES=1000 node scripts/prerender/export-scene.cjs <carIndex> /tmp/prerender/<carId>.glb   # m2_g87 = 5, m4_cs_g82 = 1, m5_touring_g99 = 8
+IDLE_FRAMES=1000 node scripts/prerender/export-scene.cjs <carIndex> /tmp/prerender/<carId>.glb   # m2_g87 = 5, m4_cs_g82 = 1, m5_g90 = 7, m5_touring_g99 = 8
 python3 scripts/prerender/render_car.py /tmp/prerender/<carId>.glb /tmp/prerender/<carId> --car <carId> \
   --studio dark --samples 12 --width 1440 --views frontThreeQuarter,side,frontWheel      # about 3 minutes on 4 cores
 scripts/prerender/stills-frames.sh <carId> /tmp/prerender/<carId>                         # webp frames + stills.json

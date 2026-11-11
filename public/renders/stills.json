@@ -13,5 +13,10 @@
   "frontThreeQuarter",
   "frontWheel",
   "side"
+ ],
+ "m5_g90": [
+  "frontThreeQuarter",
+  "frontWheel",
+  "side"
  ]
 }
