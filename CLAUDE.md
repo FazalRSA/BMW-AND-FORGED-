@@ -10,7 +10,10 @@
 - Permission mode is set in the UI dropdown; settings.json only sets allow rules
 - Scratchpad is session-scoped; do not rely on it persisting
 - Wheel catalogue = the owner's stock sheet (docs/WHEEL_INVENTORY.md): real names FSA001-004/FF-1/FF-3, ZAR prices stored as USD/18.2; hide (active=false), never delete
-- /configure is the owner's viewer look (services/viewerStudio.ts, engine.setLook) + ViewerPanel; verify visual work with scripts/render/shoot.cjs and ?look=viewer before claiming done
+- Journey is welcome carousel -> /configure -> /summary (no showroom); /configure is the stage look (services/viewerStudio.ts STAGE, engine.setLook('stage')) + the stepped drawer (StepDrawer in Configurator.tsx); verify visual work with scripts/render/shoot.cjs and ?look=stage before claiming done
+- Rim page /rims/<id> is components/WheelStudio.tsx (ported from the FORGED website); no spin frames
+- The cloud sandbox has no GPU: renders are SwiftShader on CPU (about 50 s a shot); never claim real-GPU or phone results
+- Commit messages: type(scope) subject, body says why and what was checked; never rewrite pushed history
 - Harness runs (journey.cjs, e2e.cjs) stub Supabase writes; never create real leads (each one emails the owner)
 - Prepared cars/rims go in with scripts/ingest-car.mjs / scripts/ingest-rim.mjs (docs/ADD_PREPARED_CAR.md); migrations are written, not applied (no Supabase access from the sandbox)
 
@@ -20,5 +23,7 @@
 - Decision: 16:9, about 90s, British female VO with best voice model — Reason: user spec for BMW pitch
 - Decision: customer accounts via Google on Supabase Auth with a garage; admin allowlist untouched — Reason: owner's choice (2026-11-10 plan)
 - Decision: legacy Sketchfab cars and photo-traced wheels hidden, not removed — Reason: reactivation in /admin when packages/stock arrive
+- Decision: showroom removed, stepped drawer over the viewer's glass panel, scenes modelled on the Cycles hero stills — Reason: owner's direction (2026-11-11)
+- Decision: BlendKit Royalty Free cars only as pre-rendered images, never as a live GLB — Reason: its licence FAQ forbids assets that are directly extractable from the distribution
 
 <!-- handoff:learnings:end -->

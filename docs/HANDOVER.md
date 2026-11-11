@@ -27,21 +27,21 @@ Follow the sections in order. Each step has a **Check** line; do not move on unt
 
 | URL | What it is |
 |---|---|
-| `/` | Welcome: live car in the dark FORGEDSA studio, region and currency select, **Enter** |
-| `/models` | Showroom: one BMW M car at a time, huge model name behind it, ← → to switch (the car drives out and the next drives in), **Explore** (specs) and **Build** |
-| `/configure` | Configurator: the owner's vehicle viewer as the screen. The car in the grey studio dome (gradient horizon, fogged floor, pool shadow, "FORGED" plates); one glass panel (bottom sheet on phones) with Car, Paint (grouped by finish), Wheels, Size, Finish, View and Auto-rotate; the paint name over the stage; live set price (the dearer finish counts). `?panel=steps` shows the older four-step panel |
+| `/` | Welcome: the dark carousel of studio stills of the four cars. The car is chosen here (arrows, scroll, keyboard, swipe or dots). Region and currency select, **Enter** (opens the configurator on the car showing) |
+| `/models` | Opens the welcome. The showroom page that used to live here was removed on 2026-11-11 |
+| `/configure` | Configurator: a live car on the dark stage (black backdrop, a pool of light on a pale floor, pool shadow, "FORGED" plates; the M5 G90 shows its Blender frames in the fixed views instead, `ADD_PREPARED_CAR.md`, "Body modes"); the stepped drawer (a bottom sheet on phones, a side panel on wider screens) with Overview, then steps 1 Paint, 2 Wheels, 3 Size, 4 Finish; camera chips Front / Side / Rear / Wheel / Top and a turntable button over the stage; **Change model** (back to the welcome carousel, which opens on the car being built); **More options** (the … button in the drawer header: Region, Load a configuration, Account & garage, links to The wheels, Enquire, Delivery & fitment, Terms & conditions and Credits, and Start again, which returns to the welcome); live set price (the dearer finish counts). `?panel=viewer` shows the viewer's glass panel instead, for comparison |
 | `/summary` | Your build: studio stills, options, price, **Share** (configuration code + link), **PDF**, **Enquire**, **Save to garage** (signed in) |
-| Account sheet (top bar) | Google sign-in (Supabase Auth); profile; garage of saved builds (open, rename, delete); sign out. `docs/ACCOUNTS.md` |
+| Account sheet (the **Account** button in the configurator's stage corner, or **More options** → **Account & garage**) | Google sign-in (Supabase Auth); profile; garage of saved builds (open, rename, delete); sign out. `docs/ACCOUNTS.md` |
 | `/?config=CODE` | Reopens a shared configuration |
 | `/forged` | The wheel collection |
-| `/rims/<rim-id>` | 360° view of one wheel: finish, size, price, "See it on my car" |
+| `/rims/<rim-id>` | One wheel in the 3D wheel studio (views Face / 3/4 / Side / Back / Top, finish chips, Show toggles): finish, size, price, "See it on my car" |
 | `/delivery` | Delivery & fitment (copy in `config/pages.ts`) |
 | `/terms` | Terms & conditions (copy in `config/pages.ts`) |
 | `/admin` | Admin sign-in (with emailed set-password link), then edit cars, wheels, finishes and paints, upload GLBs, rim PNGs or CAD, and read Enquiries |
 
-Since 2026-11-10 the `/configure` screen is the owner's vehicle spec viewer: the car sits in its studio (dome, floor, reflection coves) and the right-hand glass panel holds Car chips, paint swatch groups, rims, sizes, finishes, views and the price; the prepared cars (M2 CS, M4 CS, M5, M5 Touring) are the showroom and the older Sketchfab cars are hidden until their packages arrive (`ADD_PREPARED_CAR.md`).
+Since 2026-11-11 there is no showroom page: the car is chosen on the welcome carousel and **Enter** opens `/configure` on it. The `/configure` screen draws a live car in the stage look (`services/viewerStudio.ts`, `engine.setLook('stage')`: a black backdrop, a pool of light on a pale floor, a black reflection cove with one overhead softbox), modelled on the welcome's Cycles stills. Its controls are the stepped drawer (`StepDrawer` in `components/journey/Configurator.tsx`), which the owner chose over the viewer's glass panel. The prepared cars (M2 CS, M4 CS, M5, M5 Touring) are the line-up and the older Sketchfab cars are hidden until their packages arrive (`ADD_PREPARED_CAR.md`).
 
-**Four cars are in the showroom:** the prepared M2 CS, M4 CS, M5 and M5 Touring (all with a GLB in
+**Four cars are in the line-up:** the prepared M2 CS, M4 CS, M5 and M5 Touring (all with a GLB in
 `public/models/`). The other eight rows (M4 Competition, M4 Convertible, M3, M3 Touring, M235, M8, X3 M50,
 X5 M) stay in the catalogue but are hidden (`active = false`, migration `20261110141000_legacy_cars_hidden.sql`)
 until their prepared packages arrive. Uploading a GLB alone does not bring a hidden car back: tick *Visible in
@@ -115,7 +115,9 @@ If it says *"not on the admin allowlist"*, the email in `admin_users` doesn't ma
 **Upload:**
 1. `/admin` → **Cars** → click the car → **3D model (.glb) → Upload** → pick the file.
 2. Wait for the link to appear under the button, then click **Save**.
-3. Click **Back to studio** and select that car.
+3. Click **Back to studio** and choose that car on the welcome carousel, then **Enter**. A car with no slide
+   on the carousel yet (see the note under the table in section 3) is not offered there; open
+   `/configure?panel=viewer`, whose panel has Car chips, to look at it.
 
 **Check / fix:**
 
@@ -152,9 +154,10 @@ the file are dropped automatically.
 - It's turned, sized to the rim diameter and centred automatically, and takes the finish colour.
   If the face points into the car, tick **Flip 3D rim** → Save.
 
-**Check:** `/configure` → **Wheels** → select the wheel (the camera cuts to the wheel close-up; the
-**Wheel** chip in the **View** row returns to it), then the **360°** chip next to the wheel, which opens
-the rim page (`/rims/<rim-id>`, the 3D turntable with finish, size and price).
+**Check:** `/configure` → step 2 **Wheels** → select the wheel (the camera cuts to the wheel close-up; the
+**Wheel** camera chip over the stage returns to it), then the **View in 360°** button on the wheel card,
+which opens the rim page (`/rims/<rim-id>`, the 3D wheel studio with finish, size and price). Check the
+wheel there as well: the rim page loads the same rim file as the car.
 
 ### 2c. Prices, names, finishes, paints
 
@@ -173,9 +176,15 @@ Everything in the drawers comes from the admin tabs. Edit → **Save** → the s
 
 ## 3. User journey
 
-Welcome (`/`) → **Enter** → Showroom (`/models`) → **Build** → pre-curated vehicle notice → Configurator
-(`/configure`) → **View your M4** → Summary (`/summary`) → Share / PDF / Enquire.
-One 3D studio stays alive behind every step; the camera glides between stages rather than the page reloading.
+Welcome (`/`, the car is chosen on the carousel) → **Enter** → Configurator (`/configure`) → **View your M4** →
+Summary (`/summary`, which carries the visualisation notice) → Share / PDF / Enquire. There is no showroom.
+One 3D studio stays alive behind the welcome and the configurator rather than the page reloading. While the
+welcome stills cover the canvas the engine is prepared behind them (stage look built, camera framed as in the
+configurator, the car on stage preloaded), so Enter reaches the configurator in well under a second in the
+harness. **Enter** opens the car in the paint its still shows when that car's palette has it (the M2 CS in
+Portimao Blue, the M5 in Fire Red); the M4 CS and M5 Touring palettes do not have their stills' paints, so they
+open in their first paint. **Change model** in the configurator goes back to the welcome carousel, which opens
+on the car being built.
 
 | To change… | Edit |
 |---|---|
@@ -183,12 +192,22 @@ One 3D studio stays alive behind every step; the camera glides between stages ra
 | Regions, languages, currencies and exchange rates (prices are stored in USD) | `config/brand.ts` → `regions` |
 | Browser tab title, link-preview text | `index.html` |
 | Welcome screen layout | `components/journey/WelcomeGate.tsx` |
-| Showroom | `components/journey/Showroom.tsx` |
-| Configurator panel (Car, Paint, Wheels, Size, Finish, View, Auto-rotate) | `components/journey/ViewerPanel.tsx`; the older four-step panel (`?panel=steps`) is `components/journey/Configurator.tsx` |
+| Welcome carousel: the cars, their order and the paint each still shows | `HERO_SLIDES` in `components/journey/HeroStage.tsx`; images in `public/hero/` |
+| Configurator controls (Overview, then 1 Paint, 2 Wheels, 3 Size, 4 Finish; camera chips; turntable) | `StepDrawer` in `components/journey/Configurator.tsx`. The viewer's glass panel (`components/journey/ViewerPanel.tsx`) only shows with `?panel=viewer` |
+| More options dialog (region, load a code, account, links to the other pages, Start again) | `MoreOptionsModal` in `components/journey/Configurator.tsx`; its page links are `menuLinks` in `App.tsx`. It replaces the hamburger menu and top bar, which went with the showroom (`components/journey/TopBar.tsx` is deleted). There is no "Home", "Models" or "Configure" entry; the welcome keeps its own "The wheels" link and social icons |
+| Rim page (`/rims/<id>`) | `components/RimDetailPage.tsx`, `components/WheelStage.tsx`, `components/WheelStudio.tsx`, `services/wheelStudioParts.ts` |
 | Summary page | `components/journey/SummaryPage.tsx` |
 | PDF layout | `services/brochurePdf.ts` |
 | Enquiry form | `components/journey/EnquiryModal.tsx` |
-| Car order in the showroom / default paint and wheel | Admin → *Sort order* (the first item is the default) |
+| Car order on the welcome, and the paint a car opens in | `HERO_SLIDES` (above). A car whose palette lacks its still's paint opens in the first paint of its palette |
+| Order of the wheel list / default wheel | Admin → *Sort order* (the first wheel is the default) |
+
+**The welcome carousel's slides are a fixed list (`HERO_SLIDES`), filtered to the catalogue's active cars.** Since
+the showroom went, it is the only place a customer chooses the car, so:
+- a car added in `/admin` is not offered to customers until it has a slide (a still in `public/hero/` and an
+  entry in `HERO_SLIDES`; `PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.7);
+- a car hidden in `/admin` loses its slide (`WelcomeGate` leaves out slides whose car is not on offer);
+- *Sort order* on cars does not change the order of the slides.
 
 **Where things are saved (Supabase):**
 - **Enquiries** → table `leads` (name, email, phone, message, consultation, configuration, code, region).
@@ -204,7 +223,7 @@ One 3D studio stays alive behind every step; the camera glides between stages ra
 | Name, logo | `config/brand.ts`: `name`, and `logoUrl` (put the SVG/PNG in `public/` and use e.g. `'/logo.svg'`) |
 | Colours | `config/brand.ts` → `colors` (used by the PDF), and the matching Tailwind tokens in `tailwind.config.cjs` (`gold`, `brass`, `carbon`, `surface`, `ember`). Main action buttons are the `primary` variant of `Button` in `components/journey/ui.tsx` (`bg-ember`, hover `ember-light`). The lead email has its own copy of the colours in the n8n Code node (§5a). |
 | Font | Satoshi (headings) and Inter (body), self-hosted in `public/fonts/` and declared in `index.html`. The PDF embeds `satoshi-700/900.ttf` |
-| Studio lighting / reflections | `services/CarConfiguratorEngine.ts` → `setupStudioLighting('studio_light')` and `HDRI_URL` |
+| Studio lighting / reflections | `/configure` (the stage look): `services/viewerStudio.ts` → `STAGE` (floor, pool of light, overhead softbox, exposure). The softbox studio the engine uses elsewhere: `services/CarConfiguratorEngine.ts` → `setupStudioLighting('studio_light')` and `HDRI_URL` |
 | Camera angles | `services/CarConfiguratorEngine.ts` → `setCameraPreset` |
 
 **Safe editing loop (every time):**
@@ -325,12 +344,13 @@ you add it (section 5, "Branch preview on Render").
 steps 1 to 5); the URL you test on is in the redirect list. Until then, use the Render preview for the
 car and wheel items (it ships the bundled catalogue) and skip the account item.
 
-- [ ] Loader → welcome in a few seconds; the car turns slowly on the welcome screen
-- [ ] Showroom arrows switch between the four cars (M2 CS, M4 CS, M5, M5 Touring; drive-out / drive-in); Explore shows specs; no Sketchfab-era car appears
-- [ ] Build → notice → Confirm opens the configurator; every paint, wheel, size and finish applies
+- [ ] Loader → welcome in a few seconds; the welcome shows a studio still of a car on a dark stage
+- [ ] The welcome's arrows, scroll, arrow keys, swipe and dots switch between the four cars (M2 CS, M4 CS, M5, M5 Touring); no Sketchfab-era car appears
+- [ ] **Enter** opens the configurator on the car showing (the M2 CS in Portimao Blue, the M5 in Fire Red, the M4 CS and M5 Touring in their first paint); every paint, wheel, size and finish applies; **Change model** returns to the welcome on the same car
 - [ ] Choosing a wheel, size or finish cuts to the wheel close-up
 - [ ] Prices and currency match the region chosen on the welcome screen
-- [ ] Summary shows three stills; **Share** shows a code; opening `/?config=CODE` in a private window restores it
+- [ ] Summary shows three stills and the visualisation notice; **Share** shows a code; opening `/?config=CODE` in a private window restores it
+- [ ] **View in 360°** on a wheel opens the rim page: the wheel studio draws the rim, the view and finish chips work, FSA001 offers Front / Rear
 - [ ] **PDF** downloads a two-page spec sheet
 - [ ] PDF asks for email + mobile first; the lead appears in `/admin` → Enquiries as "PDF download"
 - [ ] An enquiry appears in `/admin` → Enquiries

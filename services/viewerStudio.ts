@@ -7,12 +7,16 @@ import * as THREE from 'three';
 import type { PaintColor } from '../types';
 
 /**
- * The studio of the four-car viewer (car_viewer_web/index.html, the "vehicle spec viewer"), ported so
- * the configurator stage looks the same: a gradient dome behind the car, a floor that fogs into the
+ * The studio of the four-car viewer (car_viewer_web/index.html, the "vehicle spec viewer"), ported as
+ * the engine's 'viewer' look: a gradient dome behind the car, a floor that fogs into the
  * dome's horizon, a soft pool of shadow around the footprint, and two reflection coves built from
  * feathered light panels. Glossy paints get the dark "gloss cove" (overhead softbox, two crisp rails
  * along the car, a ring of wrap panels, low kickers); Frozen paints get the soft grey cove.
  * Numbers are the viewer's, verbatim.
+ *
+ * The configurator screen no longer shows this look. It shows the stage look (STAGE, further down), which
+ * reuses the shadow pool, the soft cove and the paint finish table from here. The viewer look is kept for
+ * comparison (?look=viewer in the render harness).
  */
 
 /** Soft-edged light panel: real softboxes fall off at the edges, which gives natural highlight edges on paint. */
@@ -170,7 +174,7 @@ export function stageFloorTexture(): THREE.CanvasTexture {
 
 /**
  * The stage floor: unlit, so its brightness is the stills' whatever the paint's exposure, and transparent where the
- * pool fades, so it melts into a black backdrop (the dome on the configure screen, the page on the showroom).
+ * pool fades, so it melts into the black backdrop behind it (the stage dome, which the engine always shows with it).
  */
 export function buildStageFloor(): THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> {
   const floor = new THREE.Mesh(

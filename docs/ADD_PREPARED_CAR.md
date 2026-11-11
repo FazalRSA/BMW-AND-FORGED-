@@ -63,13 +63,14 @@ All four were ingested on 2026-11-10 (see `docs/ingest/*.jpg` for the check shee
 
 The configurator can draw a car two ways (`App.tsx`, `services/renderedBody.ts`), and it decides per view: a
 view listed for the car in `public/renders/manifest.json` shows its Blender frame, any other view shows the live
-GLB, and so does the turntable (Auto-rotate), because a frame is a fixed camera.
+GLB, and so does the turntable, because a frame is a fixed camera.
 
 - **Live GLB** (what the ingest sets up by default): the engine draws the model with the studio lighting, paint
   shader and materials pass; the forged wheels sit in the model's arches. Any car without render frames
   works this way.
 - **Blender frames** (`--render`; today only the M5 G90 has them, in the dark studio; the other three prepared cars are drawn live): Cycles renders the body once
-  per view chip (Front ¾, Side, Rear ¾, Front, Wheel, Top) with white and black paint bases, and the browser
+  per view (front three-quarter, side, rear three-quarter, front, wheel, top; the stepped drawer has chips for
+  all but the straight-on front, which only the `?panel=viewer` panel offers) with white and black paint bases, and the browser
   recolours them for any paint. The wheels are still drawn live on top, so paint, wheel, size and finish all
   change at once. It needs Blender as a Python module:
 
@@ -78,7 +79,8 @@ GLB, and so does the turntable (Auto-rotate), because a frame is a fixed camera.
   SAMPLES=12 IDLE_FRAMES=1000 node scripts/ingest-car.mjs BMW_M5_G90.zip --car m5_g90 --render --check
   ```
 
-  Nothing else changes: the same GLB stays in the showroom, and the wheels stay live.
+  Nothing else changes: the same GLB is still what the turntable and any view without a frame draw, and the
+  wheels stay live.
 
 ### What the frames of a prepared car need
 
@@ -105,17 +107,27 @@ included: `scripts/prerender/render-all.sh 7` for m5_g90) — it re-renders that
 rebuilds the manifest from everything on disk. Do not run it with no index: that re-renders every car for hours
 and overwrites the frames just restored.
 
-## The configurator screen looks like the viewer
+## The configurator screen is the stage look
 
-Whatever is drawn live (a car or view without a Blender frame, and the turntable of any car) sits in the four-car
-viewer's studio on the configurator screen: the gradient dome, the floor that fogs into the horizon, the pool of shadow around the
-footprint, Neutral tone mapping with the exposure set by the paint, and the viewer's two reflection coves (the
-gloss cove for solid, metallic and pearl paints; the soft grey cove for Frozen). The port is
-`services/viewerStudio.ts` (the viewer's numbers verbatim) and `CarConfiguratorEngine.setLook('viewer' | 'studio')`;
-`App.tsx` turns it on for `/configure` only, so the showroom keeps its giant model name behind the car. The
-headless harness takes `?look=viewer`. The viewer's Daylight and Golden-hour modes are not ported (the
-configurator has one studio); its paint library maps onto the catalogue's paints (`type` Uni / Metallic / Pearl /
-Frozen).
+Whatever is drawn live (a car or view without a Blender frame, and the turntable of any car) sits in the
+**stage look** on the configurator screen. It is modelled on the Cycles hero stills of the welcome carousel
+(`public/hero/`): a black backdrop, a pool of light on a pale floor that fades to black, the pool of shadow
+around the footprint, Neutral tone mapping with the exposure set by the paint, and a black reflection cove
+with one overhead softbox for solid, metallic and pearl paints (Frozen paints keep the soft grey cove). It
+is still the live WebGL car: it does not have the stills' path-traced reflections and soft shadows.
+
+The code is `services/viewerStudio.ts` (`STAGE`, `buildStageDome`, `buildStageFloor`, `buildStageCove`) and
+`CarConfiguratorEngine.setLook('stage' | 'viewer' | 'studio')`. `App.tsx` sets `'stage'` for `/configure`, and
+already behind the welcome's stills, so the look is built before **Enter** shows it. The headless harness
+takes `?look=stage`. `?look=viewer` still draws the older look (the four-car viewer's grey gradient dome,
+fogged floor and gloss cove), for comparison only; with no `look=` the harness draws the softbox studio.
+The paint finish table (`VIEWER_FINISH`, by the catalogue's paint `type` Uni / Metallic / Pearl / Frozen) is
+shared by the stage and viewer looks.
+
+Stage defaults: floor peak 0.97, pool sigma 2.2 m across and 3.4 m along, overhead 12, rails 6, ring 1,
+floorEnv 0.5, exposure 1.2, parts 0.35 (the share of the cove that glass, carbon, chrome, trim and lamps
+mirror). For comparison renders each can be overridden from the URL: `?stagePeak= ?stageRx= ?stageRz=
+?stageOver= ?stageRails= ?stageRing= ?stageFloorEnv= ?stageExp= ?stageParts=`.
 
 ## Rims the same way
 
@@ -126,13 +138,15 @@ no tyre; see `public/models/wheels/README.md` in the Forgedwebsite repo) goes on
 node scripts/ingest-rim.mjs ../Forgedwebsite/public/models/wheels/fsa003.glb --wheel forged_fsa_03 --check
 ```
 
-It packs the file (`scripts/rim3d/pack.mjs`, to `--budget` triangles, default 40 000), writes
+It packs the file (`scripts/rim3d/pack.mjs`, to `--budget` triangles; the default is 160 000, which is above
+the triangle count of every stocked rim, so they were packed without losing triangles; at 40 000 the thin
+spokes broke up), writes
 `public/models/rims/<wheelId>.glb`, sets `modelUrl` on the wheel in the bundled catalogue plus a migration
 for `public.wheels`, and with `--check` shoots the wheel on the two prepared cars the engine page indexes as
 `1` (M4 CS, `m4_cs_g82`: close-up in Liquid Metal and Black Gloss, front three-quarter in Silver) and `7`
 (M5, `m5_g90`: 21" in Bronze) into `docs/ingest/rims/<wheelId>/` with a contact sheet
-`docs/ingest/rims/<wheelId>.jpg`. On the car the 3D rim replaces the wheel's photo face; the rim page keeps
-its pre-rendered spin. Spokes facing into the car: run again with `--flip`. Back to the photo face: remove
+`docs/ingest/rims/<wheelId>.jpg`. On the car the 3D rim replaces the wheel's photo face; the rim page
+(`/rims/<wheelId>`) loads the same file in the wheel studio (`components/WheelStudio.tsx`). Spokes facing into the car: run again with `--flip`. Back to the photo face: remove
 `modelUrl` (or clear "Rim 3D model" in `/admin`). `--dry-run` prints the rim check and the plan and changes
 nothing (no pack, no catalogue edit, no migration, no thumbnail copy); `--port` points at a dev server on
 another port; `node scripts/ingest-rim.mjs --help` lists every option.
@@ -165,7 +179,9 @@ Website rims in the configurator on 2026-11-10, named and priced from the owner'
 `fsa002.glb` → `forged_fsa002` (FSA002), `fsa003.glb` → `forged_fsa_03` (FSA003), `fsa004.glb` →
 `forged_fsa004` (FSA004), `ff-1.glb` → `sixnine_ff1` (FF-1), `ff-3.glb` → `sixnine_ff3` (FF-3). Brake
 calipers and rotors inside a rim file are dropped when packing (`scripts/rim3d/pack.mjs`; the engine draws
-its own). The rim-page spins (`turntable.py`) are still to do; the live engine is the fallback meanwhile.
+its own). Since 2026-11-11 the rim page draws these same files in the wheel studio
+(`components/WheelStudio.tsx`); the pre-rendered spins (`scripts/rim3d/turntable.py`, `spin-manifest.py`) are
+legacy scripts whose output nothing in the app uses.
 A thumbnail for a rim that has no website photo: `python3 scripts/rim3d/preview.py out.png <uncompressed
 rim.glb> --size 1024x1024 --angle 0`, cut out with `rembg`, saved as WebP with alpha (FSA001 was done this
 way).

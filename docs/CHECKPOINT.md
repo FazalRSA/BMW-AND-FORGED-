@@ -1,7 +1,60 @@
 # Checkpoint: photoreal cars and rims
 
-**Last updated:** 2026-11-11 · **Branch:** `claude/prepared-cars-render-frames` (PR #3; `ccr-f52bf849-fnf7qs` is merged into `main`) · **To continue:** the
+**Read first:** `docs/SESSION_HANDOVER_2026-11-11.md` (what is merged and what is not, helpers still in flight, decisions waiting for the owner).
+
+**Last updated:** 2026-11-11 · **Branch:** `ccr-f52bf849-fnf7qs` (the work in the first entry below is on it, ahead of `main`) · **To continue:** the
 `forgedsa-resume` skill (`.claude/skills/forgedsa-resume/SKILL.md`) restores the tools, and this file says what is next.
+
+## 2026-11-11: no showroom, stage look, stepped drawer, wheel studio on the rim page
+- **Journey:** Welcome (`/`) → Enter → Configurator (`/configure`) → Summary (`/summary`). There is no showroom:
+  `components/journey/Showroom.tsx` is deleted and `/models` opens the welcome. No Explore, Build or "Next model" buttons, and
+  no drive-out / drive-in between cars. The footer's "Configure" link goes to `/configure`.
+- **The welcome carousel is where the car is chosen** (arrows, scroll, keyboard, swipe, dots). Enter opens the configurator on
+  the car on stage, in the paint its still shows when that car's palette has it (`HERO_SLIDES[].paintId` in `HeroStage.tsx`):
+  the M2 CS (Portimao Blue) and M5 (Fire Red) do; the M4 CS and M5 Touring palettes do not have their stills' paints, so they
+  open in their first paint. "Change model" in the configurator goes back to the carousel, which opens on the car being built.
+- **The carousel's slides are a fixed list** (`HERO_SLIDES`), filtered to the cars that are active in the catalogue: a car
+  hidden in `/admin` loses its slide, but a car added there is not offered until it has a slide, and *Sort order* does not
+  reorder the slides (`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.7).
+- **Enter is fast:** while the stills cover the canvas the engine is prepared behind them (stage look built, camera framed as
+  in the configurator, the car on stage preloaded), so Enter reaches the configurator in well under a second in the harness.
+- **Controls = the stepped drawer** (`StepDrawer` in `components/journey/Configurator.tsx`): Overview, then steps 1 Paint,
+  2 Wheels, 3 Size, 4 Finish; a bottom sheet on phones, a side panel on wider screens; camera chips Front / Side / Rear /
+  Wheel / Top and a turntable button over the stage. The owner chose it over the viewer's glass panel.
+  `components/journey/ViewerPanel.tsx` still exists but only behind `?panel=viewer`; `?panel=steps` no longer exists.
+- **The owner's visualisation notice** (`BRAND.visualisationNotice`, formerly the showroom's "Pre-curated vehicle" confirmation
+  before Build) now shows on the summary page. `shortModelName` lives in `components/journey/carNames.ts`.
+- **Stage look:** `/configure` draws live cars with `engine.setLook('stage')` (`services/viewerStudio.ts`: `STAGE`,
+  `buildStageDome`, `buildStageFloor`, `buildStageCove`), modelled on the Cycles hero stills: a black backdrop, a pool of light
+  on a pale floor that fades to black, and a black reflection cove with one overhead softbox. Defaults: floor peak 0.97, pool
+  sigma 2.2 m across and 3.4 m along, overhead 12, rails 6, ring 1, floorEnv 0.5, exposure 1.2, parts 0.35 (the share of the
+  cove that glass, carbon, chrome, trim and lamps mirror). URL overrides for comparison renders: `?stagePeak= ?stageRx=
+  ?stageRz= ?stageOver= ?stageRails= ?stageRing= ?stageFloorEnv= ?stageExp= ?stageParts=`. Frozen paints keep the soft cove;
+  the paint finish table (`VIEWER_FINISH`) is shared with the viewer look. In the harness `?look=stage` is what /configure
+  draws; `?look=viewer` draws the older grey viewer dome, for comparison only; `?look=studio` is the softbox studio. It is
+  still the live WebGL car: it does not have the stills' path-traced reflections and soft shadows.
+- **Rim page (`/rims/<id>`) = the wheel studio ported from the FORGED website:** `components/WheelStudio.tsx` (lazy chunk),
+  `components/WheelStage.tsx` (the studio for a wheel with a `modelUrl`, the wheel's photo for one without),
+  `services/wheelStudioParts.ts`. Views Face / 3/4 / Side / Back / Top; Front / Rear for a staggered set (FSA001); finish
+  chips; Show toggles Orbit, Spin wheel, Exploded, Wireframe, Bolts, Cap, and Brake check when the model has brake meshes. It
+  loads the same rim files the car uses (`public/models/rims/`) and draws finishes with `services/wheelFinish.ts`, so a finish
+  is the same on the rim page and on the car.
+- **Removed:** `components/RimSpinView.tsx` and `public/renders/rims/manifest.json`. No spin frames existed for the six stocked
+  wheels. The pre-rendered 360° spin is no longer part of the app. `scripts/rim3d/turntable.py` and `spin-manifest.py` still
+  exist but nothing in the app uses their output (legacy). The engine's `showcase` constructor option is no longer used by the app.
+- **Harnesses (`scripts/render/`):** `journey.cjs` goes welcome → Enter (straight into the configurator) → wheels step → three
+  wheels → size → finish → summary, and waits for the boot overlay by its opacity. `car-switch.cjs` drives the viewer panel's
+  car chips, so it needs `BASE` to end in `?panel=viewer`. `responsive.cjs` no longer records a showroom page. `pdf-check.cjs`
+  and `swap-perf.cjs` no longer click Build / Confirm. **`e2e.cjs` still walks the showroom and has not been updated.**
+- **Renders here are slow:** the cloud container has no GPU; headless renders use SwiftShader on CPU (about 50 s a shot).
+- **BlendKit licence finding** (the owner is looking at BlendKit car models; a Royalty Free model must not ship as a live GLB):
+  `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.1.
+- **Not done:** `e2e.cjs`; the branded client PDF (`docs/FORGEDSA-Client-Handover.pdf`) has not been regenerated since this change.
+- **Menu:** the hamburger menu and top bar went with the showroom (`components/journey/TopBar.tsx` is deleted). Its links now
+  live in the configurator's "More options" dialog (the … button in the drawer header, `MoreOptionsModal` in
+  `components/journey/Configurator.tsx`): The wheels, Enquire, Delivery & fitment, Terms & conditions, Credits, next to Region,
+  Load a configuration, Account & garage and Start again (which returns to the welcome). There is no "Home", "Models" or
+  "Configure" menu entry any more. The welcome keeps its own "The wheels" link and social icons.
 
 ## 2026-11-11: welcome stage, Cycles stills, 16-bit normals (PR #3)
 - **Welcome screen** is a dark studio stage that cycles Cycles-rendered stills of the four cars (arrows, scroll, keyboard,
@@ -47,10 +100,11 @@ README → Hosting). Verified: tsc, vite build, `journey.cjs` phone + desktop, `
 share-code writes stubbed), accounts sheet check at both sizes.
 
 ## Goal of this phase (since 2026-11-10)
-The owner's **four prepared cars** (M2 CS, M4 CS, M5, M5 Touring) drawn live from their GLBs in the viewer look, with the
-**six stock-sheet wheels** (FSA001-004, FF-1, FF-3) as GLB rims, in the sheet's sizes, finishes and prices, verified with
-the harness (`journey.cjs` both sizes, `pdf-check.cjs`, `shoot.cjs` sheets of the six wheels). Next: apply the migrations,
-Google sign-in, spins for the six wheels (queue below).
+The owner's **four prepared cars** (M2 CS, M4 CS, M5, M5 Touring) drawn live from their GLBs in the stage look (the viewer
+look until 2026-11-11), with the **six stock-sheet wheels** (FSA001-004, FF-1, FF-3) as GLB rims, in the sheet's sizes,
+finishes and prices, verified with the harness (`journey.cjs` both sizes, `pdf-check.cjs`, `shoot.cjs` sheets of the six
+wheels). Next: apply the migrations, Google sign-in (queue below). Spins for the six wheels are no longer planned: the rim
+page draws the rim GLB in the wheel studio.
 
 *Superseded (Oct 2026 goal, kept for the history below):* M4 Competition and M5 G90 with Twin-Y (FSA-12), Star 6 (FSA-13),
 Kyalami 15 (FSA-03), Turbine 25 (FSA-14). FSA-12/13/14 are hidden (`active: false`); the `forged_fsa_03` id now carries
@@ -59,11 +113,11 @@ the stock FSA003 GLB, not the photo-traced Kyalami 15.
 ## How it works now (decided, keep)
 | Surface | What renders it |
 |---|---|
-| Car body (configurator) | **Prepared cars (M5, M5 Touring, M4 CS, M2 CS since 2026-11-10): the GLB live** (`docs/ADD_PREPARED_CAR.md`). Others: Blender Cycles images per car × view, recoloured per paint in the browser (`scripts/prerender/`, `components/journey/RenderedCarView.tsx`). Since 2026-10-07: darker reflection panels in the `STUDIO=dark` studio (no milky haze), a third `flake_w` frame (metallic base) blended in for Metallic/Pearl paints (`flakeLook` in `services/renderedBody.ts`), `BODY_EXPOSURE` 1.25 |
-| Wheels on the car | live engine. **The six stocked wheels are 3D rim GLBs** (`modelUrl`, `rearModelUrl` for the staggered FSA001; `scripts/ingest-rim.mjs`; a GLB wins whenever `modelUrl` is set in `applyWheelDesign`), lit by the viewer studio on the live cars. The **2D photo/bar face** (`imageUrl`, `services/rimFaces.ts`, Blender studio HDR `public/env/forgedsa_studio.hdr`) applies only to the hidden legacy wheels |
-| Rim detail page | **Blender 360° spin** for the hidden legacy wheels, 36 frames × 5 finishes (`scripts/rim3d/turntable.py` → `public/renders/rims/<id>/`, `RimSpinView.tsx`). None of the six stocked wheels has a spin yet (queue): their page draws the live GLB |
-| Finishes (spins) | `scripts/rim3d/finishes.json` + `materials.py`: Liquid Metal, Satin Bronze, Satin Gold, Gloss Black, Silver = brushed aluminium |
-| Finishes (car) | `services/wheelFinish.ts` (Satin Gold live in Supabase on every wheel since 2026-10-04) |
+| Car body (configurator) | **Prepared cars (M5, M5 Touring, M4 CS, M2 CS since 2026-11-10): the GLB live** (`docs/ADD_PREPARED_CAR.md`). **The M5 G90 also has Blender Cycles frames** (`public/renders/m5_g90/`, six views), which the configurator shows in those fixed views while the turntable is off, recoloured per paint in the browser (`scripts/prerender/`, `components/journey/RenderedCarView.tsx`); it is the only car with frames. The eight hidden cars have no body in the repo: commit `b62b126` (2026-11-11) removed their Sketchfab GLBs and the frames six of them had, so a hidden car needs a new model before it can be shown again. The frames since 2026-10-07: darker reflection panels in the `STUDIO=dark` studio (no milky haze), a third `flake_w` frame (metallic base) blended in for Metallic/Pearl paints (`flakeLook` in `services/renderedBody.ts`), `BODY_EXPOSURE` 1.25 |
+| Wheels on the car | live engine. **The six stocked wheels are 3D rim GLBs** (`modelUrl`, `rearModelUrl` for the staggered FSA001; `scripts/ingest-rim.mjs`; a GLB wins whenever `modelUrl` is set in `applyWheelDesign`), lit by the stage look on the live cars. The **2D photo/bar face** (`imageUrl`, `services/rimFaces.ts`, Blender studio HDR `public/env/forgedsa_studio.hdr`) applies only to the hidden legacy wheels |
+| Rim detail page | **The wheel studio** (since 2026-11-11): `components/WheelStudio.tsx` via `components/WheelStage.tsx` draws the wheel's rim GLB (the same file as on the car) live, with fixed views, finish chips and Show toggles; a wheel without a `modelUrl` shows its photo. The Blender 360° spin (`scripts/rim3d/turntable.py`, `RimSpinView.tsx`) is no longer part of the app |
+| Finishes (legacy spin scripts) | `scripts/rim3d/finishes.json` + `materials.py`: Liquid Metal, Satin Bronze, Satin Gold, Gloss Black, Silver = brushed aluminium. Nothing in the app uses their output |
+| Finishes (car and rim page) | `services/wheelFinish.ts` (Satin Gold live in Supabase on every wheel since 2026-10-04) |
 
 ## Status of the Oct 2026 target set (history: these wheels are hidden since 2026-11-10, the M4 Competition too)
 | Item | M4 Competition | M5 G90 | Rim page spin |
@@ -76,7 +130,8 @@ the stock FSA003 GLB, not the photo-traced Kyalami 15.
 
 **Live since 2026-10-05:** FSA-12/13/14 are active in Supabase (migration `20261004180000_wheels_fsa_12_13_14_live.sql`)
 with PLACEHOLDER names/sizes/prices from FSA-05. **Every one of the twelve spun wheels has a rim page spin, but eleven of the twelve (FSA-03 is now the stock FSA003)
-are hidden since 2026-11-10 (`active: false`); the six active stock wheels have no spin yet** (queue). FSA-01, 02, 04,
+are hidden since 2026-11-10 (`active: false`); the six active stock wheels have no spin yet** (queue). *(2026-11-11: the spin
+frames are no longer in the repo and the app no longer shows spins; see the first entry.)* FSA-01, 02, 04,
 05, 06, 07, 08, 09 were added on 2026-10-05 (FSA-07 built from `public/rim-faces/forged_fsa_07.png`; FSA-09 rendered
 with `turntable.py --resmooth`). Weakest matches: FSA-07 Dezzi Star, then FSA-04 Scribante 3P.
 
@@ -87,7 +142,8 @@ and the stock wheels' `docs/ingest/stock-wheels.jpg`. Car body fixes in `scripts
 `CAR_FIXES`: M8 keeps only the Competition fender (four stacked variants z-fought), M3 has thin windscreen glass and
 renders without subdivision (it needs >12.7 GB subdivided). Both re-rendered and live.
 
-Responsive: `scripts/render/responsive.cjs` passes 180/180 (12 pages × 15 devices incl. iPad 834×1194 and 1366×1024).
+Responsive: `scripts/render/responsive.cjs` passed 180/180 (12 pages × 15 devices incl. iPad 834×1194 and 1366×1024) with
+the showroom page still in its list. Since 2026-11-11 the list has 11 pages (no showroom); no run of that list is recorded here.
 Headless Chromium needs the proxy CA in `$HOME/.pki/nssdb` (`apt install libnss3-tools`, then `certutil -d sql:$HOME/.pki/nssdb
 -A -t C,, -n agent-proxy -i /root/.ccr/agent-proxy-ca.crt`); without it Supabase fails and the app silently uses the
 bundled catalogue.
@@ -98,13 +154,17 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 
 ## Queue (do the top unchecked item; tick it when committed)
 - [ ] Supabase migrations, checked by name on 2026-11-11: the four cars, legacy cars hidden, the `_wheel_*_rim_model` files, the
-      wheel inventory and `car_specs_m2cs_m5touring` are applied and the four prepared cars are active. **Not applied:**
-      `customer_accounts`, `admin_requires_confirmed_email` (no migration named `lead_hardening` either). **Applied but not in
-      the repo:** `prepared_cars_keep_own_brakes`: commit its SQL. Supabase still names `m2_g87` "BMW M2 Coupe". Then deploy and
-      smoke the live catalogue (source `supabase`).
+      wheel inventory, `car_specs_m2cs_m5touring`, `customer_accounts`, `admin_requires_confirmed_email` and
+      `prepared_cars_keep_own_brakes` are applied (all fifteen `20261110*` files; read with `list_migrations`) and the four
+      prepared cars are active. No migration named `lead_hardening` is in the applied list. **Not applied:**
+      `20261111090000_car_m2_g87_name_m2_cs.sql` (Supabase still names `m2_g87` "BMW M2 Coupe"; it changes live data, so it
+      waits for the owner's go-ahead). Then deploy and smoke the live catalogue (source `supabase`).
 - [ ] Owner: Supabase dashboard → Authentication → Providers → Google (client id/secret, redirect URLs) per `docs/ACCOUNTS.md`;
       then the manual sign-in → save → garage test on the preview URL.
-- [ ] Rim-page spins for the six stocked wheels (`scripts/rim3d/turntable.py`, ~75 min each on CPU; the live engine is the fallback).
+- [x] Rim-page spins for the six stocked wheels: dropped on 2026-11-11. The rim page draws the rim GLB in the wheel studio
+      (`components/WheelStudio.tsx`), so no spin frames are needed.
+- [ ] `scripts/render/e2e.cjs` still walks the showroom (Build, Confirm, `?panel=steps`): update it to the journey without one.
+- [ ] Regenerate the branded client PDF (`docs/handover/handover.html` → `docs/FORGEDSA-Client-Handover.pdf`): it still shows the showroom.
 - [ ] Owner: look at `docs/ingest/*.jpg` and `docs/ingest/stock-wheels.jpg`; decide live GLB vs `--render` Blender frames for the four prepared cars.
 - [ ] Owner: licence for the four prepared cars (game-derived, none supplied); real M5 Touring / M2 CS specs and palettes.
 - [ ] Optional: the viewer's GTAO + SMAA composer behind a flag (`CarConfiguratorEngine.AO`) for the on-screen frame.
@@ -140,15 +200,16 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 - [ ] Owner decisions: Star 6 (keep, or front-on photo), Aldo Fork 15 spoke count (photo 12 vs name 15).
 - [ ] Stale draft PRs #6 (2D wheel stage), #8 (old phone fixes), #10 (live-WebGL paint/lighting recalibration): all
       conflict with main and predate the Blender bodies; owner to decide close vs salvage (#10's verified paint codes).
-- [ ] Optional: re-render the other eight spins with `--resmooth --weighted` for cleaner hub reflections.
+- [x] Optional: re-render the other eight spins with `--resmooth --weighted` for cleaner hub reflections. Dropped on
+      2026-11-11: the app no longer shows spins.
 
 ## Later (parked)
 - **Photo 7** (champagne, forked spokes) may be a different design from the catalogue's 12-spoke Aldo Fork 15: ask.
 - Cars: the M4 Convertible has no real 3D model (placeholder body; hidden); X3 M50's model has filled
   wheel arches (hidden). The M5 Touring is one of the four prepared GLBs and live. Paid models need the owner's OK.
 - Summary page and PDF stills still come from the live WebGL car, not the Blender renders.
-- Spin frames are in git (~12 MB per wheel, 137 MB for 12). Before the full catalogue, move them to Supabase storage
-  (and consider 720×540 or lazy preloading in `RimSpinView`).
+- Spin frames: no longer in the repo (`public/renders/rims/` is gone) and no longer shown by the app (`RimSpinView` was
+  removed on 2026-11-11), so there is nothing left to move to Supabase storage.
 - Not modelled on 3D rims: lip engraving, logos, milled channels on traced faces.
 
 ## Decisions log (so they aren't asked twice)
@@ -163,3 +224,6 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
   legacy wheels and cars are hidden (`active: false`), never deleted.
 - 2026-11-10: live GLB for the prepared cars; viewer look and viewer panel on /configure; customer accounts via Google on
   Supabase Auth; admin allowlist untouched.
+- 2026-11-11 (owner): no showroom, the welcome carousel leads straight to the configurator; the stepped drawer instead of
+  the viewer's glass panel (kept behind `?panel=viewer`); the live stage modelled on the Cycles hero stills (`look=stage`);
+  the FORGED website's wheel studio on the rim page instead of the pre-rendered spin.

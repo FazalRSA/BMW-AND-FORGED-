@@ -33,8 +33,9 @@ setsid nohup npx vite --host 127.0.0.1 --port 5173 > /tmp/vite.log 2>&1 &
   wheels are GLB rims (`modelUrl`, `public/models/rims/`) served by Vite and need no cache.
 - **Ids, not indexes:** `shoot.cjs` shot lists take `"wheel": "<wheelId>"` (an index counts the
   hidden designs too: `0` is the hidden FSA-01). `car` is an index into `BMW_MODELS` including the
-  hidden cars: the live ones are 1 (M4 CS), 5 (M2 CS), 7 (M5), 8 (M5 Touring). Add `"q": "&look=viewer"`
-  to see what /configure draws.
+  hidden cars: the live ones are 1 (M4 CS), 5 (M2 CS), 7 (M5), 8 (M5 Touring). Add `"q": "&look=stage"`
+  to see what /configure draws (`&look=viewer` is the older grey viewer dome, for comparison only).
+- **No GPU:** the cloud container renders with SwiftShader on CPU, about 50 s a shot.
 - **Run renders in the background,** and **don't edit engine files while one runs:** Vite
   hot-reloads, so the shots after an edit use the new code, or a half-written file.
 - Shell `sleep` chains are blocked. Use a background command and wait for its notification.
@@ -46,18 +47,30 @@ node scripts/render/journey.cjs $OUT $RIMS both      # phone (390x844, touch) an
 ```
 
 Any change to the app shell, the engine or the catalogue runs this first. It drives the real app
-(welcome → showroom → build → wheels, size, finish → summary) and writes a log and a screenshot per
-step. Supabase writes are stubbed (never create a real lead: each one emails the owner).
+(welcome → Enter, straight into the configurator on the car on stage → wheels step → three wheels →
+size → finish → summary; there is no showroom) and writes a log and a screenshot per step. It waits
+for the boot overlay by its opacity (the overlay fades to 0 and stays in the page, which Playwright
+does not count as hidden). Supabase writes are stubbed (never create a real lead: each one emails the
+owner).
 
-Its selectors, so extensions keep working with the viewer panel (`components/journey/ViewerPanel.tsx`):
-- steps: the section headings are buttons with `aria-label="Step N: Wheels|Size|Finish"`
-  (`getByRole('button', { name: /step 2: wheels|^wheels$/i })` and so on);
+Its selectors work with both panels: the stepped drawer customers get (`StepDrawer` in
+`components/journey/Configurator.tsx`) and the viewer panel behind `?panel=viewer`
+(`components/journey/ViewerPanel.tsx`):
+- steps: buttons with `aria-label="Step N: Paint|Wheels|Size|Finish"` (the numbered stepper of the
+  drawer, the section headings of the viewer panel;
+  `getByRole('button', { name: /step 2: wheels|^wheels$/i })` and so on);
 - wheel list: `aside [data-section="wheels"] li > button`; finish list:
-  `aside [data-section="finish"] li > button` (fallback `aside ul li > button` for the old
-  `?panel=steps` panel); size chips: `aside button` whose text matches `/^\d\d"/`;
-- summary: on desktop the icon button named "Summary"; on phones that icon is `sheet:hidden`, so
-  the footer CTA "View your <car>" (`/^view your /i`) is clicked instead.
-Do not switch these to role names or generic list selectors that miss the viewer panel.
+  `aside [data-section="finish"] li > button` (the viewer panel), with the fallback
+  `aside ul li > button`, which is what matches in the stepped drawer; size chips: `aside button`
+  whose text matches `/^\d\d"/`;
+- summary: the icon button named "Summary" when it is visible, otherwise the footer CTA
+  "View your <car>" (`/^view your /i`).
+Do not switch these to selectors that miss either panel.
+
+The other journey scripts: `pdf-check.cjs` and `swap-perf.cjs` no longer click Build / Confirm;
+`responsive.cjs` no longer records a showroom page; `car-switch.cjs` drives the viewer panel's car
+chips, so it needs `BASE` to end in `?panel=viewer`. **`e2e.cjs` (every button and link, three
+devices) still walks the showroom and has not been updated.**
 
 Read the log for:
 - **FAILED steps:** a button not found or not clickable within the timeout (a broken step, an
@@ -177,9 +190,12 @@ The current gate (Nov 2026):
   stubbed).
 - `shoot.cjs` sheets of the **six stocked wheels by id** (`forged_fsa001`, `forged_fsa002`,
   `forged_fsa_03`, `forged_fsa004`, `sixnine_ff1`, `sixnine_ff3`) on the live cars (indexes 1, 5, 7, 8)
-  with `"q": "&look=viewer"`, in the finishes each wheel offers (`docs/WHEEL_INVENTORY.md`); the
+  with `"q": "&look=stage"`, in the finishes each wheel offers (`docs/WHEEL_INVENTORY.md`); the
   reference is `docs/ingest/stock-wheels.jpg`. Every sheet has been looked at, and the doubtful
   shots at full size.
+- When a rim file or a finish changed: the rim page (`/rims/<id>`) looked at too. It is the wheel
+  studio (`components/WheelStudio.tsx`), which loads the same rim file and finish recipe as the car but
+  is not covered by `shoot.cjs`.
 - Only when a photo wheel is touched: Layer 1 on **every** photo wheel (one engine change touches
   them all) and the matrix; both cover the hidden photo wheels only.
 - `bun run lint` and `bun run build` pass.

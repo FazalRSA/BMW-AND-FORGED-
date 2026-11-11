@@ -18,7 +18,6 @@ import { controlsInset, layoutMode } from './services/layout';
 import { BootLoader } from './components/journey/BootLoader';
 import { WelcomeGate } from './components/journey/WelcomeGate';
 import { HERO_SLIDES } from './components/journey/HeroStage';
-import { TopBar } from './components/journey/TopBar';
 import { ConfigStep, Configurator, MoreOptionsModal } from './components/journey/Configurator';
 import { SummaryPage } from './components/journey/SummaryPage';
 import { EnquiryModal } from './components/journey/EnquiryModal';
@@ -131,6 +130,8 @@ export const App: React.FC = () => {
   }, [reloadCatalog]);
 
   const cars = useMemo(() => lineUpCars(catalog.cars), [catalog.cars]);
+  /** The cars on offer, for the welcome carousel (it leaves out the slide of a car that is hidden). */
+  const carIds = useMemo(() => cars.map((c) => c.id), [cars]);
 
   // The five choices
   const [selectedCar, setSelectedCar] = useState<CarModel>(() => firstCar(STATIC_CATALOG.cars));
@@ -752,9 +753,9 @@ export const App: React.FC = () => {
   const price = rimPrice(selectedWheel, selectedSize, selectedFinish.id);
   const carPaints = useMemo(() => paintsForCar(catalog.paints, selectedCar), [catalog.paints, selectedCar]);
 
+  // The site's other pages and the enquiry, in the configurator's "More options" dialog (they were the
+  // showroom's menu until the showroom went; "Start again" there is the way back to the welcome)
   const menuLinks = [
-    { label: 'Home', onClick: () => navigateTo({ name: 'welcome' }) },
-    { label: 'Configure', onClick: () => navigateTo({ name: 'configure' }) },
     { label: 'The wheels', onClick: () => navigateTo({ name: 'forged' }) },
     { label: 'Enquire', onClick: () => setEnquiryOpen(true) },
     { label: 'Delivery & fitment', onClick: () => navigateTo({ name: 'delivery' }) },
@@ -792,6 +793,7 @@ export const App: React.FC = () => {
           region={region}
           onRegionChange={changeRegion}
           startCarId={selectedCar.id}
+          carIds={carIds}
           onSlide={(carId) => {
             // Fetch and parse the car on stage now, so Enter only has to mount it
             const car = cars.find((c) => c.id === carId);
@@ -946,6 +948,7 @@ export const App: React.FC = () => {
         onLoadCode={loadCode}
         onRestart={() => navigateTo({ name: 'welcome' })}
         onOpenAccount={() => setAccountOpen(true)}
+        links={menuLinks}
       />
 
       <AccountSheet

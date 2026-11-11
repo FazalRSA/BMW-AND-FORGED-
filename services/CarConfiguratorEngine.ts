@@ -259,7 +259,7 @@ export class CarConfiguratorEngine {
     easeIn: boolean;
     resolve: () => void;
   } | null = null;
-  /** Car loads and showroom drives in flight (settle() waits for them). */
+  /** Car loads and car-change drives (driveToCar) in flight (settle() waits for them). */
   private stageOps = 0;
   private cameraDamping = 0.12;
   private viewInset = { right: 0, bottom: 0 };
@@ -305,7 +305,8 @@ export class CarConfiguratorEngine {
     this.boundOnContextRestored = () => {
       this.environmentTarget = null; // its GPU objects died with the old context; nothing to free
       this.renderEnvTarget = null;
-      if (this.viewer) this.viewer.gloss = this.viewer.soft = null; // rebuilt by the next applyViewerPaint
+      // rebuilt by the next applyViewerPaint (every cove: a missed one leaves the car black on the stage)
+      if (this.viewer) this.viewer.gloss = this.viewer.soft = this.viewer.stage = null;
       this.generateStudioEnvironment();
       if (this.renderedBody) {
         this.liveEnv = null; // the studio just generated is the live one to come back to
@@ -1038,7 +1039,7 @@ export class CarConfiguratorEngine {
     return p;
   }
 
-  /** Keeps the cache to a few cars so browsing the showroom doesn't pile up GPU memory. */
+  /** Keeps the cache to a few cars so browsing the cars on the welcome carousel doesn't pile up GPU memory. */
   private evictModels(keep: string) {
     for (const url of this.modelCache.keys()) {
       if (this.modelCache.size <= CarConfiguratorEngine.MODEL_CACHE_MAX) break;
@@ -1093,8 +1094,10 @@ export class CarConfiguratorEngine {
   }
 
   /**
-   * Showroom change: the current car drives out of frame, the next one drives in and stops on its
-   * mark. direction 1 = forwards (next), -1 = reversing (previous).
+   * Car change with a drive: the current car drives out of frame, the next one drives in and stops on its
+   * mark. direction 1 = forwards (next), -1 = reversing (previous). This was the showroom's car change; with
+   * the showroom gone, only the viewer panel's Car chips use it (?panel=viewer). The welcome's Enter mounts
+   * the chosen car with loadCar, without a drive.
    */
   public async driveToCar(car: CarModel, direction: 1 | -1 = 1): Promise<void> {
     const distance = 11;
@@ -2659,12 +2662,15 @@ export class CarConfiguratorEngine {
   }
 
   // ----------------------------------------------------
-  // STAGE LOOK: the four-car viewer's studio (services/viewerStudio.ts) on the configurator screen
+  // STAGE LOOK: the scene a live car stands in (services/viewerStudio.ts); the configurator screen uses 'stage'
   // ----------------------------------------------------
   /**
-   * 'viewer' puts the car in the viewer's gradient dome and reflection coves (Neutral tone mapping, exposure by
-   * paint); 'studio' is the softbox studio over the page backdrop. While a pre-rendered body is shown the stage
-   * stays 'studio' and the wanted look returns when rendered mode ends.
+   * 'stage' is the look App.tsx sets on the configurator screen (and behind the welcome's stills): the Cycles
+   * stills' black backdrop, a pool of light on a pale floor and the stage cove. 'viewer' puts the car in the
+   * four-car viewer's gradient dome and reflection coves; the configurator showed it before the stage look and
+   * it is kept for comparison. Both use Neutral tone mapping and an exposure by paint. 'studio' is the softbox
+   * studio over the page backdrop. While a pre-rendered body is shown the stage stays 'studio' and the wanted
+   * look returns when rendered mode ends.
    */
   public setLook(look: StageLook) {
     this.lookWanted = look;
@@ -3178,7 +3184,9 @@ export class CarConfiguratorEngine {
     if (this.viewer) {
       this.viewer.gloss?.dispose();
       this.viewer.soft?.dispose();
-      for (const m of [this.viewer.dome, this.viewer.floor, this.viewer.pool]) {
+      this.viewer.stage?.dispose();
+      const stageMeshes = [this.viewer.stageDome, this.viewer.stageFloor].filter((m): m is THREE.Mesh => !!m);
+      for (const m of [this.viewer.dome, this.viewer.floor, this.viewer.pool, ...stageMeshes]) {
         m.geometry.dispose();
         const mat = m.material as THREE.MeshBasicMaterial;
         mat.map?.dispose();

@@ -26,8 +26,11 @@
  * Options
  *   --car <id>          catalogue id: m5_g90, m5_touring_g99, m4_cs_g82, m2_g87, ... (required)
  *   --name <name>       display name: renames an existing car (e.g. the M2 Coupe row becomes "BMW M2 CS") or
- *                       names a new one (a new row is added)
- *   --badge <badge>     short badge shown in the showroom (default: the name without "BMW", e.g. "M2 CS G87")
+ *                       names a new one (a new row is added). Customers choose the car on the welcome carousel,
+ *                       so a new car is only offered once it also has a slide there (HERO_SLIDES in
+ *                       components/journey/HeroStage.tsx)
+ *   --badge <badge>     short badge (default: the name without "BMW", e.g. "M2 CS G87"). Without its chassis code
+ *                       it is the car's short name in the configurator, on the summary and in the garage ("M2 CS")
  *   --body <style>      coupe | sedan | suv | convertible | touring | gran_coupe (new cars; default sedan)
  *   --length <m>        real length in metres (default: measured from the file, which is in metres for
  *                       the prepared packages)

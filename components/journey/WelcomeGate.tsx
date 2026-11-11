@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ArrowRight, ChevronDown, Globe } from 'lucide-react';
 import { BRAND, Region } from '../../config/brand';
 import { Button, Logo } from './ui';
@@ -22,16 +22,27 @@ export const WelcomeGate: React.FC<{
   startCarId?: string;
   /** A car came on stage: the app gets its model ready, so Enter does not wait for it. */
   onSlide?: (carId: string) => void;
-}> = ({ region, onRegionChange, onEnter, onOpenForged, startCarId, onSlide }) => {
-  const hero = useHeroCycle(HERO_SLIDES.length, HERO_SLIDES.findIndex((s) => s.carId === startCarId));
-  const stageCarId = HERO_SLIDES[hero.index].carId;
+  /**
+   * The cars on offer (the catalogue's active cars). The carousel is the only place a car is chosen, so a car
+   * hidden in /admin must not be offered here: its slide is left out. All slides show while this is unknown.
+   */
+  carIds?: readonly string[];
+}> = ({ region, onRegionChange, onEnter, onOpenForged, startCarId, onSlide, carIds }) => {
+  const slides = useMemo(() => {
+    const offered = carIds ? HERO_SLIDES.filter((s) => carIds.includes(s.carId)) : HERO_SLIDES;
+    return offered.length ? offered : HERO_SLIDES; // never an empty stage
+  }, [carIds]);
+  const hero = useHeroCycle(slides.length, slides.findIndex((s) => s.carId === startCarId));
+  // The list can shrink while the welcome is open (the live catalogue arrives after the bundled one)
+  const index = Math.min(hero.index, slides.length - 1);
+  const stageCarId = slides[index].carId;
   useEffect(() => {
     onSlide?.(stageCarId);
     // (the callback's identity changes with every app render; only a new car on stage should report)
   }, [stageCarId]);
   return (
     <div className="stage-dark absolute inset-0 z-30 pointer-events-none">
-      <HeroStage slides={HERO_SLIDES} index={hero.index} prev={hero.prev} dir={hero.dir} />
+      <HeroStage slides={slides} index={index} prev={hero.prev} dir={hero.dir} />
 
       {/* Legibility wash behind the text only; the car stays crisp */}
       <div className="absolute inset-y-0 left-0 hidden landscape:block w-[38%] bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
@@ -47,7 +58,7 @@ export const WelcomeGate: React.FC<{
         </button>
       </header>
 
-      <HeroControls slides={HERO_SLIDES} index={hero.index} onStep={hero.step} onJump={hero.jump} />
+      <HeroControls slides={slides} index={index} onStep={hero.step} onJump={hero.jump} />
 
       <div className="absolute left-0 bottom-0 w-full sm:max-w-xl landscape:max-w-lg px-6 sm:px-12 pb-10 sm:pb-16 short:pb-4 pointer-events-auto">
         <div className="text-[10.5px] font-semibold uppercase tracking-[0.34em] text-bronze animate-rise">{BRAND.descriptor}</div>
@@ -75,7 +86,7 @@ export const WelcomeGate: React.FC<{
           </label>
           <Button
             size="lg"
-            onClick={() => onEnter(stageCarId, HERO_SLIDES[hero.index].paintId)}
+            onClick={() => onEnter(stageCarId, slides[index].paintId)}
             icon={<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
           >
             Enter

@@ -51,18 +51,22 @@ body {
 /* Text and surface colours are variables so the parts that sit on the white 3D stage (welcome,
    showroom, top bar) can flip to dark-on-light, and dialogs inside them flip back */
 :root, .stage-dark { --ink: 242 238 230; --mute: 156 151 142; --line: 255 255 255; --carbon: 18 18 18; --surface: 26 26 26; }
-.stage-light { --ink: 22 22 26; --mute: 92 92 100; --line: 0 0 0; --carbon: 255 255 255; --surface: 255 255 255; }
 .bg-stage {
-  /* White studio behind the 3D car: a bright seamless backdrop (the car's reflections are a white room too) */
-  background: radial-gradient(120% 85% at 50% 58%, #ffffff 0%, #f1f1f1 55%, #dedede 100%);
+  /* Dark studio behind the 3D car and under every boot screen: the Cycles stills' black backdrop with a warm pool */
+  background:
+    radial-gradient(70% 45% at 50% 64%, rgba(207,159,82,0.07) 0%, rgba(207,159,82,0) 60%),
+    radial-gradient(120% 85% at 50% 58%, #2c2c2c 0%, #1b1b1b 40%, #121212 70%, #0b0b0b 100%);
 }
 /* Wheel studio stage on the rim page (components/WheelStudio.tsx, WheelStage.tsx): the website's light
-   product-photography backdrop in a rounded frame. Pair it with .stage-light for dark-on-light text. */
+   dark product backdrop in a rounded frame (the app's dark ink variables apply). */
 .wheel-stage {
   overflow: hidden;
   border-radius: 1.5rem;
-  background: radial-gradient(120% 90% at 50% 35%, #f6f7f9 0%, #e3e6eb 60%, #cfd3da 100%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  /* Dark stage like the car's: a warm pool of light under the wheel, falling to black */
+  background:
+    radial-gradient(60% 40% at 50% 62%, rgba(207, 159, 82, 0.10) 0%, rgba(207, 159, 82, 0) 70%),
+    radial-gradient(120% 90% at 50% 42%, #2a2a2c 0%, #19191a 55%, #0b0b0c 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 /* Welcome stage: the Cycles hero stills (16:9, black backdrop, a pool of light under the car).
    Portrait: the car sits above the text, wider than the screen so it fills it. Landscape: the car sits

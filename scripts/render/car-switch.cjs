@@ -1,5 +1,10 @@
-// Car-switch smoke test: boot the app, open the build, switch car through the viewer's Car chips
+// Car-switch smoke test: boot the app, open the configurator, switch car through the viewer panel's Car chips
 // (M2 CS -> M5 -> M2 CS), screenshot each, and report every page error and the satin-bronze warning.
+//
+// Does not run as it stands (checked 2026-11-11). The Car chips exist only in the viewer panel (?panel=viewer;
+// the stepped drawer has no car picker). The welcome's Enter opens /configure without the query string, so
+// with BASE ending in ?panel=viewer the drawer shows and the wait for the chips times out. Opening
+// /configure?panel=viewer directly does show the chips, but that page has no Enter button for the script to click.
 const { chromium } = require('playwright');
 const path = require('path');
 const OUT = process.argv[2];
