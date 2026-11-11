@@ -49,8 +49,16 @@ const session = {
       if (url.pathname.includes('/auth/v1/user')) return json(route, session.user);
       if (url.pathname.includes('/auth/v1/')) return json(route, {});
       if (url.pathname.includes('/storage/')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{"Key":"demo"}' });
-      if (!table) { log(`unhandled Supabase call: ${req.method()} ${url.pathname}`); return route.abort(); }
-      if (m !== 'GET' && m !== 'HEAD') { log(`write swallowed locally: ${m} ${table}`); }
+      if (!table) { console.error(`UNHANDLED Supabase call ${req.method()} ${url.pathname}: stopping the capture`); process.exit(3); }
+      if (m !== 'GET' && m !== 'HEAD') {
+        // Expected here: the wheel price save and the profile upsert at sign-in. Any other write stops the run: it must never reach the live database.
+        // profiles: the app upserts the signed-in user's profile when a session starts (answered locally, see the header)
+        const EXPECTED = { wheels: ['POST', 'PATCH', 'PUT'], profiles: ['POST', 'PATCH', 'PUT'] };
+        if (!(EXPECTED[table] || []).includes(m)) {
+          console.error(`UNEXPECTED WRITE ${m} ${table}: stopping the capture`); process.exit(3);
+        }
+        log(`expected write held locally: ${m} ${table}`);
+      }
       if (m !== 'GET' && m !== 'HEAD') return route.fulfill({ status: 201, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '[]' }); // writes: swallowed
       if (table === 'admin_users') return json(route, { email: EMAIL });
       let rows = FX[table];
