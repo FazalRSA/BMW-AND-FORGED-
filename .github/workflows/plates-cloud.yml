@@ -1,0 +1,67 @@
+name: plates-cloud
+
+# Deploys the plate render service to Modal. It needs two repository secrets:
+#   MODAL_TOKEN_ID, MODAL_TOKEN_SECRET  (Settings > Secrets and variables > Actions)
+# The result of each run is written to the plates-cloud-status branch (no secrets in it).
+
+on:
+  push:
+    branches: [plates-cloud]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plates-cloud
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install the Modal client
+        run: pip install --quiet "modal==1.6.3"
+      - name: Probe
+        run: |
+          mkdir -p status
+          {
+            echo "run: ${GITHUB_RUN_ID} attempt ${GITHUB_RUN_ATTEMPT}"
+            echo "commit: ${GITHUB_SHA}"
+            echo "time: $(date -u +%FT%TZ)"
+            echo "cpus: $(nproc)"
+            if [ -n "${MODAL_TOKEN_ID}" ] && [ -n "${MODAL_TOKEN_SECRET}" ]; then echo "modal_secrets: present"; else echo "modal_secrets: missing"; fi
+          } > status/probe.txt
+          cat status/probe.txt
+      - name: Deploy to Modal
+        if: env.MODAL_TOKEN_ID != '' && env.MODAL_TOKEN_SECRET != ''
+        run: |
+          PLATES_API_TOKEN="$(python -c "import hashlib,os;print(hashlib.sha256((os.environ['MODAL_TOKEN_SECRET']+':forgedsa-plates-api').encode()).hexdigest())")"
+          echo "::add-mask::${PLATES_API_TOKEN}"
+          export PLATES_API_TOKEN
+          set +e
+          modal deploy scripts/plates/cloud/app.py > status/deploy.txt 2>&1
+          echo "exit: $?" >> status/deploy.txt
+          set -e
+          tail -40 status/deploy.txt
+      - name: Publish the status
+        if: always()
+        run: |
+          git config user.name "plates-bot"
+          git config user.email "plates-bot@users.noreply.github.com"
+          cp -r status /tmp/status
+          git checkout --orphan plates-cloud-status
+          git rm -rf --cached . > /dev/null 2>&1 || true
+          git clean -fdx > /dev/null 2>&1 || true
+          cp -r /tmp/status/. .
+          git add -A
+          git commit -m "status for ${GITHUB_SHA}"
+          git push -f origin plates-cloud-status
