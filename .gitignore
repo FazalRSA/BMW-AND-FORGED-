@@ -41,3 +41,6 @@ docs/ingest/**/*.png
 
 # Agent worktrees (isolated checkouts made by Claude Code; never part of the repo)
 .claude/worktrees/
+
+# Local CTO-toolkit session telemetry (not project content)
+.cto-toolkit/
