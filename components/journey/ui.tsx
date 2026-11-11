@@ -156,7 +156,7 @@ export const Modal: React.FC<{
   });
 
   // Where focus returns on close: whatever had it as the dialog opened. Read during the render that opens it, because
-  // a child with autoFocus (the showroom notice's Confirm) takes focus before any effect of this component runs.
+  // a child with autoFocus (a notice's Confirm button) takes focus before any effect of this component runs.
   const openerRef = useRef<Element | null>(null);
   const wasOpenRef = useRef(false);
   if (open && !wasOpenRef.current) openerRef.current = document.activeElement;

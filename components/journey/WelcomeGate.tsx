@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowRight, ChevronDown, Globe } from 'lucide-react';
 import { BRAND, Region } from '../../config/brand';
 import { Button, Logo } from './ui';
@@ -11,14 +11,24 @@ import { SocialLinks } from './SocialLinks';
 import { HERO_SLIDES, HeroControls, HeroStage, useHeroCycle } from './HeroStage';
 
 /** Region select + Enter over the studio stage: Cycles stills of the prepared cars, cycled by arrows, scroll,
- *  keyboard or swipe. Enter opens the showroom on the car that is on stage. */
+ *  keyboard or swipe. Enter opens the configurator on the car that is on stage. */
 export const WelcomeGate: React.FC<{
   region: Region;
   onRegionChange: (region: Region) => void;
-  onEnter: (carId: string) => void;
+  /** Enter: the car on stage and the paint its still shows. */
+  onEnter: (carId: string, paintId: string) => void;
   onOpenForged: () => void;
-}> = ({ region, onRegionChange, onEnter, onOpenForged }) => {
-  const hero = useHeroCycle(HERO_SLIDES.length);
+  /** The car to open the carousel on (the one being built, when the visitor comes back to change it). */
+  startCarId?: string;
+  /** A car came on stage: the app gets its model ready, so Enter does not wait for it. */
+  onSlide?: (carId: string) => void;
+}> = ({ region, onRegionChange, onEnter, onOpenForged, startCarId, onSlide }) => {
+  const hero = useHeroCycle(HERO_SLIDES.length, HERO_SLIDES.findIndex((s) => s.carId === startCarId));
+  const stageCarId = HERO_SLIDES[hero.index].carId;
+  useEffect(() => {
+    onSlide?.(stageCarId);
+    // (the callback's identity changes with every app render; only a new car on stage should report)
+  }, [stageCarId]);
   return (
     <div className="stage-dark absolute inset-0 z-30 pointer-events-none">
       <HeroStage slides={HERO_SLIDES} index={hero.index} prev={hero.prev} dir={hero.dir} />
@@ -65,7 +75,7 @@ export const WelcomeGate: React.FC<{
           </label>
           <Button
             size="lg"
-            onClick={() => onEnter(HERO_SLIDES[hero.index].carId)}
+            onClick={() => onEnter(stageCarId, HERO_SLIDES[hero.index].paintId)}
             icon={<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
           >
             Enter

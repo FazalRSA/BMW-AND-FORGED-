@@ -36,8 +36,6 @@ export const BRAND = {
   welcomeTitle: 'Welcome to FORGEDSA',
   welcomeBody:
     'Configure forged wheels on your BMW M car. Choose the car, the paint, then the design, size and finish of your wheels, and see it in real time.',
-  /** Hosts in the showroom header line. */
-  vehicleLine: 'BMW M',
 
   /** Brand kit palette (FORGEDSA Official Brand Design System). The Tailwind theme in index.html mirrors it. */
   colors: {
@@ -62,7 +60,7 @@ export const BRAND = {
     { id: 'website', label: 'Website', handle: 'www.forgedsa.com', url: 'https://www.forgedsa.com' }
   ] as SocialLink[],
 
-  /** Notice shown before the configurator opens. */
+  /** The visualisation disclaimer, shown on the summary page before the PDF and the enquiry. */
   visualisationNotice:
     'The vehicles in this configurator are pre-curated visualisations. Paint, wheel size and finish are shown as accurately as possible, but on-screen colours and proportions are indicative. Your final specification and fitment are confirmed with our team.',
 

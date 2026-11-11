@@ -12,13 +12,15 @@ export interface HeroSlide {
   carId: string;
   name: string;
   paint: string;
+  /** The catalogue paint the still shows: the configurator opens the car in it, when the car offers it. */
+  paintId: string;
 }
 
 export const HERO_SLIDES: HeroSlide[] = [
-  { carId: 'm2_g87', name: 'BMW M2 CS', paint: 'Portimao Blue Metallic' },
-  { carId: 'm4_cs_g82', name: 'BMW M4 CS', paint: 'São Paulo Yellow' },
-  { carId: 'm5_g90', name: 'BMW M5', paint: 'Fire Red Metallic' },
-  { carId: 'm5_touring_g99', name: 'BMW M5 Touring', paint: 'Frozen Pure Grey Metallic' }
+  { carId: 'm2_g87', name: 'BMW M2 CS', paint: 'Portimao Blue Metallic', paintId: 'portimao_blue' },
+  { carId: 'm4_cs_g82', name: 'BMW M4 CS', paint: 'São Paulo Yellow', paintId: 'sao_paulo_yellow' },
+  { carId: 'm5_g90', name: 'BMW M5', paint: 'Fire Red Metallic', paintId: 'fire_red' },
+  { carId: 'm5_touring_g99', name: 'BMW M5 Touring', paint: 'Frozen Pure Grey Metallic', paintId: 'frozen_pure_grey' }
 ];
 
 const WHEEL_THRESHOLD = 40; // px of scroll in one gesture before it moves one car
@@ -26,9 +28,12 @@ const GESTURE_GAP_MS = 220; // a pause this long ends a scroll gesture (trackpad
 const MIN_STEP_MS = 450; // never two steps closer together than this
 const SWIPE_PX = 50;
 
-/** Which car is on stage, and the direction it arrived from. Arrows, scroll, keyboard and swipe all step it. */
-export function useHeroCycle(count: number) {
-  const [state, setState] = useState({ index: 0, prev: -1, dir: 1 as 1 | -1 });
+/**
+ * Which car is on stage, and the direction it arrived from. Arrows, scroll, keyboard and swipe all step it.
+ * `initial` is the slide to open on (the car the visitor is building, when they come back to change it).
+ */
+export function useHeroCycle(count: number, initial = 0) {
+  const [state, setState] = useState({ index: Math.min(Math.max(initial, 0), count - 1), prev: -1, dir: 1 as 1 | -1 });
   const step = useCallback(
     (dir: 1 | -1) => setState((s) => ({ index: (s.index + dir + count) % count, prev: s.index, dir })),
     [count]

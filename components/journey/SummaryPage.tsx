@@ -11,7 +11,7 @@ import { PdfContact, rememberPdfContact, rememberedPdfContact, shareUrl } from '
 import { finishSurcharge, rimPrice } from '../../services/pricing';
 import { Alert, Button, Eyebrow, FinishChip, Logo, Modal, PaintChip, RimThumb, Status, cx } from './ui';
 import { SiteFooter } from '../SiteFooter';
-import { shortModelName } from './Showroom';
+import { shortModelName } from './carNames';
 
 export interface SummaryProps {
   car: CarModel;
@@ -275,7 +275,8 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
                 {pdfBusy ? 'Preparing…' : 'PDF'}
               </button>
             </div>
-            <p className="mt-6 text-[11px] leading-relaxed text-white/50">Visualisation only. Final specification, fitment and price are confirmed with our team.</p>
+            {/* The owner's visualisation notice (it was the showroom's Build confirmation until the showroom went) */}
+            <p className="mt-6 text-[11px] leading-relaxed text-white/50">{BRAND.visualisationNotice}</p>
           </aside>
         </div>
 
