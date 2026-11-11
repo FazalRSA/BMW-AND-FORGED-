@@ -1,5 +1,7 @@
 # Checkpoint: photoreal cars and rims
 
+**Read first:** `docs/SESSION_HANDOVER_2026-11-11.md` (what is merged and what is not, helpers still in flight, decisions waiting for the owner).
+
 **Last updated:** 2026-11-11 · **Branch:** `ccr-f52bf849-fnf7qs` (the work in the first entry below is on it, ahead of `main`) · **To continue:** the
 `forgedsa-resume` skill (`.claude/skills/forgedsa-resume/SKILL.md`) restores the tools, and this file says what is next.
 
