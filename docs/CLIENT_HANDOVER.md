@@ -2,7 +2,7 @@
 
 **Live site:** <https://forged-configurator.vercel.app>
 **Admin:** <https://forged-configurator.vercel.app/admin>
-**Preview of the latest work (until the database updates below are applied):** <https://forgedsa-configurator.onrender.com>
+**Preview of the latest work (until the live site is redeployed, outstanding work 1):** <https://forgedsa-configurator.onrender.com>
 **Handed over:** 28 September 2026 · **Updated:** 11 November 2026
 
 **Note (11 November 2026):** the branded PDF version of this document (`FORGEDSA-Client-Handover.pdf`) has not
@@ -89,8 +89,10 @@ are reached from **More options** in the configurator and from the footer; the w
 
 - **Car:** four BMW M models, the prepared packages you supplied: **M2 CS, M4 CS, M5 and M5 Touring**.
   The earlier community-licensed cars (M235i, M3, M3 Touring, M4 Competition, M4 Convertible, M8, X3 M50,
-  X5 M) are still in the catalogue but hidden until prepared packages arrive for them; switch one back on in
-  the admin panel (Cars → *Visible in configurator*) if you want it shown meanwhile.
+  X5 M) are still listed in the catalogue but hidden until prepared packages arrive for them. Ticking
+  *Visible in configurator* on one of them does not bring it back: their 3D files were removed from the
+  project on 11 November with the other unused files, and a car also needs a picture on the welcome screen
+  before customers can pick it. Bringing one back is a job for your developer.
 - **Paint:** the exact BMW South Africa factory colours offered for that car, researched from BMW's own
   configurator. A customer can match what they specced at the dealer.
 - **Wheel design:** the six wheels on your stock sheet (FSA001, FSA002, FSA003, FSA004, FF-1, FF-3), as real
@@ -165,7 +167,7 @@ email" in Supabase; customers need the first and the admin lock needs the second
 
 | Tab | What you can do |
 |---|---|
-| **Cars** | Add a car, upload its 3D model, choose which factory paints it offers, hide or reorder cars. The car pictures on the welcome screen are a fixed set of four that your developer maintains, so adding, hiding or reordering a car here does not change them (see *Add a new car* below). |
+| **Cars** | Add a car, upload its 3D model, choose which factory paints it offers, hide or reorder cars. The car pictures on the welcome screen are a set that your developer maintains. Hiding a car here takes its picture off the welcome screen, but a new car needs a picture added before customers can pick it, and reordering cars here does not reorder the pictures (see *Add a new car* below). |
 | **Wheels** | Add a wheel design, upload its image or 3D model (and a separate rear rim for a staggered set such as FSA001), write its name and description, set **sizes and prices**, choose which finishes it comes in, give a dearer finish its own price (**Dearer finishes**), hide or reorder wheels. |
 | **Finishes** | Edit the finishes (name, colour, how shiny or matte) or add a new one, then tick it on the wheels that come in it. |
 | **Paints** | Edit the factory paint list. |
@@ -187,8 +189,8 @@ email" in Supabase; customers need the first and the admin lock needs the second
   factory paints → **Save**. A developer may need to fine-tune which parts of the model take the paint
   colour the first time (explained in `HANDOVER.md`). Customers choose their car from the pictures on the
   welcome screen, so your developer also has to add a studio picture of the new car there before customers
-  can pick it. The same goes for a car you hide: its picture stays on the welcome screen until your
-  developer removes it.
+  can pick it. Hiding a car needs no developer: its picture leaves the welcome screen when you untick
+  **Visible in configurator**.
 - **Give someone admin access:** they need an account and to be on the admin list; see `HANDOVER.md`
   section 1 (a two-minute job for whoever manages the Supabase account).
 
@@ -330,7 +332,7 @@ Before launch:
 
 | # | Item | Why |
 |---|---|---|
-| 1 | The **Supabase login** (or 20 minutes of whoever has it) | Outstanding work 1: apply the database updates so the live site shows the new cars and wheels |
+| 1 | The **Vercel login** (or a few minutes of whoever has it), and your go-ahead for the M2 CS name fix | Outstanding work 1: redeploy the live site so it shows the new cars and wheels |
 | 2 | A **Google Cloud account** for the sign-in client, or approval to use ours | Outstanding work 2: customer accounts and the garage |
 | 3 | The **licence terms** for the four car packages, and the remaining prepared packages | Outstanding work 3: the cars stay prototype assets until confirmed; hidden cars return when their packages arrive |
 | 4 | Any **change to the stock sheet** (a set sold, a new design, a price) | The configurator mirrors the sheet; CAD or 3D file for any new design (section 7) |
