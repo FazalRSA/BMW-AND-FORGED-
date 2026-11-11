@@ -289,7 +289,10 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   doc.text(subtitle, M, y + 7);
   y += 7 + (subtitle.length - 1) * LINE + 10;
   doc.setTextColor(...INK);
-  const desc = clip(wrap(input.wheel.description, textW), Math.max(1, Math.floor((storyLimit - y - 6) / LINE)), textW);
+  // The stock sheet's "In stock for the M3 Sedan (G80): PCD ..." sentence is about the owner's inventory, not this
+  // build (it read "In stock for the M3" under an M2 CS); the fitment is already in the size row and the bullets
+  const blurb = input.wheel.description.replace(/\s*In stock for .*$/i, '').trim() || input.wheel.description;
+  const desc = clip(wrap(blurb, textW), Math.max(1, Math.floor((storyLimit - y - 6) / LINE)), textW);
   doc.text(desc, M, y);
   y += desc.length * LINE + 6;
   for (const h of input.wheel.highlights) {
