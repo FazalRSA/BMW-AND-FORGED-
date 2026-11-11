@@ -73,9 +73,21 @@ jobs:
           echo "::add-mask::${PLATES_API_TOKEN}"
           export PLATES_API_TOKEN
           set +e
-          modal deploy --env "${MODAL_ENVIRONMENT}" scripts/plates/cloud/app.py > status/deploy.txt 2>&1
-          echo "exit: $?" >> status/deploy.txt
+          PLATES_GPUS="t4,l4,l40s" modal deploy --env "${MODAL_ENVIRONMENT}" scripts/plates/cloud/app.py > status/deploy.txt 2>&1
+          code=$?
+          mode="gpu+cpu"
+          if [ "${code}" != "0" ] && grep -qi "payment method" status/deploy.txt; then
+            # Modal wants a card on the account before it will create GPU functions. Deploy the CPU
+            # worker alone for now; re-run this workflow after a payment method is added.
+            mv status/deploy.txt status/deploy_gpu_refused.txt
+            PLATES_GPUS="" modal deploy --env "${MODAL_ENVIRONMENT}" scripts/plates/cloud/app.py > status/deploy.txt 2>&1
+            code=$?
+            mode="cpu only (GPU refused: no payment method on the Modal account)"
+          fi
+          echo "mode: ${mode}" >> status/deploy.txt
+          echo "exit: ${code}" >> status/deploy.txt
           set -e
+          [ -f status/deploy_gpu_refused.txt ] && sed -i -E 's/a[ks]-[A-Za-z0-9]{10,}/[redacted]/g' status/deploy_gpu_refused.txt
           # The status branch is public: strip anything shaped like a Modal token before it is published.
           sed -i -E 's/a[ks]-[A-Za-z0-9]{10,}/[redacted]/g' status/deploy.txt
           tail -40 status/deploy.txt

@@ -17,6 +17,9 @@ Every route needs "Authorization: Bearer <PLATES_API_TOKEN>". The token is set a
 never stored in the repo.
 
 Deploy:  PLATES_API_TOKEN=... modal deploy scripts/plates/cloud/app.py
+
+PLATES_GPUS (default "t4,l4,l40s") lists the GPU workers to create. Modal refuses GPU functions on an
+account without a payment method, so the deploy workflow falls back to PLATES_GPUS="" (CPU worker only).
 """
 import os
 import sys
@@ -24,7 +27,7 @@ import time
 
 import modal
 
-VERSION = "2026-11-11.1"
+VERSION = "2026-11-11.2"
 APP_NAME = "forgedsa-plates"
 VOL = "/vol"
 
@@ -36,12 +39,17 @@ if modal.is_local() and len(_token) < 32:
     raise SystemExit("PLATES_API_TOKEN (32+ characters) must be set when deploying")
 api_secret = modal.Secret.from_dict({"PLATES_API_TOKEN": _token})
 
+# The same list must be seen at deploy time and inside every container, so it is baked into the images.
+GPUS = [g for g in os.environ.get("PLATES_GPUS", "t4,l4,l40s").lower().split(",") if g]
+_gpu_env = {"PLATES_GPUS": ",".join(GPUS)}
+
 render_image = (
     modal.Image.debian_slim(python_version="3.13")
     .apt_install("xorg", "libxkbcommon0", "libegl1", "libgl1", "libsm6", "libgomp1")
     .pip_install("bpy==5.2.4", "numpy", "pillow")
+    .env(_gpu_env)
 )
-web_image = modal.Image.debian_slim(python_version="3.13").pip_install("fastapi[standard]")
+web_image = modal.Image.debian_slim(python_version="3.13").pip_install("fastapi[standard]").env(_gpu_env)
 
 WORKER = dict(image=render_image, volumes={VOL: vol}, timeout=3 * 3600, max_containers=10, cpu=4.0, memory=16384)
 
@@ -108,19 +116,20 @@ def _run_job(job: dict, tag: str) -> dict:
     return {"id": job_id, "code": code, "seconds": round(time.time() - t0, 1), "gpu": tag, "log_tail": tail}
 
 
-@app.function(gpu="T4", scaledown_window=120, **WORKER)
-def run_t4(job: dict) -> dict:
-    return _run_job(job, "t4")
+if "t4" in GPUS:
+    @app.function(gpu="T4", scaledown_window=120, **WORKER)
+    def run_t4(job: dict) -> dict:
+        return _run_job(job, "t4")
 
+if "l4" in GPUS:
+    @app.function(gpu="L4", scaledown_window=120, **WORKER)
+    def run_l4(job: dict) -> dict:
+        return _run_job(job, "l4")
 
-@app.function(gpu="L4", scaledown_window=120, **WORKER)
-def run_l4(job: dict) -> dict:
-    return _run_job(job, "l4")
-
-
-@app.function(gpu="L40S", scaledown_window=60, **WORKER)
-def run_l40s(job: dict) -> dict:
-    return _run_job(job, "l40s")
+if "l40s" in GPUS:
+    @app.function(gpu="L40S", scaledown_window=60, **WORKER)
+    def run_l40s(job: dict) -> dict:
+        return _run_job(job, "l40s")
 
 
 @app.function(image=render_image, volumes={VOL: vol}, timeout=3 * 3600, max_containers=10, cpu=16.0, memory=32768,
@@ -146,7 +155,7 @@ def api():
 
     web = FastAPI(title="forgedsa-plates", docs_url=None, redoc_url=None, openapi_url=None)
     token = os.environ.get("PLATES_API_TOKEN", "")
-    runners = {"t4": run_t4, "l4": run_l4, "l40s": run_l40s, "cpu": run_cpu}
+    runners = {name: fn for name in ("t4", "l4", "l40s", "cpu") if (fn := globals().get(f"run_{name}"))}
 
     def auth(request: Request):
         given = request.headers.get("authorization", "")
