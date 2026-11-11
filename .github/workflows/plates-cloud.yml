@@ -2,7 +2,10 @@ name: plates-cloud
 
 # Deploys the plate render service to Modal. It needs two repository secrets:
 #   MODAL_TOKEN_ID, MODAL_TOKEN_SECRET  (Settings > Secrets and variables > Actions)
-# The result of each run is written to the plates-cloud-status branch (no secrets in it).
+# Target: the Modal workspace those tokens belong to, environment "main", app "forgedsa-plates".
+# A push whose commit message contains [probe] is a dry run: it only reports whether the secrets are
+# there and deploys nothing. The result of each run is written to the plates-cloud-status branch
+# (no secret values in it).
 
 on:
   push:
@@ -23,6 +26,8 @@ jobs:
     env:
       MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
       MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      MODAL_ENVIRONMENT: main
+      DRY_RUN: ${{ contains(github.event.head_commit.message, '[probe]') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,31 +36,26 @@ jobs:
       - name: Install the Modal client
         run: pip install --quiet "modal==1.6.3"
       - name: Probe
-        env:
-          ALL_SECRETS: ${{ toJSON(secrets) }}
-          ALL_VARS: ${{ toJSON(vars) }}
         run: |
           mkdir -p status
           {
             echo "run: ${GITHUB_RUN_ID} attempt ${GITHUB_RUN_ATTEMPT}"
             echo "commit: ${GITHUB_SHA}"
             echo "time: $(date -u +%FT%TZ)"
-            echo "cpus: $(nproc)"
-            if [ -n "${MODAL_TOKEN_ID}" ] && [ -n "${MODAL_TOKEN_SECRET}" ]; then echo "modal_secrets: present"; else echo "modal_secrets: missing"; fi
+            echo "dry_run: ${DRY_RUN}"
+            echo "target: modal environment ${MODAL_ENVIRONMENT}, app forgedsa-plates"
             if [ -n "${MODAL_TOKEN_ID}" ]; then echo "MODAL_TOKEN_ID: present"; else echo "MODAL_TOKEN_ID: missing"; fi
             if [ -n "${MODAL_TOKEN_SECRET}" ]; then echo "MODAL_TOKEN_SECRET: present"; else echo "MODAL_TOKEN_SECRET: missing"; fi
-            echo "secret names visible to this workflow: $(printf '%s' "${ALL_SECRETS}" | python -c "import json,sys; print(sorted(k for k in json.load(sys.stdin) if k != 'github_token'))")"
-            echo "variable names visible to this workflow: $(printf '%s' "${ALL_VARS}" | python -c "import json,sys; print(sorted(json.load(sys.stdin)))")"
           } > status/probe.txt
           cat status/probe.txt
-      - name: Deploy to Modal
-        if: env.MODAL_TOKEN_ID != '' && env.MODAL_TOKEN_SECRET != ''
+      - name: Deploy to Modal (environment main)
+        if: env.DRY_RUN != 'true' && env.MODAL_TOKEN_ID != '' && env.MODAL_TOKEN_SECRET != ''
         run: |
           PLATES_API_TOKEN="$(python -c "import hashlib,os;print(hashlib.sha256((os.environ['MODAL_TOKEN_SECRET']+':forgedsa-plates-api').encode()).hexdigest())")"
           echo "::add-mask::${PLATES_API_TOKEN}"
           export PLATES_API_TOKEN
           set +e
-          modal deploy scripts/plates/cloud/app.py > status/deploy.txt 2>&1
+          modal deploy --env "${MODAL_ENVIRONMENT}" scripts/plates/cloud/app.py > status/deploy.txt 2>&1
           echo "exit: $?" >> status/deploy.txt
           set -e
           tail -40 status/deploy.txt
@@ -71,4 +71,4 @@ jobs:
           cp -r /tmp/status/. .
           git add -A
           git commit -m "status for ${GITHUB_SHA}"
-          git push -f origin plates-cloud-status
+          git push origin +plates-cloud-status
