@@ -50,10 +50,14 @@ def pack_copy(src, dst):
         bpy.ops.wm.save_as_mainfile(filepath=dst, copy=True, compress=True)
     except (OSError, RuntimeError) as e:
         fail(f"could not write {dst}: {e}")
-    if not os.path.isfile(dst) or os.path.getsize(dst) == 0:
+    try:
+        size = os.path.getsize(dst)
+    except OSError:
+        size = 0
+    if size == 0:
         fail(f"no file was written at {dst}")
     packed = sum(1 for i in bpy.data.images if i.packed_file is not None)
-    log(f"OK {dst} {os.path.getsize(dst) / 1e6:.1f} MB, {packed} packed images")
+    log(f"OK {dst} {size / 1e6:.1f} MB, {packed} packed images")
 
 
 def main():

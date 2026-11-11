@@ -127,6 +127,12 @@ def render_frame(png_path, exr_path="", rgba=False):
     st.compression = 15
     img.save_render(png_path, scene=sc)
     for path in (png_path, exr_path):
-        if path and (not os.path.isfile(path) or os.path.getsize(path) == 0):   # Blender can return without raising
+        if not path:
+            continue
+        try:
+            written = os.path.getsize(path) > 0
+        except OSError:
+            written = False
+        if not written:   # Blender can return without raising
             raise RuntimeError(f"no file was written at {path}")
     return png_path

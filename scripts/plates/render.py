@@ -31,6 +31,14 @@ def master_path(task, out_root):
     return os.path.join(base, "wheels", f"{task['wheel']}__{task.get('finish') or 'factory'}.png")
 
 
+def has_master(path):
+    """True when a non-empty master file is already there (an unreadable one counts as missing)."""
+    try:
+        return os.path.getsize(path) > 0
+    except OSError:
+        return False
+
+
 def render_task(ctx, task, path, exr=False, region=None):
     """Render one task into path. The scene is already assembled and on the task's view."""
     cfg = ctx.cfg
@@ -100,8 +108,7 @@ def run_batch(a, cfg):
     order = {"body": 0, "wheel": 1}
     for car_id in dict.fromkeys(t["car"] for t in tasks):
         car_tasks = [t for t in tasks if t["car"] == car_id]
-        todo = [t for t in car_tasks
-                if not (a.skip_existing and os.path.isfile(master_path(t, out_root)) and os.path.getsize(master_path(t, out_root)) > 0)]
+        todo = [t for t in car_tasks if not (a.skip_existing and has_master(master_path(t, out_root)))]
         skipped += len(car_tasks) - len(todo)
         if not todo:
             continue

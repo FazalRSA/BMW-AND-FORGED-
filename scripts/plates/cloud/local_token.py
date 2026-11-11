@@ -47,7 +47,9 @@ def main():
         store["url"] = a.url.rstrip("/")
     store.setdefault("url", "")
     try:
-        with open(STORE, "w", encoding="utf-8") as fh:
+        # Created private from the start: the key must never be readable by others, even for a moment.
+        fd = os.open(STORE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(store, fh)
         os.chmod(STORE, 0o600)
     except OSError as e:
