@@ -19,13 +19,15 @@ module.exports = {
         ink: 'rgb(var(--ink) / <alpha-value>)',
         mute: 'rgb(var(--mute) / <alpha-value>)',
         line: 'rgb(var(--line) / 0.10)',
-        bronze: '#CF9F52',
-        gold: '#CF9F52',
+        // gold, gunmetal and ember read CSS variables (defaults in index.css :root) so a theme can restyle
+        // them: the configurator's luxury theme does (config/theme.ts)
+        bronze: 'rgb(var(--gold) / <alpha-value>)',
+        gold: 'rgb(var(--gold) / <alpha-value>)',
         brass: '#E8C37D',
         carbon: 'rgb(var(--carbon) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
-        gunmetal: '#2A2A2A',
-        ember: { DEFAULT: '#FF5A00', light: '#FF7A33' },
+        gunmetal: 'rgb(var(--gunmetal) / <alpha-value>)',
+        ember: { DEFAULT: 'rgb(var(--ember) / <alpha-value>)', light: 'rgb(var(--ember-light) / <alpha-value>)' },
         studio: '#121212',
         neon: {
           orange: '#FF5500',
@@ -55,8 +57,8 @@ module.exports = {
       },
       boxShadow: {
         panel: '0 0 0 1px rgba(255,255,255,0.06), 0 24px 60px -24px rgba(0,0,0,0.8)',
-        float: '0 10px 30px -10px rgba(207,159,82,0.35)',
-        ember: '0 10px 30px -10px rgba(255,90,0,0.45)',
+        float: '0 10px 30px -10px rgb(var(--gold) / 0.35)',
+        ember: '0 10px 30px -10px rgb(var(--ember) / var(--ember-glow))',
         'neon-orange': '0 0 25px rgba(255, 85, 0, 0.35)',
         'neon-orange-sm': '0 0 12px rgba(255, 85, 0, 0.25)',
         'neon-orange-lg': '0 0 45px rgba(255, 85, 0, 0.50)',

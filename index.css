@@ -11,6 +11,14 @@
      the screen, 280-560 px). The same clamps are in services/layout.ts for the 3D camera. */
   --panel-w: clamp(340px, 28vw, 460px);
   --sheet-h: clamp(280px, 52dvh, 560px);
+  /* Brand accents as "r g b" (the Tailwind tokens gold, gunmetal and ember read them): Forged Gold,
+     Gunmetal, Electric Orange and its hover, and the opacity of the glow under a main action button.
+     A theme (config/theme.ts) overrides them; the configurator's luxury theme does. */
+  --gold: 207 159 82;
+  --gunmetal: 42 42 42;
+  --ember: 255 90 0;
+  --ember-light: 255 122 51;
+  --ember-glow: 0.45;
 }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi-700.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
@@ -90,9 +98,9 @@ body {
   color: transparent;
 }
 button, [role="button"] { -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 2px solid #CF9F52; outline-offset: 2px; }
+:focus-visible { outline: 2px solid rgb(var(--gold)); outline-offset: 2px; }
 ::selection {
-  background-color: #CF9F52;
+  background-color: rgb(var(--gold));
   color: #121212;
 }
 /* Custom Precision Scrollbars */

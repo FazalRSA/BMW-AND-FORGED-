@@ -77,6 +77,9 @@ export const BRAND = {
 
 export const DEFAULT_REGION = BRAND.regions[0];
 
+/** The configurator's luxury palette and theme (config/theme.ts holds the hex codes, once). */
+export { LUXURY, LUXURY_THEME, applyTheme } from './theme';
+
 export const formatMoney = (usd: number, region: Region) =>
   new Intl.NumberFormat(region.locale, {
     style: 'currency',
