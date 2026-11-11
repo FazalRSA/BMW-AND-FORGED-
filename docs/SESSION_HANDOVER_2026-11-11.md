@@ -134,7 +134,7 @@ Merged: #12, then #14 (menu links, GPU-restore fix, carousel, dark wheel stage).
 |---|---|
 | Admin login (`/admin`, email + password, allowlist) | built, plain form, redesign not done |
 | Customer login (Google via Supabase Auth, garage) | built; needs the owner's Google provider setup (docs/ACCOUNTS.md) |
-| Dealer login | NOT BUILT (needs a role in `profiles` and a policy decision) |
+| Dealer login | BUILT on `claude/dealership-forged-admin-pages-cgw28j` (`/dealer`, Dealers tab in `/admin`, migration `20261111120000_dealers.sql` written, NOT applied); docs/DEALERS.md |
 | Magic link / password-less login | NOT BUILT (`signInWithOtp` is the route) |
 | FORGED wordmark | present (`public/brand/forgedsa-wordmark.png`) |
 | SixNine logo | NO ASSET in the repo; the owner must supply it |
