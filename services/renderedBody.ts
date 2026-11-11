@@ -22,6 +22,21 @@ export const loadRenderManifest = () =>
     .then((r) => (r.ok ? r.json() : {}))
     .catch(() => ({})));
 
+/**
+ * Cars with Blender bodies for the summary and PDF stills only (public/renders/stills.json). The configurator's
+ * stage keeps drawing these cars live (a view in manifest.json would replace the live car there), but its stills are
+ * Cycles renders with the live wheels on top. A car listed in both has the union of the views.
+ */
+export const loadStillsManifest = async (): Promise<Record<string, string[]>> => {
+  const [main, stills] = await Promise.all([
+    loadRenderManifest(),
+    fetch('/renders/stills.json').then((r) => (r.ok ? (r.json() as Promise<Record<string, string[]>>) : {})).catch(() => ({} as Record<string, string[]>))
+  ]);
+  const out: Record<string, string[]> = { ...main };
+  for (const [car, views] of Object.entries(stills)) out[car] = [...new Set([...(out[car] ?? []), ...views])];
+  return out;
+};
+
 const toLin = new Float32Array(256).map((_, i) => {
   const c = i / 255;
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
