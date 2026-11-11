@@ -5,6 +5,48 @@ section 5 of [`PRODUCT_SPEC_CARS_AND_WHEELS.md`](PRODUCT_SPEC_CARS_AND_WHEELS.md
 market actually offers today, not what it offered when this repo's photo pipeline was built. It does
 not replace either doc — it tells you which route to pick, and what changed since.
 
+## Pilot log
+
+The original plan below (§2, "Recommended pilot") was to re-run FSA-07. That didn't work: the only
+FSA-07 asset in this repo (`public/rim-faces/forged_fsa_07.png`) turned out to be the already-traced
+flat grey silhouette mask, not a photo — there's no second angle of it anywhere, and no raw photo
+folder in the repo by design (source photos live in Drive). Feeding a single flat mask through a
+"multi-image" tool would not have tested anything real, so the pilot was redirected.
+
+**What ran instead, 2026-11-11:** the owner's Drive folder "WEBSITE wheels" → "FSA4" has three real
+product photos of the physical **FSA004** wheel on a turntable stand (consistent studio lighting,
+same background) — two of the silver/machined finish at different rotations, one of the same design
+in gloss black. The two silver photos are genuinely different viewpoints of the same physical wheel,
+which is exactly what multi-image reconstruction needs. **This is a better pilot subject than
+FSA-07 was going to be**, because FSA004 already has an authoritative ground-truth 3D file in this
+repo (`public/models/rims/forged_fsa004.glb`, sourced from the FORGED website) — so the AI
+reconstruction's geometry can be measured against a known-correct model, not just judged "does it
+look plausible."
+
+Progress:
+- Both photos downloaded from Drive, uploaded to Higgsfield (which exposes Meshy's models) and
+  confirmed. They're in the account's media library under these IDs (no local re-upload needed to
+  resume):
+  - `7f798784-49ee-4338-8289-f9d1dc311fdc` (silver, angle 1 — face mostly square-on)
+  - `f1014bdf-42cf-4f25-b766-284cc37ebc03` (silver, angle 2 — rotated to show the barrel/profile)
+- The job was preflighted (`get_cost: true`) against Meshy's `multi_image_to_3d` model: **20
+  credits**, `should_texture: false` (geometry only — the engine replaces every rim's material
+  anyway), `symmetry_mode: "on"` (wheels are rotationally symmetric), `topology: "triangle"`,
+  `target_polycount: 50000` (ample headroom under this repo's rim pack budget; `pack.mjs` will
+  decimate to the live triangle budget during cleanup regardless).
+- **Blocked on submission:** the connected Higgsfield workspace has 0 credits (starter plan). The
+  owner chose not to top up credits for this pilot right now, so the job was not submitted — no
+  charge was made.
+
+**To resume exactly where this left off:** call `generate_3d` with
+`model: "multi_image_to_3d"`, `medias: [{"value": "7f798784-49ee-4338-8289-f9d1dc311fdc", "role": "image"}, {"value": "f1014bdf-42cf-4f25-b766-284cc37ebc03", "role": "image"}]`,
+`should_texture: false`, `symmetry_mode: "on"`, `topology: "triangle"`, `target_polycount: 50000`,
+once the workspace has at least 20 credits. Then: strip any texture, decimate/retopologize to this
+repo's rim budget, sort meshes into the `Rim_Barrel`/`Rim_Face_Spokes`/`Hardware_Bolts`/`Center_Cap`
+convention, pack with `scripts/rim3d/pack.mjs`, and compare directly against
+`public/models/rims/forged_fsa004.glb` plus `scripts/render/wheel-qa.cjs` — this one pilot answers
+both "is the multi-image route any good" and "how close does it get to the real file."
+
 ## TL;DR
 
 1. **Still ask for CAD first** (STEP/IGES). Nothing below beats it, and nothing has closed that gap.
