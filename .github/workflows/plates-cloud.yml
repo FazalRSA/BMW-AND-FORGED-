@@ -47,10 +47,24 @@ jobs:
             if [ -n "${MODAL_TOKEN_ID}" ]; then echo "MODAL_TOKEN_ID: present"; else echo "MODAL_TOKEN_ID: missing"; fi
             if [ -n "${MODAL_TOKEN_SECRET}" ]; then echo "MODAL_TOKEN_SECRET: present"; else echo "MODAL_TOKEN_SECRET: missing"; fi
           } > status/probe.txt
+          # Shape only (never the value): a Modal token id is "ak-" + 22 characters, a secret "as-" + 22.
+          python - >> status/probe.txt <<'PY'
+          import os
+          for name, prefix in (("MODAL_TOKEN_ID", "ak-"), ("MODAL_TOKEN_SECRET", "as-")):
+              raw = os.environ.get(name, "")
+              v = raw.strip()
+              print(f"{name} shape: length {len(raw)} (trimmed {len(v)}, expected 25), "
+                    f"starts with {prefix}: {v.startswith(prefix)}, "
+                    f"spaces or line breaks inside: {any(c.isspace() for c in v)}")
+          PY
           cat status/probe.txt
       - name: Deploy to Modal (environment main)
         if: env.DRY_RUN != 'true' && env.MODAL_TOKEN_ID != '' && env.MODAL_TOKEN_SECRET != ''
         run: |
+          # A pasted secret often carries a trailing space or line break; Modal rejects those.
+          MODAL_TOKEN_ID="$(printf %s "${MODAL_TOKEN_ID}" | tr -d '[:space:]')"
+          MODAL_TOKEN_SECRET="$(printf %s "${MODAL_TOKEN_SECRET}" | tr -d '[:space:]')"
+          export MODAL_TOKEN_ID MODAL_TOKEN_SECRET
           PLATES_API_TOKEN="$(python -c "import hashlib,os;print(hashlib.sha256((os.environ['MODAL_TOKEN_SECRET']+':forgedsa-plates-api').encode()).hexdigest())")"
           echo "::add-mask::${PLATES_API_TOKEN}"
           export PLATES_API_TOKEN
