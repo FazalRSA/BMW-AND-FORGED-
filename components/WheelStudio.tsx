@@ -53,7 +53,7 @@ export interface StudioToggles {
 }
 
 export const DEFAULT_STUDIO_TOGGLES: StudioToggles = {
-  orbit: true,
+  orbit: false,
   spin: false,
   explode: false,
   wire: false,
@@ -218,7 +218,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
   controls.maxDistance = 4;
   controls.maxPolarAngle = Math.PI * 0.62;
   controls.enablePan = false;
-  controls.autoRotate = true;
+  controls.autoRotate = false;
   controls.autoRotateSpeed = 1.2;
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
@@ -688,8 +688,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks): 
   };
 }
 
-// The stage is light inside the app's dark page: `stage-light` (index.css) turns the ink, mute, line and
-// surface tokens dark-on-light, so the chips and cards below are the website's, in this app's tokens.
+// The stage is dark like the rest of the app (index.css .wheel-stage); the chips and cards below use the app's tokens.
 const chipBase =
   'shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px] leading-none transition-colors cursor-pointer';
 const chipOff = 'border-line bg-surface/70 text-ink hover:bg-surface';
@@ -821,7 +820,7 @@ export const WheelStudio = ({
 
   return (
     <div
-      className={`wheel-stage stage-light relative w-full select-none text-ink ${className}`}
+      className={`wheel-stage relative w-full select-none text-ink ${className}`}
       data-studio-state={error ? 'error' : loading ? 'loading' : 'ready'}
     >
       <div
@@ -1000,7 +999,7 @@ export const WheelStudio = ({
 const ControlRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex items-center gap-2 mt-2">
     <div className="w-12 sm:w-14 shrink-0 text-[11px] uppercase tracking-wider text-mute">{label}</div>
-    <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto sm:flex-wrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex min-w-0 flex-1 gap-1.5 flex-wrap">
       {children}
     </div>
   </div>

@@ -44,7 +44,7 @@ export interface WheelStageProps {
 
 const DEFAULT_SIZE = 'h-[76vh] min-h-[540px] max-h-[860px]';
 /** The stage's frame (index.css .wheel-stage), shared by the studio's stand-ins below. */
-const frame = (size: string) => `wheel-stage stage-light relative w-full select-none text-ink ${size}`;
+const frame = (size: string) => `wheel-stage relative w-full select-none text-ink ${size}`;
 
 /** Wheel name and subtitle, top left, where the studio shows them. */
 const StageTitle = ({ wheel }: { wheel: WheelDesign }) => (
