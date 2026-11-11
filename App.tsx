@@ -966,6 +966,7 @@ export const App: React.FC = () => {
       <AccountSheet
         open={accountOpen}
         onClose={() => setAccountOpen(false)}
+        stageCarId={selectedCar.id}
         user={user}
         profile={profile}
         onProfile={setProfile}
