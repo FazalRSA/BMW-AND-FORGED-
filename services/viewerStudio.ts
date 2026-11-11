@@ -106,6 +106,114 @@ export function buildGlossCove(): THREE.Scene {
   return env;
 }
 
+/**
+ * Stage look: the Cycles hero stills (public/hero/*, the welcome carousel), which the owner asked every scene to
+ * match. A black backdrop, a pale studio floor lit by a pool of light that fades out, and a black cove with one
+ * large overhead softbox for the paint to mirror (the white sweep over bonnet and roof in the stills). The numbers
+ * can be overridden from the URL for comparison renders: ?stagePeak= ?stageRx= ?stageRz= ?stageOver= ?stageRails=
+ * ?stageRing= ?stageFloorEnv= ?stageExp=
+ */
+const urlNum = (key: string, fallback: number) => {
+  if (typeof window === 'undefined') return fallback;
+  const raw = new URLSearchParams(window.location.search).get(key);
+  const n = raw === null ? NaN : Number(raw);
+  return Number.isFinite(n) ? n : fallback;
+};
+// Chosen against public/hero/m2_g87-1600.webp (M2 CS, Portimao Blue, front three-quarter), Nov 2026. A ring above
+// about 2 lit the body evenly and flattened it; the stills' contrast is one strong overhead key over a black room.
+export const STAGE = {
+  /** Floor brightness at the centre of the pool, as an sRGB level (0..1). */
+  peak: urlNum('stagePeak', 0.97),
+  /** Pool spread across the car and along it (m): the Gaussian's sigma on each axis. */
+  rx: urlNum('stageRx', 2.2),
+  rz: urlNum('stageRz', 3.4),
+  /** Overhead softbox, the two light rails, and the wrap ring in the reflection cove. */
+  overhead: urlNum('stageOver', 32),
+  rails: urlNum('stageRails', 10),
+  ring: urlNum('stageRing', 1),
+  /** The lit floor as the paint sees it in the cove (sills and lower doors pick it up). */
+  floorEnv: urlNum('stageFloorEnv', 0.5),
+  exposure: urlNum('stageExp', 1.2),
+  /** Floor plane size (m); the pool has faded out well before its edge. */
+  size: 40
+};
+
+/** The stage floor's pool of light: brightness in the colour channels, the fade-out in alpha. */
+export function stageFloorTexture(): THREE.CanvasTexture {
+  const N = 512, c = document.createElement('canvas');
+  c.width = c.height = N;
+  const g = c.getContext('2d')!;
+  const img = g.createImageData(N, N);
+  for (let j = 0; j < N; j++) {
+    for (let i = 0; i < N; i++) {
+      const x = (i / (N - 1) - 0.5) * STAGE.size, z = (j / (N - 1) - 0.5) * STAGE.size;
+      const r2 = (x / STAGE.rx) ** 2 + (z / STAGE.rz) ** 2;
+      const k = Math.exp(-0.5 * r2); // 1 under the car, fading out across the floor
+      const q = (j * N + i) * 4;
+      img.data[q] = img.data[q + 1] = img.data[q + 2] = 255 * STAGE.peak;
+      img.data[q + 3] = 255 * k;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/**
+ * The stage floor: unlit, so its brightness is the stills' whatever the paint's exposure, and transparent where the
+ * pool fades, so it melts into a black backdrop (the dome on the configure screen, the page on the showroom).
+ */
+export function buildStageFloor(): THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> {
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(STAGE.size, STAGE.size),
+    new THREE.MeshBasicMaterial({ map: stageFloorTexture(), transparent: true, depthWrite: false, toneMapped: false, fog: false })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.renderOrder = 0; // under the shadow pool (renderOrder 1) and the car
+  floor.name = 'stageFloor';
+  return floor;
+}
+
+/** The stage backdrop: black, untouched by tone mapping or fog. */
+export function buildStageDome(): THREE.Mesh {
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(70, 16, 8),
+    new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide, fog: false, depthWrite: false, toneMapped: false })
+  );
+  dome.renderOrder = -10;
+  dome.frustumCulled = false;
+  dome.name = 'stageDome';
+  return dome;
+}
+
+/**
+ * The stage's reflection cove for glossy paints: black walls, one big overhead softbox with the gloss cove's two
+ * light rails, a faint wrap ring, and a lit floor below, as in the stills' studio.
+ */
+export function buildStageCove(): THREE.Scene {
+  const wide = softboxTexture(0.34), tight = softboxTexture(0.07);
+  const env = new THREE.Scene();
+  const f = Math.round(255 * STAGE.floorEnv).toString(16).padStart(2, '0');
+  const wall = gradientTexture([[0, '#000000'], [0.44, '#020202'], [0.495, '#0c0c0c'], [0.51, `#${f}${f}${f}`], [0.62, `#${f}${f}${f}`], [1, '#000000']]);
+  env.add(new THREE.Mesh(new THREE.SphereGeometry(40, 48, 24), new THREE.MeshBasicMaterial({ map: wall, side: THREE.BackSide })));
+  const box = (w: number, h: number, pos: [number, number, number], k: number, tex: THREE.Texture, rot?: [number, number, number]) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(k, k, k), side: THREE.DoubleSide }));
+    m.position.set(...pos);
+    if (rot) m.rotation.set(...rot);
+    else m.lookAt(0, pos[1], 0);
+    env.add(m);
+  };
+  box(11, 22, [0, 11, 0], STAGE.overhead, wide, [H, 0, 0]); // the big overhead softbox
+  box(1.1, 20, [-3.6, 10.2, 0], STAGE.rails, tight, [H, 0, 0]); // the crisp lines along bonnet, roof and boot
+  box(1.1, 20, [3.6, 10.2, 0], STAGE.rails, tight, [H, 0, 0]);
+  for (let i = 0; i < 6; i++) {
+    const a = THREE.MathUtils.degToRad(30 + i * 60), R = 10.5;
+    box(3.6, 2.8, [Math.sin(a) * R, 1.9, Math.cos(a) * R], STAGE.ring, wide);
+  }
+  return env;
+}
+
 /** Frees a cove scene once its PMREM has been taken. */
 export function disposeCove(env: THREE.Scene) {
   env.traverse((o) => {
