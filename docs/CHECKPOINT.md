@@ -156,9 +156,8 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
 - [ ] Supabase migrations, checked by name on 2026-11-11: the four cars, legacy cars hidden, the `_wheel_*_rim_model` files, the
       wheel inventory, `car_specs_m2cs_m5touring`, `customer_accounts`, `admin_requires_confirmed_email` and
       `prepared_cars_keep_own_brakes` are applied (all fifteen `20261110*` files; read with `list_migrations`) and the four
-      prepared cars are active. No migration named `lead_hardening` is in the applied list. **Not applied:**
-      `20261111090000_car_m2_g87_name_m2_cs.sql` (Supabase still names `m2_g87` "BMW M2 Coupe"; it changes live data, so it
-      waits for the owner's go-ahead). Then deploy and smoke the live catalogue (source `supabase`).
+      prepared cars are active. No migration named `lead_hardening` is in the applied list. `20261111090000_car_m2_g87_name_m2_cs.sql` was applied
+      on 2026-11-11 with the owner's go-ahead (`m2_g87` is now "BMW M2 CS" / "M2 CS G87"). Then deploy and smoke the live catalogue (source `supabase`).
 - [ ] Owner: Supabase dashboard → Authentication → Providers → Google (client id/secret, redirect URLs) per `docs/ACCOUNTS.md`;
       then the manual sign-in → save → garage test on the preview URL.
 - [x] Rim-page spins for the six stocked wheels: dropped on 2026-11-11. The rim page draws the rim GLB in the wheel studio

@@ -90,8 +90,8 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
   Auth (Google provider) with `profiles`, `saved_configurations.user_id` and `leads.user_id`
   (migration `20261110150000_customer_accounts.sql`); admins stay on the `admin_users` allowlist.
 - **Migrations:** all fifteen `supabase/migrations/20261110*.sql` files are applied to the live project
-  (read back on 2026-11-11). One is written and not applied: `20261111090000_car_m2_g87_name_m2_cs.sql`,
-  which renames the live `m2_g87` row from "BMW M2 Coupe" to "BMW M2 CS".
+  (read back on 2026-11-11). `20261111090000_car_m2_g87_name_m2_cs.sql` was applied on 2026-11-11 and renamed the
+  live `m2_g87` row from "BMW M2 Coupe" to "BMW M2 CS".
 - **Hosting:** Vercel project `forged-configurator` (team Nova Havens). Framework preset Vite,
   build `vite build`, output `dist`, no environment variables required.
 
