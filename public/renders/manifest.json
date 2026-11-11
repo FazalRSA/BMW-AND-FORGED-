@@ -1,49 +1,6 @@
 {
- "m235_f74": [
-  "frontThreeQuarter",
-  "frontWheel",
-  "rearThreeQuarter",
-  "side",
-  "top"
- ],
- "m3_g80": [
-  "frontThreeQuarter",
-  "frontWheel",
-  "rearThreeQuarter",
-  "side",
-  "top"
- ],
- "m3_touring_g81": [
-  "frontThreeQuarter",
-  "frontWheel",
-  "rearThreeQuarter",
-  "side",
-  "top"
- ],
- "m4_g82": [
-  "frontThreeQuarter",
-  "frontWheel",
-  "rearThreeQuarter",
-  "side",
-  "top"
- ],
  "m5_g90": [
   "front",
-  "frontThreeQuarter",
-  "frontWheel",
-  "rearThreeQuarter",
-  "side",
-  "top"
- ],
- "m8_f92": [
-  "frontThreeQuarter",
-  "frontWheel",
-  "rearThreeQuarter",
-  "side",
-  "top"
- ],
- "rims": [],
- "x5m_f95": [
   "frontThreeQuarter",
   "frontWheel",
   "rearThreeQuarter",

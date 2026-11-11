@@ -35,3 +35,6 @@ docs/ingest/**/*.png
 .token-optimizer/state/
 .token-optimizer/probe/
 !.token-optimizer/optimize.sh
+
+# CTO toolkit turn-stats log (rewritten by a hook every turn)
+.cto-toolkit/learning/patterns.jsonl

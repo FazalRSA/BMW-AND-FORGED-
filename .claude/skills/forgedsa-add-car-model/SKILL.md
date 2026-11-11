@@ -41,7 +41,7 @@ other files.
 - Compress: `npx @gltf-transform/cli optimize in.glb out.glb --texture-compress webp`. Aim for
   under 15 MB (the `car-models` bucket limit is 50 MB).
 - Multi-variant sources (game mods that stack every bumper, hood and interior in one file) need a
-  build script. See `scripts/build-x5m-lci.mjs`: keep one coherent variant, zero the kept parts'
+  build script. The old X5 M script (`scripts/build-x5m-lci.mjs`, removed 2026-11-11, see git history) showed the pattern: keep one coherent variant, zero the kept parts'
   node translations, rebuild PBR materials from mesh names, mount one wheel per corner, then run
   meshopt.
 - Do **not** smooth or crease normals on car bodies (`toCreasedNormals` broke the M5 bumper).
