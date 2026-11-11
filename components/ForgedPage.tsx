@@ -8,7 +8,8 @@ import { ArrowLeft, ArrowRight, Rotate3d } from 'lucide-react';
 import { BRAND, Region, formatMoney } from '../config/brand';
 import { WheelDesign, WheelFinish } from '../types';
 import { rimFromPrice, rimSizes } from '../services/pricing';
-import { Button, Eyebrow, Logo, RimThumb } from './journey/ui';
+import { Button, Eyebrow, Logo } from './journey/ui';
+import { RimThumb } from './journey/RimThumb';
 import { RimFaceSvg } from './journey/RimFaceSvg';
 import { SiteFooter } from './SiteFooter';
 

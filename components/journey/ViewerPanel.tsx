@@ -8,7 +8,8 @@ import { ArrowRight, ChevronLeft, ClipboardList, Info, MoreHorizontal, Rotate3d 
 import { Region, formatMoney } from '../../config/brand';
 import { CameraViewPreset, CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import { finishSurcharge, rimPrice, rimSizes } from '../../services/pricing';
-import { Button, FinishChip, IconButton, PaintChip, RimThumb, cx } from './ui';
+import { Button, FinishChip, IconButton, PaintChip, cx } from './ui';
+import { RimThumb } from './RimThumb';
 import { shortModelName } from './Showroom';
 import type { ConfigStep } from './Configurator';
 

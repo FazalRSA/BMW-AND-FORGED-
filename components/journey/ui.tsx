@@ -9,7 +9,6 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { BRAND } from '../../config/brand';
 import { PaintColor, WheelDesign, WheelFinish } from '../../types';
-import { RimFaceSvg } from './RimFaceSvg';
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 
@@ -303,17 +302,22 @@ const thumbTint = (hex?: string) => {
   return `rgb(${ch.join(',')})`;
 };
 
-/** Rim thumbnail: the uploaded front-on PNG tinted by the finish, else the drawn preview. */
-export const RimThumb: React.FC<{ wheel: WheelDesign; finish?: WheelFinish; size?: number; className?: string }> = ({
+/**
+ * Rim thumbnail from the wheel's front-on image, tinted by the finish. A wheel without an image gets
+ * `fallback` (nothing by default). This file stays free of three.js, so pages that never draw 3D can use
+ * it; the drawn preview for wheels without a photo lives in RimThumb.tsx.
+ */
+export const RimPhotoThumb: React.FC<{ wheel: Pick<WheelDesign, 'imageUrl'>; finish?: Pick<WheelFinish, 'hex'>; size?: number; className?: string; fallback?: React.ReactNode }> = ({
   wheel,
   finish,
   size = 72,
-  className
+  className,
+  fallback = null
 }) => {
   // The rim PNGs are 2048 px (1-2 MB each); a list of nine at 54 px loaded every one twice (image
   // and mask). One downscaled copy per photo serves both.
   const src = useRimThumb(wheel.imageUrl);
-  if (!wheel.imageUrl) return <RimFaceSvg wheel={wheel} finishHex={finish?.hex} size={size} className={className} />;
+  if (!wheel.imageUrl) return <>{fallback}</>;
   const tint = thumbTint(finish?.hex);
   if (!src) return <div className={className} style={{ width: size, height: size }} aria-hidden />;
   const mask = `url("${src}") center / contain no-repeat`;
