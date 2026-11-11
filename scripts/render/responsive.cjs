@@ -8,7 +8,7 @@
  *
  * Devices: small / normal / large phones, phones in landscape, small / large tablets (portrait and
  * landscape, incl. iPad 11" 834x1194 and iPad 13" 1366x1024), laptop, desktop, full HD, 4K. Pages:
- * welcome, showroom, configurator (overview, paint, wheels, size, finish), summary, the wheels
+ * welcome, configurator (overview, paint, wheels, size, finish), summary, the wheels
  * gallery, a rim page with a 360° spin (forged_fsa_12), terms, delivery.
  *
  * Checks per page and device (all must be empty):
@@ -46,7 +46,7 @@ const DEVICES = {
   'uhd-2560x1440': { width: 2560, height: 1440 }
 };
 
-const PAGES = ['welcome', 'showroom', 'configure', 'paint', 'wheels', 'size', 'finish', 'summary', 'forged', 'rim', 'terms', 'delivery'];
+const PAGES = ['welcome', 'configure', 'paint', 'wheels', 'size', 'finish', 'summary', 'forged', 'rim', 'terms', 'delivery'];
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -149,7 +149,6 @@ const PAGES = ['welcome', 'showroom', 'configure', 'paint', 'wheels', 'size', 'f
       await p.waitForFunction(() => { const l = document.querySelector('[aria-label="Loading"]'); return !l || getComputedStyle(l).opacity === '0'; }, null, { timeout: 240000 });
     };
     await record('welcome', async () => { await go('/'); await ready(/^enter/i); });
-    await record('showroom', async () => { await go('/models'); await ready(/^build$/i); });
     await record('configure', async () => { await go('/configure'); await ready(/^front$/i); });
     // each configurator page also works on its own (a page filter skips the ones before it); a busy
     // SwiftShader main thread can hold a step click past Playwright's default 30 s

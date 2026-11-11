@@ -6,7 +6,7 @@
  *   bunx vite --host 127.0.0.1 --port 5173            # dev server, in another shell
  *   node scripts/render/journey.cjs <outDir> <rimCacheDir> [phone|desktop|both]
  *
- * Welcome -> Enter -> showroom (next model) -> Build -> Confirm -> wheels step -> three wheels ->
+ * Welcome -> Enter (straight into the configurator on the car on stage) -> wheels step -> three wheels ->
  * size -> finish -> summary. Writes <outDir>/<size>.log and <size>-<step>.png (…-FAIL.png on a
  * failed step). SwiftShader: a few minutes per size; the step times are for comparison between
  * runs, not absolute.
@@ -59,21 +59,13 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
       await p.getByRole('button', { name: /enter|start|begin|explore|discover/i }).first().waitFor({ timeout: 240000 });
     });
     await step('welcome-enter', async () => {
-      // The boot screen can still cover the page under load: wait for it to fade before clicking
-      await p.locator('[aria-label="Loading"]').waitFor({ state: 'hidden', timeout: 120000 }).catch(() => {});
+      // The boot screen can still cover the page under load: wait for it to fade before clicking. It fades to
+      // opacity 0 and stays in the page, which Playwright does not count as hidden (that wait ran out its
+      // 120 s every time), so the opacity is read instead, as in responsive.cjs
+      await p.waitForFunction(() => { const l = document.querySelector('[aria-label="Loading"]'); return !l || getComputedStyle(l).opacity === '0'; }, null, { timeout: 120000 }).catch(() => {});
       await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click({ timeout: 60000 });
-      await p.getByRole('button', { name: /^build$/i }).waitFor({ timeout: 60000 });
-    });
-    await step('showroom-next', async () => {
-      await p.getByRole('button', { name: 'Next model' }).click();
-      await p.waitForTimeout(4000);
-    });
-    await step('showroom-build', async () => {
-      await p.getByRole('button', { name: /^build$/i }).click();
-      // The notice closes as it is confirmed; a click whose target vanishes mid-way is fine, and the notice is not shown for every car
-      const confirm = p.getByRole('button', { name: /^confirm$/i });
-      if (await confirm.waitFor({ timeout: 8000 }).then(() => true, () => false)) await confirm.click({ timeout: 45000, noWaitAfter: true }).catch(() => {});
-      await p.getByRole('button', { name: /step 2|wheels/i }).first().waitFor({ timeout: 60000 });
+      // Enter opens the configurator on the car on stage (the showroom model picker is gone)
+      await p.getByRole('button', { name: /step 2|wheels/i }).first().waitFor({ timeout: 120000 });
     });
     await step('configure-wheels-step', async () => {
       await p.getByRole('button', { name: /step 2: wheels|^wheels$/i }).first().click();

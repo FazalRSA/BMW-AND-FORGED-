@@ -41,17 +41,8 @@ const SIZES = { phone: { width: 390, height: 844, isMobile: true, hasTouch: true
     // The boot screen can still cover the page under load: wait for it to fade before clicking
     await p.locator('[aria-label="Loading"]').waitFor({ state: 'hidden', timeout: 120000 }).catch(() => {});
     await p.getByRole('button', { name: /enter|start|begin|discover/i }).first().click({ timeout: 60000 });
-    await p.getByRole('button', { name: /^build$/i }).waitFor({ timeout: 60000 });
-    note('showroom loaded');
-    await p.getByRole('button', { name: /^build$/i }).click();
-    note('build clicked');
-    // The notice before the configurator (Confirm) is not shown for every car; take it when it appears
-    const confirm = p.getByRole('button', { name: /^confirm$/i });
-    if (await confirm.waitFor({ timeout: 8000 }).then(() => true, () => false)) {
-      // The notice closes as soon as it is confirmed; a click whose target vanishes mid-way is fine
-      await confirm.click({ timeout: 45000, noWaitAfter: true }).catch((e) => note('confirm click: ' + e.message.split('\n')[0]));
-      note('confirm clicked');
-    } else note('no confirm notice');
+    // Enter opens the configurator directly (the showroom model picker is gone)
+    note('enter clicked');
     await p.getByRole('button', { name: /step 2|wheels/i }).first().waitFor({ timeout: 60000 });
     await p.waitForTimeout(4000);
     note('configure reached');
