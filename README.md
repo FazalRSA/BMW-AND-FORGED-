@@ -217,7 +217,8 @@ Two fields need a bit of care, because every 3D model names its own parts differ
 A new car also needs a slide on the welcome carousel, because that is where customers choose the car:
 an entry in `HERO_SLIDES` (`components/journey/HeroStage.tsx`) and its stills in `public/hero/`
 ([`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md`](docs/PRODUCT_SPEC_CARS_AND_WHEELS.md) section 4.7). The carousel
-is a fixed list and does not follow the catalogue.
+shows the slides of the cars that are active in the catalogue: hiding a car in `/admin` removes its slide,
+but a new car is not offered until it has one.
 
 You can also add a car directly with SQL if you're comfortable with it — insert a row into
 `public.cars` with the same columns (snake_case); see `supabase/migrations/` for worked examples of

@@ -202,12 +202,11 @@ on the car being built.
 | Car order on the welcome, and the paint a car opens in | `HERO_SLIDES` (above). A car whose palette lacks its still's paint opens in the first paint of its palette |
 | Order of the wheel list / default wheel | Admin → *Sort order* (the first wheel is the default) |
 
-**The welcome carousel is a fixed list (`HERO_SLIDES`), not the catalogue.** Since the showroom went, it is the
-only place a customer chooses the car, so:
+**The welcome carousel's slides are a fixed list (`HERO_SLIDES`), filtered to the catalogue's active cars.** Since
+the showroom went, it is the only place a customer chooses the car, so:
 - a car added in `/admin` is not offered to customers until it has a slide (a still in `public/hero/` and an
   entry in `HERO_SLIDES`; `PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.7);
-- a car hidden in `/admin` keeps its slide until the entry is removed, and **Enter** on that slide opens the
-  car that was already selected;
+- a car hidden in `/admin` loses its slide (`WelcomeGate` leaves out slides whose car is not on offer);
 - *Sort order* on cars does not change the order of the slides.
 
 **Where things are saved (Supabase):**

@@ -130,6 +130,8 @@ export const App: React.FC = () => {
   }, [reloadCatalog]);
 
   const cars = useMemo(() => lineUpCars(catalog.cars), [catalog.cars]);
+  /** The cars on offer, for the welcome carousel (it leaves out the slide of a car that is hidden). */
+  const carIds = useMemo(() => cars.map((c) => c.id), [cars]);
 
   // The five choices
   const [selectedCar, setSelectedCar] = useState<CarModel>(() => firstCar(STATIC_CATALOG.cars));
@@ -791,6 +793,7 @@ export const App: React.FC = () => {
           region={region}
           onRegionChange={changeRegion}
           startCarId={selectedCar.id}
+          carIds={carIds}
           onSlide={(carId) => {
             // Fetch and parse the car on stage now, so Enter only has to mount it
             const car = cars.find((c) => c.id === carId);

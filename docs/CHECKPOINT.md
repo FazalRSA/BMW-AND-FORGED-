@@ -11,9 +11,9 @@
   the car on stage, in the paint its still shows when that car's palette has it (`HERO_SLIDES[].paintId` in `HeroStage.tsx`):
   the M2 CS (Portimao Blue) and M5 (Fire Red) do; the M4 CS and M5 Touring palettes do not have their stills' paints, so they
   open in their first paint. "Change model" in the configurator goes back to the carousel, which opens on the car being built.
-- **The carousel is a fixed list** (`HERO_SLIDES`), not the catalogue: a car added, hidden or reordered in `/admin` does not
-  change the welcome, and Enter on the slide of a hidden car opens the car that was already selected. A new car needs a slide
-  (`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.7).
+- **The carousel's slides are a fixed list** (`HERO_SLIDES`), filtered to the cars that are active in the catalogue: a car
+  hidden in `/admin` loses its slide, but a car added there is not offered until it has a slide, and *Sort order* does not
+  reorder the slides (`docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` section 4.7).
 - **Enter is fast:** while the stills cover the canvas the engine is prepared behind them (stage look built, camera framed as
   in the configurator, the car on stage preloaded), so Enter reaches the configurator in well under a second in the harness.
 - **Controls = the stepped drawer** (`StepDrawer` in `components/journey/Configurator.tsx`): Overview, then steps 1 Paint,
