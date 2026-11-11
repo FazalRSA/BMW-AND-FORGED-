@@ -73,7 +73,7 @@ const supaSrc = fs.readFileSync(path.join(__dirname, '../../services/supabaseCli
 const SUPA_URL = /'(https:\/\/\w+\.supabase\.co)'/.exec(supaSrc)[1];
 const SUPA_KEY = /'(sb_publishable_[^']+)'/.exec(supaSrc)[1];
 const rest = (q) => JSON.parse(execFileSync('curl', ['-sS', '--max-time', '60', `${SUPA_URL}/rest/v1/${q}`, '-H', `apikey: ${SUPA_KEY}`], { maxBuffer: 16 << 20 }).toString());
-const WHEELS = rest('wheels?select=id,code,name,standard_sizes,available_variants,default_variant,model_url,rear_model_url&active=eq.true&order=sort_order');
+const WHEELS = rest('wheels?select=id,code,name,standard_sizes,available_variants,default_variant,model_url,rear_model_url,price_by_size&active=eq.true&order=sort_order');
 const FINISHES = Object.fromEntries(rest('wheel_finishes?select=id,name&active=eq.true').map((f) => [f.id, f.name]));
 const CARS = rest('cars?select=id,name,model_url,paint_ids&active=eq.true&order=sort_order');
 const PAINTS = rest('paints?select=id,name,active&order=sort_order').filter((x) => x.active !== false);
@@ -228,7 +228,12 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
       }
     };
     const act = (loc, opts = {}) => (d.hasTouch ? loc.tap(opts) : loc.click(opts));
-    const btn = (name, exact = true) => p.getByRole('button', { name, exact });
+    // "Back" is also the wheel studio's view chip (Face / 3/4 / Side / Back / Top) on a rim page: the page's own
+    // Back button comes first in the DOM, so a bare "Back" means that one
+    const btn = (name, exact = true) => {
+      const loc = p.getByRole('button', { name, exact });
+      return name === 'Back' ? loc.first() : loc;
+    };
     const pathname = () => new URL(p.url()).pathname;
     const waitPath = (want, timeout = 120000) =>
       p.waitForFunction((w) => location.pathname === w, want, { timeout }).catch(() => { throw new Error(`expected ${want}, at ${pathname()}`); });
@@ -934,6 +939,8 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
     // The wheels (/forged), reached from outside the app
     // =====================================================================================
     let order = WHEELS.map((w) => w.id);
+    // ONLY_WHEELS=id1,id2 walks just those rim pages (a rim page takes minutes on a CPU-only machine)
+    if (process.env.ONLY_WHEELS) order = order.filter((id) => process.env.ONLY_WHEELS.split(',').includes(id));
     if (!secFilter || secFilter.split(',').includes('forged') || secFilter.split(',').includes('rims')) {
       const F = 'forged';
       await check(F, 'direct visit: Back stays in the app (-> /)', async () => {
@@ -1078,8 +1085,10 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
             await studioReady();
             const VIEWS = ['Face', '3/4', 'Side', 'Back', 'Top'];
             for (const v of VIEWS) assert((await chip(v).count()) === 1, `no "${v}" chip`);
-            // it opens on 3/4, orbiting
+            // it opens on 3/4 and still (the orbit is a toggle: on load it used to carry the wheel round to its barrel)
             await pressed('3/4', true);
+            await pressed('Orbit', false);
+            await act(chip('Orbit'));
             await pressed('Orbit', true);
             for (const v of ['Face', 'Side', 'Back', 'Top', '3/4']) {
               await act(chip(v));
@@ -1127,7 +1136,10 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
               assert((await sz.nth(j).getAttribute('class')).includes('bg-gold'), `size ${j} not active`);
               prices.add(await text(p.locator('aside .tabular-nums')));
             }
-            assert(prices.size > 1, `one price for every size: ${[...prices]}`);
+            // the stock sheet's wheels cost the same in every size (docs/WHEEL_INVENTORY.md): the page must show as many
+            // different prices as the catalogue has, so a size that moved the price on a flat-priced wheel fails too
+            const want = new Set(Object.values(w.price_by_size || {}).map(Number)).size || 2;
+            assert(want === 1 ? prices.size === 1 : prices.size > 1, `${prices.size} prices for ${want} in the catalogue: ${[...prices]}`);
           });
           // the enquiry is for the rim on this page, in the finish and size chosen here
           for (const [what, tap] of [['studio "Enquire"', () => act(chip('Enquire'))], ['"Enquire about this wheel"', () => act(btn('Enquire about this wheel'))]]) {
