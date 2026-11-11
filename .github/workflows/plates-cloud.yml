@@ -31,6 +31,9 @@ jobs:
       - name: Install the Modal client
         run: pip install --quiet "modal==1.6.3"
       - name: Probe
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          ALL_VARS: ${{ toJSON(vars) }}
         run: |
           mkdir -p status
           {
@@ -39,6 +42,10 @@ jobs:
             echo "time: $(date -u +%FT%TZ)"
             echo "cpus: $(nproc)"
             if [ -n "${MODAL_TOKEN_ID}" ] && [ -n "${MODAL_TOKEN_SECRET}" ]; then echo "modal_secrets: present"; else echo "modal_secrets: missing"; fi
+            if [ -n "${MODAL_TOKEN_ID}" ]; then echo "MODAL_TOKEN_ID: present"; else echo "MODAL_TOKEN_ID: missing"; fi
+            if [ -n "${MODAL_TOKEN_SECRET}" ]; then echo "MODAL_TOKEN_SECRET: present"; else echo "MODAL_TOKEN_SECRET: missing"; fi
+            echo "secret names visible to this workflow: $(printf '%s' "${ALL_SECRETS}" | python -c "import json,sys; print(sorted(k for k in json.load(sys.stdin) if k != 'github_token'))")"
+            echo "variable names visible to this workflow: $(printf '%s' "${ALL_VARS}" | python -c "import json,sys; print(sorted(json.load(sys.stdin)))")"
           } > status/probe.txt
           cat status/probe.txt
       - name: Deploy to Modal
