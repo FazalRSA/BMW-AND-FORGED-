@@ -216,27 +216,43 @@ bun run lint                     # must print nothing
 bun run build                    # must end with "built in …"
 git commit -am "Describe change" && git push -u origin my-change
 ```
-Vercel builds a **preview URL** for every pushed branch. Check it there before merging to `main`.
+Check a branch on the Render preview (below) before merging to `main`. Vercel builds nothing on push
+(section 5).
 
 ---
 
 ## 5. Deploy (Vercel)
 
-A Vercel project **forged-configurator** (team *Nova Havens*) is connected to this repo. Every push
-builds a preview URL; the production URL is <https://forged-configurator.vercel.app> (the same URL the
-client handover, the OAuth client and the Supabase redirect list use).
-Build settings: framework **Vite**, build `vite build`, output `dist`. No environment variables are needed.
-`vercel.json` makes every page work on refresh. Optional: Settings → Domains → add the client's domain.
+The production URL is <https://forged-configurator.vercel.app>. The client handover, the OAuth client
+and the Supabase redirect list all use this URL. It is served by the Vercel project
+**forged-configurator** (team *Nova Havens*, `prj_p1fOXWBPFfxedbLZFp9R3s1Qiq9P`).
 
-**Production reads the Supabase catalogue, so a deploy alone does not change what customers see.** The
-2026-11-10 work (the four prepared cars, the hidden legacy cars, the six stock-sheet wheels and finishes,
-customer accounts, the confirmed-email admin lock, the M2 CS / M5 Touring specs) is written as migrations
-but **not applied** (there is no Supabase access from the sandbox). Until every
-`supabase/migrations/20261110*.sql` has been run in file-name order in the SQL Editor (the two
-`CONCURRENTLY` indexes from `ACCOUNTS.md` step 5b as their own run after `20261110150000`, and
-`20261110170000_admin_requires_confirmed_email.sql` then `20261110171000_car_specs_m2cs_m5touring.sql`
-last), the live site still shows the old Sketchfab cars and photo-traced wheels, and **Continue with
-Google** fails until the Google provider and redirect URLs are set up (`ACCOUNTS.md`, owner steps 1 to 4).
+**The project is not linked to this repo, so pushes and merges deploy nothing.** This was checked
+read-only through the Vercel API on 2026-11-11:
+- The project has no git connection.
+- Its current production build (2026-10-08) was made from `Novahavens/BMW-AND-FORGED-` at `0aef67e`,
+  42 commits behind this repo's `main`.
+- No build has ever come from `FazalRSA/BMW-AND-FORGED-`.
+
+To update production there are two routes. Either connect this repo in the project's Git settings and
+merge to `main`, or start a production deployment by hand from a `main` commit (the
+`forgedsa-deploy-and-release` skill). Either way, production deploys are the owner's call.
+
+Build settings: framework **Vite**, build `vite build`, output `dist`. No environment variables are
+needed. `vercel.json` makes every page work on refresh. Optional: Settings → Domains → add the client's
+domain.
+
+**Production reads the live Supabase catalogue.**
+- All fifteen `supabase/migrations/20261110*.sql` files were applied to the live project on 2026-11-10
+  and checked against its migration history on 2026-11-11.
+- They cover the four prepared cars, the hidden legacy cars, the six stock-sheet wheels and finishes,
+  customer accounts, the confirmed-email admin lock, the M2 CS / M5 Touring specs and the
+  own-brakes hide rule.
+- The two `CONCURRENTLY` indexes from `ACCOUNTS.md` step 5b were created separately.
+
+The production code, however, is still the 2026-10-08 build until it is redeployed. **Continue with
+Google** fails until the Google provider and redirect URLs are set up (`ACCOUNTS.md`, owner steps 1
+to 4).
 
 ---
 
