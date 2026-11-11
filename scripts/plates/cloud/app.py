@@ -27,7 +27,7 @@ import time
 
 import modal
 
-VERSION = "2026-11-11.2"
+VERSION = "2026-11-11.3"
 APP_NAME = "forgedsa-plates"
 VOL = "/vol"
 
@@ -81,7 +81,10 @@ def _run_job(job: dict, tag: str) -> dict:
     out_dir = f"{VOL}/out/{job_id}"
     if not os.path.isfile(entry):
         return {"id": job_id, "code": 2, "seconds": 0, "gpu": tag, "log_tail": f"entry not found: {entry}"}
-    os.makedirs(out_dir, exist_ok=True)
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+    except OSError as e:
+        return {"id": job_id, "code": 3, "seconds": 0, "gpu": tag, "log_tail": f"cannot create {out_dir}: {e}"}
     env = dict(os.environ, PLATES_SRC=f"{VOL}/src", PLATES_OUT=out_dir, PLATES_CLOUD="1", PYTHONUNBUFFERED="1",
                PLATES_DEVICE="CPU" if tag == "cpu" else "GPU")
     log_path = f"{out_dir}/job.log"
@@ -103,8 +106,12 @@ def _run_job(job: dict, tag: str) -> dict:
         code = -9
     except OSError as e:
         code = -2
-        with open(log_path, "a") as lf:
-            lf.write(f"\ncould not start the job: {e}\n")
+        start_error = f"could not start the job: {e}"
+        try:
+            with open(log_path, "a") as lf:
+                lf.write(f"\n{start_error}\n")
+        except OSError:
+            print(start_error, flush=True)  # the log itself is unwritable; keep the reason in the container log
     finally:
         stop.set()
         _commit()
@@ -162,6 +169,21 @@ def api():
         if len(token) < 32 or not hmac.compare_digest(given, f"Bearer {token}"):
             raise HTTPException(401, "missing or wrong token")
 
+    async def commit_volume():
+        try:
+            await vol.commit.aio()
+        except Exception as e:  # Modal raises several types here; the caller needs one clear answer
+            raise HTTPException(500, f"the change was made on the worker but the volume commit failed: {type(e).__name__}: {e}")
+
+    async def json_body(request: Request) -> dict:
+        try:
+            body = await request.json()
+        except ValueError as e:
+            raise HTTPException(400, f"the request body is not JSON: {e}")
+        if not isinstance(body, dict):
+            raise HTTPException(400, "the request body must be a JSON object")
+        return body
+
     def safe(path: str, roots=("src", "code", "out")) -> str:
         p = os.path.normpath("/" + path).lstrip("/")
         if not p or p.split("/")[0] not in roots:
@@ -185,7 +207,7 @@ def api():
             size = os.path.getsize(dst)
         except OSError as e:
             raise HTTPException(500, f"could not write {path}: {e}")
-        await vol.commit.aio()
+        await commit_volume()
         return {"path": path, "size": size}
 
     @web.post("/bundle")
@@ -203,16 +225,16 @@ def api():
                         raise HTTPException(400, f"unsafe path in bundle: {m.name}")
                 shutil.rmtree(dst, ignore_errors=True)
                 os.makedirs(dst, exist_ok=True)
-                tf.extractall(dst)
+                tf.extractall(dst, filter="data")
         except (tarfile.TarError, OSError) as e:
             raise HTTPException(400, f"bad bundle: {e}")
-        await vol.commit.aio()
+        await commit_volume()
         return {"bundle": id, "files": sum(len(f) for _, _, f in os.walk(dst))}
 
     @web.post("/submit")
     async def submit(request: Request):
         auth(request)
-        body = await request.json()
+        body = await json_body(request)
         fn = runners.get(str(body.get("gpu", "")).lower())
         if fn is None:
             raise HTTPException(400, f"gpu must be one of {sorted(runners)}")
@@ -220,14 +242,18 @@ def api():
         for job in body.get("jobs", []):
             if not all(k in job for k in ("id", "bundle", "entry")):
                 raise HTTPException(400, "each job needs id, bundle and entry")
-            call = await fn.spawn.aio(job)
+            try:
+                call = await fn.spawn.aio(job)
+            except Exception as e:  # quota, missing payment method, Modal outage
+                raise HTTPException(502, f"could not start job {job['id']} ({len(calls)} started before it): "
+                                         f"{type(e).__name__}: {e}"[:1500])
             calls.append({"id": job["id"], "call_id": call.object_id})
         return {"calls": calls}
 
     @web.post("/poll")
     async def poll(request: Request):
         auth(request)
-        body = await request.json()
+        body = await json_body(request)
         out = {}
         for cid in body.get("call_ids", []):
             try:
@@ -239,7 +265,7 @@ def api():
         return out
 
     @web.get("/ls")
-    def ls(request: Request, path: str):
+    def list_files(request: Request, path: str):
         auth(request)
         _reload()
         root = safe(path)
@@ -284,11 +310,15 @@ def api():
         return FileResponse(tmp.name, filename="plates.tar")
 
     @web.post("/rm")
-    async def rm(request: Request, path: str):
+    async def remove_tree(request: Request, path: str):
         auth(request)
         target = safe(path, ("out", "code"))
-        shutil.rmtree(target, ignore_errors=True)
-        await vol.commit.aio()
+        try:
+            if os.path.isdir(target):
+                shutil.rmtree(target)
+        except OSError as e:
+            raise HTTPException(500, f"could not remove {path}: {e}")
+        await commit_volume()
         return {"removed": path}
 
     return web
