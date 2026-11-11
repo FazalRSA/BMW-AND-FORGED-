@@ -6,7 +6,7 @@
  *
  * specs.json is a list of shots:
  *   { "name": "m4cs-wheel", "car": 1, "paint": 17, "wheel": "forged_fsa_03", "finish": "black", "size": "20\"",
- *     "view": "frontWheel", "q": "&look=viewer&tone=agx", "w": 1280, "h": 800, "wait": 6000,
+ *     "view": "frontWheel", "q": "&look=stage", "w": 1280, "h": 800, "wait": 6000,
  *     "cam": { "pos": [x, y, z], "look": [x, y, z] } }
  * These are engine.html's query parameters (data/configuratorData.ts is the source of every list):
  *   car    an index into the full BMW_MODELS list, hidden cars included (not the filtered list the app
@@ -19,10 +19,13 @@
  *          (forged_fsa_01 .. forged_fsa_14), 11-16 the six stocked wheels above in that order.
  *   finish a finish id (liquid_metal, black, silver, bronze, gold, hyper_black, ...); size e.g. "21\"";
  *          view a camera preset (frontThreeQuarter, frontWheel, side, ...).
- *   q      appended to the URL as is, for the engine switches: &look=viewer (the /configure studio),
- *          &plates=0, &studio=hdri, &tone=agx|neutral, &exposure=1.2, &rimModel=/models/rims/x.glb&rimFlip=1
- *          (a rim file on the chosen wheel), &rendered=1 (Blender body frames), &model=/x.glb&rot=&len=
- *          &paintMatch=&hideMatch= (an ad-hoc car GLB instead of car).
+ *   q      appended to the URL as is, for the engine switches: &look=stage (what /configure draws for
+ *          customers: black backdrop, a pool of light on the floor), &look=viewer (the older grey viewer
+ *          dome, for comparison); without look= the softbox studio, where &studio=hdri, &tone=agx|neutral
+ *          and &exposure=1.2 apply (the stage and viewer looks set their own tone mapping and exposure).
+ *          Also &plates=0, &rimModel=/models/rims/x.glb&rimFlip=1 (a rim file on the chosen wheel),
+ *          &rendered=1 (Blender body frames), &model=/x.glb&rot=&len=&paintMatch=&hideMatch= (an ad-hoc
+ *          car GLB instead of car).
  *
  * Uses the sandbox Chromium with SwiftShader (no GPU): about a minute per shot. Rim photos from
  * Supabase storage are served from [rimCacheDir] when present (curl otherwise), because the

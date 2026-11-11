@@ -2660,12 +2660,15 @@ export class CarConfiguratorEngine {
   }
 
   // ----------------------------------------------------
-  // STAGE LOOK: the four-car viewer's studio (services/viewerStudio.ts) on the configurator screen
+  // STAGE LOOK: the scene a live car stands in (services/viewerStudio.ts); the configurator screen uses 'stage'
   // ----------------------------------------------------
   /**
-   * 'viewer' puts the car in the viewer's gradient dome and reflection coves (Neutral tone mapping, exposure by
-   * paint); 'studio' is the softbox studio over the page backdrop. While a pre-rendered body is shown the stage
-   * stays 'studio' and the wanted look returns when rendered mode ends.
+   * 'stage' is the look App.tsx sets on the configurator screen (and behind the welcome's stills): the Cycles
+   * stills' black backdrop, a pool of light on a pale floor and the stage cove. 'viewer' puts the car in the
+   * four-car viewer's gradient dome and reflection coves; the configurator showed it before the stage look and
+   * it is kept for comparison. Both use Neutral tone mapping and an exposure by paint. 'studio' is the softbox
+   * studio over the page backdrop. While a pre-rendered body is shown the stage stays 'studio' and the wanted
+   * look returns when rendered mode ends.
    */
   public setLook(look: StageLook) {
     this.lookWanted = look;

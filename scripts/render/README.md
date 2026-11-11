@@ -22,9 +22,14 @@ unfiltered, so hidden rows count:
 - `finish` (id), `size` (e.g. `21"`) and `view` (camera preset).
 
 For ad-hoc GLBs it also takes `model`, `rot`, `len`, `paintMatch` and `hideMatch`; `rimModel=` and
-`rimFlip=1` put a rim file on the chosen wheel; `rendered=1` uses the Blender body frames. Engine
-switches are `look=viewer` (the `/configure` studio), `plates=0`, `studio=hdri`, `tone=agx|neutral`
-and `exposure=`. A shot's `q` field in `shoot.cjs` passes any of these through.
+`rimFlip=1` put a rim file on the chosen wheel; `rendered=1` uses the Blender body frames.
+
+`look=` picks the scene. `look=stage` is what `/configure` draws for customers (a black backdrop and a
+pool of light on a pale floor). `look=viewer` is the older grey viewer dome, kept for comparison.
+Without `look=` the page draws the softbox studio. The other engine switches are `plates=0` and, in
+the softbox studio only, `studio=hdri`, `tone=agx|neutral` and `exposure=` (the stage and viewer
+looks set their own tone mapping and exposure). A shot's `q` field in `shoot.cjs` passes any of these
+through.
 
 Shots take about a minute each on SwiftShader. Judge colour and gloss on a real device as well.
 
