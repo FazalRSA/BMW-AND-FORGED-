@@ -259,7 +259,7 @@ export class CarConfiguratorEngine {
     easeIn: boolean;
     resolve: () => void;
   } | null = null;
-  /** Car loads and showroom drives in flight (settle() waits for them). */
+  /** Car loads and car-change drives (driveToCar) in flight (settle() waits for them). */
   private stageOps = 0;
   private cameraDamping = 0.12;
   private viewInset = { right: 0, bottom: 0 };
@@ -1039,7 +1039,7 @@ export class CarConfiguratorEngine {
     return p;
   }
 
-  /** Keeps the cache to a few cars so browsing the showroom doesn't pile up GPU memory. */
+  /** Keeps the cache to a few cars so browsing the cars on the welcome carousel doesn't pile up GPU memory. */
   private evictModels(keep: string) {
     for (const url of this.modelCache.keys()) {
       if (this.modelCache.size <= CarConfiguratorEngine.MODEL_CACHE_MAX) break;
@@ -1094,8 +1094,10 @@ export class CarConfiguratorEngine {
   }
 
   /**
-   * Showroom change: the current car drives out of frame, the next one drives in and stops on its
-   * mark. direction 1 = forwards (next), -1 = reversing (previous).
+   * Car change with a drive: the current car drives out of frame, the next one drives in and stops on its
+   * mark. direction 1 = forwards (next), -1 = reversing (previous). This was the showroom's car change; with
+   * the showroom gone, only the viewer panel's Car chips use it (?panel=viewer). The welcome's Enter mounts
+   * the chosen car with loadCar, without a drive.
    */
   public async driveToCar(car: CarModel, direction: 1 | -1 = 1): Promise<void> {
     const distance = 11;
