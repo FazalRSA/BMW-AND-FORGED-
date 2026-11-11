@@ -80,9 +80,15 @@ def conf():
 @contextlib.contextmanager
 def state():
     """Read-modify-write of the state file under a lock (several agents may use the client at once)."""
-    fd = os.open(STATE + ".lock", os.O_CREAT | os.O_RDWR, 0o600)
     try:
-        fcntl.flock(fd, fcntl.LOCK_EX)
+        fd = os.open(STATE + ".lock", os.O_CREAT | os.O_RDWR, 0o600)
+    except OSError as e:
+        fail(f"cannot open the lock file {STATE}.lock: {e}")
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except OSError as e:
+            fail(f"cannot lock {STATE}.lock: {e}")
         try:
             with open(STATE) as fh:
                 st = json.load(fh)
@@ -95,10 +101,15 @@ def state():
         st.setdefault("runs", {})
         yield st
         tmp = STATE + ".tmp"
-        with open(tmp, "w") as fh:
-            json.dump(st, fh, indent=1)
-        os.chmod(tmp, 0o600)
-        os.replace(tmp, STATE)
+        try:
+            with open(tmp, "w") as fh:
+                json.dump(st, fh, indent=1)
+            os.chmod(tmp, 0o600)
+            os.replace(tmp, STATE)
+        except (OSError, TypeError, ValueError) as e:
+            # The ledger is what keeps spending under the budget: never carry on with it unsaved.
+            fail(f"could not save the state file {STATE} ({e}); the spending ledger was not updated. "
+                 f"Fix the cause before submitting anything else.")
     finally:
         os.close(fd)
 
