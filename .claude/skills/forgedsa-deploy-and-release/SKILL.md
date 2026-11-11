@@ -29,6 +29,14 @@ description: Ship FORGEDSA changes safely. Covers the pre-push checks (tsc, vite
    docs mentioning names, never values.
 5. Commit messages end with the session's attribution lines (Co-Authored-By plus the Claude-Session
    URL). Never put model names in commits or PRs.
+6. Commit messages must be proper (the owner asked for this, Nov 2026):
+   - The subject is `type(scope): what changed`, at most about 65 characters.
+   - The body says why the change was made, what it touches, and what was checked.
+   - Never repeat a message that says nothing. The learning-log commit
+     (`.cto-toolkit/learning/patterns.jsonl`) says how many records it adds, the time span,
+     and anything flagged.
+   - Merges list what the other branch brings in.
+   - Pushed history is never rewritten to fix a message. Write it properly the first time.
 
 ## Deploy (Vercel)
 

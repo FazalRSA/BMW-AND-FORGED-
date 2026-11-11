@@ -60,7 +60,7 @@ export const BMW_MODELS: CarModel[] = [
     modelRotationDeg: 0,
     modelLengthM: 4.79,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
-    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     id: 'm4_convertible_g83',
@@ -170,7 +170,7 @@ export const BMW_MODELS: CarModel[] = [
     modelRotationDeg: 0,
     modelLengthM: 4.58,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
-    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     id: 'm235_f74',
@@ -223,7 +223,7 @@ export const BMW_MODELS: CarModel[] = [
     modelRotationDeg: 0,
     modelLengthM: 5.09,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
-    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     id: 'm5_touring_g99',
@@ -253,7 +253,7 @@ export const BMW_MODELS: CarModel[] = [
     modelRotationDeg: 0,
     modelLengthM: 5.09,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
-    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|calliper|rotor|lugs?)'
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     id: 'm8_f92',
