@@ -1320,6 +1320,16 @@ export class CarConfiguratorEngine {
     // made only of such triangles are hidden. A cylinder, not the wheel's box: fender lips sit
     // inside the box corners but outside the tyre. (Same space as the wheel boxes: before the
     // model joins the scene.)
+    // The car's own tyre sets each wheel's size. When only the stock rim is hidden, the rim's box is smaller than
+    // the tyre around it, and sizing from it drew our rim (and, off the factory size, our tyre) 15-26% too small.
+    // Measured here, in the same space as the corner boxes (before the model joins the scene).
+    const ownTyreBoxes = new Map<string, THREE.Box3>();
+    this.ownTyreMeshes.forEach((meshes, key) => {
+      const box = new THREE.Box3();
+      meshes.forEach((m) => box.expandByObject(m));
+      if (!box.isEmpty()) ownTyreBoxes.set(key, box);
+    });
+
     // All four wheels merged into one mesh: split its vertices by side of the car instead.
     if (corners.size < 4 && wheelMeshes.length) {
       const byVertex = CarConfiguratorEngine.cornersFromVertices(wheelMeshes);
@@ -1348,7 +1358,8 @@ export class CarConfiguratorEngine {
         const key = `${a.isFront ? 'front' : 'rear'}-${a.isRight ? 'right' : 'left'}`;
         const cornerBox = corners.get(key)!;
         const c = cornerBox.getCenter(new THREE.Vector3());
-        const tyreRadius = cornerBox.getSize(new THREE.Vector3()).y / 2;
+        // The rim we replace places the wheel; the car's own tyre, where it has one, sizes it
+        const tyreRadius = (ownTyreBoxes.get(key) ?? cornerBox).getSize(new THREE.Vector3()).y / 2;
         a.group.position.set(c.x, c.y, c.z);
         a.group.scale.setScalar(tyreRadius / 0.35); // procedural tyre radius
       });
