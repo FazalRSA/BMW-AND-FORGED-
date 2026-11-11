@@ -12,6 +12,7 @@
 - Wheel catalogue = the owner's stock sheet (docs/WHEEL_INVENTORY.md): real names FSA001-004/FF-1/FF-3, ZAR prices stored as USD/18.2; hide (active=false), never delete
 - Journey is welcome carousel -> /configure -> /summary (no showroom); /configure is the stage look (services/viewerStudio.ts STAGE, engine.setLook('stage')) + the stepped drawer (StepDrawer in Configurator.tsx); verify visual work with scripts/render/shoot.cjs and ?look=stage before claiming done
 - Rim page /rims/<id> shows the ONE wheel viewer shared with the FORGED website: shared/wheel-viewer/ is a byte-identical copy of Forgedwebsite src/wheel-viewer/ (edit it there, then `node scripts/wheel-viewer-sync.mjs pull ../Forgedwebsite`; `bun run lint` fails if the copy was edited here). This app's bits are components/WheelStage.tsx (finish rows, photo fallback) and services/wheelViewerPaint.ts (the car's finish recipe as the viewer's paint plug-in); no spin frames
+- Summary and PDF stills of all four prepared cars (M2 CS, M4 CS, M5 G90, M5 Touring) are Cycles bodies + live wheels (public/renders/stills.json, scripts/prerender/stills-frames.sh, docs/ADD_PREPARED_CAR.md); the configurator stage stays live, so never list those cars in manifest.json
 - The cloud sandbox has no GPU: renders are SwiftShader on CPU (about 50 s a shot); never claim real-GPU or phone results
 - Commit messages: type(scope) subject, body says why and what was checked; never rewrite pushed history
 - Harness runs (journey.cjs, e2e.cjs) stub Supabase writes; never create real leads (each one emails the owner)
