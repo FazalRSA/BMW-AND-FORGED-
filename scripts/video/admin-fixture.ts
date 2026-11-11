@@ -10,7 +10,7 @@
 import { BMW_MODELS, BMW_PAINTS, WHEEL_DESIGNS, WHEEL_FINISHES } from '../../data/configuratorData';
 
 const toSnake = (k: string) => k.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
-const row = (o: Record<string, unknown>, i: number) => {
+const toRow = (o: Record<string, unknown>, i: number) => {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(o)) out[toSnake(k)] = v ?? null;
   out.sort_order = i + 1;
@@ -19,7 +19,7 @@ const row = (o: Record<string, unknown>, i: number) => {
 };
 /** Live items first, hidden (retired) ones after, then numbered 1..n as sort_order. */
 const ordered = (list: Record<string, unknown>[]) => {
-  const rows = list.map(row);
+  const rows = list.map(toRow);
   const live = rows.filter((r) => r.active !== false), hidden = rows.filter((r) => r.active === false);
   return [...live, ...hidden].map((r, i) => ({ ...r, sort_order: i + 1 }));
 };
@@ -34,8 +34,8 @@ const leads = [
 ];
 console.log(JSON.stringify({
   cars: ordered(BMW_MODELS as unknown as Record<string, unknown>[]),
-  paints: (BMW_PAINTS as unknown as Record<string, unknown>[]).map(row),
+  paints: (BMW_PAINTS as unknown as Record<string, unknown>[]).map(toRow),
   wheels: ordered(WHEEL_DESIGNS as unknown as Record<string, unknown>[]),
-  wheel_finishes: fin.map(row),
+  wheel_finishes: fin.map(toRow),
   leads
 }));

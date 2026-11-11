@@ -14,7 +14,7 @@ PROMPTS = [
     "Instrumental only, no vocals. A gentle, focused background track for a product explainer: airy pads, a plucked guitar motif and a soft pulse, around 80 BPM, understated, no drops, no big builds, easy to talk over. About two and a half minutes.",
 ]
 
-def take(prompt, path):
+def generate_take(prompt, path):
     body = {"model": "google/lyria-3-pro-preview", "modalities": ["text", "audio"], "stream": True,
             "messages": [{"role": "user", "content": prompt}]}
     p = subprocess.run(["curl", "-sS", "-N", "https://openrouter.ai/api/v1/chat/completions", "-H", "Content-Type: application/json",
@@ -28,7 +28,7 @@ def take(prompt, path):
                 a = (ch.get("delta") or {}).get("audio") or {}
                 if a.get("data"): buf += base64.b64decode(a["data"])
     if not buf: raise SystemExit("no audio returned: " + (p.stdout[:300] or p.stderr[:300]))
-    open(path, "wb").write(buf)
+    with open(path, "wb") as f: f.write(buf)
     return float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path]).decode())
 
 def main():
@@ -36,7 +36,7 @@ def main():
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     takes, total, i = [], 0.0, 0
     while total < need + 6 * len(takes):
-        path = f"assets/.take{i}.mp3"; d = take(PROMPTS[i % len(PROMPTS)], path)
+        path = f"assets/.take{i}.mp3"; d = generate_take(PROMPTS[i % len(PROMPTS)], path)
         print(f"take {i}: {d:.0f}s"); takes.append(path); total += d - 4 if i else d; i += 1
         if i > 5: break
     cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]

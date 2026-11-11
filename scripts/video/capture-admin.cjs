@@ -15,7 +15,9 @@ const fs = require('fs'); const path = require('path');
 const [,, OUT] = process.argv;
 const BASE = process.env.BASE || 'http://127.0.0.1:5173';
 const REF = 'qxlfkfhzpqbxffuqqewg'; // Supabase project ref: the key supabase-js keeps its session under
-const FX = JSON.parse(fs.readFileSync(path.join(OUT, 'fixtures.json'), 'utf8'));
+const FX_PATH = path.join(OUT, 'fixtures.json');
+if (!fs.existsSync(FX_PATH)) { console.error(`missing ${FX_PATH}: run bun run scripts/video/admin-fixture.ts > ${FX_PATH} first`); process.exit(1); }
+const FX = JSON.parse(fs.readFileSync(FX_PATH, 'utf8'));
 const EMAIL = 'dealer@example.com';
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -27,7 +29,7 @@ const session = {
 };
 
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const b = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const t0 = Date.now();
   const log = (s) => console.log(`${((Date.now() - t0) / 1000).toFixed(0)}s  ${s}`);
   const manifest = {}; let n = 0;

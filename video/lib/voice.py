@@ -25,7 +25,7 @@ DIRECTION = (
     "such as 'F F one', 'P D F', 'G L B' or 'S T L', letter by letter. Never sound like a text-to-speech system."
 )
 
-def synth(text):
+def synthesize_line(text):
     body = {
         "model": MODEL, "stream": True, "modalities": ["text", "audio"],
         "audio": {"voice": VOICE, "format": "pcm16"},
@@ -93,11 +93,13 @@ def words_for(text, dur, sil):
 
 def main(ids):
     meta_path = os.path.join(ROOT, "assets/voice/meta.json")
-    meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
+    meta = {}
+    if os.path.exists(meta_path):
+        with open(meta_path) as f: meta = json.load(f)
     for sid in ids:
-        text = open(os.path.join(ROOT, f"assets/voice/src/{sid}.txt")).read().strip()
+        with open(os.path.join(ROOT, f"assets/voice/src/{sid}.txt")) as f: text = f.read().strip()
         for attempt in range(1, 6):  # the model sometimes ad-libs ("Sure, here it is"): retry until it reads the script exactly
-            pcm, tr = synth(text)
+            pcm, tr = synthesize_line(text)
             if norm(tr) == norm(text): break
             print(f"  {sid}: attempt {attempt} did not match the script ({tr.strip()[:50]!r}), retrying")
         else:
@@ -112,7 +114,7 @@ def main(ids):
         os.remove(raw)
         dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out]).decode())
         meta[sid] = {"duration": round(dur, 3), "words": words_for(text, dur, silences(out)), "transcript": tr.strip()}
-        json.dump(meta, open(meta_path, "w"), indent=1)
+        with open(meta_path, "w") as f: json.dump(meta, f, indent=1)
         print(f"{sid}: {dur:.1f}s, {len(text.split())} words ({len(text.split())/dur:.2f}/s)\n  said: {tr.strip()[:200]}")
 
 if __name__ == "__main__":
