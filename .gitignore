@@ -35,3 +35,7 @@ docs/ingest/**/*.png
 .token-optimizer/state/
 .token-optimizer/probe/
 !.token-optimizer/optimize.sh
+
+# Photoreal plates: rendered and encoded outside the repo (docs/PLATES_MASTER_PLAN.md), linked or copied in for local work
+public/plates
+public/plates-fixture
