@@ -2,11 +2,8 @@
 
 **Live site:** <https://forged-configurator.vercel.app>
 **Admin:** <https://forged-configurator.vercel.app/admin>
-**Preview of the latest work (until the live site is redeployed, outstanding work 1):** <https://forgedsa-configurator.onrender.com>
-**Handed over:** 28 September 2026 · **Updated:** 11 November 2026
-
-**Note (11 November 2026):** the branded PDF version of this document (`FORGEDSA-Client-Handover.pdf`) has not
-been regenerated since the showroom page was removed, so it still describes the earlier journey.
+**Earlier preview (the live site now shows the latest work):** <https://forgedsa-configurator.onrender.com>
+**Handed over:** 28 September 2026 · **Updated:** 12 November 2026
 
 This document explains, in plain language, what has been built for FORGEDSA, how your customers use
 it, how you run it day to day, and what is still needed from you before launch. No technical
@@ -23,16 +20,17 @@ rebuilt with `node scripts/build-handover-pdf.mjs`.
 ## Outstanding work
 
 The configurator works end to end. The 10 November update (your four prepared cars, your six stocked
-wheels at the stock sheet's prices, customer accounts) is built and can be seen on the preview link above,
-but the **live site keeps showing the October version until it is redeployed**. The to-do list, in order:
+wheels at the stock sheet's prices, customer accounts) is built and **live** (the site was redeployed on
+12 November). What is left, in order:
 
-1. **Redeploy the live site.** The database updates for November are done: all fifteen update files
-   (`supabase/migrations/20261110*.sql`) were applied on 10 November and read back on 11 November. What is
-   left is the site itself. The live address is not connected to this code repository, so it still runs
-   the 8 October build; your developer starts a production deployment from the `main` branch
-   (`HANDOVER.md` section 5). One small database fix is also waiting for your go-ahead: the M2 CS is
-   still named "BMW M2 Coupe" in the live database.
-   *Needed:* a few minutes from whoever has the Vercel login, and your go-ahead for the name fix.
+1. **Connect the live site to the code.** The database updates for November are done: all fifteen update
+   files (`supabase/migrations/20261110*.sql`) were applied on 10 November and read back on 11 November, and
+   the M2 CS now carries its correct name in the live database. The live site was redeployed from the `main`
+   branch on 12 November and shows the new cars and wheels. The live address is still not connected to this
+   code repository, so a merge does not update it by itself: your developer starts each production
+   deployment (`HANDOVER.md` section 5).
+   *Needed:* a few minutes from whoever has the Vercel login, to connect the project to the code
+   repository so updates deploy by themselves.
 2. **Switch on Google sign-in for customers.** A Google sign-in client has to be created in Google Cloud
    and pasted into Supabase, and the site addresses customers may return to have to be listed (the live
    site, the preview addresses). The step-by-step is `ACCOUNTS.md`, "Owner steps". Until then the
@@ -41,8 +39,9 @@ but the **live site keeps showing the October version until it is redeployed**. 
 3. **Licence for the four car models.** The M2 CS, M4 CS, M5 and M5 Touring bodies came in packages
    without a licence (their read-me says so), so they are recorded as *licence not confirmed* and should be
    treated as prototype assets until a licence that covers use on a public website is in hand. The
-   earlier community-licensed cars (M3, M4 Competition, M3 Touring, M235, M8, X3 M50, X5 M) are hidden,
-   not deleted, and come back when prepared packages for them arrive.
+   earlier community-licensed cars (M3, M4 Competition, M3 Touring, M235, M8, X3 M50, X5 M) were deleted
+   from the configurator on 11 November at your request. Copies are kept in a private archive, so your
+   developer can bring one back when a prepared package for it arrives.
    *Needed:* the licence terms for the packages, and the remaining packages when ready.
 4. **Check the Terms & conditions and Delivery pages for content accuracy.** Both are live drafts
    (section 8). Every statement must match how FORGEDSA actually trades, the bracketed details must be
@@ -89,10 +88,10 @@ are reached from **More options** in the configurator and from the footer; the w
 
 - **Car:** four BMW M models, the prepared packages you supplied: **M2 CS, M4 CS, M5 and M5 Touring**.
   The earlier community-licensed cars (M235i, M3, M3 Touring, M4 Competition, M4 Convertible, M8, X3 M50,
-  X5 M) are still listed in the catalogue but hidden until prepared packages arrive for them. Ticking
-  *Visible in configurator* on one of them does not bring it back: their 3D files were removed from the
-  project on 11 November with the other unused files, and a car also needs a picture on the welcome screen
-  before customers can pick it. Bringing one back is a job for your developer.
+  X5 M) were deleted from the catalogue on 11 November at your request, and their 3D files were removed
+  with the other unused files. Copies of their catalogue entries are kept in a private archive, but they do
+  not appear in the admin panel and cannot be switched back on there. Bringing one back needs a prepared
+  package, a picture on the welcome screen and your developer.
 - **Paint:** the exact BMW South Africa factory colours offered for that car, researched from BMW's own
   configurator. A customer can match what they specced at the dealer.
 - **Wheel design:** the six wheels on your stock sheet (FSA001, FSA002, FSA003, FSA004, FF-1, FF-3), as real
@@ -267,7 +266,9 @@ it sells out** (Wheels → *Visible in configurator*) and show it again when res
 including how the Rand prices are stored, is in `docs/WHEEL_INVENTORY.md`.
 
 The earlier photo-based designs (the nine named after South African circuits, and three built from the rim
-template) are **hidden, not deleted**. Switch one on in the admin panel if it is stocked again.
+template) were **deleted from the catalogue** on 11 November at your request. Copies are kept in a private
+archive, so your developer can restore one if it is stocked again; they cannot be switched back on in the
+admin panel.
 
 ### The wheels sheet (for new photo-based designs)
 
@@ -281,7 +282,7 @@ wheels did not come this way (they are 3D files), so edit them in the admin pane
 
 The app can turn a straight-on photo of a wheel into 3D spokes on the car. On the car, at normal viewing
 distance, this looks convincing. Up close in the 360° view you can tell it is not a true 3D model:
-spoke depth and the inner barrel are approximated. This is how the hidden designs were built; the six
+spoke depth and the inner barrel are approximated. This is how the earlier designs were built (they are no longer in the catalogue); the six
 stocked wheels are real 3D models and do not have this limit.
 
 ### New designs: CAD or 3D files → real 3D wheels
@@ -332,9 +333,9 @@ Before launch:
 
 | # | Item | Why |
 |---|---|---|
-| 1 | The **Vercel login** (or a few minutes of whoever has it), and your go-ahead for the M2 CS name fix | Outstanding work 1: redeploy the live site so it shows the new cars and wheels |
+| 1 | The **Vercel login** (or a few minutes of whoever has it) | Outstanding work 1: connect the live site to the code repository so updates deploy by themselves |
 | 2 | A **Google Cloud account** for the sign-in client, or approval to use ours | Outstanding work 2: customer accounts and the garage |
-| 3 | The **licence terms** for the four car packages, and the remaining prepared packages | Outstanding work 3: the cars stay prototype assets until confirmed; hidden cars return when their packages arrive |
+| 3 | The **licence terms** for the four car packages, and the remaining prepared packages | Outstanding work 3: the cars stay prototype assets until confirmed; the deleted cars can be restored by your developer when their packages arrive |
 | 4 | Any **change to the stock sheet** (a set sold, a new design, a price) | The configurator mirrors the sheet; CAD or 3D file for any new design (section 7) |
 | 5 | Your real **email address** | The site shows a placeholder (info@forgedsa.com); the phone number is set (+27 82 123 4567) |
 | 6 | **Legal review** of Terms and Delivery, and the [bracketed] details | Outstanding work 4; required before taking orders |
