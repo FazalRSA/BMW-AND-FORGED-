@@ -62,6 +62,18 @@ export const BRAND = {
     { id: 'website', label: 'Website', handle: 'www.forgedsa.com', url: 'https://www.forgedsa.com' }
   ] as SocialLink[],
 
+  /**
+   * What the business stands behind, in the owner's words (PDF spec sheet; usable on any page). `short` is the
+   * compact form for a four-up strip: a label, a headline and an optional second line. `full` is the sentence.
+   * Do not add terms here that the owner has not given (certificate numbers, periods, exclusions).
+   */
+  credentials: [
+    { id: 'dealer', label: 'SIXNINE', headline: 'Only dealer', detail: 'in South Africa', full: 'The only SIXNINE dealer in South Africa' },
+    { id: 'tuv', label: 'Certification', headline: 'TÜV certified', detail: '', full: 'TÜV certified' },
+    { id: 'finish', label: 'Finish', headline: '3-year warranty', detail: 'on the wheel finish', full: '3-year warranty on the finish' },
+    { id: 'wheel', label: 'Wheel', headline: 'Lifetime warranty', detail: 'Not for neglect', full: 'Lifetime warranty on the wheel', note: 'Does not cover neglect.' }
+  ] as { id: string; label: string; headline: string; detail: string; full: string; note?: string }[],
+
   /** The visualisation disclaimer, shown on the summary page before the PDF and the enquiry. */
   visualisationNotice:
     'The vehicles in this configurator are pre-curated visualisations. Paint, wheel size and finish are shown as accurately as possible, but on-screen colours and proportions are indicative. Your final specification and fitment are confirmed with our team.',
