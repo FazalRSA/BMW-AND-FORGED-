@@ -36,8 +36,15 @@ uvx "mcp-for-blender@${MCP_VERSION}" install-addon
 
 if [ -n "$BLENDKIT_ZIP" ]; then
   [ -f "$BLENDKIT_ZIP" ] || { echo "No such zip: $BLENDKIT_ZIP"; exit 1; }
-  blender --background --factory-startup --command extension install-file \
-    -r user_default -e "$BLENDKIT_ZIP" >/dev/null 2>&1
+  log="$(mktemp)"
+  if ! blender --background --factory-startup --command extension install-file \
+         -r user_default -e "$BLENDKIT_ZIP" >"$log" 2>&1 \
+     || grep -q '^ERROR' "$log" \
+     || [ ! -f "$HOME/.config/blender/${BLENDER_SERIES}/extensions/user_default/blenderkit/__init__.py" ]; then
+    # Blender exits 0 even when the install fails, so its ERROR lines are checked too.
+    echo "Blendkit install failed; Blender said:"; tail -20 "$log"; rm -f "$log"; exit 1
+  fi
+  rm -f "$log"
   echo "Blendkit installed from $BLENDKIT_ZIP"
 else
   echo "No Blendkit zip given: skipping Blendkit."
@@ -53,5 +60,5 @@ for m in mods:
     addon_utils.enable(m, default_set=True, persistent=True)
 bpy.ops.wm.save_userpref()
 print("ENABLED:", ", ".join(mods))
-' 2>&1 | grep ENABLED
+' 2>&1 | grep ENABLED || { echo "Could not enable the add-ons: rerun the blender step above without the grep to see why."; exit 1; }
 echo "Done. Start Blender with scripts/blender-mcp/start.sh"
