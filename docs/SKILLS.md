@@ -19,7 +19,6 @@ exact files, commands, values and pitfalls for its task.
 | [`forgedsa-rim-finishes`](../.claude/skills/forgedsa-rim-finishes/SKILL.md) | how the finishes are built (the four kinds; the stock sheet's Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte, Silver, Gloss Black, Liquid Metal); adding or tuning a finish |
 | [`forgedsa-catalogue-admin`](../.claude/skills/forgedsa-catalogue-admin/SKILL.md) | prices, sizes, finishes, paints; admin accounts and sign-in problems |
 | [`forgedsa-paint-and-lighting`](../.claude/skills/forgedsa-paint-and-lighting/SKILL.md) | paint looks plastic, blotchy or washed out; tuning the studio |
-| [`forgedsa-photoreal-mode`](../.claude/skills/forgedsa-photoreal-mode/SKILL.md) | path-traced photorealism (proof branch `claude/photoreal-proof`) |
 | [`forgedsa-render-verification`](../.claude/skills/forgedsa-render-verification/SKILL.md) | screenshotting the app/engine/PDF headlessly to prove a visual change |
 | [`forgedsa-pdf-brochure`](../.claude/skills/forgedsa-pdf-brochure/SKILL.md) | the customer PDF, its email + mobile gate and lead capture |
 | [`forgedsa-lead-email-automation`](../.claude/skills/forgedsa-lead-email-automation/SKILL.md) | new-lead emails to forgedsa1@gmail.com (trigger → n8n → Gmail) |

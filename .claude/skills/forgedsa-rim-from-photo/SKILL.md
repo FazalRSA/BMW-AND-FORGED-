@@ -5,6 +5,10 @@ description: Step by step from a regular photo of a FORGEDSA rim to a swappable 
 
 # From a rim photo to a swappable rim
 
+> None of the six current stock-sheet wheels use this route — they all ship a GLB (`modelUrl`,
+> see `forgedsa-rim-3d-pipeline`). The mechanism below is still live code (`applyWheelDesign`'s
+> `image` mode), so use this if a future wheel is added as a photo only, with no 3D model yet.
+
 A **swappable rim** is one PNG per design. The app turns it into a 3D spoke face that fits every
 car, every size (19–22") and every finish.
 - **Generated, not from the photo:** tyre, lip and barrel, brake disc, caliper, lug nuts and
