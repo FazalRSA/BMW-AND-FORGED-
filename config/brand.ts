@@ -51,7 +51,7 @@ export const BRAND = {
   // Phone and email are the owner's (2026-11-12). The email is the FORGEDSA inbox that also receives the new-lead emails.
   contact: {
     email: 'forgedsa1@gmail.com',
-    phone: '+27 82 123 4567',
+    phone: '+27 82 000 0000',
     website: 'www.forgedsa.com'
   },
 
