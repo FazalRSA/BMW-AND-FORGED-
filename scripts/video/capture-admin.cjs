@@ -10,6 +10,7 @@
  * plus four clearly fictional example.com enquiries). Writes (save, delete, upload) are swallowed locally, so nothing
  * reaches the live database. Writes <outDir>/NN-name.png and manifest.json (box of each control in 1920x1080 film pixels, i.e. CSS pixels x 1.5).
  */
+const { answerSupabase, CaptureStop } = require('./supabase-stub.cjs');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'); const path = require('path');
 const [,, OUT] = process.argv;
@@ -40,33 +41,13 @@ const session = {
     if (signedIn) await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch {} }, [`sb-${REF}-auth-token`, JSON.stringify(session)]);
     const p = await ctx.newPage();
     p.on('pageerror', (e) => log('PAGEERROR ' + e.message));
-    const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
-    await p.route(/supabase\.co\//, async (route) => {
+        await p.route(/supabase\.co\//, async (route) => {
       try {
-      const req = route.request(); const url = new URL(req.url()); const m = req.method();
-      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
-      const table = (url.pathname.match(/\/rest\/v1\/([a-z_]+)/) || [])[1];
-      if (url.pathname.includes('/auth/v1/token')) return json(route, session);
-      if (url.pathname.includes('/auth/v1/user')) return json(route, session.user);
-      if (url.pathname.includes('/auth/v1/')) return json(route, {});
-      if (url.pathname.includes('/storage/')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{"Key":"demo"}' });
-      if (!table) { console.error(`UNHANDLED Supabase call ${req.method()} ${url.pathname}: stopping the capture`); process.exit(3); }
-      if (m !== 'GET' && m !== 'HEAD') {
-        // Expected here: the wheel price save and the profile upsert at sign-in. Any other write stops the run: it must never reach the live database.
-        // profiles: the app upserts the signed-in user's profile when a session starts (answered locally, see the header)
-        const EXPECTED = { wheels: ['POST', 'PATCH', 'PUT'], profiles: ['POST', 'PATCH', 'PUT'] };
-        if (!(EXPECTED[table] || []).includes(m)) {
-          console.error(`UNEXPECTED WRITE ${m} ${table}: stopping the capture`); process.exit(3);
-        }
-        log(`expected write held locally: ${m} ${table}`);
+        await answerSupabase(route, { FX, session, email: EMAIL, log });
+      } catch (e) {
+        if (e instanceof CaptureStop) { console.error(e.message); process.exit(e.exitCode); }
+        console.error(`route handler failed for ${route.request().url()}: ${e.message}`); process.exit(4);
       }
-      if (m !== 'GET' && m !== 'HEAD') return route.fulfill({ status: 201, headers: { 'access-control-allow-origin': '*' }, contentType: 'application/json', body: '[]' }); // writes: swallowed
-      if (table === 'admin_users') return json(route, { email: EMAIL });
-      let rows = FX[table];
-      if (!rows) return json(route, []);
-      if (url.searchParams.get('active') === 'eq.true') rows = rows.filter((r) => r.active !== false);
-      return json(route, rows);
-      } catch (e) { console.error(`route handler failed for ${route.request().url()}: ${e.message}`); process.exit(4); }
     });
     return { ctx, p };
   };
