@@ -32,13 +32,6 @@ const RIM_ID = process.env.RIM_ID || 'sixnine_ff1';
   const log = (s) => console.log(`${((Date.now() - t0) / 1000).toFixed(0)}s  ${s}`);
   p.on('pageerror', (e) => log('PAGEERROR ' + e.message));
   await p.route(/supabase\.co\/(rest|functions|auth)\//, (r) => (['GET', 'HEAD'].includes(r.request().method()) ? r.continue() : r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })));
-  await p.route(/supabase\.co\/storage\//, (r) => {
-    const f = RIMS && path.join(RIMS, path.basename(r.request().url().split('?')[0]));
-    try {
-      if (f && fs.existsSync(f)) { log(`storage served from cache: ${path.basename(f)}`); r.fulfill({ body: fs.readFileSync(f), contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } }); }
-      else { log(`storage not cached, passed through: ${path.basename(u)}`); r.continue(); }
-    } catch (e) { console.error(`storage read failed for ${f}: ${e.message}`); r.abort(); }
-  });
 
   const manifest = {};
   let n = 0;
