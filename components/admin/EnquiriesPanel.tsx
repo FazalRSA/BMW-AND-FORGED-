@@ -60,9 +60,14 @@ export const EnquiriesPanel: React.FC<{ mode?: 'admin' | 'dealer' }> = ({ mode =
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(500);
-    if (err) setError(err.message);
-    else setLeads((data ?? []) as Lead[]);
+    try {
+      const { data, error: err } = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(500);
+      if (err) setError(err.message);
+      else setLeads((data ?? []) as Lead[]);
+    } catch (e) {
+      // a network failure throws instead of returning an error: say so rather than sit on "Loading…"
+      setError((e as Error).message || 'Could not load the enquiries. Check your connection and refresh.');
+    }
     if (isAdmin) listDealers().then(setDealers).catch(() => setDealers([]));
     setLoading(false);
   }, [isAdmin]);
