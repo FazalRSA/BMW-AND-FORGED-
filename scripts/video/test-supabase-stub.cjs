@@ -21,7 +21,21 @@ async function handle(method, url) {
   return seen;
 }
 
+/** Real process exit (no spy): a child process runs the route handler on a request it must stop, and we read its exit code. */
+function realExitCode(caseName) {
+  const { spawnSync } = require('node:child_process');
+  const script = `const { makeRouteHandler } = require(${JSON.stringify(path.join(__dirname, 'supabase-stub.cjs'))});
+    const cases = { unexpected_write: ['POST', 'https://x.supabase.co/rest/v1/leads'], unknown_call: ['GET', 'https://x.supabase.co/graphql/v1'], stub_failure: ['GET', 'https://x.supabase.co/rest/v1/broken?active=eq.true'] };
+    const [m, u] = cases[${JSON.stringify(caseName)}];
+    const route = { request: () => ({ method: () => m, url: () => u }), fulfill: async () => {} };
+    makeRouteHandler({ FX: { broken: 'not-an-array' }, session: { user: {} }, email: 'd@example.com' })(route);`;
+  return spawnSync(process.execPath, ['-e', script], { encoding: 'utf8' }).status;
+}
+
 const tests = {
+  'real process exit: unexpected write exits 3': async () => assert.equal(realExitCode('unexpected_write'), 3),
+  'real process exit: unknown call exits 3': async () => assert.equal(realExitCode('unknown_call'), 3),
+  'real process exit: stub failure exits 4': async () => assert.equal(realExitCode('stub_failure'), 4),
   'route handler: unexpected write exits 3 with the message': async () => {
     const seen = await handle('POST', 'https://x.supabase.co/rest/v1/leads');
     assert.equal(seen.exit, 3); assert.match(seen.report, /UNEXPECTED WRITE POST leads/);
