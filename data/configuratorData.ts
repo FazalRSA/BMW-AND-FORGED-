@@ -280,7 +280,7 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
   },
   black: {
     id: 'black',
-    name: 'Black Gloss',
+    name: 'Gloss Black',
     colorName: 'Gloss Black',
     hex: '#141618',
     metalness: 0.7,
@@ -361,12 +361,12 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
   pure_bronze: {
     id: 'pure_bronze',
     name: 'Pure Bronze',
-    colorName: 'Gloss Bronze',
-    hex: '#9c6b3a',
+    colorName: 'Satin Bronze',
+    hex: '#75523f',
     metalness: 0.9,
     roughness: 0.3,
-    clearcoat: 0.85,
-    description: 'Deep gloss bronze metallic, the FF-3 signature finish.',
+    clearcoat: 0.7,
+    description: 'Deep bronze metallic with a soft sheen, the FF-3 signature finish.',
     badge: 'In stock'
   },
   black_matte: {
@@ -522,8 +522,8 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     pricePerSet: 4395.60,
     priceBySize: { '20"': 4395.60, '21"': 4395.60 },
     priceByFinish: { liquid_metal: 5219.78 },
-    description: 'Twin five-spoke three-piece forged wheel in Pure Bronze, Glossy Black or Liquid Metal. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET15/17 · CB 66.6.',
-    highlights: ['Three-piece construction', 'Pure Bronze, Glossy Black or Liquid Metal', 'PCD 5×112 · ET15/17 · CB 66.6'],
+    description: 'Twin five-spoke three-piece forged wheel in Pure Bronze, Gloss Black or Liquid Metal. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET15/17 · CB 66.6.',
+    highlights: ['Three-piece construction', 'Pure Bronze, Gloss Black or Liquid Metal', 'PCD 5×112 · ET15/17 · CB 66.6'],
     availableVariants: ['pure_bronze', 'black', 'liquid_metal'],
     defaultVariant: 'pure_bronze',
     imageUrl: '/rim-images/sixnine_ff3.webp',

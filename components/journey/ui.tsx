@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useId, useRef } from 'react';
-import { useRimThumb } from '../../services/rimThumbs';
+import { renderedRimThumb, useRimThumb } from '../../services/rimThumbs';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { BRAND } from '../../config/brand';
@@ -303,16 +303,25 @@ const thumbTint = (hex?: string) => {
   return `rgb(${ch.join(',')})`;
 };
 
-/** Rim thumbnail: the uploaded front-on PNG tinted by the finish, else the drawn preview. */
+/** Rim thumbnail: the render of the rim's 3D file in this finish, else the uploaded front-on PNG tinted by the
+ *  finish, else the drawn preview. */
 export const RimThumb: React.FC<{ wheel: WheelDesign; finish?: WheelFinish; size?: number; className?: string }> = ({
   wheel,
   finish,
   size = 72,
   className
 }) => {
+  // A thumbnail rendered from the rim's own 3D file in this finish, when there is one: no tint needed.
+  const rendered = renderedRimThumb(wheel.id, finish?.id ?? wheel.defaultVariant);
   // The rim PNGs are 2048 px (1-2 MB each); a list of nine at 54 px loaded every one twice (image
   // and mask). One downscaled copy per photo serves both.
-  const src = useRimThumb(wheel.imageUrl);
+  const src = useRimThumb(rendered ? null : wheel.imageUrl);
+  if (rendered)
+    return (
+      <div className={cx('relative drop-shadow-[0_8px_14px_rgba(0,0,0,0.55)]', className)} style={{ width: size, height: size }}>
+        <img src={rendered} alt="" draggable={false} decoding="async" className="h-full w-full object-contain" />
+      </div>
+    );
   if (!wheel.imageUrl) return <RimFaceSvg wheel={wheel} finishHex={finish?.hex} size={size} className={className} />;
   const tint = thumbTint(finish?.hex);
   if (!src) return <div className={className} style={{ width: size, height: size }} aria-hidden />;
@@ -332,5 +341,10 @@ export const RimThumb: React.FC<{ wheel: WheelDesign; finish?: WheelFinish; size
     </div>
   );
 };
+
+/** The small label over a wheel's name: its code when that says something the name does not, else its
+ *  construction (the stock-sheet wheels are named by their code, so "FSA004" over "FSA004" said nothing). */
+export const wheelEyebrow = (w: WheelDesign) =>
+  w.code && w.code.trim().toLowerCase() !== w.name.trim().toLowerCase() ? w.code : w.style;
 
 export const Divider: React.FC<{ className?: string }> = ({ className }) => <div className={cx('h-px bg-line', className)} />;

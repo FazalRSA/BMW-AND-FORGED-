@@ -8,7 +8,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Car } from 'lucide-react';
 import { WheelDesign, WheelFinish } from '../types';
 import { finishSurcharge, nearestRimSize, rimPrice, rimSizes } from '../services/pricing';
 import { Region, formatMoney } from '../config/brand';
-import { Button, Eyebrow, FinishChip, IconButton, cx } from './journey/ui';
+import { Button, Eyebrow, FinishChip, IconButton, cx, wheelEyebrow } from './journey/ui';
 import { WheelStage } from './WheelStage';
 
 interface RimDetailPageProps {
@@ -117,7 +117,7 @@ export const RimDetailPage: React.FC<RimDetailPageProps> = ({
       {/* Details */}
       <aside className="w-full shrink-0 lg:w-[var(--panel-w)] lg:min-h-0 lg:overflow-y-auto short:w-[min(360px,46vw)] short:min-h-0 short:overflow-y-auto overscroll-contain bg-surface lg:border-l short:border-l border-line px-6 sm:px-7 py-7 space-y-7 shadow-panel">
         <div key={wheel.id} className="animate-rise">
-          <div className="text-[10.5px] font-semibold uppercase tracking-[0.24em] text-bronze">{wheel.code}</div>
+          <div className="text-[10.5px] font-semibold uppercase tracking-[0.24em] text-bronze">{wheelEyebrow(wheel)}</div>
           <h1 className="mt-2 font-display text-[26px] font-extrabold tracking-[-0.02em]">{wheel.name}</h1>
           <p className="mt-1 text-[13px] text-mute">{wheel.subtitle}</p>
         </div>

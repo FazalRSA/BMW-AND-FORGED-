@@ -21,7 +21,7 @@ import { BRAND, Region, formatMoney } from '../../config/brand';
 import { CameraViewPreset, CarModel, PaintColor, WheelDesign, WheelFinish } from '../../types';
 import { finishSurcharge, rimFromPrice, rimPrice, rimSizes } from '../../services/pricing';
 import { PAINT_FAMILIES, PaintFamily, paintFamily } from '../../services/journeyService';
-import { Button, Eyebrow, FinishChip, IconButton, Modal, PaintChip, RimThumb, cx } from './ui';
+import { Button, Eyebrow, FinishChip, IconButton, Modal, PaintChip, RimThumb, cx, wheelEyebrow } from './ui';
 import { RimFaceSvg } from './RimFaceSvg';
 import { shortModelName } from './carNames';
 import { ViewerPanel } from './ViewerPanel';
@@ -372,7 +372,7 @@ const WheelStep: React.FC<ConfiguratorProps & { onInfo: (w: WheelDesign) => void
       </div>
       <div className="flex items-end justify-between gap-3 px-5 pb-5">
         <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-bronze">{p.wheel.code}</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-bronze">{wheelEyebrow(p.wheel)}</div>
           <div className="mt-1 truncate text-[16px] font-bold">{p.wheel.name}</div>
           <div className="truncate text-[12px] text-mute">
             {p.size} · {p.finish.name}

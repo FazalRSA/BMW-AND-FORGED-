@@ -179,7 +179,7 @@ in the FORGED Drive folder; edit it like any spreadsheet.
 | `code` | `FSA-02` | optional; becomes the wheel id (`forged_fsa_02`), keep it stable |
 | `sizes` | `19\|20\|21\|22` | separate values with `\|` |
 | `prices_zar` or `prices_usd` | `68000\|74000\|82000\|92000` | set of four, one per size |
-| `finishes` | `Liquid Metal\|Silver` | any finish in the `wheel_finishes` table: Liquid Metal, Bronze Matte, Black Gloss, Silver, Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte (and Satin Gold, Gunmetal Matte) |
+| `finishes` | `Liquid Metal\|Silver` | any finish in the `wheel_finishes` table: Liquid Metal, Bronze Matte, Gloss Black, Silver, Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte (and Satin Gold, Gunmetal Matte) |
 | optional | `subtitle`, `description`, `highlights` (split on `\|`), `style`, `skip` (`yes` = leave alone), `notes` | AI writes the copy if blank |
 
 Each photo is cut out (rim only, transparent gaps), then posted to the Supabase function
