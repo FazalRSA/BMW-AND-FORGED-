@@ -10,7 +10,7 @@
  * plus four clearly fictional example.com enquiries). Writes (save, delete, upload) are swallowed locally, so nothing
  * reaches the live database. Writes <outDir>/NN-name.png and manifest.json (box of each control in 1920x1080 film pixels, i.e. CSS pixels x 1.5).
  */
-const { answerSupabase, CaptureStop } = require('./supabase-stub.cjs');
+const { answerSupabase, CaptureStop, exitCodeFor } = require('./supabase-stub.cjs');
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'); const path = require('path');
 const [,, OUT] = process.argv;
@@ -45,8 +45,8 @@ const session = {
       try {
         await answerSupabase(route, { FX, session, email: EMAIL, log });
       } catch (e) {
-        if (e instanceof CaptureStop) { console.error(e.message); process.exit(e.exitCode); }
-        console.error(`route handler failed for ${route.request().url()}: ${e.message}`); process.exit(4);
+        console.error(e instanceof CaptureStop ? e.message : `route handler failed for ${route.request().url()}: ${e.message}`);
+        process.exit(exitCodeFor(e));
       }
     });
     return { ctx, p };

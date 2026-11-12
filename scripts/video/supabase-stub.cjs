@@ -43,4 +43,9 @@ async function answerSupabase(route, { FX, session, email, log = () => {} }) {
   return json(rows);
 }
 
-module.exports = { answerSupabase, CaptureStop };
+/** The process exit code for an error thrown while answering: a CaptureStop keeps its code, anything else is a stub failure (4). */
+function exitCodeFor(error) {
+  return error instanceof CaptureStop ? error.exitCode : 4;
+}
+
+module.exports = { answerSupabase, CaptureStop, exitCodeFor };

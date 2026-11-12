@@ -1,6 +1,7 @@
 /** Runs the admin capture's Supabase stub on fake routes. node scripts/video/test-supabase-stub.cjs  (exit 0 = all pass) */
 const assert = require('node:assert/strict');
-const { answerSupabase, CaptureStop } = require('./supabase-stub.cjs');
+const { answerSupabase, CaptureStop, exitCodeFor } = require('./supabase-stub.cjs');
+const fs = require('node:fs'); const path = require('node:path');
 
 const session = { access_token: 't', user: { id: 'u', email: 'dealer@example.com' } };
 const FX = { cars: [{ id: 'm2_g87', active: true }, { id: 'old', active: false }], wheels: [{ id: 'w1' }], broken: 'not-an-array' };
@@ -13,6 +14,12 @@ const run = (method, url) => { const r = fakeRoute(method, url); return answerSu
 const body = (o) => JSON.parse(o.body);
 
 const tests = {
+  'exit code: a CaptureStop keeps its code (3)': async () => assert.equal(exitCodeFor(new CaptureStop(3, 'x')), 3),
+  'exit code: any other error is a stub failure (4)': async () => assert.equal(exitCodeFor(new TypeError('x')), 4),
+  'no secrets in the capture scripts (keys, tokens, private keys)': async () => {
+    const dir = path.join(__dirname); const pat = /sk-[A-Za-z0-9]{16,}|eyJ[A-Za-z0-9_-]{30,}|service_role|BEGIN (RSA |)PRIVATE|sb_secret/;
+    for (const f of fs.readdirSync(dir).filter((f) => /\.(cjs|ts)$/.test(f) && f !== 'test-supabase-stub.cjs')) assert.equal(pat.test(fs.readFileSync(path.join(dir, f), 'utf8')), false, `secret pattern in ${f}`);
+  },
   'GET cars returns every fixture row': async () => assert.equal(body(await run('GET', 'https://x.supabase.co/rest/v1/cars?select=*')).length, 2),
   'GET with active=eq.true hides inactive rows': async () => assert.equal(body(await run('GET', 'https://x.supabase.co/rest/v1/cars?active=eq.true')).length, 1),
   'admin_users answers the demo email': async () => assert.equal(body(await run('GET', 'https://x.supabase.co/rest/v1/admin_users')).email, 'dealer@example.com'),
