@@ -60,9 +60,14 @@ export const EnquiriesPanel: React.FC<{ mode?: 'admin' | 'dealer' }> = ({ mode =
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: err } = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(500);
-    if (err) setError(err.message);
-    else setLeads((data ?? []) as Lead[]);
+    try {
+      const { data, error: err } = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(500);
+      if (err) setError(err.message);
+      else setLeads((data ?? []) as Lead[]);
+    } catch (e) {
+      // a network failure throws instead of returning an error: say so rather than sit on "Loading…"
+      setError((e as Error).message || 'Could not load the enquiries. Check your connection and refresh.');
+    }
     if (isAdmin) listDealers().then(setDealers).catch(() => setDealers([]));
     setLoading(false);
   }, [isAdmin]);
@@ -86,9 +91,15 @@ export const EnquiriesPanel: React.FC<{ mode?: 'admin' | 'dealer' }> = ({ mode =
 
   const remove = async (lead: Lead) => {
     if (!window.confirm(`Delete the enquiry from ${lead.name || lead.email}? This cannot be undone.`)) return;
-    const { error: err } = await supabase.from('leads').delete().eq('id', lead.id);
-    if (err) setError(err.message);
-    else setLeads((l) => l.filter((x) => x.id !== lead.id));
+    setError(null);
+    try {
+      const { error: err } = await supabase.from('leads').delete().eq('id', lead.id);
+      if (err) setError(err.message);
+      else setLeads((l) => l.filter((x) => x.id !== lead.id));
+    } catch (e) {
+      // a network failure throws instead of returning an error: show it, and keep the enquiry in the list
+      setError((e as Error).message || 'Could not delete the enquiry. Check your connection and try again.');
+    }
   };
 
   const exportCsv = () => {

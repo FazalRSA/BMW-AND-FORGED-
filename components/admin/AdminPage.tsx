@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { ArrowLeft, Loader2, LogOut, Plus, Save, Trash2, Upload, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
+import { BRAND } from '../../config/brand';
 import {
   deleteRow,
   isCurrentUserAdmin,
@@ -63,10 +64,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack, onCatalogChanged }
     // Keep the current session object unless WHO is signed in changed. A new object would re-run the admin
     // check below and swap the editor (open draft, uploaded-but-unsaved .glb URLs) for a spinner.
     const adopt = (s: Session | null) => setSession((prev) => (identityOf(prev) === identityOf(s) ? prev : s));
-    supabase.auth.getSession().then(({ data }) => {
-      adopt(data.session);
-      setAuthChecked(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => adopt(data.session))
+      // a failed session read counts as signed out, so the sign-in form shows instead of the spinner forever
+      .catch(() => adopt(null))
+      .finally(() => setAuthChecked(true));
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       // supabase-js also emits TOKEN_REFRESHED (hourly), USER_UPDATED and a repeat SIGNED_IN whenever the tab
@@ -181,6 +184,13 @@ export const LoginForm: React.FC<{
           <p className="text-sm text-neutral-400">
             If {email} has an account here, a link to set your password is on its way. Open it on this device; it brings you
             back here to choose the password. The link works once and expires after an hour.
+          </p>
+          <p className="text-sm text-neutral-400">
+            No email after a few minutes? Your login may not be set up yet. Ask FORGED at{' '}
+            <a href={`mailto:${BRAND.contact.email}`} className="text-[#E8C37D] hover:text-white">
+              {BRAND.contact.email}
+            </a>{' '}
+            to create it.
           </p>
           <button onClick={() => setMode('signin')} className="text-xs uppercase tracking-widest text-[#E8C37D] hover:text-white">
             Back to sign in

@@ -122,7 +122,7 @@
       <div><span>Live site</span>forged-configurator.vercel.app</div>
       <div><span>Admin</span>forged-configurator.vercel.app/admin</div>
       <div><span>Preview of the latest work</span>forgedsa-configurator.onrender.com</div>
-      <div><span>Handed over</span>28 September 2026 · Updated 11 November 2026</div>
+      <div><span>Handed over</span>28 September 2026 · Updated 12 November 2026</div>
     </div>
     <div class="rule"></div>
   </div>
@@ -133,19 +133,17 @@
   <div class="num">Before launch</div>
   <h2>Outstanding work</h2>
   <p class="intro" style="max-width:none;font-size:10pt;margin-bottom:4mm">The configurator works end to end. The 10 November update (your four prepared cars, your
-    six stocked wheels at the stock sheet's prices, customer accounts) is built and can be seen on the
-    preview link, but the <strong>live site keeps showing the October version until it is redeployed</strong>.
-    The to-do list, in order:</p>
+    six stocked wheels at the stock sheet's prices, customer accounts) is built and <strong>live</strong>
+    (the site was redeployed on 12 November). What is left is below, in order:</p>
 
   <div class="task">
     <div class="tag">Outstanding · 1 of 4</div>
-    <h3>Redeploy the live site</h3>
+    <h3>Connect the live site to the code</h3>
     <ul>
-      <li>The database updates for November are done: all fifteen update files were applied on 10 November and read back on 11 November.</li>
-      <li>What is left is the site itself. The live address is not connected to the code repository, so it still runs the 8 October build. Your developer starts a production deployment from the main branch (HANDOVER.md, section 5).</li>
-      <li>One small database fix is also waiting for your go-ahead: the M2 CS is still named "BMW M2 Coupe" in the live database.</li>
+      <li>The database updates for November are done: all fifteen update files were applied on 10 November and read back on 11 November, and the M2 CS now carries its correct name in the live database.</li>
+      <li>The live site was redeployed from the main branch on 12 November and now shows the new cars and wheels. The live address is still not connected to the code repository, so a merge does not update it by itself: your developer has to start each production deployment (HANDOVER.md, section 5).</li>
     </ul>
-    <div class="need"><b>Needed from you:</b> a few minutes from whoever has the Vercel login, and your go-ahead for the name fix.</div>
+    <div class="need"><b>Needed from you:</b> a few minutes from whoever has the Vercel login, to connect the project to the code repository so updates deploy by themselves.</div>
   </div>
 
   <div class="task">
@@ -163,7 +161,7 @@
     <h3>Licence for the four car models</h3>
     <ul>
       <li>The M2 CS, M4 CS, M5 and M5 Touring bodies came in packages without a licence (their read-me says so). They are recorded as <em>licence not confirmed</em> and should be treated as prototype assets until a licence that covers use on a public website is in hand.</li>
-      <li>The earlier community-licensed cars (M3, M4 Competition, M3 Touring, M235, M8, X3 M50, X5 M) are hidden, not deleted, and come back when prepared packages for them arrive.</li>
+      <li>The earlier community-licensed cars (M3, M4 Competition, M3 Touring, M235, M8, X3 M50, X5 M) were deleted from the configurator on 11 November at your request. Copies are kept in a private archive, so your developer can bring one back when a prepared package for it arrives.</li>
     </ul>
     <div class="need"><b>Needed from you:</b> the licence terms for the packages, and the remaining packages when ready.</div>
   </div>
@@ -231,7 +229,7 @@
 <section class="flow" style="margin-top:6mm">
   <h3 style="margin-top:0">What customers choose</h3>
   <table>
-    <tr><td>Car</td><td>Four BMW M models, the prepared packages you supplied: <strong>M2 CS, M4 CS, M5 and M5 Touring</strong>. The earlier community-licensed cars (M235i, M3, M3 Touring, M4 Competition, M4 Convertible, M8, X3 M50, X5 M) are still listed in the catalogue but hidden until prepared packages arrive for them. Ticking <em>Visible in configurator</em> on one of them does not bring it back: their 3D files were removed from the project on 11 November with the other unused files, and a car also needs a picture on the welcome screen before customers can pick it. Bringing one back is a job for your developer.</td></tr>
+    <tr><td>Car</td><td>Four BMW M models, the prepared packages you supplied: <strong>M2 CS, M4 CS, M5 and M5 Touring</strong>. The earlier community-licensed cars (M235i, M3, M3 Touring, M4 Competition, M4 Convertible, M8, X3 M50, X5 M) were deleted from the catalogue on 11 November at your request, and their 3D files were removed with the other unused files. Copies of their catalogue entries are kept in a private archive, but they do not appear in the admin panel and cannot be switched back on there. Bringing one back needs a prepared package, a picture on the welcome screen and your developer.</td></tr>
     <tr><td>Paint</td><td>The exact BMW South Africa factory colours offered for that car, researched from BMW's own configurator. A customer can match what they specced at the dealer.</td></tr>
     <tr><td>Wheel design</td><td>The six wheels on your stock sheet (FSA001, FSA002, FSA003, FSA004, FF-1, FF-3), as real 3D rims (section 07).</td></tr>
     <tr><td>Size</td><td>Only the sizes the sheet lists for that wheel (19" and 20" for FSA001; 20" and 21" for the others), each with its own price.</td></tr>
@@ -289,7 +287,7 @@
   <div class="num">05</div>
   <h2>Your admin panel</h2>
   <p>Go to <strong>/admin</strong> and sign in with your admin email and password. You will see five tabs.</p>
-  <div class="callout"><strong>First sign-in, or a forgotten password:</strong> on the /admin sign-in click <em>First time here, or forgot your password?</em>, enter your admin email and press <em>Email me a link</em>. Open the email on the same device; it brings you back to /admin to choose your password. (Your account, fazal@novahavens.com, already exists.)</div>
+  <div class="callout"><strong>First sign-in, or a forgotten password:</strong> on the /admin sign-in click <em>First time here, or forgot your password?</em>, enter your admin email and press <em>Email me a link</em>. Open the email on the same device; it brings you back to /admin to choose your password. (Your admin account already exists.)</div>
   <table>
     <tr><th>Tab</th><th>What you can do</th></tr>
     <tr><td>Cars</td><td>Add a car, upload its 3D model, choose which factory paints it offers, hide or reorder cars. The car pictures on the welcome screen are a set that your developer maintains. Hiding a car here takes its picture off the welcome screen, but a new car needs a picture added before customers can pick it, and reordering cars here does not reorder the pictures (see <em>Add a new car</em> below).</td></tr>
@@ -336,7 +334,7 @@
       <ol>
         <li>The customer's details and build are saved in the database (the Enquiries tab), exactly as before.</li>
         <li>The moment the lead is saved, the database passes it to an <strong>n8n</strong> automation called <em>FORGEDSA · Lead email (PDF downloads + enquiries)</em>.</li>
-        <li>n8n builds the email and sends it through the connected Gmail account (currently fazal@novahavens.com, shown as "FORGEDSA Leads").</li>
+        <li>n8n builds the email and sends it through the connected Gmail account (shown as "FORGEDSA Leads").</li>
       </ol>
       <div class="callout">If the email ever fails (for example, Gmail disconnects), the lead is <strong>still saved</strong> in the admin panel. Nothing is lost and the customer never sees an error.</div>
       <h3>Good to know</h3>
@@ -365,14 +363,14 @@
     <tr><td>FF-3</td><td class="nowrap">20", 21"</td><td>Pure Bronze, Glossy Black, Liquid Metal</td><td>R80 000; Liquid Metal R95 000</td></tr>
   </table>
   <p>The sheet's fitment notes (the car each set was listed for, PCD, offset, centre bore) are in each wheel's description. The configurator still lets a customer put any of the six on any of the four cars: the sheet says what is in stock, the configurator is for seeing it. Stock quantity is not shown; <strong>hide a design when it sells out</strong> (Wheels → <em>Visible in configurator</em>) and show it again when restocked. The full working, including how the Rand prices are stored, is in docs/WHEEL_INVENTORY.md.</p>
-  <p>The earlier photo-based designs (the nine named after South African circuits, and three built from the rim template) are <strong>hidden, not deleted</strong>. Switch one on in the admin panel if it is stocked again.</p>
+  <p>The earlier photo-based designs (the nine named after South African circuits, and three built from the rim template) were <strong>deleted from the catalogue</strong> on 11 November at your request. Copies are kept in a private archive, so your developer can restore one if it is stocked again; they cannot be switched back on in the admin panel.</p>
 
   <h3>The wheels sheet (for new photo-based designs)</h3>
   <p>There is an editable Google Sheet called <strong>wheels</strong> in your FORGEDSA Drive folder. One row per design: photo file name, name, code, sizes, prices in Rand, finishes and the product copy. The automated pipeline reads it to add new wheels from photos. Rows marked <em>skip = yes</em> are left alone. The six stocked wheels did not come this way (they are 3D files), so edit them in the admin panel, not the sheet.</p>
   <p class="small muted">docs.google.com/spreadsheets/d/1OJJYaZsVSuJIgjnYkiSE55hBF7_l6y2o4dJH0SehOIM/edit</p>
 
   <h3>How photo wheels work, and their limit</h3>
-  <p>The app can turn a straight-on photo of a wheel into 3D spokes on the car. On the car, at normal viewing distance, this looks convincing. Up close in the 360° view you can tell it is not a true 3D model: spoke depth and the inner barrel are approximated. This is how the hidden designs were built; the six stocked wheels are real 3D models and do not have this limit.</p>
+  <p>The app can turn a straight-on photo of a wheel into 3D spokes on the car. On the car, at normal viewing distance, this looks convincing. Up close in the 360° view you can tell it is not a true 3D model: spoke depth and the inner barrel are approximated. This is how the earlier designs were built (they are no longer in the catalogue); the six stocked wheels are real 3D models and do not have this limit.</p>
 </section>
 
 <section class="flow">
@@ -412,11 +410,11 @@
   <h2>Details to send us before launch</h2>
   <table>
     <tr><th>#</th><th>Item</th><th>Why</th></tr>
-    <tr><td>1</td><td>The <strong>Vercel login</strong> (or a few minutes of whoever has it), and your go-ahead for the M2 CS name fix</td><td>Outstanding work 1: redeploy the live site so it shows the new cars and wheels</td></tr>
+    <tr><td>1</td><td>The <strong>Vercel login</strong> (or a few minutes of whoever has it)</td><td>Outstanding work 1: connect the live site to the code repository so updates deploy by themselves</td></tr>
     <tr><td>2</td><td>A <strong>Google Cloud account</strong> for the sign-in client, or approval to use ours</td><td>Outstanding work 2: customer accounts and the garage</td></tr>
-    <tr><td>3</td><td>The <strong>licence terms</strong> for the four car packages, and the remaining prepared packages</td><td>Outstanding work 3: the cars stay prototype assets until confirmed; hidden cars return when their packages arrive</td></tr>
+    <tr><td>3</td><td>The <strong>licence terms</strong> for the four car packages, and the remaining prepared packages</td><td>Outstanding work 3: the cars stay prototype assets until confirmed; the deleted cars can be restored by your developer when their packages arrive</td></tr>
     <tr><td>4</td><td>Any <strong>change to the stock sheet</strong> (a set sold, a new design, a price)</td><td>The configurator mirrors the sheet; CAD or 3D file for any new design (section 07)</td></tr>
-    <tr><td>5</td><td>Your real <strong>email and phone number</strong></td><td>The site shows placeholders (info@forgedsa.com, +27 00 000 0000)</td></tr>
+    <tr><td>5</td><td>Confirm the <strong>contact details</strong> customers see</td><td>The site and the PDF show forgedsa1@gmail.com and +27 82 123 4567</td></tr>
     <tr><td>6</td><td><strong>Legal review</strong> of Terms and Delivery, and the [bracketed] details</td><td>Outstanding work 4; required before taking orders</td></tr>
     <tr><td>7</td><td>The <strong>hexagon monogram</strong> file (PNG or SVG with transparency)</td><td>Browser tab icon and social avatar</td></tr>
     <tr><td>8</td><td><strong>Wheel weights</strong>, if you want them shown</td><td>The weight panel appears automatically once a wheel has weights</td></tr>
