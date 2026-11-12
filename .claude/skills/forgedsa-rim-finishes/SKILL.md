@@ -82,6 +82,11 @@ shading.
   is the same coating on the rim page and on the car. Its barrel, face and cap take the finish; bolts and
   brake meshes keep their own materials (`FINISH_PARTS` in `shared/wheel-viewer/wheelStudioParts.ts`). What differs is
   the room: a light product stage with its own generated reflections, and no wheel-arch shading.
+- **Reflections on the stage (ADR-001, 2026-11-12):** on the stage and viewer looks the wheel materials (spokes or GLB
+  rim, barrel, image faces) reflect the softbox studio, not the body's black cove, at `CarConfiguratorEngine.WHEEL_ENV`
+  (0.1; the barrel 0.45 of it). `syncWheelEnvironment()` sets it. Without it the near-vertical spokes mirrored black and
+  every finish read flat or as a black hole. `?wheelEnv=` compares strengths: 0.35 and up turns Silver white and Gloss
+  Black chrome-like. On the softbox studio look the wheels follow `scene.environment` as before.
 - **Not affected:** caliper colour (`applyCaliperColor`), tyre, disc, lug nuts, centre cap.
 
 ## Adding or tuning a finish
