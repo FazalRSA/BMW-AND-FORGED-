@@ -35,8 +35,8 @@ const RIM_ID = process.env.RIM_ID || 'sixnine_ff1';
   await p.route(/supabase\.co\/storage\//, (r) => {
     const f = RIMS && path.join(RIMS, path.basename(r.request().url().split('?')[0]));
     try {
-      if (f && fs.existsSync(f)) r.fulfill({ body: fs.readFileSync(f), contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } });
-      else r.continue();
+      if (f && fs.existsSync(f)) { log(`storage served from cache: ${path.basename(f)}`); r.fulfill({ body: fs.readFileSync(f), contentType: 'image/png', headers: { 'access-control-allow-origin': '*' } }); }
+      else { log(`storage not cached, passed through: ${path.basename(u)}`); r.continue(); }
     } catch (e) { console.error(`storage read failed for ${f}: ${e.message}`); r.abort(); }
   });
 
