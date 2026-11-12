@@ -11,6 +11,7 @@ index [`SKILLS.md`](SKILLS.md) first — Claude Code loads those skills automati
 | Add a **wheel** | [`PRODUCT_SPEC_CARS_AND_WHEELS.md`](PRODUCT_SPEC_CARS_AND_WHEELS.md) §5 (pick the route: CAD file, photo-to-3D, or flat photo), [`WHEEL_PIPELINE.md`](WHEEL_PIPELINE.md) (photo batch via n8n), [`RIM_3D_PROCESS.md`](RIM_3D_PROCESS.md) (photo → real 3D rim, step by step) | `scripts/ingest-rim.mjs`, `scripts/rim3d/`, `.claude/skills/forgedsa-wheel-pipeline/`, `.claude/skills/forgedsa-rim-from-photo/` |
 | See **how a car and its wheels combine** in the configurator | §1 below | `services/CarConfiguratorEngine.ts`, `services/wheelKit.ts`, `services/viewerStudio.ts` |
 | Go from a **rim photo to a photoreal 3D file**, the best way today | [`RIM_PHOTO_TO_3D_SPEC.md`](RIM_PHOTO_TO_3D_SPEC.md) (researched decision guide, Nov 2026) | `scripts/rim3d/convert.sh` (the in-house route) |
+| Get into **`/admin`** or run the **presentation demo** | [`ADMIN_AND_DEMO.md`](ADMIN_AND_DEMO.md) (login, troubleshooting, step-by-step demo script) | — |
 
 ---
 
