@@ -13,14 +13,22 @@ RAW, OUT = ROOT / '.scratch/rim-thumbs', ROOT / 'public/rim-thumbs'
 PX = 768      # the collection hero shows it at 340 CSS px, so 2x screens get a sharp copy
 MARGIN = 0.02
 
-manifest = {}
-for f in sorted(RAW.glob('*__*.png')):
+raws = sorted(RAW.glob('*__*.png'))
+if not raws:
+    raise SystemExit(f'no renders in {RAW}: run scripts/render/rim-thumbs.cjs first')
+manifest, failed = {}, []
+for f in raws:
     wheel, finish = f.stem.split('__')
-    im = Image.open(f).convert('RGBA')
+    try:
+        im = Image.open(f).convert('RGBA')
+    except OSError as e:
+        failed.append(f'{f.name}: {e}')
+        continue
     # the rim's own pixels (alpha above a hair, so stray anti-aliasing doesn't widen the box)
     box = im.getchannel('A').point(lambda a: 255 if a > 8 else 0).getbbox()
     if not box:
-        raise SystemExit(f'{f.name}: empty render')
+        failed.append(f'{f.name}: empty render')
+        continue
     rim = im.crop(box)
     side = round(max(rim.size) * (1 + 2 * MARGIN))
     sq = Image.new('RGBA', (side, side), (0, 0, 0, 0))
@@ -29,4 +37,7 @@ for f in sorted(RAW.glob('*__*.png')):
     sq.resize((PX, PX), Image.LANCZOS).save(OUT / wheel / f'{finish}.webp', 'WEBP', quality=88, method=6)
     manifest.setdefault(wheel, []).append(finish)
     print(f'{wheel}/{finish}.webp  rim {rim.size}')
+if failed:
+    # leave the manifest as it was rather than drop finishes that still have a good thumbnail
+    raise SystemExit('not written, fix these renders first:\n  ' + '\n  '.join(failed))
 (ROOT / 'data/rimThumbs.json').write_text(json.dumps(manifest, indent=2) + '\n')

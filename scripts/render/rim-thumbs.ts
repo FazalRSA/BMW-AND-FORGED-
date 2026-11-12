@@ -15,8 +15,13 @@ import { WHEEL_DESIGNS } from '../../data/configuratorData';
 Object.defineProperty(THREE.ShadowMaterial.prototype, 'visible', { get: () => false, set: () => {} });
 
 const q = new URLSearchParams(location.search);
-const wheel = WHEEL_DESIGNS.find((w) => w.id === q.get('wheel'))!;
-const f = STATIC_CATALOG.finishes[q.get('finish') || wheel.defaultVariant];
+const wheel = WHEEL_DESIGNS.find((w) => w.id === q.get('wheel'));
+const f = wheel && STATIC_CATALOG.finishes[q.get('finish') || wheel.defaultVariant];
+if (!wheel?.modelUrl || !f) {
+  // the driver waits for a canvas, so it times out and reports this shot as failed
+  document.body.textContent = `rim-thumbs: unknown wheel "${q.get('wheel')}", no model file, or unknown finish "${q.get('finish')}"`;
+  throw new Error(document.body.textContent);
+}
 const finish = {
   id: f.id,
   name: f.name,
@@ -36,7 +41,7 @@ createRoot(document.getElementById('root')!).render(
     finishes: [finish],
     selectedFinish: finish,
     onSelectFinish: () => {},
-    modelUrl: wheel.modelUrl!,
+    modelUrl: wheel.modelUrl,
     modelFlip: !!wheel.modelFlip,
     initialView: 'face',
     initialToggles: { orbit: false, spin: false },
