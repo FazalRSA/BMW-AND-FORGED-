@@ -18,6 +18,7 @@ import {
 import { ENTITIES, EntitySpec, FieldSpec } from './entityConfig';
 import { EnquiriesPanel } from './EnquiriesPanel';
 import { DealersPanel } from './DealersPanel';
+import { SalesPanel } from './SalesPanel';
 import { ASSET_BUCKETS, authFlags } from '../../services/supabaseClient';
 import { CAD_EXTENSIONS, convertCadFile, isCadFile } from '../../services/cadToGlb';
 
@@ -291,7 +292,7 @@ export const SetPasswordForm: React.FC<{ email: string; onDone: () => void }> = 
 
 const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogChanged }) => {
   const [entity, setEntity] = useState<EntitySpec>(ENTITIES[0]);
-  const [panel, setPanel] = useState<'catalog' | 'leads' | 'dealers'>('catalog');
+  const [panel, setPanel] = useState<'catalog' | 'leads' | 'dealers' | 'sales'>('catalog');
   const showLeads = panel === 'leads';
   const [rows, setRows] = useState<Row[]>([]);
   const [finishIds, setFinishIds] = useState<string[]>([]);
@@ -411,9 +412,17 @@ const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogCh
         >
           Dealers
         </button>
+        <button
+          onClick={() => setPanel('sales')}
+          className={`px-4 py-2 rounded-md text-xs font-bold uppercase tracking-widest border ${
+            panel === 'sales' ? 'bg-[#CF9F52] text-black border-[#CF9F52]' : 'border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
+          }`}
+        >
+          Sales
+        </button>
       </nav>
 
-      {panel === 'leads' ? <EnquiriesPanel mode="admin" /> : panel === 'dealers' ? <DealersPanel /> : <>
+      {panel === 'leads' ? <EnquiriesPanel mode="admin" /> : panel === 'dealers' ? <DealersPanel /> : panel === 'sales' ? <SalesPanel /> : <>
 
       {message && (
         <p className={`mb-4 text-xs ${message.kind === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{message.text}</p>
