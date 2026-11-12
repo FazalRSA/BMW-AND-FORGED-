@@ -5,6 +5,19 @@
 **Last updated:** 2026-11-11 · **Branch:** `ccr-f52bf849-fnf7qs` (the work in the first entry below is on it, ahead of `main`) · **To continue:** the
 `forgedsa-resume` skill (`.claude/skills/forgedsa-resume/SKILL.md`) restores the tools, and this file says what is next.
 
+## 2026-11-12: rims reflect their own studio on the stage (presentation-ready)
+- **Why the rims looked fake:** on the stage look the studio lights are off and everything mirrors the stage cove, which is
+  black except overhead. Spoke faces are near-vertical, so they mirrored black: Silver and Liquid Metal read as grey
+  plastic, Gold as mustard, the gloss blacks as silhouettes. The rim files were never the problem.
+- **Fix (ADR-001, `.10x/adrs/001-wheel-own-reflections-on-stage.md`):** the wheels reflect the softbox studio built at
+  start, at `WHEEL_ENV` 0.1 (`?wheelEnv=` to compare). Body, glass and parts keep the cove. Checked with `shoot.cjs` on the
+  M2 CS, front wheel, all 16 wheel-and-finish pairs, and three-quarter views of the M2 CS and M5: body unchanged.
+- **Tripo CLI** 0.11.2 installs and dry-runs (40 credits for one photo, geometry only, v3.1 detailed; 30 for front + side);
+  no key in this session, so no rim was generated.
+- **Logins:** admin works; Google provider is off; the dealer's allowlisted email has no Supabase Auth user yet. The
+  "Check your inbox" screen now tells a dealer or admin with no login to ask FORGED. Owner steps:
+  `.10x/specs/2026-11-12-presentation-ready-design.md` and below in the status file.
+
 ## 2026-11-11: no showroom, stage look, stepped drawer, wheel studio on the rim page
 - **Journey:** Welcome (`/`) → Enter → Configurator (`/configure`) → Summary (`/summary`). There is no showroom:
   `components/journey/Showroom.tsx` is deleted and `/models` opens the welcome. No Explore, Build or "Next model" buttons, and

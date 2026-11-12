@@ -3,3 +3,4 @@
 - [DISCOVERED] Rims: GLB per wheel in public/models/rims, finishes in services/wheelFinish.ts, mounted by applyWheelDesign.
 - [DISCOVERED] Catalogue source of truth is Supabase; data/configuratorData.ts is the fallback.
 - Active feature: presentation-ready (no design file until approval).
+- presentation-ready: decisions/architect/presentation-ready.md

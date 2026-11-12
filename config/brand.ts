@@ -48,10 +48,10 @@ export const BRAND = {
     ember: '#FF5A00' // Electric Orange: main action buttons only (site, PDF, lead email)
   },
 
-  // Placeholder email and phone: replace with the real ones before launch.
+  // Phone and email are the owner's (2026-11-12). The email is the FORGEDSA inbox that also receives the new-lead emails.
   contact: {
-    email: 'info@forgedsa.com',
-    phone: '+27 00 000 0000',
+    email: 'forgedsa1@gmail.com',
+    phone: '+27 82 123 4567',
     website: 'www.forgedsa.com'
   },
 

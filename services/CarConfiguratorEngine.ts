@@ -708,6 +708,7 @@ export class CarConfiguratorEngine {
       this.scene.environmentIntensity = CarConfiguratorEngine.SOFTBOX_INTENSITY;
       this.scene.environmentRotation.set(0, 0, 0);
       this.environmentTarget = studioTarget;
+      this.syncWheelEnvironment();
       roomTarget.dispose(); // replaced before the first frame
       pmrem.dispose();
       this.requestRender();
@@ -723,6 +724,7 @@ export class CarConfiguratorEngine {
         this.scene.environment = envTarget.texture;
         roomTarget.dispose();
         this.environmentTarget = envTarget;
+        this.syncWheelEnvironment();
         this.requestRender();
         this.scene.environmentIntensity = 1.0;
         this.scene.environmentRotation.set(0, Math.PI * 0.35, 0);
@@ -2221,7 +2223,7 @@ export class CarConfiguratorEngine {
    * the flake cells stay ~1 mm whatever the file's units.
    */
   private makeRimFinishMaterial(side: THREE.Side, unitScale: number): THREE.MeshPhysicalMaterial {
-    const m = new THREE.MeshPhysicalMaterial({ side, envMap: this.wheelMaterial.envMap });
+    const m = new THREE.MeshPhysicalMaterial({ side, envMap: this.wheelMaterial.envMap, envMapIntensity: this.wheelMaterial.envMapIntensity });
     installWheelShading(m, { arch: 0.3 });
     installFinishLayers(m).uFinishFlakeScale.value = FINISH_FLAKE_SCALE * (unitScale > 0 ? unitScale : 1);
     if (this.wheelFinishLook) applyFinishLook(m, this.wheelFinishLook);
@@ -2326,6 +2328,16 @@ export class CarConfiguratorEngine {
     return m ? +m[1] : 0.45;
   })();
   /** Overall strength of the generated softbox studio (scene.environmentIntensity). */
+  /**
+   * How strongly the wheels reflect the softbox studio on the stage and viewer looks (ADR-001). Those looks light
+   * the car with a cove that is black except overhead, so near-vertical spokes mirrored black and every finish read
+   * flat. The wheels keep the softbox studio's long strips instead, at this strength. ?wheelEnv= compares.
+   */
+  static WHEEL_ENV: number = (() => {
+    const m = typeof window !== 'undefined' ? /[?&]wheelEnv=([0-9.]+)/.exec(window.location.search) : null;
+    return m ? +m[1] : 0.1;
+  })();
+
   static SOFTBOX_INTENSITY: number = (() => {
     const m = typeof window !== 'undefined' ? /[?&]envi=([0-9.]+)/.exec(window.location.search) : null;
     return m ? +m[1] : 0.28;
@@ -2895,6 +2907,7 @@ export class CarConfiguratorEngine {
       if (!mats) return;
       (Array.isArray(mats) ? mats : [mats]).forEach((m) => (m.needsUpdate = true));
     });
+    this.syncWheelEnvironment(); // ADR-001: the wheels keep the softbox studio on the stage
     if (this.currentPaint) this.applyPaintColor(this.currentPaint); // cove, exposure and body reflectivity follow the look
     this.markShadowDirty();
     this.requestRender();
@@ -2946,6 +2959,26 @@ export class CarConfiguratorEngine {
       if (!std.isMeshStandardMaterial || !std.userData.envBound || std.userData.envOwn !== undefined) continue;
       std.userData.envOwn = studio.intensity > 0 ? std.envMapIntensity / studio.intensity : std.envMapIntensity;
     }
+  }
+
+  /**
+   * ADR-001: on the stage and viewer looks the wheels (spokes or GLB rim, barrel, image faces) reflect the softbox
+   * studio built at start, not the body's cove; on the softbox studio look (and before the studio exists) they follow
+   * scene.environment as before. The barrel keeps its own share (0.45: deep inside the wheel).
+   */
+  private syncWheelEnvironment() {
+    const map = this.look !== 'studio' && this.environmentTarget ? this.environmentTarget.texture : null;
+    const strength = map ? CarConfiguratorEngine.WHEEL_ENV : 1;
+    const set = (m: THREE.MeshStandardMaterial, share: number) => {
+      if (m.envMap !== map) {
+        m.envMap = map;
+        m.needsUpdate = true;
+      }
+      m.envMapIntensity = strength * share;
+    };
+    set(this.wheelMaterial, 1);
+    set(this.barrelMaterial, 0.45);
+    this.customFaceMaterials.forEach((m) => set(m, 1));
   }
 
   /**

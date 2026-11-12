@@ -1,15 +1,15 @@
 # Status
-**Feature:** presentation-ready · **Phase:** Discovery complete, Phase 0 spec written, WAITING FOR OWNER APPROVAL
+**Feature:** presentation-ready · **Phase:** Delivered to production 2026-11-12 (dpl_AcV5FCQ5S21k7oTMVNQnAH3KHd1w); PR #40 still to merge
 **Date:** 2026-11-12
 
 | Phase | State |
 |---|---|
-| Discovery | done (decisions/*/_index.md tagged [DISCOVERED]) |
-| 0 Brainstorming | spec written: specs/2026-11-12-presentation-ready-design.md |
-| 1-6 | not started |
+| 0-3 | done (spec, ADR-001, plan) |
+| 4 Implementation | done: wheel reflections on the stage, sign-in inbox line |
+| 5 Verification | done: lint, build, shoot.cjs sheets, journey.cjs phone + desktop pass |
+| 6 Delivery | deployed from PR head; owner: merge #40, real-phone check |
 
-## Blockers
-- Owner approval of the spec and the presentation date.
-- Tripo API key (tsk_...) not provided.
-- Google provider off in Supabase (owner dashboard steps, docs/ACCOUNTS.md).
-- Dealer allowlisted email has no Supabase Auth user.
+## Open, owner only
+- Google provider in Supabase (docs/ACCOUNTS.md steps 1-4).
+- Dealer login: create the Supabase Auth user for the allowlisted dealer email (Auto Confirm or Invite).
+- Tripo API key, if the one-wheel spike is still wanted.
