@@ -1,5 +1,5 @@
 # Status
-**Feature:** presentation-ready · **Phase:** Discovery complete, Phase 0 spec written, WAITING FOR OWNER APPROVAL
+**Feature:** presentation-ready · **Phase:** Planning complete (owner said "go" 2026-11-12); implementation next
 **Date:** 2026-11-12
 
 | Phase | State |
@@ -13,3 +13,7 @@
 - Tripo API key (tsk_...) not provided.
 - Google provider off in Supabase (owner dashboard steps, docs/ACCOUNTS.md).
 - Dealer allowlisted email has no Supabase Auth user.
+
+## Phases 1-3 (2026-11-12)
+Strategy, design (ADR-001) and planning written. Tasks in decisions/engineering-manager/presentation-ready.md.
+Tripo spike blocked: owner declined to provide the API key.
