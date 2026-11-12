@@ -151,6 +151,33 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.79
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 Sedan 2025", Zifir3D): no modelUrl, see the iX3 above
+    id: 'm3_g80',
+    name: 'BMW M3',
+    badge: 'M3 Competition G80',
+    generation: 'G80',
+    chassisCode: 'G80 M3',
+    // 2024 facelift (LCI), Competition M xDrive: 530 PS / 390 kW, 650 Nm, 0-100 km/h 3.5 s. Fitment from BMW's G80
+    // M3 Competition xDrive press kit (05/2021): 9.5J x 19 front, 10.5J x 20 rear. Owner to confirm for the LCI.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 530 PS',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'sedan',
+    paintIds: [
+      'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.79
   }
 ];
 
