@@ -33,11 +33,18 @@ for f in raws:
     side = round(max(rim.size) * (1 + 2 * MARGIN))
     sq = Image.new('RGBA', (side, side), (0, 0, 0, 0))
     sq.paste(rim, ((side - rim.width) // 2, (side - rim.height) // 2))
-    (OUT / wheel).mkdir(parents=True, exist_ok=True)
-    sq.resize((PX, PX), Image.LANCZOS).save(OUT / wheel / f'{finish}.webp', 'WEBP', quality=88, method=6)
+    try:
+        (OUT / wheel).mkdir(parents=True, exist_ok=True)
+        sq.resize((PX, PX), Image.LANCZOS).save(OUT / wheel / f'{finish}.webp', 'WEBP', quality=88, method=6)
+    except OSError as e:
+        failed.append(f'{wheel}/{finish}.webp: {e}')
+        continue
     manifest.setdefault(wheel, []).append(finish)
     print(f'{wheel}/{finish}.webp  rim {rim.size}')
 if failed:
     # leave the manifest as it was rather than drop finishes that still have a good thumbnail
     raise SystemExit('not written, fix these renders first:\n  ' + '\n  '.join(failed))
-(ROOT / 'data/rimThumbs.json').write_text(json.dumps(manifest, indent=2) + '\n')
+try:
+    (ROOT / 'data/rimThumbs.json').write_text(json.dumps(manifest, indent=2) + '\n')
+except OSError as e:
+    raise SystemExit(f'could not write data/rimThumbs.json: {e}')

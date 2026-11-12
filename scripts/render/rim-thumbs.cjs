@@ -11,7 +11,13 @@
 const { chromium } = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'); const path = require('path');
 const OUT = path.join(__dirname, '../../.scratch/rim-thumbs');
-const src = fs.readFileSync(path.join(__dirname, '../../data/configuratorData.ts'), 'utf8');
+let src;
+try {
+  src = fs.readFileSync(path.join(__dirname, '../../data/configuratorData.ts'), 'utf8');
+} catch (e) {
+  console.error(`cannot read the catalogue: ${e.message}`);
+  process.exit(1);
+}
 // wheel ids and their finishes, read from the bundled catalogue (the same rows as Supabase)
 const wheels = [...src.matchAll(/id: '([a-z0-9_]+)',\n\s+code:[\s\S]*?availableVariants: \[([^\]]*)\]/g)]
   .map((m) => ({ id: m[1], finishes: [...m[2].matchAll(/'([a-z_]+)'/g)].map((x) => x[1]) }));
