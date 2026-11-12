@@ -24,17 +24,11 @@ table in `docs/MAP.md` — it will need to move from "separate, unmerged" to eit
 
 **See also:** the `presentation-ready` feature below independently explored the *same* Drive folder
 and the *same* multi-image-reconstruction idea (different provider — Tripo there, Meshy/Higgsfield
-here), and is blocked the same way (no credits/API key). Worth the owner reconciling the two before
-either one actually spends credit, so the same wheel isn't reconstructed twice at cost.
+here). That session has since confirmed (see `status.md`) it's holding its Tripo spike in favour of
+this one, so there's no remaining double-spend risk — just two blocked-by-funding pilots pointing at
+the same eventual answer.
 
 ## presentation-ready
 
-**From:** discovery + brainstorming · **To:** CTO/PM (phase 1) once the owner approves.
-
-Read specs/2026-11-12-presentation-ready-design.md first. Key facts:
-- The six rims already are good GLBs; the photoreal gap is lighting and finishes, not geometry (docs/ingest/stock-wheels.jpg).
-- Tripo is installed (0.11.2); dry runs: 40 credits single image geometry-only v3.1 detailed, 30 credits two-photo multiview. Use only as a one-wheel spike.
-- Drive > WEBSITE wheels (folder id 1-O0emTrsTXfFzrUGRcdlB9CDMcF6Au7d) holds per-wheel reference photos; no FF-1 folder.
-- Logins: admin works; dealer has no auth user; Google provider off.
-
-Next: on approval, write cto/ and product-manager/presentation-ready.md, then ADR-001 (wheel-only lighting environment) in phase 2.
+**From:** QA/Security · **To:** owner + DevOps
+PR #40 is verified. After merge: production deploy from main, then check /configure on a real phone, /admin sign-in, /dealer sign-in once its auth user exists, and Google sign-in once the provider is on.

@@ -68,7 +68,8 @@ GLB, and so does the turntable, because a frame is a fixed camera.
 - **Live GLB** (what the ingest sets up by default): the engine draws the model with the studio lighting, paint
   shader and materials pass; the forged wheels sit in the model's arches. Any car without render frames
   works this way.
-- **Blender frames** (`--render`; today only the M5 G90 has them, in the dark studio; the other three prepared cars are drawn live): Cycles renders the body once
+- **Blender frames** (`--render`; no GLB car shows them on the stage today, the four prepared cars are drawn live; the
+  frames-only iX3 M60 below is always its frames): Cycles renders the body once
   per view (front three-quarter, side, rear three-quarter, front, wheel, top; the stepped drawer has chips for
   all but the straight-on front, which only the `?panel=viewer` panel offers) with white and black paint bases, and the browser
   recolours them for any paint. The wheels are still drawn live on top, so paint, wheel, size and finish all
@@ -124,8 +125,51 @@ their entry in `public/renders/manifest.json` (the ingest removed it; `--dry-run
 add the entry by hand (`"<carId>": [<view folders that hold gloss_w.webp>]`, the shape of the other entries),
 or run `scripts/prerender/render-all.sh <carIndex>` for that one car (its index in `BMW_MODELS`, hidden cars
 included: `scripts/prerender/render-all.sh 7` for m5_g90) — it re-renders that car (about 15 minutes) and then
-rebuilds the manifest from everything on disk. Do not run it with no index: that re-renders every car for hours
+updates that car's manifest entry (the others, frames-only entries included, are kept; frames-only cars are skipped). Do not run it with no index: that re-renders every car for hours
 and overwrites the frames just restored.
+
+## Frames-only cars (licensed models that must not be served)
+
+Some licences allow a car only as pictures: Blendkit **Royalty Free** forbids assets that are "directly extractable in the
+distribution", and a GLB the browser downloads is exactly that. Such a car is **frames-only**: its body exists on the site
+only as Cycles frames, recoloured per paint like any Blender frame, with the forged wheels drawn live on top. The first
+one is the BMW iX3 M60 (`ix3_m60`).
+
+What the browser gets, all in `public/renders/<carId>/`: per view the five webp frames (`gloss_w/b`, `matte_w/b`,
+`flake_w`) and a `depth.png`, plus the car's entry in `public/renders/manifest.json`:
+
+```json
+"ix3_m60": { "framesOnly": true, "views": ["front", "frontThreeQuarter", ...],
+             "wheels": { "front-left": [x, y, z, scale], ... }, "footprint": [halfLength, halfWidth] }
+```
+
+How the engine copes without the GLB (`services/CarConfiguratorEngine.ts`, `mountFramesCar`, `syncFramesDepth`):
+
+- **Wheels**: placed from `wheels` (engine space, written by the export from the same engine), not from the model.
+- **Far-side wheels**: the GLB depth mask is replaced by the view's `depth.png` (distance along the view axis, 16 bits
+  over 40 m in R/G, 65535 = no body), drawn first as a depth-only quad covering exactly the Blender camera's view.
+- **No live body ever**: `loadCar` downloads nothing for it, `preloadCar`/`driveToCar` skip it, the turntable is refused
+  (and its button hidden), `captureViews` returns nothing, so the summary/PDF stills always come from the frames.
+- **The line-up** (`App.tsx lineUpCars`) admits it without `modelUrl`; its catalogue row has `model_url` NULL.
+
+Build it (the licensed file stays in `/opt` and the git-ignored `.scratch/`; nothing of it is committed or uploaded):
+
+```bash
+scripts/blender-mcp/setup.sh <blendkit.zip>        # Blender 5.3; and: apt-get install -y libegl1
+# download the .blend with the owner's Blendkit key (environment network secret for www.blendkit.com)
+blender -b car.blend --python scripts/prerender/prepare_blend.py -- .scratch/private/<carId>.glb --tyre-mat '^Tire$'
+bunx vite --host 127.0.0.1 --port 5173 &
+CAR_QUERY='&model=/.scratch/private/<carId>.glb&len=<metres>&body=suv&paintMatch=paint_' IDLE_FRAMES=400 \
+  node scripts/prerender/export-scene.cjs 0 .scratch/private/<carId>/scene.glb     # + scene.layout.json, scene.wheels.json
+blender -b --python scripts/prerender/render_depth.py -- .scratch/private/<carId>/scene.glb .scratch/private/<carId>/frames
+python3 scripts/prerender/render_car.py .scratch/private/<carId>/scene.glb .scratch/private/<carId>/frames \
+  --car <carId> --studio dark --samples 12 --width 1440            # bpy 5.3 (pip/uv), about 25 minutes on 4 cores
+scripts/prerender/frames-only.sh <carId> .scratch/private/<carId>/frames .scratch/private/<carId>/scene.layout.json
+```
+
+Then add the car to `data/configuratorData.ts` with `modelUrl: null` and a migration inserting its row (model_url NULL),
+add `CAR_FIXES['<carId>'] = {'keep_normals': True, 'authored_lamps': True}` in `render_car.py` for a clean model, and
+check in the browser's network tab that no `.glb` is requested for it on the welcome, configure and summary pages.
 
 ## The configurator screen is the stage look
 

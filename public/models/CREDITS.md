@@ -9,6 +9,9 @@
 | `m4_cs_g82.glb` | Prepared package BMW_M4_CS_G82.zip (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 | `m2_g87.glb` | Prepared package bmw_m2_cs_g87.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 
+| _(no file: frames only)_ `../renders/ix3_m60/` | [BMW iX3 M60 2027](https://www.blendkit.com/asset-gallery-detail/e1fa17a8-122c-4ec3-93e7-1e30e106cb0d/) (Blendkit asset base `f822dd79-2e65-43f5-a787-f08ad9a8344e`) | Zifir3D Fedorov | Blendkit **Royalty Free** (paid plan, the owner's account) | The licence forbids assets that are directly extractable from the distribution, so the GLB is **never** served: only Cycles frames and per-view depth images, rendered at build time from a private copy (`docs/ADD_PREPARED_CAR.md`, "Frames-only cars"). Wheels replaced in the app; number plates replaced by the engine's. Open questions for the owner: real-car trademarks, and whether the right to use the renders outlasts the subscription. |
+| _(no file: frames only)_ `../renders/m3_g80/` | [BMW M3 Sedan 2025](https://www.blendkit.com/asset-gallery-detail/55e4fc40-73ee-4723-8365-486c6260c87e/) (Blendkit asset base `2af75b3c-2cb7-4eec-8729-3eea3bdaff8e`) | Zifir3D Fedorov | Blendkit **Royalty Free** (paid plan, the owner's account) | Frames-only, as the iX3 M60 above. The carbon roof's weave maps are missing from the download, so the roof renders as plain dark gloss. Same open licence questions. |
+
 All car files were compressed for the web (meshopt geometry, WebP textures up to 2048 px) with gltf-transform.
 
 
