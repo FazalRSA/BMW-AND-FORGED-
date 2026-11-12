@@ -11,14 +11,13 @@ wheels, tyres, brakes) without a GPU. The full method is in
 `engine.html` is the bare engine page. Its query parameters come from `data/configuratorData.ts`,
 unfiltered, so hidden rows count:
 
-- `car` is an index into the full `BMW_MODELS` list, hidden cars included. Live on 2026-11-10:
-  `1` m4_cs_g82, `5` m2_g87 (M2 CS), `7` m5_g90, `8` m5_touring_g99. `0` is the retired Sketchfab
-  M4; 2-4, 6 and 9-11 are the other hidden legacy cars.
+- `car` is an index into `BMW_MODELS` (the bundled catalogue). The legacy cars were deleted on
+  2026-11-11, so it holds only the four live cars: `0` m4_cs_g82, `1` m2_g87 (M2 CS), `2` m5_g90,
+  `3` m5_touring_g99.
 - `paint` is an index into `BMW_PAINTS`.
 - `wheel` is a wheel **id** (preferred, the same ids `ingest-rim.mjs` takes: `forged_fsa001`,
   `forged_fsa002`, `forged_fsa_03`, `forged_fsa004`, `sixnine_ff1`, `sixnine_ff3`) or an index into
-  the full `WHEEL_DESIGNS` list, hidden designs included: `0`-`10` are the hidden legacy designs
-  (`forged_fsa_01` .. `forged_fsa_14`), `11`-`16` the six stocked wheels in the order above.
+  `WHEEL_DESIGNS`, which holds only those six wheels in that order (`0`-`5`).
 - `finish` (id), `size` (e.g. `21"`) and `view` (camera preset).
 
 For ad-hoc GLBs it also takes `model`, `rot`, `len`, `paintMatch` and `hideMatch`; `rimModel=` and

@@ -63,10 +63,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack, onCatalogChanged }
     // Keep the current session object unless WHO is signed in changed. A new object would re-run the admin
     // check below and swap the editor (open draft, uploaded-but-unsaved .glb URLs) for a spinner.
     const adopt = (s: Session | null) => setSession((prev) => (identityOf(prev) === identityOf(s) ? prev : s));
-    supabase.auth.getSession().then(({ data }) => {
-      adopt(data.session);
-      setAuthChecked(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => adopt(data.session))
+      // a failed session read counts as signed out, so the sign-in form shows instead of the spinner forever
+      .catch(() => adopt(null))
+      .finally(() => setAuthChecked(true));
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       // supabase-js also emits TOKEN_REFRESHED (hourly), USER_UPDATED and a repeat SIGNED_IN whenever the tab

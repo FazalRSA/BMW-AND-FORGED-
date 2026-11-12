@@ -26,12 +26,11 @@ for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5173/ && break; s
 
 - **`scripts/render/shoot.cjs <outDir> shots.json [rimCacheDir]`:** batch screenshots from a JSON
   shot list (`car`, `paint`, `wheel`, `finish`, `size`, `view`, `q`, `cam`).
-  - `wheel` is a **wheel id** (`"forged_fsa002"`, preferred) or an index into the full bundled
-    `WHEEL_DESIGNS` list, hidden designs included (`0` is the hidden photo wheel FSA-01; the six
-    stocked wheels `forged_fsa001`, `forged_fsa002`, `forged_fsa_03`, `forged_fsa004`, `sixnine_ff1`,
-    `sixnine_ff3` are indexes 11-16). Use ids in shot lists. `car` is an index into `BMW_MODELS`
-    including hidden cars: live cars are `1` (M4 CS), `5` (M2 CS), `7` (M5), `8` (M5 Touring); `0` is
-    the hidden M4 G82. `q` appends raw params, e.g. `"&look=stage"` for what /configure shows.
+  - `wheel` is a **wheel id** (`"forged_fsa002"`, preferred) or an index into the bundled
+    `WHEEL_DESIGNS` list, which holds only the six stocked wheels `forged_fsa001`, `forged_fsa002`,
+    `forged_fsa_03`, `forged_fsa004`, `sixnine_ff1`, `sixnine_ff3` (indexes 0-5; the legacy photo
+    wheels were deleted on 2026-11-11). Use ids in shot lists. `car` is an index into `BMW_MODELS`,
+    which holds only the four live cars: `0` (M4 CS), `1` (M2 CS), `2` (M5), `3` (M5 Touring). `q` appends raw params, e.g. `"&look=stage"` for what /configure shows.
   - It loads `scripts/render/engine.html`, routes Supabase storage to a local rim cache (curl
     fallback) and waits for `window.done`. Stock wheels are GLBs under `public/models/rims/` served
     by Vite, so they need no rim cache; the cache only matters for the hidden photo wheels.
