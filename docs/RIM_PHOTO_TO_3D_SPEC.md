@@ -47,6 +47,16 @@ convention, pack with `scripts/rim3d/pack.mjs`, and compare directly against
 `public/models/rims/forged_fsa004.glb` plus `scripts/render/wheel-qa.cjs` — this one pilot answers
 both "is the multi-image route any good" and "how close does it get to the real file."
 
+**Coordination, 2026-11-12:** the `presentation-ready` session (branch
+`claude/clever-brahmagupta-xnnpfj`) was independently exploring the same idea via a direct Tripo
+API key. It confirmed it's holding that spike (the owner had already declined to provide the Tripo
+key, and it has no cost/quality evidence favouring Tripo over Meshy) and flagged something useful
+for whoever resumes this pilot: its PR [#40](https://github.com/FazalRSA/BMW-AND-FORGED-/pull/40)
+changes how rims reflect the stage look (`CarConfiguratorEngine.syncWheelEnvironment`, `WHEEL_ENV`
+0.1), not rim meshes. Any rim this pilot produces picks up that reflection change automatically
+through `makeRimFinishMaterial` — compare it under the same light with `scripts/render/shoot.cjs`
+and `&look=stage`, no extra wiring needed.
+
 ## TL;DR
 
 1. **Still ask for CAD first** (STEP/IGES). Nothing below beats it, and nothing has closed that gap.
