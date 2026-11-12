@@ -175,6 +175,14 @@ export const App: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [summaryImages, setSummaryImages] = useState<string[]>([]);
+  // The latest stills, for the PDF: it can be asked for before they are taken (they take a moment, and the gate has a form)
+  const summaryImagesRef = useRef<string[]>([]);
+  summaryImagesRef.current = summaryImages;
+  /** The summary's three stills once they are there (the PDF prints exactly these), or whatever there is after 30 s. */
+  const stillsForPdf = async () => {
+    for (let waited = 0; summaryImagesRef.current.length < 3 && waited < 30000; waited += 200) await new Promise((r) => setTimeout(r, 200));
+    return summaryImagesRef.current;
+  };
   // shared: undefined while the copy every device can open is being written, false if it could not be
   const [configCode, setConfigCode] = useState<{ key: string; code: string; shared?: boolean } | null>(null);
   const saveToken = useRef(0);
@@ -941,7 +949,7 @@ export const App: React.FC = () => {
               price,
               region,
               code: configCode?.code ?? '',
-              images: summaryImages
+              images: await stillsForPdf()
             });
           }}
         />
