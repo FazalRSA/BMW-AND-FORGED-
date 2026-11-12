@@ -80,5 +80,46 @@
    2.413,
    1.04
   ]
+ },
+ "m3_touring_g81": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7953,
+    0.3464,
+    1.537,
+    0.9898
+   ],
+   "front-right": [
+    0.7953,
+    0.3464,
+    1.5371,
+    0.9898
+   ],
+   "rear-left": [
+    -0.7953,
+    0.3464,
+    -1.311,
+    0.9898
+   ],
+   "rear-right": [
+    0.7953,
+    0.3464,
+    -1.311,
+    0.9898
+   ]
+  },
+  "footprint": [
+   2.41,
+   1.039
+  ]
  }
 }

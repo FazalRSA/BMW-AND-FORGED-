@@ -183,7 +183,7 @@ export const BMW_MODELS: CarModel[] = [
     // Frames-only (Blendkit Royalty Free "BMW M3 Touring 2025", Zifir3D): no modelUrl, see the iX3 above
     id: 'm3_touring_g81',
     name: 'BMW M3 Touring',
-    badge: 'M3 Competition Touring G81',
+    badge: 'M3 Touring G81',
     generation: 'G81',
     chassisCode: 'G81 M3 Touring',
     // 2024 facelift (LCI), Competition M xDrive: 530 PS / 390 kW, 650 Nm, 0-100 km/h 3.6 s (spec databases; the

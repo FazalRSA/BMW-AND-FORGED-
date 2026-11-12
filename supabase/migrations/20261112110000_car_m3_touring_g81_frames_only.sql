@@ -7,7 +7,7 @@
 
 insert into public.cars (id, name, badge, generation, chassis_code, engine, power, torque, acceleration,
   recommended_wheel_fitment, body_style, model_url, sort_order, active, model_rotation_deg, model_length_m, paint_ids)
-values ('m3_touring_g81', 'BMW M3 Touring', 'M3 Competition Touring G81', 'G81', 'G81 M3 Touring',
+values ('m3_touring_g81', 'BMW M3 Touring', 'M3 Touring G81', 'G81', 'G81 M3 Touring',
   '3.0L S58 Twin-Turbo Inline-6', '523 HP / 530 PS', '650 Nm (479 lb-ft)', '0-100 km/h in 3.6s',
   '{"front":"19 x 9.5J","rear":"20 x 10.5J","pcd":"5x112","cb":"66.6mm"}'::jsonb, 'touring', null, 6, true, 0, 4.8,
   array['isle_of_man_green','brooklyn_grey','portimao_blue','sao_paulo_yellow','toronto_red','fire_red',
