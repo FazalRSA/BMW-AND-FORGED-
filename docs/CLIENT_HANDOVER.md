@@ -257,7 +257,7 @@ the sheet (they are the same for both sizes, as the sheet gives one price per de
 | **FSA003** | 20", 21" | Silver, Hyper Black | R75 000 |
 | **FSA004** | 20", 21" | Silver, Hyper Black, Gloss Black | R70 000 |
 | **FF-1** | 20", 21" | Silver, Liquid Metal | R80 000; Liquid Metal R95 000 |
-| **FF-3** | 20", 21" | Pure Bronze, Glossy Black, Liquid Metal | R80 000; Liquid Metal R95 000 |
+| **FF-3** | 20", 21" | Pure Bronze, Gloss Black, Liquid Metal | R80 000; Liquid Metal R95 000 |
 
 The sheet's fitment notes (the car each set was listed for, PCD, offset, centre bore) are in each wheel's
 description. The configurator still lets a customer put any of the six on any of the four cars: the sheet

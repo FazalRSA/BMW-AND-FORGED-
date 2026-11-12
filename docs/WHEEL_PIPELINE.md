@@ -16,7 +16,7 @@ The configurator builds each rim face in 3D from a single PNG (`services/wheelKi
 - **The barrel behind the outer spokes** may stay in the photo. The app traces the arms across it to
   the lip. Cutting it out between the arms gives the cleanest result.
 - **Only the cut-out's shape is used for the 3D face.** Its colour comes from the finish the customer
-  picks (Liquid Metal, Bronze Matte, Black Gloss, Silver; see the `forgedsa-rim-finishes` skill).
+  picks (Liquid Metal, Bronze Matte, Gloss Black, Silver; see the `forgedsa-rim-finishes` skill).
   - The ingest still maps every photo to **neutral light grey**, because the flat fallback (no
     transparency, or 3D spokes switched off) shows the photo itself, multiplied by the finish.
   - A gold photo would tint every finish gold there.
@@ -45,7 +45,7 @@ there.
 | `code` | `FSA-02` | Optional; the wheel's id is built from it (`forged_fsa_02`), so keep it stable. |
 | `sizes` | `19\|20\|21\|22` | Separate values with `\|`. |
 | `prices_zar` or `prices_usd` | `68000\|74000\|82000\|92000` | Price for a set of four, one per size. Rand is converted at the `config/brand.ts` rate. |
-| `finishes` | `Liquid Metal\|Bronze Matte\|Black Gloss\|Silver` | Names or ids from the Finishes tab. |
+| `finishes` | `Liquid Metal\|Bronze Matte\|Gloss Black\|Silver` | Names or ids from the Finishes tab. |
 | `subtitle`, `description`, `highlights` | | Optional copy; highlights separated by `\|`. The AI writes them if blank. |
 | `style` | `Monoblock Forged` | Optional line under the name on the collection page. The AI suggests one if blank. |
 | `skip` | `yes` | Optional. `yes` leaves the row alone on the next run (used for the wheels already live). |

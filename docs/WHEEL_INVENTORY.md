@@ -19,7 +19,7 @@ Source of truth: Supabase `public.wheels` and `public.wheel_finishes` (migration
 | FSA003 | `forged_fsa_03` (kept: older share codes point at it) | 20", 21" | Silver → `silver`; Hyper Black → `hyper_black` | R75 000 → 4120.88 | `forged_fsa_03.glb` (website `fsa003.glb`); thumbnail cut from the website photo | M3 Sedan (G80), PCD 5×112, ET8/15, CB 66.6 |
 | FSA004 | `forged_fsa004` | 20", 21" | Silver → `silver`; Hyper Black → `hyper_black`; Gloss Black → `black` | R70 000 → 3846.15 | `forged_fsa004.glb` (website `fsa004.glb`) | M3 Sedan / M3 Competition (G80), PCD 5×112, ET8/15, CB 66.6 |
 | FF-1 | `sixnine_ff1` | 20", 21" | Silver → `silver`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff1.glb` (website `ff-1.glb`) | M3 Sedan / M3 Competition (G80), PCD 5×112, ET15/20 (ET15/17 for Liquid Metal), CB 66.6 |
-| FF-3 | `sixnine_ff3` | 20", 21" | Pure Bronze → `pure_bronze`; Glossy Black → `black`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff3.glb` (website `ff-3.glb`) | M3 Competition Sedan (G80), PCD 5×112, ET15/17, CB 66.6 |
+| FF-3 | `sixnine_ff3` | 20", 21" | Pure Bronze → `pure_bronze`; Gloss Black → `black`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff3.glb` (website `ff-3.glb`) | M3 Competition Sedan (G80), PCD 5×112, ET15/17, CB 66.6 |
 
 Notes
 
@@ -58,8 +58,8 @@ Notes
 | Hyper Black | `hyper_black` | dark gloss metallic (bright flop, near-black pockets) | #3a3e44, 0.9, 0.24, 0.9 |
 | Polished Face | `polished_face` | bare polished aluminium | #e6e9ec, 1.0, 0.08, 0.6 |
 | Silver | `silver` (existing) | metallic silver paint | #c3c8cd, 0.9, 0.28, 0.7 |
-| Gloss Black / Glossy Black | `black` (existing, "Black Gloss") | gloss black paint | #141618, 0.7, 0.15, 0.95 |
-| Pure Bronze | `pure_bronze` | gloss metallic bronze | #9c6b3a, 0.9, 0.3, 0.85 |
+| Gloss Black | `black` (renamed from "Black Gloss" on 2026-11-12) | gloss black paint | #141618, 0.7, 0.15, 0.95 |
+| Pure Bronze | `pure_bronze` | satin metallic bronze (SIXNINE's chocolate bronze; was gloss #9c6b3a until 2026-11-12) | #6e4a30, 0.85, 0.45, 0.3 |
 | Liquid Metal | `liquid_metal` (existing) | polished chrome | #dfe4e8, 0.98, 0.12, 1.0 |
 | Black Matte | `black_matte` | satin solid black (no flake, no flop) | #26282b, 0.0, 0.5, 0.0 |
 

@@ -26,7 +26,7 @@ recipe for each kind. `bronze` (Bronze Matte) is offered on hidden wheels only.
 | Finish (id) | Admin values | Kind (rule) | What the engine renders |
 |---|---|---|---|
 | Liquid Metal (`liquid_metal`) | #dfe4e8, metal 0.98, rough 0.12, clear 1.0 | **polished** (metal ≥ 0.95, rough ≤ 0.16) | bare polished metal: metal 1, roughness 0.05–0.1, mirror clear coat (0.02) |
-| Black Gloss (`black`) | #141618, metal 0.7, rough 0.15, clear 0.95 | **gloss paint** (linear luminance < 0.03 or metal < 0.3; rough ≤ 0.35) | black **paint** (metal 0, base roughness 0.4) under a gloss clear coat (≥ 0.9, roughness 0.03) |
+| Gloss Black (`black`) | #141618, metal 0.7, rough 0.15, clear 0.95 | **gloss paint** (linear luminance < 0.03 or metal < 0.3; rough ≤ 0.35) | black **paint** (metal 0, base roughness 0.4) under a gloss clear coat (≥ 0.9, roughness 0.03) |
 | Bronze Matte (`bronze`) | #8f6738, metal 0.8, rough 0.55, clear 0.1 | **satin metallic** (rough ≥ 0.42; metal < 0.3 = matte solid paint) | metallic paint (metal ≥ 0.75, rough 0.42–0.7) under a satin clear coat (roughness 0.5); strong flop 0.5, flake 0.09 |
 | Silver (`silver`) | #c3c8cd, metal 0.9, rough 0.28, clear 0.7 | **metallic paint** (everything else) | metallic paint (rough ≥ 0.3) under a gloss clear coat (0.04); flop 0.7, flake 0.06 |
 
@@ -37,7 +37,7 @@ Why each recipe:
   liquid metal only because of what it reflects, so it needs the softbox studio
   (`services/studioSoftbox.ts`). Under a flat environment it goes dull grey. Roughness stays
   ≥ 0.05, because below that the thin spoke edges sparkle (alias) between frames.
-- **Black Gloss.** Gloss black wheels are painted or powder-coated: a non-metal. The old reading
+- **Gloss Black.** Gloss black wheels are painted or powder-coated: a non-metal. The old reading
   (metal 0.7 with a near-black colour) reflected almost nothing from the base, so spokes were
   flat black cut-outs with a rim of highlight.
   - As paint, the base gives its own 4% reflection with a soft sheen (roughness 0.4).
@@ -142,12 +142,12 @@ an edit in Finishes changes the live site at once.
 2. **Look for, per finish:**
    - **Liquid Metal:** crisp reflections of the softbox panels on the spoke faces; no sparkle
      on the edges.
-   - **Black Gloss:** the spoke *shapes* visible through soft reflections; sharp highlights
+   - **Gloss Black:** the spoke *shapes* visible through soft reflections; sharp highlights
      along the edges; never a flat black silhouette.
    - **Bronze Matte:** no mirror highlight anywhere, even on the lip and at grazing angles;
      darker sides; brown-gold, not orange.
    - **Silver:** brighter faces, darker sides; not chrome-like.
-   - **Gold / Pure Bronze:** warm metallic paint with flop and sharp clear-coat reflections; gold
+   - **Gold:** warm metallic paint (Pure Bronze is satin metallic since 2026-11-12) with flop and sharp clear-coat reflections; gold
      reads gold, not yellow or brass-orange; bronze brown-gold, not orange.
    - **Hyper Black:** dark gloss metallic whose faces flash bright as they turn (flop); pockets
      near-black; never a flat black cut-out, never as light as Silver.
@@ -188,7 +188,7 @@ The owner's stock sheet names the finishes customers see; they map onto these ro
 | Gold | `gold` | metallic paint | #c9a24e, 0.9, 0.32, 0.85 |
 | Hyper Black | `hyper_black` | metallic paint (dark, bright flop) | #3a3e44, 0.9, 0.24, 0.9 |
 | Polished Face | `polished_face` | polished | #e6e9ec, 1.0, 0.08, 0.6 |
-| Pure Bronze | `pure_bronze` | metallic paint | #9c6b3a, 0.9, 0.3, 0.85 |
+| Pure Bronze | `pure_bronze` | satin metallic (SIXNINE chocolate bronze; gloss #9c6b3a until 2026-11-12) | #6e4a30, 0.85, 0.45, 0.3 |
 | Black Matte | `black_matte` | satin solid (no flake/flop) | #26282b, 0.0, 0.5, 0.0 |
 | Silver / Gloss Black / Liquid Metal | `silver` / `black` / `liquid_metal` | as above | unchanged |
 
