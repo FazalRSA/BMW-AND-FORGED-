@@ -37,9 +37,14 @@ nothing in the app's runtime behaviour, schema, or data changed)
 - Google provider off in Supabase (owner dashboard steps, docs/ACCOUNTS.md).
 - Dealer allowlisted email has no Supabase Auth user.
 
-**Note (added while resolving a merge conflict from `repo-cleanup-and-navigation`, 2026-11-12):**
-this feature's own Drive and multi-image-reconstruction exploration overlaps with
-`docs/RIM_PHOTO_TO_3D_SPEC.md`'s "Pilot log" (a separate session ran a Meshy-via-Higgsfield
-multi-image pilot on FSA004 from the same "WEBSITE wheels" Drive folder, also blocked on
-credits/an API key, just a different provider — Tripo here, Meshy/Higgsfield there). Worth
-reconciling before both run the same spend twice.
+**Decision (2026-11-12, `repo-cleanup-and-navigation` session):** this feature's own Drive and
+multi-image-reconstruction exploration overlapped with `docs/RIM_PHOTO_TO_3D_SPEC.md`'s "Pilot
+log" — same idea (multi-image AI reconstruction of a stocked wheel from the "WEBSITE wheels" Drive
+folder), two providers, both blocked. **Resolved in favour of the Meshy-via-Higgsfield pilot**
+(`repo-cleanup-and-navigation`'s): it was further along — FSA004's two real angle photos already
+uploaded and confirmed, the job already preflighted at 20 credits — and its remaining blocker is a
+plain credit top-up, not a new API key/credential to provision. The other session
+(`session_015obiwacWWAXLcwnsYzmqUf`, branch `claude/clever-brahmagupta-xnnpfj`) was messaged on
+2026-11-12 and asked to hold off on its own Tripo multi-image spike; the rest of its
+`presentation-ready` work (lighting/finishes, dealer/Google auth) is unaffected and should continue.
+If that session disagrees with this call, it said so in its reply — check before assuming it holds.
