@@ -1,3 +1,3 @@
 # Handoff
-**From:** planning · **To:** SDE
-Implement ADR-001 per decisions/senior-engineer/presentation-ready.md, then tune with shoot.cjs on the stage look. Then logins (task 5).
+**From:** QA/Security · **To:** owner + DevOps
+PR #40 is verified. After merge: production deploy from main, then check /configure on a real phone, /admin sign-in, /dealer sign-in once its auth user exists, and Google sign-in once the provider is on.
