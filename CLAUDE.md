@@ -18,6 +18,7 @@
 - Harness runs (journey.cjs, e2e.cjs) stub Supabase writes; never create real leads (each one emails the owner)
 - Prepared cars/rims go in with scripts/ingest-car.mjs / scripts/ingest-rim.mjs (docs/ADD_PREPARED_CAR.md); migrations can be applied from the sandbox with the Supabase connector (apply_migration) when the owner asks: read the live schema first, apply, read it back, never apply unasked
 - Blender MCP: Blender 5.3 + mcp-for-blender@2.2.7 (.mcp.json) + the Blendkit add-on (the owner's zip; not downloadable); a fresh container needs scripts/blender-mcp/setup.sh <zip> then start.sh (UI on Xvfb, the add-on refuses -b); Blendkit is driven via execute_blender_code (docs/BLENDER_MCP.md)
+- Frames-only cars (licence forbids serving the GLB, e.g. Blendkit Royalty Free; first: ix3_m60): no modelUrl, body = Cycles frames + per-view depth.png, wheel layout in public/renders/manifest.json (framesOnly); build with prepare_blend.py -> export-scene.cjs (CAR_QUERY) -> render_depth.py + render_car.py -> frames-only.sh; check with scripts/render/frames-car.cjs (fails on any .glb request for the car); licensed files only in /opt and .scratch/private (docs/ADD_PREPARED_CAR.md)
 
 ### Key Decisions
 - Decision: allow rules in .claude/settings.json for git, bun/npm, node, ffmpeg and basic file commands only — Reason: cut prompts without pre-approving credential lookups or external installs

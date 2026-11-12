@@ -88,7 +88,15 @@ const paletteOf = (car) => {
 // names are the slides' own (the dots' labels); the configurator shows the catalogue's name for the car.
 const heroSrc = fs.readFileSync(path.join(__dirname, '../../components/journey/HeroStage.tsx'), 'utf8');
 const HERO = [...heroSrc.matchAll(/\{ carId: '([^']+)', name: '([^']+)', paint: '([^']+)', paintId: '([^']+)' \}/g)].map((m) => ({ carId: m[1], name: m[2], paint: m[3], paintId: m[4] }));
-const LINE_UP = CARS.some((c) => c.model_url) ? CARS.filter((c) => c.model_url) : CARS;
+// a frames-only car (renders/manifest.json framesOnly, no GLB) is on offer too
+const FRAMES_ONLY = (() => {
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(__dirname, '../../public/renders/manifest.json'), 'utf8'));
+    return new Set(Object.keys(m).filter((id) => m[id] && m[id].framesOnly));
+  } catch { return new Set(); }
+})();
+const hasBody = (c) => c.model_url || FRAMES_ONLY.has(c.id);
+const LINE_UP = CARS.some(hasBody) ? CARS.filter(hasBody) : CARS;
 const SLIDES = (HERO.some((s) => LINE_UP.some((c) => c.id === s.carId)) ? HERO.filter((s) => LINE_UP.some((c) => c.id === s.carId)) : HERO).map((s) => {
   const car = LINE_UP.find((c) => c.id === s.carId) || { id: s.carId, name: s.name, paint_ids: [] };
   const palette = paletteOf(car);

@@ -51,6 +51,7 @@ import {
   StudioTheme,
   Custom2DWheelConfig
 } from '../types';
+import type { FramesLayout } from './renderedBody';
 
 /**
  * The placeholder body has three shapes; other body styles use the nearest one:
@@ -283,7 +284,7 @@ export class CarConfiguratorEngine {
     const aspect = w / (h > 0 ? h : 1);
 
     // Camera
-    this.camera = new THREE.PerspectiveCamera(38, aspect, 0.1, 100);
+    this.camera = new THREE.PerspectiveCamera(CarConfiguratorEngine.RENDER_FOV, aspect, 0.1, 100);
     this.camera.position.copy(this.targetCameraPos);
 
     // Renderer
@@ -983,11 +984,17 @@ export class CarConfiguratorEngine {
    * Shows the car's uploaded GLB, or the procedural body when it has none (or it fails to load).
    * Resolves to which one ended up on screen.
    */
-  public async loadCar(car: CarModel): Promise<'model' | 'procedural'> {
+  public async loadCar(car: CarModel): Promise<'model' | 'procedural' | 'frames'> {
     const token = ++this.carLoadToken;
     this.stageOps++;
     try {
       this.proceduralWheelScale = car.bodyStyle === 'suv' ? 1.14 : 1;
+      const frames = this.framesCars[car.id];
+      if (frames) {
+        // Frames-only: nothing is downloaded, whatever modelUrl says
+        if (token === this.carLoadToken) this.mountFramesCar(car, frames);
+        return 'frames';
+      }
       if (car.modelUrl) {
         try {
           const template = await this.loadCarTemplate(car.modelUrl);
@@ -1002,6 +1009,7 @@ export class CarConfiguratorEngine {
       }
       if (token === this.carLoadToken) {
         this.mountedModelUrl = null;
+        this.framesCarId = null;
         this.buildBMWCarBody(car.bodyStyle);
         this.resetWheelLayout();
         this.markShadowDirty();
@@ -1084,7 +1092,7 @@ export class CarConfiguratorEngine {
   /** Warms the model cache so switching to this car is instant. Runs when the browser is idle. */
   public preloadCar(car: CarModel) {
     const url = car.modelUrl;
-    if (!url) return;
+    if (!url || this.framesCars[car.id]) return;
     if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
     const run = () => {
       if (!this.isDisposed) this.loadCarTemplate(url).catch(() => {});
@@ -1103,7 +1111,7 @@ export class CarConfiguratorEngine {
     const distance = 11;
     this.stageOps++;
     try {
-      const loading = car.modelUrl ? this.loadCarTemplate(car.modelUrl).catch(() => null) : Promise.resolve(null);
+      const loading = car.modelUrl && !this.framesCars[car.id] ? this.loadCarTemplate(car.modelUrl).catch(() => null) : Promise.resolve(null);
       await this.animateDrive(this.carGroup.position.z, direction * distance, 0.85, true);
       await loading;
       this.carGroup.position.z = -direction * distance;
@@ -1193,7 +1201,45 @@ export class CarConfiguratorEngine {
     }
   }
 
+  /** Frames-only cars the engine should mount without a GLB (from renders/manifest.json via loadFramesCars). */
+  public setFramesCars(cars: Record<string, FramesLayout>) {
+    this.framesCars = cars;
+  }
+
+  public isFramesCar(carId: string) {
+    return !!this.framesCars[carId];
+  }
+
+  /**
+   * A frames-only car: no body in the scene, only the forged wheels where the manifest puts them. It is meant to be
+   * shown in rendered mode (setRenderedBody), where the Blender frame is the body and depth.png masks the far wheels.
+   */
+  private mountFramesCar(car: CarModel, layout: FramesLayout) {
+    this.ownCaliperPaints.forEach((m) => m.dispose());
+    this.ownCaliperPaints = [];
+    this.ownTyreMeshes.clear();
+    this.ownDiscMeshes.clear();
+    this.factoryInches = {
+      front: CarConfiguratorEngine.inchesFrom(car.recommendedWheelFitment?.front),
+      rear: CarConfiguratorEngine.inchesFrom(car.recommendedWheelFitment?.rear),
+    };
+    this.disposeBody();
+    this.mountedModelUrl = null;
+    this.framesCarId = car.id;
+    this.setCarFootprint(layout.footprint[0] + 0.1, layout.footprint[1] + 0.28); // the margins mountCarModel adds
+    this.wheelAssemblies.forEach((a) => {
+      const [x, y, z, s] = layout.wheels[`${a.isFront ? 'front' : 'rear'}-${a.isRight ? 'right' : 'left'}`];
+      a.group.position.set(x, y, z);
+      a.group.scale.setScalar(s);
+      a.caliper.visible = true; // no model calipers: ours draw
+    });
+    this.applyOwnPartsVisibility();
+    this.markShadowDirty();
+    this.syncRenderedBody();
+  }
+
   private mountCarModel(model: THREE.Object3D, car: CarModel) {
+    this.framesCarId = null;
     // Orient: this scene drives along Z, so turn models authored along X first.
     model.updateMatrixWorld(true);
     const rawSize = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
@@ -2453,6 +2499,8 @@ export class CarConfiguratorEngine {
   // ----------------------------------------------------
   public setCameraPreset(view: CameraViewPreset, opts: { instant?: boolean; aspect?: number } = {}) {
     if (this.renderedBody) opts = { instant: true, aspect: CarConfiguratorEngine.RENDER_ASPECT };
+    this.presetView = view;
+    this.syncFramesDepth();
     // Whole-car views back off on narrow screens (or when UI covers part of it) so the car always fits.
     // `aspect` frames for a fixed picture (the summary stills) instead of the screen.
     const w = this.container.clientWidth || 1;
@@ -2563,6 +2611,18 @@ export class CarConfiguratorEngine {
   })();
   private static DEPTH_ONLY = new THREE.MeshBasicMaterial({ colorWrite: false });
   private renderedBody = false;
+  // Frames-only cars (services/renderedBody.ts FramesLayout): the body exists only as images, so there is no GLB to
+  // place the wheels or to mask the far-side wheels. The wheels come from the manifest; the mask is the view's depth
+  // image (render_car.py --depth), drawn first as a depth-only quad over the frame (syncFramesDepth).
+  private framesCars: Record<string, FramesLayout> = {};
+  private framesCarId: string | null = null;
+  private presetView: CameraViewPreset | null = null;
+  private framesDepth = new Map<string, Promise<THREE.Texture | null>>();
+  private framesDepthReady = new Map<string, THREE.Texture | null>();
+  private depthOccluder: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial> | null = null;
+  /** Metres covered by depth.png's 16 bits (render_car.py DEPTH_RANGE); 65535 = nothing there. */
+  static FRAMES_DEPTH_RANGE = 40;
+  static RENDER_FOV = 38; // the camera's vertical field of view, as export-scene.cjs hands it to Blender
   // The stage look (setLook): the viewer's dome, floor, pool and reflection coves are built on first use and stay in the scene, hidden when the softbox studio is on
   private lookWanted: StageLook = 'studio';
   private look: StageLook = 'studio';
@@ -2658,6 +2718,113 @@ export class CarConfiguratorEngine {
     if (this.contactShadow) this.contactShadow.group.visible = !on;
     this.wheelAssemblies.forEach((a) => {
       if (on) a.caliper.visible = true;
+    });
+    this.syncFramesDepth();
+  }
+
+  /** The depth image of a frames-only car's view (cached; null when it is missing or fails). */
+  private loadFramesDepth(carId: string, view: CameraViewPreset): Promise<THREE.Texture | null> {
+    const key = `${carId}/${view}`;
+    let p = this.framesDepth.get(key);
+    if (!p) {
+      p = new THREE.TextureLoader()
+        .loadAsync(`/renders/${carId}/${view}/depth.png`)
+        .then((tex) => {
+          // Data, not colour: no colour conversion, no filtering between depths, no mipmaps
+          tex.colorSpace = THREE.NoColorSpace;
+          tex.minFilter = tex.magFilter = THREE.NearestFilter;
+          tex.generateMipmaps = false;
+          tex.needsUpdate = true;
+          return tex;
+        })
+        .catch((err) => {
+          console.warn(`No depth image for ${key}: the far-side wheels will show through the body.`, err);
+          return null;
+        })
+        .then((tex) => {
+          this.framesDepthReady.set(key, tex);
+          return tex;
+        });
+      this.framesDepth.set(key, p);
+    }
+    return p;
+  }
+
+  /**
+   * A quad just in front of the camera, covering exactly what the Blender camera saw (RENDER_FOV, RENDER_ASPECT), that
+   * writes the frame's depth and no colour. Drawn first, it hides whatever of the live wheels the rendered body covers,
+   * as the GLB depth mask does for the other cars. Placed from the camera at draw time, so a view offset or a canvas
+   * that is not exactly 1.6:1 still lines it up with the frame.
+   */
+  private ensureDepthOccluder() {
+    if (this.depthOccluder) return this.depthOccluder;
+    const material = new THREE.ShaderMaterial({
+      uniforms: { depthMap: { value: null }, range: { value: CarConfiguratorEngine.FRAMES_DEPTH_RANGE } },
+      vertexShader: /* glsl */ `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform mat4 projectionMatrix; // three.js declares it for the vertex stage only; it fills both
+        uniform sampler2D depthMap;
+        uniform float range;
+        varying vec2 vUv;
+        void main() {
+          vec4 t = texture2D(depthMap, vUv);
+          float code = floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5);
+          if (code >= 65535.0) {
+            gl_FragDepth = 1.0; // no body here: the wheels draw
+          } else {
+            float d = code / 65534.0 * range; // metres along the view axis
+            vec4 clip = projectionMatrix * vec4(0.0, 0.0, -d, 1.0);
+            gl_FragDepth = clamp(clip.z / clip.w * 0.5 + 0.5, 0.0, 1.0);
+          }
+          gl_FragColor = vec4(0.0);
+        }`,
+      depthTest: true,
+      depthWrite: true,
+      depthFunc: THREE.AlwaysDepth,
+      colorWrite: false,
+    });
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+    quad.frustumCulled = false;
+    quad.matrixAutoUpdate = false;
+    quad.renderOrder = -10;
+    quad.visible = false;
+    const dist = 0.2; // past the camera's near plane (0.1)
+    const halfH = dist * Math.tan(THREE.MathUtils.degToRad(CarConfiguratorEngine.RENDER_FOV / 2));
+    const local = new THREE.Matrix4().makeTranslation(0, 0, -dist).multiply(new THREE.Matrix4().makeScale(2 * halfH * CarConfiguratorEngine.RENDER_ASPECT, 2 * halfH, 1));
+    quad.onBeforeRender = (_r, _s, camera) => {
+      quad.matrixWorld.multiplyMatrices(camera.matrixWorld, local);
+    };
+    this.scene.add(quad);
+    return (this.depthOccluder = quad);
+  }
+
+  /** Shows the depth quad for a frames-only car in rendered mode, once the view's depth image is in. */
+  private syncFramesDepth() {
+    const carId = this.framesCarId, view = this.presetView;
+    if (!this.renderedBody || !carId || !view) {
+      if (this.depthOccluder) this.depthOccluder.visible = false;
+      return;
+    }
+    const key = `${carId}/${view}`;
+    const quad = this.ensureDepthOccluder();
+    if (this.framesDepthReady.has(key)) {
+      const tex = this.framesDepthReady.get(key) ?? null;
+      quad.material.uniforms.depthMap.value = tex;
+      quad.visible = !!tex;
+      return;
+    }
+    quad.visible = false; // until it loads: never mask with another view's depth
+    this.loadFramesDepth(carId, view).then(() => {
+      if (this.isDisposed) return;
+      if (this.framesCarId === carId && this.presetView === view) {
+        this.syncFramesDepth();
+        this.requestRender();
+      }
     });
   }
 
@@ -2875,6 +3042,9 @@ export class CarConfiguratorEngine {
     // The stills are always 16:9 (the summary page and the PDF lay them out that way), whatever the
     // screen: a phone's portrait canvas used to be cropped into a 16:9 frame, cutting the car off.
     const outW = 1600, outH = 900;
+    // A frames-only car has no 3D body: a live still would be four wheels in the air. Its stills come from
+    // renderedStills only; the summary shows empty frames rather than that.
+    if (this.framesCarId) return [];
     const wasRendered = this.renderedBody; // stills need the 3D body
     if (wasRendered) {
       this.renderedBody = false;
@@ -2952,6 +3122,9 @@ export class CarConfiguratorEngine {
   public async captureWheelLayers(views: CameraViewPreset[], width = 1440): Promise<HTMLCanvasElement[]> {
     const target = await this.loadRenderEnv();
     if (!target || this.isDisposed) return [];
+    const framesCarId = this.framesCarId;
+    if (framesCarId) await Promise.all(views.map((v) => this.loadFramesDepth(framesCarId, v)));
+    if (this.isDisposed) return [];
     const outW = width, outH = Math.round(width / CarConfiguratorEngine.RENDER_ASPECT);
     const wasRendered = this.renderedBody;
     const saved = {
@@ -3013,7 +3186,7 @@ export class CarConfiguratorEngine {
   }
 
   public setAutoRotate(enabled: boolean) {
-    if (this.renderedBody) enabled = false;
+    if (this.renderedBody || this.framesCarId) enabled = false; // a frames-only car has no body to turn
     this.isAutoRotate = enabled;
     this.requestRender();
   }

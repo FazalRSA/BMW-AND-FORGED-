@@ -120,6 +120,37 @@ export const BMW_MODELS: CarModel[] = [
     modelLengthM: 5.09,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
+  },
+  {
+    // Frames-only: a Blendkit Royalty Free model, so the browser never gets its GLB (no modelUrl). The body is the
+    // Cycles frames in public/renders/ix3_m60 and the wheel layout in public/renders/manifest.json
+    // (docs/ADD_PREPARED_CAR.md, "Frames-only cars").
+    id: 'ix3_m60',
+    name: 'BMW iX3 M60',
+    badge: 'iX3 M60 xDrive',
+    generation: 'NA5',
+    chassisCode: 'NA5 iX3 M60',
+    // BMW Group press release, 8 Oct 2026 (figures provisional): one motor per axle, 450 kW / 612 hp, 875 Nm,
+    // 0-100 km/h 3.9 s; 21-inch M wheels standard (22-inch optional). Rim width and offset are not published:
+    // 21 x 9J is the 21-inch iX3 50 xDrive fitment in the tyre guides; hub 5x112 / 66.6 mm. Owner to confirm.
+    engine: 'Dual-motor electric (one per axle)',
+    power: '612 HP / 450 kW',
+    torque: '875 Nm (645 lb-ft)',
+    acceleration: '0-100 km/h in 3.9s',
+    recommendedWheelFitment: {
+      front: '21 x 9J',
+      rear: '21 x 9J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    // From the existing palette until the owner picks the iX3's own colours
+    paintIds: [
+      'alpine_white', 'mineral_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey', 'fire_red', 'storm_bay',
+      'frozen_deep_grey_c64'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.79
   }
 ];
 
