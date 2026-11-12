@@ -28,10 +28,12 @@ export const DealerPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   useEffect(() => {
     const adopt = (s: Session | null) => setSession((prev) => (identityOf(prev) === identityOf(s) ? prev : s));
-    supabase.auth.getSession().then(({ data }) => {
-      adopt(data.session);
-      setAuthChecked(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => adopt(data.session))
+      // a failed session read counts as signed out, so the sign-in form shows instead of the spinner forever
+      .catch(() => adopt(null))
+      .finally(() => setAuthChecked(true));
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY') adopt(s);
