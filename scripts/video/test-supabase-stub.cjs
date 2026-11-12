@@ -1,6 +1,6 @@
 /** Runs the admin capture's Supabase stub on fake routes. node scripts/video/test-supabase-stub.cjs  (exit 0 = all pass) */
 const assert = require('node:assert/strict');
-const { answerSupabase, CaptureStop, exitCodeFor } = require('./supabase-stub.cjs');
+const { answerSupabase, CaptureStop, exitCodeFor, makeRouteHandler } = require('./supabase-stub.cjs');
 const fs = require('node:fs'); const path = require('node:path');
 
 const session = { access_token: 't', user: { id: 'u', email: 'dealer@example.com' } };
@@ -13,7 +13,25 @@ function fakeRoute(method, url) {
 const run = (method, url) => { const r = fakeRoute(method, url); return answerSupabase(r, { FX, session, email: 'dealer@example.com' }).then(() => r.out.fulfilled, (e) => { throw e; }); };
 const body = (o) => JSON.parse(o.body);
 
+/** Runs the real route handler the capture registers, with a spy for exit, and returns what it reported and exited with. */
+async function handle(method, url) {
+  const seen = { exit: null, report: null };
+  const handler = makeRouteHandler({ FX, session, email: 'dealer@example.com', exit: (c) => { seen.exit = c; }, report: (m) => { seen.report = m; } });
+  await handler(fakeRoute(method, url));
+  return seen;
+}
+
 const tests = {
+  'route handler: unexpected write exits 3 with the message': async () => {
+    const seen = await handle('POST', 'https://x.supabase.co/rest/v1/leads');
+    assert.equal(seen.exit, 3); assert.match(seen.report, /UNEXPECTED WRITE POST leads/);
+  },
+  'route handler: unknown call exits 3': async () => assert.equal((await handle('GET', 'https://x.supabase.co/graphql/v1')).exit, 3),
+  'route handler: stub failure exits 4 and names the URL': async () => {
+    const seen = await handle('GET', 'https://x.supabase.co/rest/v1/broken?active=eq.true');
+    assert.equal(seen.exit, 4); assert.match(seen.report, /route handler failed for .*broken/);
+  },
+  'route handler: a normal answer does not exit': async () => assert.equal((await handle('GET', 'https://x.supabase.co/rest/v1/cars')).exit, null),
   'exit code: a CaptureStop keeps its code (3)': async () => assert.equal(exitCodeFor(new CaptureStop(3, 'x')), 3),
   'exit code: any other error is a stub failure (4)': async () => assert.equal(exitCodeFor(new TypeError('x')), 4),
   'no secrets in the capture scripts (keys, tokens, private keys)': async () => {

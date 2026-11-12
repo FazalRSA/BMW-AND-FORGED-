@@ -48,4 +48,19 @@ function exitCodeFor(error) {
   return error instanceof CaptureStop ? error.exitCode : 4;
 }
 
-module.exports = { answerSupabase, CaptureStop, exitCodeFor };
+/**
+ * The Playwright route handler for the admin capture: answers each Supabase call, and on a stop or a failure
+ * reports it and exits with exitCodeFor(error). `exit` is injected so the test can observe the code without exiting.
+ */
+function makeRouteHandler({ FX, session, email, log = () => {}, exit = (code) => process.exit(code), report = (m) => console.error(m) }) {
+  return async (route) => {
+    try {
+      await answerSupabase(route, { FX, session, email, log });
+    } catch (e) {
+      report(e instanceof CaptureStop ? e.message : `route handler failed for ${route.request().url()}: ${e.message}`);
+      exit(exitCodeFor(e));
+    }
+  };
+}
+
+module.exports = { answerSupabase, CaptureStop, exitCodeFor, makeRouteHandler };
