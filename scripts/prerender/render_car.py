@@ -75,6 +75,9 @@ CAR_FIXES = {
     'm4_cs_g82': {'keep_normals': True, 'authored_lamps': True},
     'm5_g90': {'keep_normals': True, 'authored_lamps': True},
     'm5_touring_g99': {'keep_normals': True, 'authored_lamps': True},
+    # Blendkit (frames-only: the browser never gets its GLB), from scripts/prerender/prepare_blend.py
+    'ix3_m60': {'keep_normals': True, 'authored_lamps': True},
+    'm3_g80': {'keep_normals': True, 'authored_lamps': True},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors

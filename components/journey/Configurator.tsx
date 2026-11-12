@@ -60,7 +60,8 @@ export interface ConfiguratorProps {
   cameraView: CameraViewPreset;
   autoRotate: boolean;
   onCamera: (view: CameraViewPreset) => void;
-  onToggleRotate: () => void;
+  /** Absent for a frames-only car (its body is fixed images: no turntable). */
+  onToggleRotate?: () => void;
   onPaint: (paint: PaintColor) => void;
   onWheel: (wheel: WheelDesign) => void;
   onSize: (size: string) => void;
@@ -136,10 +137,14 @@ const StepDrawer: React.FC<ConfiguratorProps> = (p) => {
               {v.label}
             </button>
           ))}
-          <span className="mx-0.5 sm:mx-1 h-5 w-px bg-line" />
-          <IconButton label={p.autoRotate ? 'Stop turntable' : 'Turntable'} onClick={p.onToggleRotate} active={p.autoRotate} className="h-10 w-10 shrink-0">
-            {p.autoRotate ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 translate-x-px" />}
-          </IconButton>
+          {p.onToggleRotate && (
+            <>
+              <span className="mx-0.5 sm:mx-1 h-5 w-px bg-line" />
+              <IconButton label={p.autoRotate ? 'Stop turntable' : 'Turntable'} onClick={p.onToggleRotate} active={p.autoRotate} className="h-10 w-10 shrink-0">
+                {p.autoRotate ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 translate-x-px" />}
+              </IconButton>
+            </>
+          )}
         </div>
       </div>
 

@@ -120,6 +120,64 @@ export const BMW_MODELS: CarModel[] = [
     modelLengthM: 5.09,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
+  },
+  {
+    // Frames-only: a Blendkit Royalty Free model, so the browser never gets its GLB (no modelUrl). The body is the
+    // Cycles frames in public/renders/ix3_m60 and the wheel layout in public/renders/manifest.json
+    // (docs/ADD_PREPARED_CAR.md, "Frames-only cars").
+    id: 'ix3_m60',
+    name: 'BMW iX3 M60',
+    badge: 'iX3 M60 xDrive',
+    generation: 'NA5',
+    chassisCode: 'NA5 iX3 M60',
+    // BMW Group press release, 8 Oct 2026 (figures provisional): one motor per axle, 450 kW / 612 hp, 875 Nm,
+    // 0-100 km/h 3.9 s; 21-inch M wheels standard (22-inch optional). Rim width and offset are not published:
+    // 21 x 9J is the 21-inch iX3 50 xDrive fitment in the tyre guides; hub 5x112 / 66.6 mm. Owner to confirm.
+    engine: 'Dual-motor electric (one per axle)',
+    power: '612 HP / 450 kW',
+    torque: '875 Nm (645 lb-ft)',
+    acceleration: '0-100 km/h in 3.9s',
+    recommendedWheelFitment: {
+      front: '21 x 9J',
+      rear: '21 x 9J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    // From the existing palette until the owner picks the iX3's own colours
+    paintIds: [
+      'alpine_white', 'mineral_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey', 'fire_red', 'storm_bay',
+      'frozen_deep_grey_c64'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.79
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 Sedan 2025", Zifir3D): no modelUrl, see the iX3 above
+    id: 'm3_g80',
+    name: 'BMW M3',
+    badge: 'M3 Competition G80',
+    generation: 'G80',
+    chassisCode: 'G80 M3',
+    // 2024 facelift (LCI), Competition M xDrive: 530 PS / 390 kW, 650 Nm, 0-100 km/h 3.5 s. Fitment from BMW's G80
+    // M3 Competition xDrive press kit (05/2021): 9.5J x 19 front, 10.5J x 20 rear. Owner to confirm for the LCI.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 530 PS',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'sedan',
+    paintIds: [
+      'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.79
   }
 ];
 

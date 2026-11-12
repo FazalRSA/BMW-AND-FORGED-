@@ -45,9 +45,10 @@ other files.
     Free car **must not be shipped as a live GLB** (mode A, the default of `scripts/ingest-car.mjs`). It
     can be used through pre-rendered images: Blender frames (mode B) or Cycles bodies with live wheels
     (mode C, planned). Modes: `docs/PRODUCT_SPEC_CARS_AND_WHEELS.md` sections 2, 4.1 and 8.
-  - As built today, mode B still serves the car's GLB (the engine keeps the body as an invisible depth
-    mask behind the frames, and the turntable and any view without a frame draw it live). That has to
-    change before a BlendKit car goes in; it is not built.
+  - Mode B still serves the car's GLB, so a BlendKit car goes in **frames-only** instead (built 2026-11-12):
+    no GLB served, wheels and a per-view depth mask from `public/renders/manifest.json`. Runbook:
+    `docs/ADD_PREPARED_CAR.md`, "Frames-only cars" (`prepare_blend.py`, `render_depth.py`, `frames-only.sh`).
+    First one: the BMW iX3 M60 (`ix3_m60`).
   - Those pages do not say anything about trademarks or real car brands, or whether the licence
     continues after a subscription ends. Both are open questions for the owner: ask before using one.
 
