@@ -237,7 +237,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks, o
   controls.autoRotate = !reduceMotion;
   controls.autoRotateSpeed = 1.2;
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 3.8);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
   keyLight.position.set(1.2, 2.2, 1.0);
   keyLight.castShadow = true;
   const shadowSize = window.innerWidth < 768 ? 1024 : 2048; // lighter on phones
@@ -251,7 +251,7 @@ function createStudioEngine(mount: HTMLDivElement, callbacks: EngineCallbacks, o
   keyLight.shadow.bias = -0.0004;
   keyLight.shadow.radius = 6;
   scene.add(keyLight);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f98, 1.4));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f98, 0.9));
 
   const floorGeo = new THREE.PlaneGeometry(12, 12);
   const floorMat = new THREE.ShadowMaterial({ opacity: 0.28 });
