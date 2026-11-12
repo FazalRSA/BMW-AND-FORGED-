@@ -59,7 +59,7 @@ Notes
 | Polished Face | `polished_face` | bare polished aluminium | #e6e9ec, 1.0, 0.08, 0.6 |
 | Silver | `silver` (existing) | metallic silver paint | #c3c8cd, 0.9, 0.28, 0.7 |
 | Gloss Black | `black` (renamed from "Black Gloss" on 2026-11-12) | gloss black paint | #141618, 0.7, 0.15, 0.95 |
-| Pure Bronze | `pure_bronze` | satin metallic bronze (SIXNINE's chocolate bronze; was gloss #9c6b3a until 2026-11-12) | #6e4a30, 0.85, 0.45, 0.3 |
+| Pure Bronze | `pure_bronze` | metallic bronze with a soft sheen (SIXNINE's chocolate bronze; was #9c6b3a until 2026-11-12; a satin #6e4a30 at rough 0.45 read as flat clay) | #75523f, 0.9, 0.3, 0.7 |
 | Liquid Metal | `liquid_metal` (existing) | polished chrome | #dfe4e8, 0.98, 0.12, 1.0 |
 | Black Matte | `black_matte` | satin solid black (no flake, no flop) | #26282b, 0.0, 0.5, 0.0 |
 

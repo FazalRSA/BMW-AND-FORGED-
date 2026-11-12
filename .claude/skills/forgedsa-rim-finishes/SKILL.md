@@ -147,7 +147,7 @@ an edit in Finishes changes the live site at once.
    - **Bronze Matte:** no mirror highlight anywhere, even on the lip and at grazing angles;
      darker sides; brown-gold, not orange.
    - **Silver:** brighter faces, darker sides; not chrome-like.
-   - **Gold:** warm metallic paint (Pure Bronze is satin metallic since 2026-11-12) with flop and sharp clear-coat reflections; gold
+   - **Gold / Pure Bronze:** warm metallic paint with flop and sharp clear-coat reflections; gold
      reads gold, not yellow or brass-orange; bronze brown-gold, not orange.
    - **Hyper Black:** dark gloss metallic whose faces flash bright as they turn (flop); pockets
      near-black; never a flat black cut-out, never as light as Silver.
@@ -188,7 +188,7 @@ The owner's stock sheet names the finishes customers see; they map onto these ro
 | Gold | `gold` | metallic paint | #c9a24e, 0.9, 0.32, 0.85 |
 | Hyper Black | `hyper_black` | metallic paint (dark, bright flop) | #3a3e44, 0.9, 0.24, 0.9 |
 | Polished Face | `polished_face` | polished | #e6e9ec, 1.0, 0.08, 0.6 |
-| Pure Bronze | `pure_bronze` | satin metallic (SIXNINE chocolate bronze; gloss #9c6b3a until 2026-11-12) | #6e4a30, 0.85, 0.45, 0.3 |
+| Pure Bronze | `pure_bronze` | metallic paint (SIXNINE chocolate bronze; #9c6b3a until 2026-11-12; satin rough 0.45 read as flat clay, keep it below 0.42) | #75523f, 0.9, 0.3, 0.7 |
 | Black Matte | `black_matte` | satin solid (no flake/flop) | #26282b, 0.0, 0.5, 0.0 |
 | Silver / Gloss Black / Liquid Metal | `silver` / `black` / `liquid_metal` | as above | unchanged |
 

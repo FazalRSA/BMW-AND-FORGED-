@@ -362,11 +362,11 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
     id: 'pure_bronze',
     name: 'Pure Bronze',
     colorName: 'Satin Bronze',
-    hex: '#6e4a30',
-    metalness: 0.85,
-    roughness: 0.45,
-    clearcoat: 0.3,
-    description: 'Deep satin bronze metallic with a soft sheen, the FF-3 signature finish.',
+    hex: '#75523f',
+    metalness: 0.9,
+    roughness: 0.3,
+    clearcoat: 0.7,
+    description: 'Deep bronze metallic with a soft sheen, the FF-3 signature finish.',
     badge: 'In stock'
   },
   black_matte: {
