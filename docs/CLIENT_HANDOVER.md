@@ -152,7 +152,7 @@ Go to **/admin** and sign in with your admin email and password. You will see fi
 
 **First sign-in, or a forgotten password:** on the /admin sign-in click **First time here, or forgot your
 password?**, enter your admin email and press **Email me a link**. Open the email on the same device; it
-brings you back to /admin to choose your password. (Your account, fazal@novahavens.com, already exists.)
+brings you back to /admin to choose your password. (Your admin account already exists.)
 
 **Adding another admin:** create their account in Supabase
 ([Authentication → Users](https://supabase.com/dashboard/project/qxlfkfhzpqbxffuqqewg/auth/users) →
@@ -222,8 +222,8 @@ and a layout that works on a phone.
 1. The customer's details and build are saved in the database (the Enquiries tab), exactly as before.
 2. The moment the lead is saved, the database passes it to an **n8n** automation called
    *FORGEDSA · Lead email (PDF downloads + enquiries)*.
-3. n8n builds the email and sends it through the connected Gmail account (currently
-   fazal@novahavens.com, shown as "FORGEDSA Leads").
+3. n8n builds the email and sends it through the connected Gmail account (shown as
+   "FORGEDSA Leads").
 
 If the email ever fails (for example, Gmail disconnects), the lead is **still saved** in the admin
 panel. Nothing is lost and the customer never sees an error.

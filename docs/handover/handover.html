@@ -287,7 +287,7 @@
   <div class="num">05</div>
   <h2>Your admin panel</h2>
   <p>Go to <strong>/admin</strong> and sign in with your admin email and password. You will see five tabs.</p>
-  <div class="callout"><strong>First sign-in, or a forgotten password:</strong> on the /admin sign-in click <em>First time here, or forgot your password?</em>, enter your admin email and press <em>Email me a link</em>. Open the email on the same device; it brings you back to /admin to choose your password. (Your account, fazal@novahavens.com, already exists.)</div>
+  <div class="callout"><strong>First sign-in, or a forgotten password:</strong> on the /admin sign-in click <em>First time here, or forgot your password?</em>, enter your admin email and press <em>Email me a link</em>. Open the email on the same device; it brings you back to /admin to choose your password. (Your admin account already exists.)</div>
   <table>
     <tr><th>Tab</th><th>What you can do</th></tr>
     <tr><td>Cars</td><td>Add a car, upload its 3D model, choose which factory paints it offers, hide or reorder cars. The car pictures on the welcome screen are a set that your developer maintains. Hiding a car here takes its picture off the welcome screen, but a new car needs a picture added before customers can pick it, and reordering cars here does not reorder the pictures (see <em>Add a new car</em> below).</td></tr>
@@ -334,7 +334,7 @@
       <ol>
         <li>The customer's details and build are saved in the database (the Enquiries tab), exactly as before.</li>
         <li>The moment the lead is saved, the database passes it to an <strong>n8n</strong> automation called <em>FORGEDSA · Lead email (PDF downloads + enquiries)</em>.</li>
-        <li>n8n builds the email and sends it through the connected Gmail account (currently fazal@novahavens.com, shown as "FORGEDSA Leads").</li>
+        <li>n8n builds the email and sends it through the connected Gmail account (shown as "FORGEDSA Leads").</li>
       </ol>
       <div class="callout">If the email ever fails (for example, Gmail disconnects), the lead is <strong>still saved</strong> in the admin panel. Nothing is lost and the customer never sees an error.</div>
       <h3>Good to know</h3>
