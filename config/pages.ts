@@ -109,7 +109,7 @@ export const TERMS: InfoPageContent = {
       title: '10. Your information (POPIA)',
       body: [
         'When you send an enquiry or save a configuration we process your name, contact details and the configuration you chose. We use them only to respond to you, prepare your quotation and fulfil your order. We do not sell your information. We store it securely with our service providers and keep it only as long as we need it or the law requires.',
-        'You may ask to see, correct or delete your information at any time by emailing [info@forgedsa.com]. Our Information Officer is [name]. You may also complain to the Information Regulator (inforegulator.org.za).'
+        'You may ask to see, correct or delete your information at any time by emailing [forgedsa1@gmail.com]. Our Information Officer is [name]. You may also complain to the Information Regulator (inforegulator.org.za).'
       ]
     },
     {
@@ -179,7 +179,7 @@ export const DELIVERY: InfoPageContent = {
       points: [
         'Check that the boxes are intact before signing, and note any visible damage on the delivery slip.',
         'Unpack on a soft surface and inspect every wheel and finish.',
-        'Report any damage or discrepancy within 48 hours with photos, to [info@forgedsa.com]. We will arrange a solution.'
+        'Report any damage or discrepancy within 48 hours with photos, to [forgedsa1@gmail.com]. We will arrange a solution.'
       ]
     },
     {
@@ -237,7 +237,7 @@ export const CREDITS: InfoPageContent = {
     {
       title: 'Corrections',
       body: [
-        'If you are the author of one of these models and the credit or licence shown is wrong, or you would like it displayed differently, email [info@forgedsa.com] and we will correct it promptly.'
+        'If you are the author of one of these models and the credit or licence shown is wrong, or you would like it displayed differently, email [forgedsa1@gmail.com] and we will correct it promptly.'
       ]
     }
   ]
