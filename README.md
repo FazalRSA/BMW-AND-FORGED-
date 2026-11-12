@@ -15,6 +15,10 @@ wheel design, size and finish, then share the build, download a branded PDF spec
 enquiry (every lead is emailed to the team). Built with React 19, Vite and Three.js, backed by
 Supabase (catalogue, auth, file storage), automated with n8n and deployed on Vercel.
 
+**New to this repo? Start at [`docs/MAP.md`](docs/MAP.md):** where cars are added, how they're made
+photoreal, where wheels are added, and how wheels and cars come together in the configurator — one
+screen, with direct links.
+
 **Brand name, logo, colours, copy and regions/currencies live in one file:** `config/brand.ts`.
 For the full step-by-step handover see [`docs/HANDOVER.md`](docs/HANDOVER.md); the client-facing
 overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
@@ -291,6 +295,7 @@ components/admin/            /admin UI (AdminPage.tsx, entityConfig.ts defines e
 public/models/               Prepared car GLBs; public/models/rims/ the packed rim GLBs; CREDITS.md
 supabase/migrations/         Database schema, RLS policies, and catalogue changes over time
 n8n/lead-email.code.js       Copy of the n8n Code node that builds the branded lead email
+docs/MAP.md                  Start here: where cars/wheels/photorealism live, how they combine
 docs/HANDOVER.md             Full handover guide: setup, workflow, pre-handover checklist
 docs/ADD_PREPARED_CAR.md     Runbook: a prepared car package or a rim GLB into the configurator
 docs/WHEEL_INVENTORY.md      The stock sheet as the wheel catalogue: ids, finishes, prices
@@ -305,8 +310,9 @@ docs/PHOTOREAL_METHOD.md     The validated photoreal method (studio, paint, whee
 
 ## 🤝 Contributing
 
-1. Read [`agents.md`](agents.md), [`skills.md`](skills.md) and the task playbooks in
-   [`docs/SKILLS.md`](docs/SKILLS.md) (`.claude/skills/`).
+1. Start with [`docs/MAP.md`](docs/MAP.md) (where cars, photorealism, wheels and the configurator
+   live), then [`AGENTS.md`](AGENTS.md) and the task playbooks in [`docs/SKILLS.md`](docs/SKILLS.md)
+   (`.claude/skills/`).
 2. Work on a feature branch and open a Pull Request against `main`.
 3. Before pushing: `bun run lint` (TypeScript) and `bun run build` must pass; check visual changes
    in the browser.

@@ -90,7 +90,7 @@ If it says *"not on the admin allowlist"*, the email in `admin_users` doesn't ma
 
 ### 2a. Car models (.glb)
 
-> **No Blender?** See `NO_BLENDER_AND_UI_PLAN.md`, section 1: check names in the browser, rename in the free three.js editor, compress at gltf.report.
+> **No Blender?** See `archive/NO_BLENDER_AND_UI_PLAN.md`, section 1: check names in the browser, rename in the free three.js editor, compress at gltf.report.
 >
 > **Got one of the prepared car packages** (Drive > 3d cars, `BMW_*.zip` with `C10_Wheel_FL..` and a `Paint` material)? One command does everything below: `node scripts/ingest-car.mjs BMW_M5_G90.zip --car m5_g90 --check`. See `ADD_PREPARED_CAR.md`.
 
@@ -144,7 +144,7 @@ Each wheel can have a **rim image**, a **rim 3D model**, or both (the model wins
 - *Build 3D spokes from the image* is ticked by default; untick it to show the image flat.
 
 **Rim GLB (best quality)**: from the client's CAD files, an AI image-to-3D tool (Tripo, Meshy, Hunyuan3D)
-or a 3D modeller. See `NO_BLENDER_AND_UI_PLAN.md` section 2b. The six stocked designs are already real
+or a 3D modeller. See `archive/NO_BLENDER_AND_UI_PLAN.md` section 2b. The six stocked designs are already real
 3D rims (`public/models/rims/`, from the website's files); a new one goes in with one command,
 `node scripts/ingest-rim.mjs rim.glb --wheel <id> --new --name … --sizes … --price-zar … --finishes … --check`
 (`docs/ADD_PREPARED_CAR.md`, "Rims the same way"; a staggered set adds `--rear rear.glb`). Brake parts inside
