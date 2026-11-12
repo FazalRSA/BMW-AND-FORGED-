@@ -15,6 +15,8 @@ export interface Dealer {
   email: string | null;
   active: boolean;
   created_at: string;
+  /** Rand FORGED pays per wheel set sold (20261112140000_sales_agents_and_sales.sql); missing until it is applied. */
+  commission_per_set_zar?: number | string | null;
 }
 
 export interface DealerUser {

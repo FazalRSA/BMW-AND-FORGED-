@@ -14,6 +14,8 @@ import {
   listDealers,
   updateLeadProgress
 } from '../../services/dealerService';
+import { listAgents, listSales, Sale, SalesAgent } from '../../services/salesService';
+import { SaleForm } from './SaleForm';
 
 interface Lead {
   id: string;
@@ -56,6 +58,11 @@ export const EnquiriesPanel: React.FC<{ mode?: 'admin' | 'dealer' }> = ({ mode =
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Admin only: sales recorded on won enquiries and the dealerships' agents (null until loaded; an error string if
+  // the sales migration is not applied yet, so the enquiries still work)
+  const [sales, setSales] = useState<Sale[] | null>(null);
+  const [agents, setAgents] = useState<SalesAgent[]>([]);
+  const [salesError, setSalesError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,7 +75,19 @@ export const EnquiriesPanel: React.FC<{ mode?: 'admin' | 'dealer' }> = ({ mode =
       // a network failure throws instead of returning an error: say so rather than sit on "Loading…"
       setError((e as Error).message || 'Could not load the enquiries. Check your connection and refresh.');
     }
-    if (isAdmin) listDealers().then(setDealers).catch(() => setDealers([]));
+    if (isAdmin) {
+      listDealers().then(setDealers).catch(() => setDealers([]));
+      Promise.all([listSales(), listAgents()])
+        .then(([s, a]) => {
+          setSales(s);
+          setAgents(a);
+          setSalesError(null);
+        })
+        .catch((e: Error) => {
+          setSales(null);
+          setSalesError(e.message);
+        });
+    }
     setLoading(false);
   }, [isAdmin]);
 
@@ -251,6 +270,21 @@ export const EnquiriesPanel: React.FC<{ mode?: 'admin' | 'dealer' }> = ({ mode =
                   )}
                   <NotesBox lead={l} onSave={(text) => run(() => updateLeadProgress(l.id, { dealer_notes: text || null }), l.id, { dealer_notes: text || null })} />
                 </div>
+                {isAdmin && l.status === 'won' && (salesError ? (
+                  <p className="mt-3 text-xs text-amber-300">{salesError}</p>
+                ) : sales && (() => {
+                  const sale = sales.find((x) => x.lead_id === l.id);
+                  return (
+                    <SaleForm
+                      key={`${l.id}-${sale?.id ?? 'new'}-${l.dealer_id ?? 'forged'}-${dealers.length}`}
+                      leadId={l.id}
+                      dealer={dealers.find((d) => d.id === l.dealer_id)}
+                      agents={agents}
+                      sale={sale}
+                      onSaved={(saved) => setSales((all) => [saved, ...(all ?? []).filter((x) => x.id !== saved.id)])}
+                    />
+                  );
+                })())}
               </li>
             );
           })}

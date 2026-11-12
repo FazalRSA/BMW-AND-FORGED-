@@ -60,3 +60,26 @@ Still to do:
   its own enquiries; cannot reassign one, edit a customer's email, delete a lead, write to `wheels` or `cars`, add its
   own login or edit its dealership; a switched-off dealership sees nothing; a visitor cannot choose a dealer or status.
   Repeat the same checks after any change to these policies.
+
+## Sales agents, commission and sales (2026-11-12)
+
+Admin only (`/admin`). Dealers and customers cannot see any of it. Migration:
+`supabase/migrations/20261112140000_sales_agents_and_sales.sql` (two new tables and one column; additive).
+
+- **Dealers tab:** each dealership has a **Commission per set (R)**: the rand FORGED pays it per wheel set sold.
+  Below it, **Sales agents**: the dealership's salespeople (name, email, phone; switch off or remove). Agents do not sign in.
+- **Enquiries tab:** set an enquiry to **Won** and a sale form appears: agent, sold on, sets, FORGED price, dealer markup,
+  commission (pre-filled with the dealership's rate × sets, editable), commission paid, notes.
+  **Customer price = FORGED price + dealer markup.** One sale per enquiry.
+- **Sales tab:** totals (sales, sets, FORGED revenue, dealer markup, customer total, commission owed), by dealership and by
+  agent, filters (dealership, agent, month, owed only), mark commission paid, delete, CSV export.
+- **Changing a rate** affects new sales only: each sale keeps the commission it was recorded with.
+- **Removing an agent** keeps their sales (no agent). **Deleting an enquiry** keeps its sale. **Deleting a dealership**
+  removes its agents and keeps its sales as "Removed dealership".
+
+After applying the migration, build the indexes on their own (they cannot run inside a migration):
+```sql
+create index concurrently if not exists sales_agents_dealer_idx on public.sales_agents (dealer_id);
+create index concurrently if not exists sales_dealer_sold_idx on public.sales (dealer_id, sold_on desc);
+create index concurrently if not exists sales_agent_idx on public.sales (agent_id);
+```
