@@ -17,6 +17,7 @@
 - Commit messages: type(scope) subject, body says why and what was checked; never rewrite pushed history
 - Harness runs (journey.cjs, e2e.cjs) stub Supabase writes; never create real leads (each one emails the owner)
 - Prepared cars/rims go in with scripts/ingest-car.mjs / scripts/ingest-rim.mjs (docs/ADD_PREPARED_CAR.md); migrations can be applied from the sandbox with the Supabase connector (apply_migration) when the owner asks: read the live schema first, apply, read it back, never apply unasked
+- Blender MCP: Blender 5.3 + mcp-for-blender@2.2.7 (.mcp.json) + the Blendkit add-on (the owner's zip; not downloadable); a fresh container needs scripts/blender-mcp/setup.sh <zip> then start.sh (UI on Xvfb, the add-on refuses -b); Blendkit is driven via execute_blender_code (docs/BLENDER_MCP.md)
 
 ### Key Decisions
 - Decision: allow rules in .claude/settings.json for git, bun/npm, node, ffmpeg and basic file commands only — Reason: cut prompts without pre-approving credential lookups or external installs
