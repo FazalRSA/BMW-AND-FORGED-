@@ -7,11 +7,14 @@ description: Ship FORGEDSA changes safely. Covers the pre-push checks (tsc, vite
 
 ## Branches
 
-- **Repo and base:** `FazalRSA/BMW-AND-FORGED-`, base `main`. PR #2 (branch `ccr-f52bf849-fnf7qs`) is merged.
-  The open work is PR #3 (`claude/prepared-cars-render-frames`). Work on a `claude/<topic>` branch from `main`
-  and merge `main` into it (never rebase or force-push a shared branch) when the PR reports a conflict.
-- **Experiments go on their own branch** (e.g. `claude/photoreal-proof`), created from the work
-  branch.
+- **Repo and base:** `FazalRSA/BMW-AND-FORGED-`, base `main`. There have been 28+ PRs so far (all
+  merged or closed bar whatever is currently open) — check `list_pull_requests` for the actually
+  open one rather than trusting a number written here, which will rot the moment it's read. Work
+  on a `claude/<topic>` branch from `main` and merge `main` into it (never rebase or force-push a
+  shared branch) when the PR reports a conflict.
+- **Experiments go on their own branch** (e.g. a past one was `claude/photoreal-proof`, since
+  rejected and deleted — pick a fresh descriptive name, don't assume an old example branch
+  still exists), created from the work branch.
   - Commit locally and **don't push until the owner approves**. Then push, and preview on Vercel
     before any merge. Delete the branch if it's rejected.
   - The container is ephemeral, so tell the owner that unpushed work is lost if the session ends.
