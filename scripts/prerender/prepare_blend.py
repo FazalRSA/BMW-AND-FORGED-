@@ -5,6 +5,9 @@ never copied to public/ or uploaded. Royalty Free cars may only reach the site a
 (docs/ADD_PREPARED_CAR.md, "Frames-only cars").
 
 What it does:
+  - if the model merges each axle's wheels into one mesh (two tyre meshes, each spanning both sides), first splits
+    every mesh inside an axle's wheel zone into a left and a right half;
+  - levels a car whose geometry is turned on the ground (both axles should run along X);
   - finds the four wheels from the tyres (objects using a material matching --tyre-mat), and renames every mesh that
     sits inside a wheel (tyre, rim, brake, caps, logos) to wheel_<corner>_<n>, so the engine's DEFAULT_HIDE finds four
     wheels and swaps in the forged ones;
@@ -15,8 +18,8 @@ What it does:
 
   blender -b car.blend --python scripts/prerender/prepare_blend.py -- out.glb [--tyre-mat Tire] [--paint-mat "Car paint"]
 """
-import argparse, os, re, sys
-import bpy, mathutils
+import argparse, math, os, re, sys
+import bpy, bmesh, mathutils
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 ap = argparse.ArgumentParser()
@@ -45,9 +48,65 @@ def mats(o):
     return [s.material.name for s in o.material_slots if s.material]
 
 
+def split_by_side(o, cx):
+    """Splits a mesh that holds both wheels of an axle into a left and a right object (by face centre x). Some models
+    merge each axle's tyres, rims and caps into one mesh, which no single wheel box can contain."""
+    right = o.copy()
+    right.data = o.data.copy()
+    for col in o.users_collection:
+        col.objects.link(right)
+    for obj, keep_right in ((o, False), (right, True)):
+        bm = bmesh.new()
+        bm.from_mesh(obj.data)
+        mw = obj.matrix_world
+        doomed = [f for f in bm.faces if ((mw @ f.calc_center_median()).x > cx) != keep_right]
+        bmesh.ops.delete(bm, geom=doomed, context='FACES')
+        bm.to_mesh(obj.data)
+        bm.free()
+    right.name = o.name + '_R'
+    o.name = o.name + '_L'
+    return right
+
+
+def spans_sides(o, cx):
+    mn, mx = box(o)
+    return mn.x < cx - 0.2 and mx.x > cx + 0.2
+
+
 tyres = [o for o in meshes if any(tyre_re.search(m) for m in mats(o))]
+if len(tyres) == 2 and all(spans_sides(t, 0.0) for t in tyres):
+    # One tyre mesh per axle: split every mesh that lies inside an axle's zone and reaches both sides
+    cx = sum((box(t)[0].x + box(t)[1].x) / 2 for t in tyres) / 2
+    zones = [box(t) for t in tyres]
+    for o in list(meshes):
+        mn, mx = box(o)
+        inside = any(all(mn[k] >= zmn[k] - a.margin and mx[k] <= zmx[k] + a.margin for k in range(3)) for zmn, zmx in zones)
+        if inside and spans_sides(o, cx):
+            meshes.append(split_by_side(o, cx))
+            print('split per side:', o.name)
+    bpy.context.view_layer.update()  # the halves' bounding boxes are stale until the scene re-evaluates
+    tyres = [o for o in meshes if any(tyre_re.search(m) for m in mats(o))]
 if len(tyres) != 4:
     sys.exit(f'expected 4 tyres matching {a.tyre_mat!r}, found {len(tyres)}: {[o.name for o in tyres]}')
+
+
+def centre(o):
+    mn, mx = box(o)
+    return (mn + mx) / 2
+
+
+# Level the car if its geometry is turned on the ground (seen on the X1: about 1 degree baked into the meshes): each
+# axle should run along X. The yaw is the mean angle of the two axles; everything is turned back about the origin.
+by_y = sorted(tyres, key=lambda t: centre(t).y)
+axles = [sorted(by_y[:2], key=lambda t: centre(t).x), sorted(by_y[2:], key=lambda t: centre(t).x)]
+yaw = sum(math.atan2(centre(r).y - centre(l).y, centre(r).x - centre(l).x) for l, r in axles) / 2
+if abs(math.degrees(yaw)) > 0.1:
+    turn = mathutils.Matrix.Rotation(-yaw, 4, 'Z')
+    for o in bpy.data.objects:
+        if o.parent is None:
+            o.matrix_world = turn @ o.matrix_world
+    bpy.context.view_layer.update()
+    print(f'levelled: turned {-math.degrees(yaw):.2f} degrees about Z')
 
 # Corner names only for the log; the engine decides front/rear and left/right itself.
 cx = sum((box(t)[0].x + box(t)[1].x) / 2 for t in tyres) / 4
@@ -58,6 +117,8 @@ for i, t in enumerate(tyres):
     c = (tmn + tmx) / 2
     corner = ('A' if c.y < cy else 'B') + ('R' if c.x > cx else 'L')
     for o in meshes:
+        if any(paint_re.search(m) for m in mats(o)):
+            continue  # body paint is never a wheel part, however close to the wheel (the X1's lower front panel)
         mn, mx = box(o)
         if all(mn[k] >= tmn[k] - a.margin and mx[k] <= tmx[k] + a.margin for k in range(3)):
             o.name = f'wheel_{corner}_{wheel_parts:03d}'

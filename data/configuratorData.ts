@@ -178,6 +178,63 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.79
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 Touring 2025", Zifir3D): no modelUrl, see the iX3 above
+    id: 'm3_touring_g81',
+    name: 'BMW M3 Touring',
+    badge: 'M3 Touring G81',
+    generation: 'G81',
+    chassisCode: 'G81 M3 Touring',
+    // 2024 facelift (LCI), Competition M xDrive: 530 PS / 390 kW, 650 Nm, 0-100 km/h 3.6 s (spec databases; the
+    // 3.6 s is published for the pre-facelift car). Fitment as the M3 G80 (9.5J x 19 front, 10.5J x 20 rear). Owner to
+    // confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 530 PS',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.6s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'touring',
+    paintIds: [
+      'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.8
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW X1 M Sportpaket", Zifir3D): no modelUrl, see the iX3 above. The model's
+    // meshes are turned about 1 degree on the ground; prepare_blend.py levels it.
+    id: 'x1_u11',
+    name: 'BMW X1',
+    badge: 'X1 M Sport U11',
+    generation: 'U11',
+    chassisCode: 'U11 X1',
+    // sDrive18i M Sport as sold in South Africa (bmw.co.za technical data): 115 kW, 230 Nm, 0-100 km/h 9.0 s. M Sport
+    // comes on 18-inch wheels (19 and 20 optional, BMW SA press release 2022); the rim width is not published, so
+    // 18 x 8J is an estimate. Owner to confirm.
+    engine: '1.5L Turbo Inline-3',
+    power: '156 HP / 115 kW',
+    torque: '230 Nm (170 lb-ft)',
+    acceleration: '0-100 km/h in 9.0s',
+    recommendedWheelFitment: {
+      front: '18 x 8J',
+      rear: '18 x 8J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'portimao_blue', 'skyscraper_grey', 'fire_red',
+      'storm_bay'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.5
   }
 ];
 
