@@ -121,5 +121,46 @@
    2.41,
    1.039
   ]
+ },
+ "x1_u11": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7809,
+    0.3533,
+    1.3503,
+    1.0094
+   ],
+   "front-right": [
+    0.7838,
+    0.3533,
+    1.3503,
+    1.0094
+   ],
+   "rear-left": [
+    -0.7806,
+    0.3533,
+    -1.2947,
+    1.0094
+   ],
+   "rear-right": [
+    0.7841,
+    0.3533,
+    -1.2947,
+    1.0094
+   ]
+  },
+  "footprint": [
+   2.262,
+   1.036
+  ]
  }
 }
