@@ -24,7 +24,8 @@ export const HERO_SLIDES: HeroSlide[] = [
   // Frames-only car: its still is the app's own (Cycles frame + live wheels, scripts/prerender/hero-from-frames.cjs)
   { carId: 'ix3_m60', name: 'BMW iX3 M60', paint: 'Storm Bay Metallic', paintId: 'storm_bay' },
   { carId: 'm3_g80', name: 'BMW M3', paint: 'Isle of Man Green Metallic', paintId: 'isle_of_man_green' },
-  { carId: 'm3_touring_g81', name: 'BMW M3 Touring', paint: 'Portimao Blue Metallic', paintId: 'portimao_blue' }
+  { carId: 'm3_touring_g81', name: 'BMW M3 Touring', paint: 'Portimao Blue Metallic', paintId: 'portimao_blue' },
+  { carId: 'x1_u11', name: 'BMW X1', paint: 'Skyscraper Grey Metallic', paintId: 'skyscraper_grey' }
 ];
 
 const WHEEL_THRESHOLD = 40; // px of scroll in one gesture before it moves one car
