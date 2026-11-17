@@ -34,7 +34,8 @@ export interface ViewerPanelProps {
   cameraView: CameraViewPreset;
   autoRotate: boolean;
   onCamera: (view: CameraViewPreset) => void;
-  onToggleRotate: () => void;
+  /** Absent for a frames-only car (no turntable). */
+  onToggleRotate?: () => void;
   onPaint: (paint: PaintColor) => void;
   onWheel: (wheel: WheelDesign) => void;
   onSize: (size: string) => void;
@@ -270,14 +271,16 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </div>
           </section>
 
-          <section>
-            <H2>Motion</H2>
-            <div className="flex flex-wrap gap-1.5">
-              <Chip active={p.autoRotate} onClick={p.onToggleRotate} title={p.autoRotate ? 'Stop turntable' : 'Turntable'}>
-                Auto-rotate
-              </Chip>
-            </div>
-          </section>
+          {p.onToggleRotate && (
+            <section>
+              <H2>Motion</H2>
+              <div className="flex flex-wrap gap-1.5">
+                <Chip active={p.autoRotate} onClick={p.onToggleRotate} title={p.autoRotate ? 'Stop turntable' : 'Turntable'}>
+                  Auto-rotate
+                </Chip>
+              </div>
+            </section>
+          )}
 
           <p className="mt-4 text-[11px] leading-relaxed text-mute">
             Paint colours are visual approximations: BMW does not publish RGB values. Prices are for a set of four forged wheels, fitted.

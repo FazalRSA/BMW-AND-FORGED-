@@ -5,18 +5,17 @@
  *   node scripts/render/shoot.cjs <outDir> <specs.json> [rimCacheDir]
  *
  * specs.json is a list of shots:
- *   { "name": "m4cs-wheel", "car": 1, "paint": 17, "wheel": "forged_fsa_03", "finish": "black", "size": "20\"",
+ *   { "name": "m4cs-wheel", "car": 0, "paint": 17, "wheel": "forged_fsa_03", "finish": "black", "size": "20\"",
  *     "view": "frontWheel", "q": "&look=stage", "w": 1280, "h": 800, "wait": 6000,
  *     "cam": { "pos": [x, y, z], "look": [x, y, z] } }
  * These are engine.html's query parameters (data/configuratorData.ts is the source of every list):
- *   car    an index into the full BMW_MODELS list, hidden cars included (not the filtered list the app
- *          shows). Live cars on 2026-11-10: 1 m4_cs_g82, 5 m2_g87 (M2 CS), 7 m5_g90, 8 m5_touring_g99;
- *          0 is the retired Sketchfab M4 and 2-4, 6, 9-11 the other hidden legacy cars.
+ *   car    an index into BMW_MODELS (the bundled catalogue). Since the legacy cars were deleted
+ *          (2026-11-11) it holds exactly the four live cars: 0 m4_cs_g82, 1 m2_g87 (M2 CS), 2 m5_g90,
+ *          3 m5_touring_g99.
  *   paint  an index into the paints list (STATIC_CATALOG.paints = BMW_PAINTS).
  *   wheel  a wheel id (preferred: "forged_fsa001", "forged_fsa002", "forged_fsa_03", "forged_fsa004",
- *          "sixnine_ff1", "sixnine_ff3", the same ids ingest-rim.mjs takes) or an index into the full
- *          WHEEL_DESIGNS list, hidden designs included: 0-10 are the hidden legacy designs
- *          (forged_fsa_01 .. forged_fsa_14), 11-16 the six stocked wheels above in that order.
+ *          "sixnine_ff1", "sixnine_ff3", the same ids ingest-rim.mjs takes) or an index into
+ *          WHEEL_DESIGNS, which holds only those six wheels, in that order (0-5).
  *   finish a finish id (liquid_metal, black, silver, bronze, gold, hyper_black, ...); size e.g. "21\"";
  *          view a camera preset (frontThreeQuarter, frontWheel, side, ...).
  *   q      appended to the URL as is, for the engine switches: &look=stage (what /configure draws for

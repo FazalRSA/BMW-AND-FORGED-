@@ -1,5 +1,9 @@
 # Rim photo → 3D rim: the process
 
+> **Before picking a route, read [`RIM_PHOTO_TO_3D_SPEC.md`](RIM_PHOTO_TO_3D_SPEC.md)** — a Nov 2026
+> researched comparison of this route against manufacturer CAD, multi-image AI reconstruction and
+> photogrammetry, with a decision table and a recommended pilot (FSA-07).
+
 Goal: every FORGEDSA wheel ends up as a **complete 3D rim file (GLB)** that looks like the
 template in [`rim-template/PROFILE.md`](rim-template/PROFILE.md): real spoke depth, bevelled edges, a
 recessed face behind a proper lip, a deep barrel, a polished metal surface.

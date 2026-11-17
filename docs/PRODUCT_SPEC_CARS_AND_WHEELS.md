@@ -71,7 +71,7 @@ Do these first. A car that fails the licence check is not built.
    - Royalty Free "allows commercial use without mentioning the author, but doesn't allow for re-sale of the asset in the same form".
    - For games the FAQ says yes "if these can't be extracted by the users in an easy way" and "the assets shouldn't be directly extractable in the distribution".
    - A GLB that a browser downloads is directly extractable. So a BlendKit Royalty Free car **must not be shipped as a live GLB (mode A)**. It can be used through pre-rendered images: Blender frames (mode B) or Cycles bodies with live wheels (mode C, section 8).
-   - As built today, mode B still serves the car's GLB: the engine loads it as an invisible depth mask behind the frames, and the turntable and any view without a frame draw it live (`docs/ADD_PREPARED_CAR.md`, "Body modes"). For a BlendKit car that file must not be served, so mode B needs that changed first. This is not built.
+   - As built today, mode B still serves the car's GLB: the engine loads it as an invisible depth mask behind the frames, and the turntable and any view without a frame draw it live (`docs/ADD_PREPARED_CAR.md`, "Body modes"). For a BlendKit car that file must not be served: that is the **frames-only** mode, built 2026-11-12 (no GLB at all; wheels and a per-view depth image from the manifest; `docs/ADD_PREPARED_CAR.md`, "Frames-only cars"). The BMW iX3 M60 is the first.
    - Those pages do not say anything about trademarks or real car brands, or whether the licence continues after a subscription ends. Both are open questions for the owner (section 10).
 2. **Real figures.** Length, width, height, wheelbase, track, tyre sizes. Put them in the car spec (`car_specs.yaml`, with `# est` on every estimate).
 3. **Names.** Pick the catalogue id: lowercase, digits and underscores, model plus chassis code (`m5_touring_g99`). The id is permanent because saved builds and share codes point at it.
@@ -202,6 +202,10 @@ The configurator offers **exactly the wheels on the owner's stock sheet** (`docs
 | A rim `.glb` from the website repo, or CAD (STEP, IGES, STL, OBJ) | **A. Rim file** (default) | Best. Exact geometry. |
 | A straight-on product photo only | **B. Photo to 3D** | Good for flat and medium spoke designs. Depth is inferred, so deeply concave or layered designs come out wrong. Ask the maker for CAD. |
 | A photo and no 3D time | **C. Flat photo face** | Fallback for the hidden legacy wheels. Spokes are traced from the cut-out. |
+
+Before route B, see [`RIM_PHOTO_TO_3D_SPEC.md`](RIM_PHOTO_TO_3D_SPEC.md): a Nov 2026 researched
+comparison against manufacturer CAD, multi-image AI reconstruction and photogrammetry, with a
+decision table and a recommended low-risk pilot.
 
 ### 5.2 Route A: a rim file
 

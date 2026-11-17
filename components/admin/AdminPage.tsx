@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { ArrowLeft, Loader2, LogOut, Plus, Save, Trash2, Upload, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
+import { BRAND } from '../../config/brand';
 import {
   deleteRow,
   isCurrentUserAdmin,
@@ -16,6 +17,8 @@ import {
 } from '../../services/catalogService';
 import { ENTITIES, EntitySpec, FieldSpec } from './entityConfig';
 import { EnquiriesPanel } from './EnquiriesPanel';
+import { DealersPanel } from './DealersPanel';
+import { SalesPanel } from './SalesPanel';
 import { ASSET_BUCKETS, authFlags } from '../../services/supabaseClient';
 import { CAD_EXTENSIONS, convertCadFile, isCadFile } from '../../services/cadToGlb';
 
@@ -62,10 +65,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack, onCatalogChanged }
     // Keep the current session object unless WHO is signed in changed. A new object would re-run the admin
     // check below and swap the editor (open draft, uploaded-but-unsaved .glb URLs) for a spinner.
     const adopt = (s: Session | null) => setSession((prev) => (identityOf(prev) === identityOf(s) ? prev : s));
-    supabase.auth.getSession().then(({ data }) => {
-      adopt(data.session);
-      setAuthChecked(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => adopt(data.session))
+      // a failed session read counts as signed out, so the sign-in form shows instead of the spinner forever
+      .catch(() => adopt(null))
+      .finally(() => setAuthChecked(true));
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true);
       // supabase-js also emits TOKEN_REFRESHED (hourly), USER_UPDATED and a repeat SIGNED_IN whenever the tab
@@ -137,11 +142,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onBack, onCatalogChanged }
   );
 };
 
-const Centered: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const Centered: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex items-center justify-center min-h-[70vh] px-4">{children}</div>
 );
 
-const LoginForm: React.FC = () => {
+export const LoginForm: React.FC<{
+  /** Where the reset-password email link returns to (default /admin). */
+  returnPath?: string;
+  title?: string;
+  blurb?: string;
+  children?: React.ReactNode;
+}> = ({ returnPath = '/admin', title = 'Admin sign in', blurb = 'Manage cars, wheels, prices, finishes, paints, 3D assets and enquiries.', children }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +166,7 @@ const LoginForm: React.FC = () => {
     if (mode === 'reset') {
       // Supabase emails a one-time link back to /admin, where the new password is chosen.
       const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/admin`
+        redirectTo: `${window.location.origin}${returnPath}`
       });
       if (err) setError(err.message);
       else setMode('sent');
@@ -172,8 +183,15 @@ const LoginForm: React.FC = () => {
         <div className="w-full max-w-sm space-y-4 p-6 rounded-xl border border-white/10 bg-[#080808]">
           <h1 className="text-lg font-bold text-white">Check your inbox</h1>
           <p className="text-sm text-neutral-400">
-            If {email} is an admin account, a link to set your password is on its way. Open it on this device; it brings you
+            If {email} has an account here, a link to set your password is on its way. Open it on this device; it brings you
             back here to choose the password. The link works once and expires after an hour.
+          </p>
+          <p className="text-sm text-neutral-400">
+            No email after a few minutes? Your login may not be set up yet. Ask FORGED at{' '}
+            <a href={`mailto:${BRAND.contact.email}`} className="text-[#E8C37D] hover:text-white">
+              {BRAND.contact.email}
+            </a>{' '}
+            to create it.
           </p>
           <button onClick={() => setMode('signin')} className="text-xs uppercase tracking-widest text-[#E8C37D] hover:text-white">
             Back to sign in
@@ -187,11 +205,11 @@ const LoginForm: React.FC = () => {
     <Centered>
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 p-6 rounded-xl border border-white/10 bg-[#080808]">
         <div>
-          <h1 className="text-lg font-bold text-white">{mode === 'reset' ? 'Set or reset your password' : 'Admin sign in'}</h1>
+          <h1 className="text-lg font-bold text-white">{mode === 'reset' ? 'Set or reset your password' : title}</h1>
           <p className="text-xs text-neutral-500 mt-1">
             {mode === 'reset'
-              ? 'Enter your admin email and we will email you a link to choose a password.'
-              : 'Manage cars, wheels, prices, finishes, paints, 3D assets and enquiries.'}
+              ? 'Enter your email and we will email you a link to choose a password.'
+              : blurb}
           </p>
         </div>
         <label className="block space-y-1">
@@ -219,13 +237,14 @@ const LoginForm: React.FC = () => {
         >
           {mode === 'reset' ? 'Back to sign in' : 'First time here, or forgot your password?'}
         </button>
+        {mode === 'signin' && children}
       </form>
     </Centered>
   );
 };
 
 /** Shown after following a "set your password" email link (the link signs the admin in once). */
-const SetPasswordForm: React.FC<{ email: string; onDone: () => void }> = ({ email, onDone }) => {
+export const SetPasswordForm: React.FC<{ email: string; onDone: () => void }> = ({ email, onDone }) => {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -248,7 +267,7 @@ const SetPasswordForm: React.FC<{ email: string; onDone: () => void }> = ({ emai
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 p-6 rounded-xl border border-white/10 bg-[#080808]">
         <div>
           <h1 className="text-lg font-bold text-white">Choose your password</h1>
-          <p className="text-xs text-neutral-500 mt-1">For {email}. You will use it to sign in to the admin from now on.</p>
+          <p className="text-xs text-neutral-500 mt-1">For {email}. You will use it to sign in from now on.</p>
         </div>
         <label className="block space-y-1">
           <span className="text-xs text-neutral-400">New password</span>
@@ -273,7 +292,8 @@ const SetPasswordForm: React.FC<{ email: string; onDone: () => void }> = ({ emai
 
 const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogChanged }) => {
   const [entity, setEntity] = useState<EntitySpec>(ENTITIES[0]);
-  const [showLeads, setShowLeads] = useState(false);
+  const [panel, setPanel] = useState<'catalog' | 'leads' | 'dealers' | 'sales'>('catalog');
+  const showLeads = panel === 'leads';
   const [rows, setRows] = useState<Row[]>([]);
   const [finishIds, setFinishIds] = useState<string[]>([]);
   const [paintOptions, setPaintOptions] = useState<PickOption[]>([]);
@@ -366,9 +386,9 @@ const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogCh
         {ENTITIES.map((spec) => (
           <button
             key={spec.table}
-            onClick={() => { setEntity(spec); setShowLeads(false); }}
+            onClick={() => { setEntity(spec); setPanel('catalog'); }}
             className={`px-4 py-2 rounded-md text-xs font-bold uppercase tracking-widest border ${
-              !showLeads && spec.table === entity.table
+              panel === 'catalog' && spec.table === entity.table
                 ? 'bg-[#CF9F52] text-black border-[#CF9F52]'
                 : 'border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
             }`}
@@ -377,16 +397,32 @@ const CatalogEditor: React.FC<{ onCatalogChanged: () => void }> = ({ onCatalogCh
           </button>
         ))}
         <button
-          onClick={() => setShowLeads(true)}
+          onClick={() => setPanel('leads')}
           className={`px-4 py-2 rounded-md text-xs font-bold uppercase tracking-widest border ${
             showLeads ? 'bg-[#CF9F52] text-black border-[#CF9F52]' : 'border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
           }`}
         >
           Enquiries
         </button>
+        <button
+          onClick={() => setPanel('dealers')}
+          className={`px-4 py-2 rounded-md text-xs font-bold uppercase tracking-widest border ${
+            panel === 'dealers' ? 'bg-[#CF9F52] text-black border-[#CF9F52]' : 'border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
+          }`}
+        >
+          Dealers
+        </button>
+        <button
+          onClick={() => setPanel('sales')}
+          className={`px-4 py-2 rounded-md text-xs font-bold uppercase tracking-widest border ${
+            panel === 'sales' ? 'bg-[#CF9F52] text-black border-[#CF9F52]' : 'border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
+          }`}
+        >
+          Sales
+        </button>
       </nav>
 
-      {showLeads ? <EnquiriesPanel /> : <>
+      {panel === 'leads' ? <EnquiriesPanel mode="admin" /> : panel === 'dealers' ? <DealersPanel /> : panel === 'sales' ? <SalesPanel /> : <>
 
       {message && (
         <p className={`mb-4 text-xs ${message.kind === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>{message.text}</p>

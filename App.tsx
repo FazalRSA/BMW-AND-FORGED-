@@ -25,12 +25,13 @@ import { AccountSheet } from './components/journey/AccountSheet';
 import { Button, IconButton } from './components/journey/ui';
 import { UserRound } from 'lucide-react';
 import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
-import { backdropCss, hasBodies, loadStillsManifest, renderedStills } from './services/renderedBody';
+import { backdropCss, hasBodies, loadFramesCars, loadStillsManifest, renderedStills, type FramesLayout } from './services/renderedBody';
 
 // Pages off the main journey load on demand
 const ForgedPage = lazy(() => import('./components/ForgedPage').then((m) => ({ default: m.ForgedPage })));
 const RimDetailPage = lazy(() => import('./components/RimDetailPage').then((m) => ({ default: m.RimDetailPage })));
 const InfoPage = lazy(() => import('./components/InfoPage').then((m) => ({ default: m.InfoPage })));
+const DealerPage = lazy(() => import('./components/dealer/DealerPage').then((m) => ({ default: m.DealerPage })));
 const AdminPage = lazy(() => import('./components/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
 
 // Journey: welcome (choose the car on the carousel) -> configure (paint, wheel design, size, finish) -> summary.
@@ -42,6 +43,7 @@ type Route =
   | { name: 'summary' }
   | { name: 'forged' }
   | { name: 'admin' }
+  | { name: 'dealer' }
   | { name: 'terms' }
   | { name: 'credits' }
   | { name: 'delivery' }
@@ -56,6 +58,7 @@ const routeFromLocation = (): Route => {
   if (path === '/summary') return { name: 'configure' }; // stills are captured on the way in
   if (path === '/forged' || hash === 'forged') return { name: 'forged' };
   if (path === '/admin' || hash === 'admin') return { name: 'admin' };
+  if (path === '/dealer') return { name: 'dealer' };
   if (path === '/terms') return { name: 'terms' };
   if (path === '/delivery') return { name: 'delivery' };
   if (path === '/credits') return { name: 'credits' };
@@ -71,6 +74,7 @@ const routePath = (route: Route) =>
     summary: '/summary',
     forged: '/forged',
     admin: '/admin',
+    dealer: '/dealer',
     terms: '/terms',
     delivery: '/delivery',
     credits: '/credits',
@@ -86,10 +90,13 @@ const pickFinish = (catalog: Catalog, wheel: WheelDesign, current?: WheelFinish)
   catalog.finishes[wheel.defaultVariant] ||
   Object.values(catalog.finishes)[0];
 
-/** Cars with a real 3D body make the line-up; the simple procedural bodies are only a fallback. */
-const lineUpCars = (cars: CarModel[]) => {
+/**
+ * Cars with a real body make the line-up: a 3D model, or Blender frames only (frames-only cars have no GLB by
+ * licence, see renderedBody.ts FramesLayout); the simple procedural bodies are only a fallback.
+ */
+const lineUpCars = (cars: CarModel[], framesCars: Record<string, FramesLayout> = {}) => {
   const active = cars.filter((c) => c.active !== false);
-  const withModels = active.filter((c) => c.modelUrl);
+  const withModels = active.filter((c) => c.modelUrl || framesCars[c.id]);
   return withModels.length ? withModels : active.length ? active : cars;
 };
 
@@ -129,7 +136,9 @@ export const App: React.FC = () => {
     reloadCatalog();
   }, [reloadCatalog]);
 
-  const cars = useMemo(() => lineUpCars(catalog.cars), [catalog.cars]);
+  // Frames-only cars (no GLB): known once renders/manifest.json is in, before the first car is mounted
+  const [framesCars, setFramesCars] = useState<Record<string, FramesLayout>>({});
+  const cars = useMemo(() => lineUpCars(catalog.cars, framesCars), [catalog.cars, framesCars]);
   /** The cars on offer, for the welcome carousel (it leaves out the slide of a car that is hidden). */
   const carIds = useMemo(() => cars.map((c) => c.id), [cars]);
 
@@ -171,6 +180,14 @@ export const App: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [summaryImages, setSummaryImages] = useState<string[]>([]);
+  // The latest stills, for the PDF: it can be asked for before they are taken (they take a moment, and the gate has a form)
+  const summaryImagesRef = useRef<string[]>([]);
+  summaryImagesRef.current = summaryImages;
+  /** The summary's three stills once they are there (the PDF prints exactly these), or whatever there is after 30 s. */
+  const stillsForPdf = async () => {
+    for (let waited = 0; summaryImagesRef.current.length < 3 && waited < 30000; waited += 200) await new Promise((r) => setTimeout(r, 200));
+    return summaryImagesRef.current;
+  };
   // shared: undefined while the copy every device can open is being written, false if it could not be
   const [configCode, setConfigCode] = useState<{ key: string; code: string; shared?: boolean } | null>(null);
   const saveToken = useRef(0);
@@ -276,12 +293,19 @@ export const App: React.FC = () => {
 
     const started = performance.now();
     const tick = setInterval(() => setBootProgress((p) => Math.min(0.9, p + 0.05)), 250);
-    engine.loadCar(selectedCar).finally(() => {
-      clearInterval(tick);
-      setBootProgress(1);
-      // Let the loader's line drawing finish; it reads as intentional rather than a spinner
-      setTimeout(() => setBooted(true), Math.max(0, 1500 - (performance.now() - started)));
-    });
+    // The manifest first: a frames-only car mounted before it is known would get the placeholder body
+    loadFramesCars()
+      .then((frames) => {
+        engine.setFramesCars(frames);
+        setFramesCars(frames);
+        return engine.loadCar(selectedCar);
+      })
+      .finally(() => {
+        clearInterval(tick);
+        setBootProgress(1);
+        // Let the loader's line drawing finish; it reads as intentional rather than a spinner
+        setTimeout(() => setBooted(true), Math.max(0, 1500 - (performance.now() - started)));
+      });
 
     // Rotating a phone or resizing a window can change the layout (sheet <-> panel) or the aspect: the
     // camera's inset and framing follow, instead of keeping the previous orientation's composition
@@ -308,7 +332,7 @@ export const App: React.FC = () => {
 
   // After a catalogue load or admin edit, point selections at the fresh rows and push them to the engine.
   useEffect(() => {
-    const car = catalog.cars.find((c) => c.id === selectedCar.id) ?? lineUpCars(catalog.cars)[0];
+    const car = catalog.cars.find((c) => c.id === selectedCar.id) ?? lineUpCars(catalog.cars, framesCars)[0];
     const paint = pickPaintForCar(catalog.paints, car, selectedPaint.id);
     const wheel = catalog.wheels.find((w) => w.id === selectedWheel.id) ?? catalog.wheels[0];
     if (!car || !paint || !wheel) return;
@@ -357,7 +381,9 @@ export const App: React.FC = () => {
   // (4:3 and portrait tablets) instead of stopping in a line above and below the car (backdropCss); the car
   // itself (the wheel close-up fills its frame) fades out at the edges that stop short (stageEdgeFade)
   // The frames are fixed views, so the turntable (Auto-rotate) shows the live model; a view chip goes back to its frame
-  const rendered = route.name === 'configure' && !autoRotate && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
+  // A frames-only car is always its frame (it has no live body for the turntable to show)
+  const framesCar = !!framesCars[selectedCar.id];
+  const rendered = route.name === 'configure' && (framesCar || !autoRotate) && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
   const renderedRef = useRef(rendered);
   renderedRef.current = rendered;
   const computeStage = useCallback(() => {
@@ -864,7 +890,7 @@ export const App: React.FC = () => {
             }
             selectView(view);
           }}
-          onToggleRotate={toggleRotate}
+          onToggleRotate={framesCar ? undefined : toggleRotate}
           onPaint={choosePaint}
           onWheel={chooseWheel}
           onSize={chooseSize}
@@ -937,7 +963,7 @@ export const App: React.FC = () => {
               price,
               region,
               code: configCode?.code ?? '',
-              images: summaryImages
+              images: await stillsForPdf()
             });
           }}
         />
@@ -1068,6 +1094,11 @@ export const App: React.FC = () => {
       {route.name === 'admin' && (
         <div className="absolute inset-0 z-[60] animate-fadeIn">
           <AdminPage onBack={() => navigateTo({ name: 'welcome' })} onCatalogChanged={reloadCatalog} />
+        </div>
+      )}
+      {route.name === 'dealer' && (
+        <div className="absolute inset-0 z-[60] animate-fadeIn">
+          <DealerPage onBack={() => navigateTo({ name: 'welcome' })} />
         </div>
       )}
       </Suspense>

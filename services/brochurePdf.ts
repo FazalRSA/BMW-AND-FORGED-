@@ -36,6 +36,11 @@ const EMBER = hexRgb(BRAND.colors.ember);
 const INK: RGB = [242, 238, 230];
 const MUTE: RGB = [156, 151, 142];
 const HAIRLINE: RGB = [46, 46, 46];
+const FRAME: RGB = [74, 66, 52]; // a gold-tinted hairline for picture frames and cards
+const IMG_RADIUS = 2.5;
+// Page 2 reserves these from the bottom (the footer rule is at 268 mm), so the wheel story is cut rather than run into them
+const NEXT_H = 38; // the "Next steps" box
+const ASSURANCE_H = 4 + 2 * 15 + 4; // the "Our assurance" block: its label, two rows of cards and the gap between
 
 // Locale formatting (e.g. en-ZA "R 86 000") uses no-break and narrow spaces; the embedded Satoshi font has
 // no glyphs for them and jsPDF drops the rest of the string, so they become plain spaces.
@@ -158,23 +163,39 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     doc.text(`Terms: ${origin}/terms  ·  Delivery & fitment: ${origin}/delivery`, M, 288);
   };
 
+  // A picture with softly rounded corners and a hairline frame: the stills carry the studio backdrop, which is a
+  // shade off the page's carbon, so the frame makes it read as a deliberate panel
   const placeImage = async (src: string | undefined, x: number, y: number, w: number, maxH: number) => {
     if (!src) return 0;
     const { w: iw, h: ih } = await imageSize(src);
     const h = Math.min(maxH, (w * ih) / iw);
     const drawW = (h * iw) / ih;
-    doc.addImage(src, 'JPEG', x + (w - drawW) / 2, y, drawW, h, undefined, 'FAST');
+    const dx = x + (w - drawW) / 2;
+    doc.saveGraphicsState();
+    doc.roundedRect(dx, y, drawW, h, IMG_RADIUS, IMG_RADIUS, null);
+    doc.clip();
+    doc.discardPath();
+    doc.addImage(src, 'JPEG', dx, y, drawW, h, undefined, 'FAST');
+    doc.restoreGraphicsState();
+    doc.setDrawColor(...FRAME);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(dx, y, drawW, h, IMG_RADIUS, IMG_RADIUS, 'S');
     return h;
+  };
+
+  /** Small gold letter-spaced label (section eyebrows, card labels). */
+  const eyebrow = (text: string, x: number, y: number, size = 7.5, space = 1.4, align?: 'right') => {
+    body(true);
+    doc.setFontSize(size);
+    doc.setTextColor(...GOLD);
+    doc.setCharSpace(space);
+    doc.text(text.toUpperCase(), x, y, align ? { align } : undefined);
+    doc.setCharSpace(0);
   };
 
   // Page 1: hero + options
   header(1);
-  body(true);
-  doc.setFontSize(7.5);
-  doc.setTextColor(...GOLD);
-  doc.setCharSpace(1.4);
-  doc.text(BRAND.descriptor.toUpperCase(), M, 33);
-  doc.setCharSpace(0);
+  eyebrow(BRAND.descriptor, M, 33);
   heading('black');
   doc.setFontSize(28);
   doc.setTextColor(...INK);
@@ -184,7 +205,7 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   doc.setTextColor(...MUTE);
   doc.text(`${input.paint.name}  ·  ${input.wheel.name}  ·  ${input.size}  ·  ${input.finish.name}`, M, 52);
 
-  const heroH = await placeImage(input.images[0], M, 58, W - 2 * M, 104);
+  const heroH = await placeImage(input.images[0], M, 58, W - 2 * M, 101);
   let y = 58 + heroH + 11;
 
   const money = (usd: number) => pdfText(formatMoney(usd, input.region));
@@ -232,23 +253,45 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     doc.setFontSize(9);
     doc.setTextColor(...MUTE);
     if (d) doc.text(d, right, y, { align: 'right' });
-    y += 11;
+    y += 9.8;
   });
 
   doc.setFillColor(...GUNMETAL);
   doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.3);
-  doc.roundedRect(M, y, W - 2 * M, 20, 3, 3, 'FD');
+  doc.roundedRect(M, y, W - 2 * M, 18, 3, 3, 'FD');
   body(true);
   doc.setTextColor(...MUTE);
   doc.setFontSize(7.5);
   doc.setCharSpace(1.2);
-  doc.text('WHEEL SET OF FOUR', M + 7, y + 12);
+  doc.text('WHEEL SET OF FOUR', M + 7, y + 11);
   doc.setCharSpace(0);
   heading('black');
   doc.setFontSize(17);
   doc.setTextColor(...GOLD);
-  doc.text(pdfText(formatMoney(input.price, input.region)), W - M - 7, y + 13, { align: 'right' });
+  doc.text(pdfText(formatMoney(input.price, input.region)), W - M - 7, y + 12, { align: 'right' });
+
+  // What we stand behind, four across (config/brand.ts credentials): the owner's words, nothing added
+  y += 18 + 8;
+  const gap = 3;
+  const cardW = (W - 2 * M - gap * (BRAND.credentials.length - 1)) / BRAND.credentials.length;
+  BRAND.credentials.forEach((c, i) => {
+    const x = M + i * (cardW + gap);
+    doc.setDrawColor(...FRAME);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(x, y, cardW, 17, 2.5, 2.5, 'S');
+    eyebrow(c.label, x + 4, y + 5.6, 6.2, 0.9);
+    heading('bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...INK);
+    doc.text(c.headline, x + 4, y + 10.8);
+    if (c.detail) {
+      body();
+      doc.setFontSize(7.2);
+      doc.setTextColor(...MUTE);
+      doc.text(c.detail, x + 4, y + 14.6);
+    }
+  });
   footer();
 
   // Page 2: views + wheel story
@@ -257,13 +300,16 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   const half = (W - 2 * M - 6) / 2;
   const h1 = await placeImage(input.images[1], M, 29, half, 70);
   const h2 = await placeImage(input.images[2], M + half + 6, 29, half, 70);
-  y = 29 + Math.max(h1, h2) + 15;
-  body(true);
-  doc.setFontSize(7.5);
-  doc.setTextColor(...GOLD);
-  doc.setCharSpace(1.4);
-  doc.text((input.wheel.code || 'THE WHEEL').toUpperCase(), M, y - 7);
+  const imgBottom = 29 + Math.max(h1, h2);
+  body();
+  doc.setFontSize(7);
+  doc.setTextColor(...MUTE);
+  doc.setCharSpace(0.9);
+  if (h1) doc.text('SIDE PROFILE', M, imgBottom + 4.6);
+  if (h2) doc.text('WHEEL DETAIL', M + half + 6, imgBottom + 4.6);
   doc.setCharSpace(0);
+  y = imgBottom + 19;
+  eyebrow(input.wheel.code || 'THE WHEEL', M, y - 7);
   heading('black');
   doc.setFontSize(20);
   doc.setTextColor(...INK);
@@ -273,7 +319,7 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   const textW = W - 2 * M;
   const LINE = 5;
   const hasWeight = input.wheel.weightFrontKg > 0 || input.wheel.weightRearKg > 0;
-  const storyLimit = 266 - 42 - 14 - (hasWeight ? 4 : 0);
+  const storyLimit = 266 - NEXT_H - 10 - ASSURANCE_H - 10 - (hasWeight ? 4 : 0);
   const wrap = (s: string, width: number) => doc.splitTextToSize(pdfText(s), width) as string[];
   // Keeps the first `max` lines; the last one loses words until the ellipsis fits the width
   const clip = (lines: string[], max: number, width: number) => {
@@ -313,15 +359,45 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     const saving = input.wheel.weightSavingsKg > 0 ? `  ·  ${input.wheel.weightSavingsKg} kg lighter per corner` : '';
     doc.text(`Weight: ${input.wheel.weightFrontKg} kg front / ${input.wheel.weightRearKg} kg rear${saving}`, M, y);
   }
-  y += 14;
+  y += 10;
+
+  // Our assurance: the same four statements in full sentences, with the exclusion the owner gave stated
+  eyebrow('Our assurance', M, y);
+  y += 4;
+  const colW = (W - 2 * M - 4) / 2;
+  const cardH = 15;
+  BRAND.credentials.forEach((c, i) => {
+    const x = M + (i % 2) * (colW + 4);
+    const cy = y + Math.floor(i / 2) * (cardH + 4);
+    doc.setFillColor(...GUNMETAL);
+    doc.roundedRect(x, cy, colW, cardH, 2.5, 2.5, 'F');
+    // gold tick in a ring
+    doc.setDrawColor(...GOLD);
+    doc.setLineWidth(0.35);
+    doc.circle(x + 7, cy + cardH / 2, 2.9, 'S');
+    doc.lines([[1.1, 1.2], [1.9, -2.4]], x + 5.6, cy + cardH / 2 + 0.1, [1, 1], 'S');
+    heading('bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...INK);
+    const head = doc.splitTextToSize(pdfText(c.full), colW - 18) as string[];
+    const top = cy + cardH / 2 - (head.length - 1) * 2.2 + (c.note ? -1.2 : 1.2);
+    doc.text(head, x + 14, top);
+    if (c.note) {
+      body();
+      doc.setFontSize(7.8);
+      doc.setTextColor(...MUTE);
+      doc.text(c.note, x + 14, top + (head.length - 1) * 4.4 + 4.6);
+    }
+  });
+  y += 2 * cardH + 4 + 10;
 
   // Next steps
   doc.setFillColor(...GUNMETAL);
-  doc.roundedRect(M, y, W - 2 * M, 42, 3, 3, 'F');
+  doc.roundedRect(M, y, W - 2 * M, NEXT_H, 3, 3, 'F');
   heading('bold');
   doc.setFontSize(12);
   doc.setTextColor(...INK);
-  doc.text('Next steps', M + 7, y + 10);
+  doc.text('Next steps', M + 7, y + 9);
   body();
   doc.setFontSize(9);
   doc.setTextColor(...MUTE);
@@ -331,7 +407,7 @@ export async function downloadBrochurePdf(input: BrochureInput) {
       W - 2 * M - 14
     ),
     M + 7,
-    y + 17
+    y + 15.5
   );
   // Call to action: Electric Orange pill (the brand's action colour), linked to the saved build
   const reopen = `${origin}/?config=${input.code}`;
@@ -341,16 +417,16 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   doc.setCharSpace(0.5);
   const ctaW = doc.getTextWidth(cta) + cta.length * 0.18 + 14;
   doc.setFillColor(...EMBER);
-  doc.roundedRect(M + 7, y + 26, ctaW, 10, 5, 5, 'F');
+  doc.roundedRect(M + 7, y + 25, ctaW, 9, 4.5, 4.5, 'F');
   doc.setTextColor(...CARBON);
-  doc.text(cta, M + 14, y + 32.4);
+  doc.text(cta, M + 14, y + 30.7);
   doc.setCharSpace(0);
-  doc.link(M + 7, y + 26, ctaW, 10, { url: reopen });
+  doc.link(M + 7, y + 25, ctaW, 9, { url: reopen });
   body();
   doc.setFontSize(8);
   doc.setTextColor(...MUTE);
-  doc.text(reopen, M + 7 + ctaW + 5, y + 32.2);
-  doc.link(M + 7 + ctaW + 5, y + 28.5, doc.getTextWidth(reopen), 5, { url: reopen });
+  doc.text(reopen, M + 7 + ctaW + 5, y + 30.5);
+  doc.link(M + 7 + ctaW + 5, y + 27, doc.getTextWidth(reopen), 5, { url: reopen });
   footer();
 
   doc.save(`${BRAND.name.toLowerCase()}-${input.car.id}-${input.code}.pdf`);

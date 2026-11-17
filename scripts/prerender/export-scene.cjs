@@ -4,6 +4,10 @@
  *
  *   bunx vite --host 127.0.0.1 --port 5173      # dev server, in another shell
  *   node scripts/prerender/export-scene.cjs <carIndex> <out.glb>
+ *   CAR_QUERY=<query> (env) is appended to engine.html's URL, e.g. '&model=/.scratch/private/x.glb&len=4.79&paintMatch=paint_'
+ *   for a frames-only car: its licensed GLB stays in the git-ignored .scratch/ and is read from there at build time only.
+ *   Besides <out>.wheels.json (Blender axes) it writes <out>.layout.json: the wheels in engine space keyed by corner and
+ *   the body's half length and half width, which renders/manifest.json carries for a frames-only car (FramesLayout).
  *   IDLE_FRAMES=<ms> (env) hands the engine an animation frame only every <ms>: on software GL the export spends most of
  *   its minutes drawing frames nobody looks at, and the exported meshes, cameras and wheel positions do not depend on them.
  */
@@ -33,9 +37,9 @@ const VIEWS = ['frontThreeQuarter', 'side', 'rearThreeQuarter', 'frontWheel', 't
       };
     }, +process.env.IDLE_FRAMES);
   }
-  await p.goto(`http://127.0.0.1:5173/scripts/render/engine.html?car=${carIdx}`);
+  await p.goto(`http://127.0.0.1:5173/scripts/render/engine.html?car=${carIdx}${process.env.CAR_QUERY || ''}`);
   await p.waitForFunction(() => window.done !== undefined, null, { timeout: 300000 });
-  const { b64, wheels } = await p.evaluate(async ({ ASPECT, VIEWS }) => {
+  const { b64, wheels, layout } = await p.evaluate(async ({ ASPECT, VIEWS }) => {
     const THREE = await import('/node_modules/three/build/three.module.js');
     const { GLTFExporter } = await import('/node_modules/three/examples/jsm/exporters/GLTFExporter.js');
     const e = window.e;
@@ -90,10 +94,18 @@ const VIEWS = ['frontThreeQuarter', 'side', 'rearThreeQuarter', 'frontWheel', 't
       const w = a.group.getWorldPosition(new THREE.Vector3()); const sc = a.group.scale.x;
       return [w.x, -w.z, w.y, 0.35 * sc, (a.isFront ? 0.265 : 0.295) * sc].map((v) => +v.toFixed(4));
     });
-    return { b64: btoa(s), wheels };
+    // The same wheels in engine space, keyed as mountFramesCar reads them, and the body's footprint
+    const layoutWheels = Object.fromEntries(e.wheelAssemblies.map((a) => {
+      const w = a.group.getWorldPosition(new THREE.Vector3());
+      return [`${a.isFront ? 'front' : 'rear'}-${a.isRight ? 'right' : 'left'}`, [w.x, w.y, w.z, a.group.scale.x].map((v) => +v.toFixed(4))];
+    }));
+    const size = new THREE.Box3().setFromObject(e.bodyMeshGroup).getSize(new THREE.Vector3());
+    const layout = { wheels: layoutWheels, footprint: [+(size.z / 2).toFixed(3), +(size.x / 2).toFixed(3)] };
+    return { b64: btoa(s), wheels, layout };
   }, { ASPECT, VIEWS });
   fs.writeFileSync(out, Buffer.from(b64, 'base64'));
   fs.writeFileSync(out.replace(/\.glb$/, '') + '.wheels.json', JSON.stringify(wheels));
+  fs.writeFileSync(out.replace(/\.glb$/, '') + '.layout.json', JSON.stringify(layout));
   console.log('wrote', out, fs.statSync(out).size);
   await b.close();
 })().catch((e) => { console.error(e); process.exit(1); });

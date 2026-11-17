@@ -112,7 +112,7 @@ def swap_car(src):
     try:
         with bpy.data.libraries.load(src, link=False) as (data_from, data_to):
             data_to.collections = [c for c in data_from.collections if c in CAR_COLLECTIONS]
-    except OSError as e:
+    except (OSError, RuntimeError, ValueError) as e:   # Blender raises RuntimeError / ValueError for a corrupt or non-.blend file
         fail(f"could not read car file {src}: {e}")
     swapped = 0
     for coll in data_to.collections:
@@ -132,6 +132,8 @@ def reframe(ref_lo, ref_hi, new_lo, new_hi):
     """Keep the hero camera's angle; scale its distance and the studio lights to the new car's size."""
     ref_c, new_c = (ref_lo + ref_hi) / 2, (new_lo + new_hi) / 2
     ref_size, new_size = ref_hi - ref_lo, new_hi - new_lo
+    if min(ref_size.x, ref_size.y, ref_size.z) <= 0:
+        fail("reference car has a zero-size axis; cannot scale the camera and lights from it")
     s = max(new_size.y / ref_size.y, new_size.z / ref_size.z, new_size.x / ref_size.x)
     cam = bpy.context.scene.camera
     if cam is None:
@@ -247,6 +249,8 @@ def save_outputs(png_path, exr_path):
         img.save_render(png_path, scene=sc)
     except (RuntimeError, OSError) as e:
         raise RuntimeError(f"could not write {png_path}: {e}") from e
+    if not os.path.isfile(png_path) or os.path.getsize(png_path) == 0:   # Blender can return without raising on an unwritable path
+        raise RuntimeError(f"no file was written at {png_path}")
 
 
 def render_car(car_id, src, paints, args, ref_bounds):

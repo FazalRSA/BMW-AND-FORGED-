@@ -7,36 +7,6 @@ import { CarModel, PaintColor, WheelDesign, WheelFinish, CaliperColor, FinishVar
 
 export const BMW_MODELS: CarModel[] = [
   {
-    id: 'm4_g82',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW M4 Competition',
-    badge: 'M4 G82',
-    generation: 'G82',
-    chassisCode: 'G82 M4',
-    engine: '3.0L S58 Twin-Turbo Inline-6',
-    power: '503 HP / 510 PS',
-    torque: '650 Nm (479 lb-ft)',
-    acceleration: '0-100 km/h in 3.5s',
-    recommendedWheelFitment: {
-      front: '20 x 9.5J ET15',
-      rear: '21 x 10.5J ET18',
-      pcd: '5x112',
-      cb: '66.6mm'
-    },
-    bodyStyle: 'coupe',
-    paintIds: [
-      'skyscraper_grey', 'brooklyn_grey', 'isle_of_man_green', 'black_sapphire', 'toronto_red',
-      'portimao_blue', 'sao_paulo_yellow', 'alpine_white', 'aventurine_red_iii', 'tanzanite_blue_ii',
-      'dravit_grey', 'san_marino_blue', 'velvet_blue', 'java_green', 'frozen_dark_grey_ii', 'speed_yellow',
-      'frozen_pure_grey', 'frozen_black', 'marina_bay_blue', 'frozen_portimao_blue',
-      'frozen_brilliant_white'
-    ],
-    modelUrl: '/models/bmw-m4-competition.glb',
-    modelLengthM: 4.79,
-    paintMeshMatch: 'zx1mtl|body151mtl|pillars1mtl|livery1mtl',
-    hideMeshMatch: '(^|[^a-z])(wheel|rim|tyre|tire|brake|caliper|rotor)'
-  },
-  {
     id: 'm4_cs_g82',
     name: 'BMW M4 CS',
     badge: 'M4 CS G82',
@@ -61,86 +31,6 @@ export const BMW_MODELS: CarModel[] = [
     modelLengthM: 4.79,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
-  },
-  {
-    id: 'm4_convertible_g83',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW M4 Competition Convertible',
-    badge: 'M4 Convertible G83',
-    generation: 'G83',
-    chassisCode: 'G83 M4 Convertible',
-    // Specs intentionally blank (not needed by the client); blank rows are hidden in the UI.
-    engine: '',
-    power: '',
-    torque: '',
-    acceleration: '',
-    recommendedWheelFitment: { front: '', rear: '', pcd: '5x112', cb: '66.6mm' },
-    bodyStyle: 'convertible',
-    paintIds: [
-      'skyscraper_grey', 'brooklyn_grey', 'isle_of_man_green', 'black_sapphire', 'toronto_red',
-      'portimao_blue', 'sao_paulo_yellow', 'alpine_white', 'aventurine_red_iii', 'tanzanite_blue_ii',
-      'dravit_grey', 'frozen_deep_grey', 'velvet_orchid_ii', 'frozen_portimao_blue',
-      'frozen_brilliant_white'
-    ]
-  },
-  {
-    id: 'm3_g80',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW M3 Competition',
-    badge: 'M3 G80',
-    generation: 'G80',
-    chassisCode: 'G80 M3',
-    engine: '3.0L S58 Twin-Turbo Inline-6',
-    power: '503 HP / 510 PS',
-    torque: '650 Nm (479 lb-ft)',
-    acceleration: '0-100 km/h in 3.5s',
-    recommendedWheelFitment: {
-      front: '19 x 9.5J ET14',
-      rear: '20 x 10.5J ET16',
-      pcd: '5x112',
-      cb: '66.6mm'
-    },
-    bodyStyle: 'sedan',
-    paintIds: [
-      'skyscraper_grey', 'brooklyn_grey', 'isle_of_man_green', 'black_sapphire', 'toronto_red',
-      'portimao_blue', 'sao_paulo_yellow', 'alpine_white', 'aventurine_red_iii', 'tanzanite_blue_ii',
-      'dravit_grey', 'san_marino_blue', 'wildberry', 'ruby_black', 'frozen_deep_green',
-      'frozen_dark_grey_ii', 'fire_orange_iii', 'frozen_black', 'thunder', 'mineral_white', 'riviera_blue',
-      'marina_bay_blue', 'mint_green', 'sepia_iii', 'twilight_purple', 'frozen_tanzanite_blue',
-      'frozen_portimao_blue', 'frozen_pure_grey_ii', 'anglesey_green', 'ruby_star', 'frozen_brilliant_white',
-      'frozen_preciosa_red'
-    ],
-    modelUrl: '/models/bmw-m3-competition.glb',
-    modelRotationDeg: 180,
-    modelLengthM: 4.79,
-    paintMeshMatch: 'merged_materials',
-    hideMeshMatch: '(^|[^a-z])(wheelcolor1mtl|lugs1mtl|calliperpaintrl1mtl|union2mtl|stem1mtl|tyre1mtl)'
-  },
-  {
-    id: 'm3_touring_g81',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW M3 Competition Touring',
-    badge: 'M3 Touring G81',
-    generation: 'G81',
-    chassisCode: 'G81 M3 Touring',
-    // Specs intentionally blank (not needed by the client); blank rows are hidden in the UI.
-    engine: '',
-    power: '',
-    torque: '',
-    acceleration: '',
-    recommendedWheelFitment: { front: '', rear: '', pcd: '5x112', cb: '66.6mm' },
-    bodyStyle: 'touring',
-    paintIds: [
-      'skyscraper_grey', 'brooklyn_grey', 'isle_of_man_green', 'black_sapphire', 'toronto_red',
-      'portimao_blue', 'sao_paulo_yellow', 'alpine_white', 'aventurine_red_iii', 'tanzanite_blue_ii',
-      'dravit_grey', 'malachite_green_ii', 'speed_yellow', 'frozen_black', 'riviera_blue', 'brewster_green',
-      'sepia_iii', 'twilight_purple', 'frozen_portimao_blue', 'frozen_pure_grey_ii', 'anglesey_green',
-      'urban_green_ii', 'ruby_star', 'frozen_brilliant_white', 'lagoon_green', 'le_mans_blue'
-    ],
-    modelUrl: '/models/bmw-m3-touring-g81.glb',
-    modelLengthM: 4.8,
-    paintMeshMatch: '(^|\\s)m3g81law$',
-    hideMeshMatch: 'rim_04|3_wheel|amdb11'
   },
   {
     id: 'm2_g87',
@@ -171,30 +61,6 @@ export const BMW_MODELS: CarModel[] = [
     modelLengthM: 4.58,
     paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
     hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
-  },
-  {
-    id: 'm235_f74',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW M235 xDrive Gran Coupé',
-    badge: 'M235 F74',
-    generation: 'F74',
-    chassisCode: 'F74 M235',
-    // Specs intentionally blank (not needed by the client); blank rows are hidden in the UI.
-    engine: '',
-    power: '',
-    torque: '',
-    acceleration: '',
-    recommendedWheelFitment: { front: '', rear: '', pcd: '5x112', cb: '66.6mm' },
-    bodyStyle: 'gran_coupe',
-    paintIds: [
-      'fire_red', 'skyscraper_grey', 'thundernight', 'brooklyn_grey', 'black_sapphire', 'portimao_blue',
-      'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey', 'storm_bay'
-    ],
-    modelUrl: '/models/bmw-m235-gran-coupe.glb',
-    modelRotationDeg: 180,
-    modelLengthM: 4.54,
-    paintMeshMatch: '(^|\\s)paint$',
-    hideMeshMatch: 'wheel_lf'
   },
   {
     id: 'm5_g90',
@@ -256,79 +122,62 @@ export const BMW_MODELS: CarModel[] = [
     hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
-    id: 'm8_f92',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW M8 Competition Coupé',
-    badge: 'M8 F92',
-    generation: 'F92',
-    chassisCode: 'F92 M8',
-    // Specs intentionally blank (not needed by the client); blank rows are hidden in the UI.
-    engine: '',
-    power: '',
-    torque: '',
-    acceleration: '',
-    recommendedWheelFitment: { front: '', rear: '', pcd: '5x112', cb: '66.6mm' },
-    bodyStyle: 'coupe',
-    paintIds: [
-      'alpine_white', 'aventurine_red_iii', 'black_sapphire', 'brooklyn_grey', 'dravit_grey',
-      'frozen_pure_grey', 'frozen_tanzanite_blue', 'isle_of_man_green', 'marina_bay_blue',
-      'skyscraper_grey', 'tanzanite_blue_ii'
-    ],
-    modelUrl: '/models/bmw-m8-competition-f92.glb',
-    modelLengthM: 4.87,
-    paintMeshMatch: 'carpaint',
-    hideMeshMatch: 'm8f92_(wheel|caliper|brakedisc)'
-  },
-  {
-    id: 'x3m50_g45',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW X3 M50 xDrive',
-    badge: 'X3 M50 G45',
-    generation: 'G45',
-    chassisCode: 'G45 X3 M50',
-    // Specs intentionally blank (not needed by the client); blank rows are hidden in the UI.
-    engine: '',
-    power: '',
-    torque: '',
-    acceleration: '',
-    recommendedWheelFitment: { front: '', rear: '', pcd: '5x112', cb: '66.6mm' },
-    bodyStyle: 'suv',
-    paintIds: [
-      'fire_red', 'brooklyn_grey', 'sophisto_grey_brilliant_effect', 'arctic_race_blue', 'black_sapphire',
-      'dune_grey', 'alpine_white', 'tanzanite_blue_ii', 'frozen_deep_grey_c64', 'frozen_pure_grey'
-    ],
-    modelUrl: '/models/bmw-x3-m50-g45.glb',
-    modelRotationDeg: 180,
-    modelLengthM: 4.76,
-    paintMeshMatch: 'paint_|^object_86\\s',
-    hideMeshMatch: 'wheel_'
-  },
-  {
-    id: 'x5m_f95',
-    active: false, // hidden until a prepared package replaces the Sketchfab body (docs/ADD_PREPARED_CAR.md)
-    name: 'BMW X5 M Competition',
-    badge: 'X5 M F95',
-    generation: 'F95 LCI',
-    chassisCode: 'F95 X5 M',
-    engine: '4.4L S68 Twin-Turbo V8 Mild Hybrid',
-    power: '617 HP / 625 PS',
-    torque: '750 Nm (553 lb-ft)',
-    acceleration: '0-100 km/h in 3.8s',
+    // Frames-only: a Blendkit Royalty Free model, so the browser never gets its GLB (no modelUrl). The body is the
+    // Cycles frames in public/renders/ix3_m60 and the wheel layout in public/renders/manifest.json
+    // (docs/ADD_PREPARED_CAR.md, "Frames-only cars").
+    id: 'ix3_m60',
+    name: 'BMW iX3 M60',
+    badge: 'iX3 M60 xDrive',
+    generation: 'NA5',
+    chassisCode: 'NA5 iX3 M60',
+    // BMW Group press release, 8 Oct 2026 (figures provisional): one motor per axle, 450 kW / 612 hp, 875 Nm,
+    // 0-100 km/h 3.9 s; 21-inch M wheels standard (22-inch optional). Rim width and offset are not published:
+    // 21 x 9J is the 21-inch iX3 50 xDrive fitment in the tyre guides; hub 5x112 / 66.6 mm. Owner to confirm.
+    engine: 'Dual-motor electric (one per axle)',
+    power: '612 HP / 450 kW',
+    torque: '875 Nm (645 lb-ft)',
+    acceleration: '0-100 km/h in 3.9s',
     recommendedWheelFitment: {
-      front: '21 x 10.5J',
-      rear: '22 x 11.5J',
+      front: '21 x 9J',
+      rear: '21 x 9J',
       pcd: '5x112',
       cb: '66.6mm'
     },
     bodyStyle: 'suv',
+    // From the existing palette until the owner picks the iX3's own colours
     paintIds: [
-      'carbon_black', 'mineral_white', 'brooklyn_grey', 'isle_of_man_green', 'black_sapphire', 'toronto_red',
-      'fire_red_ii', 'anglesey_green', 'sepang_bronze', 'alpine_white', 'dravit_grey'
+      'alpine_white', 'mineral_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey', 'fire_red', 'storm_bay',
+      'frozen_deep_grey_c64'
     ],
-    modelUrl: '/models/bmw-x5m-f95-lci.glb',
-    modelLengthM: 4.94,
-    paintMeshMatch: 'x5m_paint',
-    hideMeshMatch: '^wheel_'
+    modelUrl: null,
+    modelLengthM: 4.79
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 Sedan 2025", Zifir3D): no modelUrl, see the iX3 above
+    id: 'm3_g80',
+    name: 'BMW M3',
+    badge: 'M3 Competition G80',
+    generation: 'G80',
+    chassisCode: 'G80 M3',
+    // 2024 facelift (LCI), Competition M xDrive: 530 PS / 390 kW, 650 Nm, 0-100 km/h 3.5 s. Fitment from BMW's G80
+    // M3 Competition xDrive press kit (05/2021): 9.5J x 19 front, 10.5J x 20 rear. Owner to confirm for the LCI.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 530 PS',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'sedan',
+    paintIds: [
+      'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.79
   }
 ];
 
@@ -431,7 +280,7 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
   },
   black: {
     id: 'black',
-    name: 'Black Gloss',
+    name: 'Gloss Black',
     colorName: 'Gloss Black',
     hex: '#141618',
     metalness: 0.7,
@@ -512,12 +361,12 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
   pure_bronze: {
     id: 'pure_bronze',
     name: 'Pure Bronze',
-    colorName: 'Gloss Bronze',
-    hex: '#9c6b3a',
+    colorName: 'Satin Bronze',
+    hex: '#75523f',
     metalness: 0.9,
     roughness: 0.3,
-    clearcoat: 0.85,
-    description: 'Deep gloss bronze metallic, the FF-3 signature finish.',
+    clearcoat: 0.7,
+    description: 'Deep bronze metallic with a soft sheen, the FF-3 signature finish.',
     badge: 'In stock'
   },
   black_matte: {
@@ -537,259 +386,9 @@ export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
 // offline fallback). Images live in the rim-images bucket and are extruded into 3D spokes on the car.
 export const WHEEL_DESIGNS: WheelDesign[] = [
   // The Nov 2026 stock sheet (BMW M / M Performance wheel inventory, docs/WHEEL_INVENTORY.md) is the source of
-  // the names, sizes, finishes and prices of the six wheels at the end of this list. The photo-traced designs
-  // above them stay in the catalogue but hidden (active: false) until they are stocked again.
-  {
-    id: 'forged_fsa_01',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-01',
-    name: 'Killarney S5',
-    subtitle: 'Two-piece split five-spoke',
-    style: 'Two-Piece Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['20"', '21"', '22"'],
-    pricePerSet: 4725.27,
-    priceBySize: { '20"': 4725.27, '21"': 5164.84, '22"': 5714.29 },
-    description: 'Five slender split spokes float over a deep, polished outer lip, with exposed assembly bolts around the barrel.',
-    highlights: ['Two-piece construction', 'Split five-spoke face', 'Deep polished lip'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_01-1790526477908.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_02',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-02',
-    name: 'Zwartkops Branch',
-    subtitle: 'Branched multi-spoke monoblock',
-    style: 'Monoblock Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Ten spokes divide into fine branches as they reach the rim, creating an intricate, airy face with a flush centre cap.',
-    highlights: ['Branched ten-spoke design', 'Open, airy face', 'Flush centre cap'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_02-1790526479977.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_04',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-04',
-    name: 'Scribante 3P',
-    subtitle: 'Riveted multi-piece split spoke',
-    style: 'Three-Piece Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['20"', '21"', '22"'],
-    pricePerSet: 4725.27,
-    priceBySize: { '20"': 4725.27, '21"': 5164.84, '22"': 5714.29 },
-    description: 'Twisted split spokes sit inside a stepped, polished lip ringed with exposed rivets for a bold multi-piece look.',
-    highlights: ['Multi-piece look', 'Twisted split spokes', 'Exposed rivet ring'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_04-1790526486272.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_05',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-05',
-    name: 'Phakisa Twin',
-    subtitle: 'Slim twin five-spoke',
-    style: 'Monoblock Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Five pairs of razor-thin spokes stretch from the hub to a broad lip, leaving large open windows.',
-    highlights: ['Twin five-spoke layout', 'Razor-thin spokes', 'Large open windows'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_05-1790526488573.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_06',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-06',
-    name: 'Aldo Fork 15',
-    subtitle: 'Forked fifteen-spoke',
-    style: 'Monoblock Forged',
-    spokeType: 'multi',
-    spokeCount: 12,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Fifteen fine spokes fork just before the lip, framing the rim with a delicate lattice of windows.',
-    highlights: ['Spokes fork at the lip', 'Delicate lattice windows', 'Clean five-lug hub'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_06-1790526491193.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_07',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-07',
-    name: 'Dezzi Star',
-    subtitle: 'Split-star two-piece',
-    style: 'Two-Piece Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['20"', '21"', '22"'],
-    pricePerSet: 4725.27,
-    priceBySize: { '20"': 4725.27, '21"': 5164.84, '22"': 5714.29 },
-    description: 'Sharp split spokes form a layered star around the hub, set inside a bright stepped lip.',
-    highlights: ['Layered star pattern', 'Two-piece stepped lip', 'Sharp split spokes'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_07-1790526493764.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_08',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-08',
-    name: 'Red Star 3P',
-    subtitle: 'Riveted Y-spoke multi-piece',
-    style: 'Three-Piece Forged',
-    spokeType: 'multi',
-    spokeCount: 15,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['20"', '21"', '22"'],
-    pricePerSet: 4725.27,
-    priceBySize: { '20"': 4725.27, '21"': 5164.84, '22"': 5714.29 },
-    description: 'Branching Y-spokes meet a pentagon centre, wrapped by a polished lip studded with exposed rivets.',
-    highlights: ['Branching Y-spokes', 'Pentagon centre', 'Polished riveted lip'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_08-1790526496586.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_09',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-09',
-    name: 'Heritage Mesh',
-    subtitle: 'Classic cross-spoke mesh',
-    style: 'Two-Piece Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['20"', '21"', '22"'],
-    pricePerSet: 4725.27,
-    priceBySize: { '20"': 4725.27, '21"': 5164.84, '22"': 5714.29 },
-    description: 'A dense cross-spoke mesh radiates from a large centre cap, framed by a riveted step lip for a heritage racing look.',
-    highlights: ['Cross-spoke mesh', 'Riveted step lip', 'Heritage racing style'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    imageUrl: 'https://qxlfkfhzpqbxffuqqewg.supabase.co/storage/v1/object/public/rim-images/pipeline/forged_fsa_09-1790526498397.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_12',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-12',
-    name: 'Forged SA Twin-Y',
-    subtitle: 'Polished twin-Y five-spoke',
-    style: 'Monoblock Forged',
-    spokeType: 'multi',
-    spokeCount: 10,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Five pairs of slim spokes leave the hub together and open toward the lip, cut from a single forged monoblock and hand-polished.',
-    highlights: ['Twin-Y five-spoke layout', 'True 3D rim model', 'Hand-polished monoblock'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    // PLACEHOLDER name, sizes and prices (copied from FSA-05) until the owner confirms them in /admin.
-    // The car shows the bar face drawn from the photo (docs/rim-template/fsa_12-spec.json); the rim page
-    // uses the rendered 360° spin (scripts/rim3d).
-    imageUrl: '/rim-faces/forged_fsa_12.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_13',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-13',
-    name: 'Forged SA Star 6',
-    subtitle: 'Brushed six-point split star',
-    style: 'Two-Piece Forged',
-    spokeType: 'multi',
-    spokeCount: 12,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Six pairs of slim brushed spokes form a star around a centre-lock hub, inside a polished two-piece lip.',
-    highlights: ['Six-point split star', 'Centre-lock hub', 'Polished two-piece lip'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    // PLACEHOLDER name, sizes and prices (copied from FSA-05) until the owner confirms them in /admin.
-    // Photo rectified front-on (scripts/rim3d/rectify.py); the car uses the bar face drawn from it
-    // (services/rimFaces.ts, docs/rim-template/fsa_13-spec.json). The rim page uses the rendered spin.
-    imageUrl: '/rim-images/forged_fsa_13.png',
-    imageExtrude: true
-  },
-  {
-    id: 'forged_fsa_14',
-    active: false, // not on the Nov 2026 stock sheet (docs/WHEEL_INVENTORY.md); reactivate in /admin > Wheels
-    code: 'FSA-14',
-    name: 'Forged SA Turbine 25',
-    subtitle: 'Gloss black 25-spoke turbine',
-    style: 'Monoblock Forged',
-    spokeType: 'multi',
-    spokeCount: 25,
-    weightFrontKg: 0,
-    weightRearKg: 0,
-    weightSavingsKg: 0,
-    standardSizes: ['19"', '20"', '21"', '22"'],
-    pricePerSet: 3736.26,
-    priceBySize: { '19"': 3736.26, '20"': 4065.93, '21"': 4505.49, '22"': 5054.95 },
-    description: 'Twenty-five swept spokes spiral out from the hub like a turbine, cut from one forged monoblock.',
-    highlights: ['25 swept spokes', 'Directional turbine face', 'Forged monoblock'],
-    availableVariants: ['liquid_metal', 'bronze', 'black', 'silver', 'satin_gold'],
-    defaultVariant: 'liquid_metal',
-    // PLACEHOLDER name, sizes and prices (copied from FSA-05) until the owner confirms them in /admin.
-    // Photo rectified front-on (scripts/rim3d/rectify.py); the car uses the bar face drawn from it
-    // (services/rimFaces.ts, docs/rim-template/fsa_14-spec.json). The rim page uses the rendered spin.
-    imageUrl: '/rim-images/forged_fsa_14.png',
-    imageExtrude: true
-  },
+  // the names, sizes, finishes and prices of these six wheels. The older photo-traced designs and the legacy
+  // cars were deleted on 2026-11-11 at the owner's request; their database rows are kept in the private
+  // archive schema (archive.legacy_wheels, archive.legacy_cars), and the code is in git history.
   {
     id: 'forged_fsa001',
     code: 'FSA001',
@@ -923,8 +522,8 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     pricePerSet: 4395.60,
     priceBySize: { '20"': 4395.60, '21"': 4395.60 },
     priceByFinish: { liquid_metal: 5219.78 },
-    description: 'Twin five-spoke three-piece forged wheel in Pure Bronze, Glossy Black or Liquid Metal. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET15/17 · CB 66.6.',
-    highlights: ['Three-piece construction', 'Pure Bronze, Glossy Black or Liquid Metal', 'PCD 5×112 · ET15/17 · CB 66.6'],
+    description: 'Twin five-spoke three-piece forged wheel in Pure Bronze, Gloss Black or Liquid Metal. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET15/17 · CB 66.6.',
+    highlights: ['Three-piece construction', 'Pure Bronze, Gloss Black or Liquid Metal', 'PCD 5×112 · ET15/17 · CB 66.6'],
     availableVariants: ['pure_bronze', 'black', 'liquid_metal'],
     defaultVariant: 'pure_bronze',
     imageUrl: '/rim-images/sixnine_ff3.webp',

@@ -109,7 +109,7 @@ export const TERMS: InfoPageContent = {
       title: '10. Your information (POPIA)',
       body: [
         'When you send an enquiry or save a configuration we process your name, contact details and the configuration you chose. We use them only to respond to you, prepare your quotation and fulfil your order. We do not sell your information. We store it securely with our service providers and keep it only as long as we need it or the law requires.',
-        'You may ask to see, correct or delete your information at any time by emailing [info@forgedsa.com]. Our Information Officer is [name]. You may also complain to the Information Regulator (inforegulator.org.za).'
+        'You may ask to see, correct or delete your information at any time by emailing [forgedsa1@gmail.com]. Our Information Officer is [name]. You may also complain to the Information Regulator (inforegulator.org.za).'
       ]
     },
     {
@@ -179,7 +179,7 @@ export const DELIVERY: InfoPageContent = {
       points: [
         'Check that the boxes are intact before signing, and note any visible damage on the delivery slip.',
         'Unpack on a soft surface and inspect every wheel and finish.',
-        'Report any damage or discrepancy within 48 hours with photos, to [info@forgedsa.com]. We will arrange a solution.'
+        'Report any damage or discrepancy within 48 hours with photos, to [forgedsa1@gmail.com]. We will arrange a solution.'
       ]
     },
     {
@@ -191,16 +191,8 @@ export const DELIVERY: InfoPageContent = {
   ]
 };
 
-const CC_BY = 'CC BY 4.0 (creativecommons.org/licenses/by/4.0)';
-const SKETCHFAB = 'sketchfab.com/3d-models/';
-
-/** One CC BY 4.0 car credit: title, author, source, licence and the changes we made. */
-const ccByCar = (title: string, author: string, slug: string, changes: string) =>
-  `"${title}" by ${author}. Source: ${SKETCHFAB}${slug}. Licence: ${CC_BY}. Changes: ${changes}`;
-
 /**
- * Model credits page (/credits). Satisfies the attribution the CC BY 4.0 car models require and
- * records the source of everything else drawn in the configurator. Mirror of public/models/CREDITS.md.
+ * Model credits page (/credits). Records the source of everything drawn in the configurator. Mirror of public/models/CREDITS.md.
  */
 export const CREDITS: InfoPageContent = {
   path: '/credits',
@@ -237,29 +229,6 @@ export const CREDITS: InfoPageContent = {
       ]
     },
     {
-      title: 'BMW cars from Sketchfab (Creative Commons Attribution 4.0)',
-      body: [
-        'These models are used under the Creative Commons Attribution 4.0 International licence, which allows commercial use provided the author is credited and changes are indicated. In every case we replaced the original wheels with FORGEDSA wheels and compressed the file for the web. Some of these cars are not currently offered in the configurator; the credit stands while the file is part of the site.'
-      ],
-      points: [
-        ccByCar('BMW M4 Competition M Package', 'SRT Performance', 'bmw-m4-competition-m-package-5c0a2dafb1ad408d9fc9eeef9aee531b', 'livery hidden, wheels replaced.'),
-        ccByCar('2025 BMW M4 CS VR46 Edition', "BMW'S Lost Proxy", '2025-bmw-m4-cs-vr46-edition-3d111a7ed0f544bc9215e3038db4c8dc', 'compressed, wheels replaced, calipers recoloured.'),
-        ccByCar('BMW M2 g87 [Free]', 'Black Snow', 'bmw-m2-g87-free-125412579b244790b27b2a7839527c6e', 'wheels replaced.'),
-        ccByCar('2021 BMW M3 Competition (G80)', 'DisneyCars', '2021-bmw-m3-competition-g80-a9027a26b7ee4da4b564d939b6c27559', 'wheels replaced.'),
-        ccByCar('BMW m3 Competition Tourning [g81]', 'Black Snow', 'bmw-m3-competition-tourning-g81-e2a4d608b2034e639c7eb6a2ef8dbfa1', 'wheels replaced.'),
-        ccByCar('BMW M8 F92 Coupé Competition', 'kevin (ケビン)', 'bmw-m8-f92-coupe-competition-25d5b4f6d13e4217afa09bbf89f8d993', 'wheels replaced.'),
-        ccByCar('BMW X5M F95 + Facelifted Versions', 'ZapupaNekra', 'bmw-x5m-f95-facelifted-versions-2f4b104aae8f4b59b05683a2a144902d', 'only the facelift X5 M Competition parts kept, materials rebuilt, plates and engine bay removed, wheels replaced.'),
-        ccByCar('BMW G90 M5', 'JUSTGAME', 'bmw-g90-m5-9dc9e5c88bec4faa94552fdd0b76ed21', 'body panels given their own paint material, wheels replaced.'),
-        ccByCar('2026 BMW X3', 'tonielpro520', '2026-bmw-x3-73212a0045524ca0804b82b813847a94', 'tyres separated from the trim mesh, wheels replaced.')
-      ]
-    },
-    {
-      title: 'BMW M235i Gran Coupé (Sketchfab Standard licence)',
-      body: [
-        `"BMW M235i Gran Coupé" by KOElkast1007 (sketchfab.com/koelkastasbers). Source: ${SKETCHFAB}bmw-m235i-gran-coupe-23aea45df6da44fab8785df6c3b09ecd. Licence: Sketchfab Standard (sketchfab.com/licenses), which permits use within this project but not redistribution of the model file. This car is not offered in the configurator and stays off unless re-licensed. Changes: skeleton baked out, wheels replaced.`
-      ]
-    },
-    {
       title: 'Studio lighting',
       body: [
         '"Studio Small 09" HDRI by Poly Haven (polyhaven.com/a/studio_small_09), CC0 (public domain). Used for reflections.'
@@ -268,7 +237,7 @@ export const CREDITS: InfoPageContent = {
     {
       title: 'Corrections',
       body: [
-        'If you are the author of one of these models and the credit or licence shown is wrong, or you would like it displayed differently, email [info@forgedsa.com] and we will correct it promptly.'
+        'If you are the author of one of these models and the credit or licence shown is wrong, or you would like it displayed differently, email [forgedsa1@gmail.com] and we will correct it promptly.'
       ]
     }
   ]

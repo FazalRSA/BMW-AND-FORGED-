@@ -1,1 +1,43 @@
-{}
+{
+ "ix3_m60": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.8106,
+    0.3735,
+    1.5075,
+    1.0671
+   ],
+   "front-right": [
+    0.8128,
+    0.3735,
+    1.5073,
+    1.0671
+   ],
+   "rear-left": [
+    -0.8106,
+    0.3735,
+    -1.3978,
+    1.0671
+   ],
+   "rear-right": [
+    0.8128,
+    0.3735,
+    -1.3979,
+    1.0671
+   ]
+  },
+  "footprint": [
+   2.406,
+   1.083
+  ]
+ }
+}
