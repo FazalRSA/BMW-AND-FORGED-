@@ -235,6 +235,35 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.5
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw x3 m50 2025", Zifir3D): no modelUrl, see the iX3 above. Its axles were
+    // merged meshes; prepare_blend.py splits them.
+    id: 'x3_g45',
+    name: 'BMW X3 M50',
+    badge: 'X3 M50 xDrive G45',
+    generation: 'G45',
+    chassisCode: 'G45 X3 M50',
+    // BMW South Africa launch material and cars.co.za: 3.0 six-cylinder with 48 V mild hybrid, 293 kW, 580 Nm,
+    // 0-100 km/h 4.6 s, 20-inch wheels standard. Rim widths are not published: 20 x 8.5J / 20 x 9.5J is an estimate
+    // (the car has a wider rear track). Owner to confirm.
+    engine: '3.0L Turbo Inline-6 48V Mild Hybrid',
+    power: '398 HP / 293 kW',
+    torque: '580 Nm (428 lb-ft)',
+    acceleration: '0-100 km/h in 4.6s',
+    recommendedWheelFitment: {
+      front: '20 x 8.5J',
+      rear: '20 x 9.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'skyscraper_grey', 'fire_red', 'portimao_blue',
+      'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.755
   }
 ];
 
