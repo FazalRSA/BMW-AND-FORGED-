@@ -178,6 +178,92 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.79
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 Touring 2025", Zifir3D): no modelUrl, see the iX3 above
+    id: 'm3_touring_g81',
+    name: 'BMW M3 Touring',
+    badge: 'M3 Touring G81',
+    generation: 'G81',
+    chassisCode: 'G81 M3 Touring',
+    // 2024 facelift (LCI), Competition M xDrive: 530 PS / 390 kW, 650 Nm, 0-100 km/h 3.6 s (spec databases; the
+    // 3.6 s is published for the pre-facelift car). Fitment as the M3 G80 (9.5J x 19 front, 10.5J x 20 rear). Owner to
+    // confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 530 PS',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.6s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'touring',
+    paintIds: [
+      'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.8
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW X1 M Sportpaket", Zifir3D): no modelUrl, see the iX3 above. The model's
+    // meshes are turned about 1 degree on the ground; prepare_blend.py levels it.
+    id: 'x1_u11',
+    name: 'BMW X1',
+    badge: 'X1 M Sport U11',
+    generation: 'U11',
+    chassisCode: 'U11 X1',
+    // sDrive18i M Sport as sold in South Africa (bmw.co.za technical data): 115 kW, 230 Nm, 0-100 km/h 9.0 s. M Sport
+    // comes on 18-inch wheels (19 and 20 optional, BMW SA press release 2022); the rim width is not published, so
+    // 18 x 8J is an estimate. Owner to confirm.
+    engine: '1.5L Turbo Inline-3',
+    power: '156 HP / 115 kW',
+    torque: '230 Nm (170 lb-ft)',
+    acceleration: '0-100 km/h in 9.0s',
+    recommendedWheelFitment: {
+      front: '18 x 8J',
+      rear: '18 x 8J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'portimao_blue', 'skyscraper_grey', 'fire_red',
+      'storm_bay'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.5
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw x3 m50 2025", Zifir3D): no modelUrl, see the iX3 above. Its axles were
+    // merged meshes; prepare_blend.py splits them.
+    id: 'x3_g45',
+    name: 'BMW X3 M50',
+    badge: 'X3 M50 xDrive G45',
+    generation: 'G45',
+    chassisCode: 'G45 X3 M50',
+    // BMW South Africa launch material and cars.co.za: 3.0 six-cylinder with 48 V mild hybrid, 293 kW, 580 Nm,
+    // 0-100 km/h 4.6 s, 20-inch wheels standard. Rim widths are not published: 20 x 8.5J / 20 x 9.5J is an estimate
+    // (the car has a wider rear track). Owner to confirm.
+    engine: '3.0L Turbo Inline-6 48V Mild Hybrid',
+    power: '398 HP / 293 kW',
+    torque: '580 Nm (428 lb-ft)',
+    acceleration: '0-100 km/h in 4.6s',
+    recommendedWheelFitment: {
+      front: '20 x 8.5J',
+      rear: '20 x 9.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'skyscraper_grey', 'fire_red', 'portimao_blue',
+      'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.755
   }
 ];
 
@@ -253,6 +339,14 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'aventurin_red', name: 'Aventurin Red', code: 'X15', hex: '#6a1612', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05, active: false }, // M8 now uses C57 (aventurine_red_iii); kept inactive so saved builds still open
   { id: 'frozen_isle_of_man_green', name: 'Frozen Isle of Man Green', code: 'P92', hex: '#1d5a45', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 },
   { id: 'borusan_turkish_blue', name: 'Borusan Turkish Blue', code: 'P9E', hex: '#25aed4', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 },
+  // Limited-run colours (2026-11-17, supabase/migrations/20261117095000_paints_limited_run_colours.sql): the M3 CS,
+  // M3 CS Touring and M4 CSL are sold in three or four colours only, so they get their real ones, as the M4 CS does.
+  // Hex values are estimates from BMW's press photos, not colour-managed data. Owner to confirm.
+  { id: 'frozen_solid_white', name: 'Frozen Solid White', code: 'P91', hex: '#e9e9e6', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // matte white without metallic effect (M3 CS, M3 CS Touring)
+  { id: 'signal_green', name: 'Signal Green', code: 'P56', hex: '#249a48', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS launch colour
+  { id: 'frozen_brooklyn_grey', name: 'Frozen Brooklyn Grey', code: 'P8X', hex: '#a4a9ac', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // M4 CSL launch colour: Brooklyn Grey (C4P) in matte
+  { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual, paint code and finish unverified
+  { id: 'laguna_seca_blue', name: 'Laguna Seca Blue', code: '448', hex: '#3a8fd1', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; 448 is the original E46 code, the 2025 code is unverified
 ];
 
 export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {

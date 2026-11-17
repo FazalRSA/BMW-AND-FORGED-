@@ -1629,6 +1629,10 @@ export class CarConfiguratorEngine {
       }
       if (!best || best.score < 0.75) return;
       const point = best.point.applyMatrix4(toLocal);
+      // A grille with gaps lets the ray through to the panel behind it (the X1's lower intake: the hit was 19.5 cm
+      // behind the nose, so the plate sat inside the intake). A front plate stands at most 8 cm behind the nose, as on
+      // a grille bracket. The other cars' front plates sit 6 cm back or less, so they are not moved.
+      if (!rear && zEnd - point.z > 0.12) point.z = zEnd - 0.08;
       const n = best.normal.transformDirection(toLocal);
       n.x = 0;
       n.y = THREE.MathUtils.clamp(n.y, -0.05, 0.28);
