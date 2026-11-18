@@ -435,6 +435,41 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.801
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw x3 2025", Zifir3D): no modelUrl, see the iX3 above. The id was chosen for
+    // the X3 20d, but the model is badged "X3 30e" and has the plug-in hybrid's charging flap on the left front wing, so
+    // it is the X3 30e xDrive, in the Standard line (not M Sport): satin aluminium window surround, roof rails and kidney
+    // grille, silver underride strips and ribbed sill inserts. Frames scaled by the wheelbase (BMW's 2.865 m): the model
+    // is then 4.769 m long, 14 mm over BMW's 4.755 m (modelLengthM; public/models/CREDITS.md).
+    id: 'x3_30e_g45',
+    name: 'BMW X3 30e xDrive',
+    badge: 'X3 30e xDrive G45',
+    generation: 'G45',
+    chassisCode: 'G45 X3 30e',
+    // BMW's technical specifications for the X3 (06/2024), X3 30e xDrive: 220 kW (299 hp) and 450 Nm system output,
+    // 0-100 km/h 6.2 s, 8.5J x 19 with 245/50 R19, 4,755 mm long, wheelbase 2,865 mm. South Africa: BMW Group South
+    // Africa's launch release (19-inch wheels standard on the 30e) and cars.co.za (X3 30e xDrive in the Standard line
+    // at R1 260 000 at launch; 220 kW, 450 Nm, 6.2 s). Bolt pattern and centre bore are the G-series hub values, not in
+    // BMW's sheet. paintIds: the Standard line's palette in BMW South Africa's configurator as read for the X3 20d
+    // xDrive (2026-11-17), assumed the same for the 30e; Brooklyn Grey is M Sport only. Owner to confirm.
+    engine: '2.0L Turbo Inline-4 Plug-in Hybrid',
+    power: '299 HP / 220 kW',
+    torque: '450 Nm (332 lb-ft)',
+    acceleration: '0-100 km/h in 6.2s',
+    recommendedWheelFitment: {
+      front: '19 x 8.5J',
+      rear: '19 x 8.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'alpine_white', 'black_sapphire', 'mineral_white', 'skyscraper_grey', 'sophisto_grey_brilliant_effect', 'dune_grey',
+      'arctic_race_blue', 'fire_red', 'tanzanite_blue_ii'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.755
   }
 ];
 

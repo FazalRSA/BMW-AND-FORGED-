@@ -78,6 +78,18 @@ CAR_FIXES = {
     'm3_touring_g81': {'keep_normals': True, 'authored_lamps': True},
     'x1_u11': {'keep_normals': True, 'authored_lamps': True},
     'x3_g45': {'keep_normals': True, 'authored_lamps': True},
+    # the X3 30e xDrive Standard Model (car id x3_30e_g45); its bright trim, sill inserts and lamps are fixed in the private copy.
+    # :top (--car x3_30e_g45:top --views top): from above the windscreen and the panoramic roof mirrored the end and shoulder
+    # strips as pale crossing bars; blurred (glass_rough 0.3, as the M3 CS Touring's top view) they are one soft sheen, and a
+    # brighter cabin light, linked to the car only so the floor shadow keeps its size, lights the cabin. At the studio's
+    # dimmed IOR the blurred glass was a near-black hole; glass's own IOR (glass_ior 1.5, as the M4's top view) gives the
+    # windscreen and roof a broad soft sheen of the overhead light, so they read as tinted glass.
+    # :ftq (--views frontThreeQuarter): the side panes (split off as Plane_055_side in the private copy) off the end rim
+    # strips only: the high one behind the car, seen end-on in the rear door glass, was a pale smudge. The long strips stay
+    # linked (with every strip off, the side glass was one flat black shape).
+    'x3_30e_g45': {'keep_normals': True, 'authored_lamps': True},
+    'x3_30e_g45:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}},
+    'x3_30e_g45:ftq': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^Plane_055_side$', 'glass_unlink_lights': r'^rim'},
     # gloss_black: the roof panel, its rails, the roof spoiler and the aerial fin (BMW: "roof and roof spoiler in Black
     # high-gloss"). carbon: the 'carbon' mesh (splitter, front air intakes, mirror caps, diffuser) and the two bonnet
     # indents (Object494), which BMW leaves in exposed carbon fibre.

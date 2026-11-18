@@ -408,5 +408,46 @@
    2.412,
    1.04
   ]
+ },
+ "x3_30e_g45": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.8049,
+    0.374,
+    1.529,
+    1.0685
+   ],
+   "front-right": [
+    0.8049,
+    0.374,
+    1.529,
+    1.0685
+   ],
+   "rear-left": [
+    -0.8296,
+    0.3742,
+    -1.3376,
+    1.0687
+   ],
+   "rear-right": [
+    0.8296,
+    0.3742,
+    -1.3376,
+    1.0687
+   ]
+  },
+  "footprint": [
+   2.385,
+   1.06
+  ]
  }
 }
