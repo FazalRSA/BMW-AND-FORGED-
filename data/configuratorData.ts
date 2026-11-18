@@ -174,7 +174,7 @@ export const BMW_MODELS: CarModel[] = [
     bodyStyle: 'sedan',
     paintIds: [
       'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
-      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue', 'frozen_pure_grey'
     ],
     modelUrl: null,
     modelLengthM: 4.79
@@ -202,7 +202,7 @@ export const BMW_MODELS: CarModel[] = [
     bodyStyle: 'touring',
     paintIds: [
       'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
-      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue', 'frozen_pure_grey'
     ],
     modelUrl: null,
     modelLengthM: 4.8
