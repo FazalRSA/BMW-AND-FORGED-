@@ -8,7 +8,15 @@ description: Add FORGEDSA wheel designs to the configurator from product photos 
 Full reference: `docs/WHEEL_PIPELINE.md`. Wheels live in `public.wheels`, and `data/configuratorData.ts`
 mirrors the live ones.
 
-## Route A: photos (live today for FSA-01…FSA-09)
+## Route A: photos (the mechanism — not what the live catalogue currently uses)
+
+The current catalogue (`docs/WHEEL_INVENTORY.md`) is the owner's six-wheel stock sheet
+(`forged_fsa001`/`002`/`_03`/`004`, `sixnine_ff1`/`ff3`), and every one of them ships a
+`modelUrl` GLB, not a live photo-trace. The earlier FSA-01…FSA-09 photo-traced wheels this route
+was built around were deleted from the catalogue on 2026-11-11 (see `CLAUDE.md`). The mechanism
+below is still real, working code — `applyWheelDesign`'s `image` mode still exists and still
+runs if a wheel is ever added with only `imageUrl` and no `modelUrl` — so use this route if a
+future wheel genuinely has no 3D model yet. Just don't assume any current wheel goes through it.
 
 1. Put the photos (or a zip) and the `wheels` sheet in one Drive folder. There is one row per design:
    `file, name, code, sizes, prices_zar|prices_usd, finishes, subtitle, description, highlights,

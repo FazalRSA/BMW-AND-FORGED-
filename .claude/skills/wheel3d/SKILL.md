@@ -1,6 +1,6 @@
 ---
 name: wheel3d
-description: Perfect any new FORGEDSA wheel in 3D the way the nine current ones were done, from a photo to a clean, photoreal rim on every car, size and finish. Step by step - check the photo, read it with the engine, measure it with the wheel QA (pieces, windows, symmetry, nicks and wobble, thinnest spoke), pick the route that makes it clean (photo as is, per-wheel options, a bar face drawn from measured straight bars, or an AI face mask), then the on-car render matrix, and going live. Use for "add this wheel", "this rim looks wrong / jagged / fat / broken on the car", "make wheel X perfect", or /wheel3d.
+description: Perfect any new FORGEDSA wheel in 3D, from a photo to a clean, photoreal rim on every car, size and finish — the method proven on the earlier FSA-01…FSA-09 photo-traced wheels (since replaced in the live catalogue by the six-wheel stock sheet's GLB models; the technique still applies to any future photo-only wheel). Step by step - check the photo, read it with the engine, measure it with the wheel QA (pieces, windows, symmetry, nicks and wobble, thinnest spoke), pick the route that makes it clean (photo as is, per-wheel options, a bar face drawn from measured straight bars, or an AI face mask), then the on-car render matrix, and going live. Use for "add this wheel", "this rim looks wrong / jagged / fat / broken on the car", "make wheel X perfect", or /wheel3d.
 ---
 
 # /wheel3d: any new wheel, perfected

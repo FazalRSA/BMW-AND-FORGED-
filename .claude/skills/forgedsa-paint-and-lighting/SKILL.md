@@ -103,9 +103,11 @@ black reflection cove with one overhead softbox. The softbox studio values furth
 - A panel that stays grey is a paint regex issue, not lighting (see `forgedsa-add-car-model`).
 - Flakes computed in model space take on the car file's units and show as coarse glitter.
   They must stay in world space.
-- Real-time paint has a ceiling. Beyond it, use the path-traced mode (`forgedsa-photoreal-mode`)
-  and better models, rather than more parameter tweaking. The whole photoreal process is in
-  `3d-car-perfect`.
+- Real-time paint has a ceiling. Beyond it, the shipped answer is pre-rendered Cycles stills
+  (`public/renders/stills.json`, `scripts/prerender/stills-frames.sh`) plus better car models,
+  not more parameter tweaking. The whole photoreal process is in `3d-car-perfect`. A live
+  in-browser path tracer was prototyped (`claude/photoreal-proof`) but not adopted — don't
+  resume it without checking with the owner first.
 
 ## Gloss vs satin: what was measured (Oct 2026)
 
