@@ -29,6 +29,7 @@ export const HERO_SLIDES: HeroSlide[] = [
   { carId: 'x3_g45', name: 'BMW X3 M50', paint: 'Brooklyn Grey Metallic', paintId: 'brooklyn_grey' },
   { carId: 'm3_cs_g80', name: 'BMW M3 CS', paint: 'Signal Green', paintId: 'signal_green' },
   { carId: 'm3_cs_touring_g81', name: 'BMW M3 CS Touring', paint: 'Laguna Seca Blue', paintId: 'laguna_seca_blue' },
+  { carId: 'm4_g82', name: 'BMW M4 Competition', paint: 'São Paulo Yellow', paintId: 'sao_paulo_yellow' },
   { carId: 'm4_csl_g82', name: 'BMW M4 CSL', paint: 'Frozen Brooklyn Grey Metallic', paintId: 'frozen_brooklyn_grey' }
 ];
 

@@ -110,6 +110,20 @@ CAR_FIXES = {
     'm4_csl_g82:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Circle_059|Plane_065|Plane_076|Circle_061|headlamp_(Circle_011|Plane_003))$',
                          'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0},
                          'carbon': r'^(24698910__11603P001|Circle_004|Circle_020)$'},
+    # the M4 CSL's body and glazing (same panes, same names): side and rear glass and the headlamp covers (hairline
+    # scribbles in the wheel close-up) off the strips. dark: as on the M3 CS, the cabin light sits under the headliner,
+    # brighter and off the floor, so the seats read through the glass. carbon: the 'carbon' mesh (mirror caps, boot-lid lip,
+    # splitter, intake inserts, diffuser; its weave maps are missing from the download). Straight ahead (--car m4_g82:front
+    # --views front) the windscreen mirrored the side strips as two broad pale bands, so all glass is off them. From above
+    # (--car m4_g82:top --views top), with every pane off the strips the windscreen and rear window were flat black, and
+    # glass_rough 0.3 frosted the sunroof: so those two are dark glass that keeps the strips, as smooth as real glass
+    # (dark_glass_rough 0.06: each strip a crisp bar, as on the paint's clear coat; glass blurrier than paint reads false), the side panes
+    # stay off the strips, and the clear panes take glass's own IOR (glass_ior 1.5, not the studio's dimmed 1.25), so the
+    # flat sunroof, which the strips do not reach from above, shows a faint sheen of the overhead panel over the seats.
+    'm4_g82': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Plane_076|Circle_061|headlamp_Circle_011)', 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
+    'm4_g82:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
+    'm4_g82:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Plane_076|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Circle_061)$', 'dark_glass_rough': 0.06,
+                   'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors

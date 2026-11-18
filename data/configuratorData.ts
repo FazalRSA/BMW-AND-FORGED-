@@ -327,6 +327,44 @@ export const BMW_MODELS: CarModel[] = [
     modelLengthM: 4.796
   },
   {
+    // Frames-only (Blendkit Royalty Free "BMW M4 Coupe 2024", Zifir3D): no modelUrl, see the iX3 above. The model is
+    // the facelifted G82 with the high-gloss black steel roof and glass sunroof (BMW's no-cost alternative to the
+    // carbon roof) and carbon mirror caps, boot lip, intake inserts and diffuser. It is badged plain "M4"; the frames
+    // carry the Competition's badges (black letters with a silver edge, the Competition script added). Rendered at the
+    // model's own size: 4.806 m long, wheelbase 2.856 m (BMW: 4.801 m and 2.857 m). The live wheels sit at the model's
+    // own 1.601 m track front and rear, centred in its arches (BMW: 1,617 mm front, 1,605 mm rear; CREDITS.md).
+    id: 'm4_g82',
+    name: 'BMW M4 Competition',
+    badge: 'M4 Competition G82',
+    generation: 'G82',
+    chassisCode: 'G82 M4 Competition',
+    // 2024 facelift (LCI), M4 Competition Coupé with M xDrive, the only M4 Coupé sold in South Africa besides the CS.
+    // BMW's technical data sheet (BMW Media Information 01/2024) and the South African launch reports (cars.co.za,
+    // citizen.co.za, toprated.co.za), which quote the same figures: 390 kW (530 PS, 523 hp), 650 Nm, 0-100 km/h 3.5 s,
+    // 9.5J x 19 front and 10.5J x 20 rear, 4,801 mm long. Bolt pattern and centre bore are the G-series hub values, not
+    // in the data sheet (66.6 mm not confirmed against a BMW document); BMW does not publish the offsets. Paints: from
+    // BMW South Africa's configurator for this car (docs/bmw-factory-paints.md, section 5): the eight no-cost series
+    // colours, the launch colour first, and the BMW Individual special-order Frozen Portimao Blue, which is X1E on the
+    // G8x M3/M4 (C6R is the G87/F74 code for the same name). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 390 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'coupe',
+    paintIds: [
+      'sao_paulo_yellow', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'brooklyn_grey', 'skyscraper_grey',
+      'black_sapphire', 'alpine_white', 'frozen_portimao_blue'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.801
+  },
+  {
     // Frames-only (Blendkit Royalty Free "Bmw m4 csl", Zifir3D): no modelUrl, see the iX3 above. The model's carbon
     // splitter and diffuser stand 39 mm and 21 mm proud of its bumpers: scaled to BMW's 4.794 m (modelLengthM) the
     // wheelbase would be 0.8% short, so the frames were rendered with the wheelbase at BMW's 2.857 m instead (the model
