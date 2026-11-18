@@ -9,7 +9,8 @@
  * --hero also writes public/hero/<carId>-1600.webp and -960.webp from the summary's front three-quarter still (the
  * frame recoloured in the slide's paint, with the live forged wheels on top): a frames-only car has no Cycles hero batch.
  * Supabase writes are answered locally (never a real lead). CAR_ROW=<json> adds the car's row to the catalogue read, in
- * the test browser only, before its migration is applied. SwiftShader: several minutes.
+ * the test browser only, before its migration is applied; PAINT_ROWS=<json> does the same for paints rows (an array)
+ * the car lists that are not in the database yet. SwiftShader: several minutes.
  */
 const { chromium } = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 const fs = require('fs');
@@ -40,6 +41,23 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
         await r.fulfill({ response: res, json: rows });
       } catch (e) {
         problems.push(`could not add the CAR_ROW to the catalogue read: ${e.message}`);
+        await r.continue().catch(() => {});
+      }
+    });
+  }
+  // PAINT_ROWS=<json file>: paints rows (an array, as their migration inserts them) added to the live paints read the
+  // same way, for paints that are not in the database yet (a limited-run car's own colours). Without them the car
+  // would open, and its --hero still would be shot, in a fallback paint instead of the slide's.
+  if (process.env.PAINT_ROWS) {
+    const extra = JSON.parse(fs.readFileSync(process.env.PAINT_ROWS, 'utf8'));
+    await p.route(/supabase\.co\/rest\/v1\/paints\?/, async (r) => {
+      try {
+        const res = await r.fetch();
+        const rows = await res.json();
+        if (Array.isArray(rows)) for (const row of extra) if (!rows.some((x) => x.id === row.id)) rows.push(row);
+        await r.fulfill({ response: res, json: rows });
+      } catch (e) {
+        problems.push(`could not add the PAINT_ROWS to the catalogue read: ${e.message}`);
         await r.continue().catch(() => {});
       }
     });
@@ -76,6 +94,13 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
     const imgs = [...document.querySelectorAll('img')].map((i) => i.src).filter((s) => s.startsWith('data:image/jpeg'));
     return imgs.length >= 3 ? imgs : null;
   }, null, { timeout: 180000 }).then((h) => h.jsonValue()).catch(() => []);
+  // The page's fade-in (animate-fade / animate-rise, about 1.5 s) only starts once the stills are drawn and the main
+  // thread is free again: let it finish, or the screenshot shows the page dimmed.
+  await p.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations().filter((a) => a.effect && Number.isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.finished.catch(() => {}))),
+    new Promise((r) => setTimeout(r, 6000)),
+  ])).catch(() => {});
+  await p.waitForTimeout(300);
   await shot('summary');
   if (stills.length < 3) problems.push(`summary has ${stills.length} stills, expected 3`);
   stills.forEach((s, i) => fs.writeFileSync(path.join(OUT, `${CAR}-still-${i}.jpg`), Buffer.from(s.split(',')[1], 'base64')));

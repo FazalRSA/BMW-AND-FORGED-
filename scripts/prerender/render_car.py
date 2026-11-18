@@ -55,18 +55,13 @@ DERIVE = a.studio == 'dark' and not a.two_render
 #  view_gain: {view: {light-name prefix: factor}} scales those lights for one view only (e.g. a roof that clips from above).
 #  dark: per-car overrides of the DARK studio values (e.g. calmer strips where a roof is hot).
 #  glass_tint: darker glass base colour (the dark studio's glass_tint) for this car.
+#  gloss_black: regex of mesh names rendered as high-gloss black (a black roof, piano-black trim) instead of the satin
+#        black given to unnamed trim: the paint's own gloss recipe over a black base, so it matches a black car's panels.
+#  carbon: regex of mesh names rendered as clear-coated 2x2 twill carbon fibre. The weave is procedural (the glTF route
+#        carries no clear coat and none of a model's weave maps) and drawn only where a pixel can resolve it.
 CAR_FIXES = {
     # four front-fender variants (stock, Competition, CS, Keyvany): keep the Competition one
     'm8_f92': {'hide': r'^(PAINT_)?(m8f92_fender_[LR](_cs)?(00\d)?_m8f92_|keyvany_fender_[LR])'},
-    # no_subdiv: subdivided, it runs out of memory (12.7 GB). glass_unlink: no ragged strip reflections in the bumpy glazing.
-    # view_gain: from above the roof's shoulder highlights clipped (p99 1.0), so that one strip is 25% dimmer in the top view.
-    'm3_g80': {'thin_glass': True, 'no_subdiv': True, 'glass_unlink': True, 'view_gain': {'top': {'shoulder': 0.75}}},
-    # suspension, hubs and anti-roll bars sit inside the arches and show through the wheel gaps (arch liners 'tubs' stay)
-    'm3_touring_g81': {'lamps': r'headlight',
-                       'hide': r'(lowerarm|upperarm|spring|shock|hub|strut|swaybar(_links)?|halfshaft|tierod)_[FR]'},
-    # the panoramic roof's black plastic panel is coplanar with its glass: the two z-fought into black blotches from above.
-    # Drop the panel, render the glass as flat dark glass and keep the crisp strips off it.
-    'x5m_f95': {'hide': r'^roof_panoram_plastic', 'dark_glass': r'^roof_panoram\d*_glass', 'glass_unlink': r'^roof_panoram\d*_glass'},
     # The prepared packages (Drive > 3d cars) are clean models with authored normals (16-bit in the web GLB). Welding the
     # panels and re-weighting their normals crumpled them, and subdividing them had Blender killed for memory on an 8 GB
     # machine, so they render exactly as exported. authored_lamps: their lamps are modelled (clear covers, reflectors, lit
@@ -116,6 +111,7 @@ DARK = dict(
     fill_rad=0.9, fill_d=0.75, fill_h=1.2,            # camera-side soft diffuse-only fill (flanks, lower body): radiance, offset (xL), height (m)
     end_rad=1.6, end_d=0.95,                          # soft diffuse-only fills ahead of / behind the car (grille, bumper, tail)
     cabin_rad=0.8,           # dim diffuse light inside the cabin so the interior reads through the glass
+    cabin_h=0.95, cabin_y=0.15, cabin_w=1.0, cabin_l=1.8, cabin_floor=1,   # that light: height (m), offset along +Y (m), width, length (m); cabin_floor=0 light-links it to the car alone (the shadow catcher counts it as light the body blocks, so a brighter or higher one widens the floor shadow)
     far_strips=0,            # 1 also puts the high/low strips on the far side (they reflect strongly in the windscreen)
     strips_reflect_only=1,   # strips/rims are invisible to diffuse rays: they draw crisp reflections but do not light (wash out) the white pass or the floor
     glass_tint=0.22, glass_opaque=0, glass_rough=0.07, glass_ior=1.25,   # glass_rough / glass_ior: a little roughness and a lower IOR turn the strip reflections into soft dim ones
@@ -231,6 +227,62 @@ if fix.get('dark_glass'):
             b.inputs['Base Color'].default_value = (0.010, 0.012, 0.015, 1)
             b.inputs['Metallic'].default_value = 0.0; b.inputs['Roughness'].default_value = fix.get('dark_glass_rough', 0.10)
             b.inputs['IOR'].default_value = 1.45
+
+def gloss_black_material():
+    """High-gloss black: the gloss paint pass (PASSES 'gloss') over a black base."""
+    m, b = principled('GLOSS_BLACK')
+    b.inputs['Base Color'].default_value = (0.004, 0.004, 0.0045, 1); b.inputs['Roughness'].default_value = 0.30
+    b.inputs['Coat Weight'].default_value = 1.0
+    b.inputs['Coat Roughness'].default_value = DARK['coat_rough'] if a.studio == 'dark' else 0.02
+    return m
+
+CARBON_TONES = (0.016, 0.050)   # base colour (linear) of a cell with the weft tow on top, and with the warp tow on top
+
+def carbon_material(tow=0.003, near=3.0, far=4.2):
+    """Clear-coated 2x2 twill carbon fibre. tow: width of one tow (m). The weave (two dark greys and a bump, under a smooth
+    coat) is laid out in world space on the plane the surface faces most, so it needs no UVs, and it fades to its mean grey
+    between near and far metres from the camera: finer than a pixel it would only alias into moire."""
+    m, b = principled('CARBON'); nt = m.node_tree
+    def M(op, *xs):   # a Math node; inputs are numbers or sockets
+        n = nt.nodes.new('ShaderNodeMath'); n.operation = op
+        for i, x in enumerate(xs):
+            if isinstance(x, (int, float)): n.inputs[i].default_value = x
+            else: nt.links.new(x, n.inputs[i])
+        return n.outputs[0]
+    pick = lambda f, x0, x1: M('ADD', x0, M('MULTIPLY', f, M('SUBTRACT', x1, x0)))   # x0 where f is 0, x1 where it is 1
+    geo = nt.nodes.new('ShaderNodeNewGeometry')
+    pos = nt.nodes.new('ShaderNodeSeparateXYZ'); nt.links.new(geo.outputs['Position'], pos.inputs[0])
+    nrm = nt.nodes.new('ShaderNodeSeparateXYZ'); nt.links.new(geo.outputs['True Normal'], nrm.inputs[0])
+    ax, ay, az = (M('ABSOLUTE', nrm.outputs[i]) for i in range(3))
+    up = M('MULTIPLY', M('GREATER_THAN', az, ax), M('GREATER_THAN', az, ay))      # the face looks up or down: weave in x, y
+    side = M('MULTIPLY', M('SUBTRACT', 1.0, up), M('GREATER_THAN', ax, ay))       # it looks along x: weave in y, z (else x, z)
+    u = M('DIVIDE', pick(side, pos.outputs['X'], pos.outputs['Y']), tow)
+    v = M('DIVIDE', pick(up, pos.outputs['Z'], pos.outputs['Y']), tow)
+    warp = M('LESS_THAN', M('WRAP', M('ADD', M('FLOOR', u), M('FLOOR', v)), 4.0, 0.0), 1.5)   # over two, under two, one step per row
+    arch = lambda t: M('SINE', M('MULTIPLY', M('FRACT', t), math.pi))             # a tow's rounded cross-section
+    h = pick(warp, arch(v), arch(u))
+    weave = M('MULTIPLY', pick(warp, CARBON_TONES[0], CARBON_TONES[1]), M('ADD', 0.55, M('MULTIPLY', h, 0.45)))
+    mean = (CARBON_TONES[0] + CARBON_TONES[1]) / 2 * (0.55 + 0.45 * 2 / math.pi)
+    cam = nt.nodes.new('ShaderNodeCameraData')
+    mr = nt.nodes.new('ShaderNodeMapRange'); mr.clamp = True; mr.interpolation_type = 'SMOOTHSTEP'
+    mr.inputs['From Min'].default_value = near; mr.inputs['From Max'].default_value = far
+    mr.inputs['To Min'].default_value = 1.0; mr.inputs['To Max'].default_value = 0.0
+    nt.links.new(cam.outputs['View Z Depth'], mr.inputs['Value'])
+    k = mr.outputs[0]   # 1 = full weave, 0 = the mean grey
+    nt.links.new(M('ADD', mean, M('MULTIPLY', k, M('SUBTRACT', weave, mean))), b.inputs['Base Color'])
+    bump = nt.nodes.new('ShaderNodeBump'); bump.inputs['Strength'].default_value = 0.6; bump.inputs['Distance'].default_value = tow * 0.12
+    nt.links.new(M('MULTIPLY', h, k), bump.inputs['Height']); nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
+    b.inputs['Metallic'].default_value = 0.3; b.inputs['Roughness'].default_value = 0.4
+    b.inputs['Coat Weight'].default_value = 1.0; b.inputs['Coat Roughness'].default_value = 0.04   # the coat keeps the smooth normal
+    return m
+
+for key, make in (('gloss_black', gloss_black_material), ('carbon', carbon_material)):
+    if fix.get(key):
+        hits = [o for o in meshes if re.search(fix[key], o.name) and not o.name.startswith('PAINT')]
+        if hits:
+            mat = make()
+            for o in hits: o.data.materials.clear(); o.data.materials.append(mat)
+        print(f'{key}: {sorted(o.name for o in hits)}', flush=True)
 
 def rewind(o):
     """Reverse faces whose winding disagrees with their custom normals, keeping those normals."""
@@ -389,7 +441,11 @@ else:
             f = strip(f'end{sgn}', lat(cs, sgn * L * D['end_d'], 0.0, 1.0), lat(cs, 0, 0, H * 0.4), 3.6, 1.6, D['end_rad']); diff_only(f)
     # 6 dim light inside the cabin: lights the seats / dash behind the (otherwise shadowing) glass
     if D['cabin_rad'] > 0:
-        cab = softbox('cabin', (cx, cy + 0.15, 0.95), (0, 0, 0), 1.0, 1.8, D['cabin_rad'] * 1.8 * math.pi); diff_only(cab)
+        cab = softbox('cabin', (cx, cy + D['cabin_y'], D['cabin_h']), (0, 0, 0), D['cabin_w'], D['cabin_l'], D['cabin_rad'] * D['cabin_w'] * D['cabin_l'] * math.pi); diff_only(cab)
+        if not D['cabin_floor']:
+            cc = bpy.data.collections.new('cabin_receivers')
+            for o in meshes: cc.objects.link(o)
+            cab.light_linking.receiver_collection = cc
 
 if fix.get('glass_unlink') and a.studio == 'dark':
     # the crisp strips light everything except the glass (Cycles light linking: receivers = every other object)

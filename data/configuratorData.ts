@@ -345,7 +345,7 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'frozen_solid_white', name: 'Frozen Solid White', code: 'P91', hex: '#e9e9e6', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // matte white without metallic effect (M3 CS, M3 CS Touring)
   { id: 'signal_green', name: 'Signal Green', code: 'P56', hex: '#249a48', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS launch colour
   { id: 'frozen_brooklyn_grey', name: 'Frozen Brooklyn Grey', code: 'P8X', hex: '#a4a9ac', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // M4 CSL launch colour: Brooklyn Grey (C4P) in matte
-  { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual, paint code and finish unverified
+  { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual solid: BMW's releases call only Sapphire Black metallic and UK dealers list it as "British Racing Green Solid"; paint code unverified
   { id: 'laguna_seca_blue', name: 'Laguna Seca Blue', code: '448', hex: '#3a8fd1', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; 448 is the original E46 code, the 2025 code is unverified
 ];
 
