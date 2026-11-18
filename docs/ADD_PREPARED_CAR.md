@@ -171,6 +171,35 @@ Then add the car to `data/configuratorData.ts` with `modelUrl: null` and a migra
 add `CAR_FIXES['<carId>'] = {'keep_normals': True, 'authored_lamps': True}` in `render_car.py` for a clean model, and
 check in the browser's network tab that no `.glb` is requested for it on the welcome, configure and summary pages.
 
+### What the Blendkit cars needed (M3 CS, M3 CS Touring, M4 CSL, M4 Competition, 2026-11-17)
+
+- **Scale by the wheelbase, not the length**, when a splitter or diffuser stands proud of the bumper: `len=` in
+  `CAR_QUERY` is then the model's own length times (BMW wheelbase / model wheelbase). The catalogue's `modelLengthM`
+  stays BMW's figure; say the difference in the catalogue comment and the CREDITS row.
+- **Model fixes stay private**: a `fix_blend.py` on a copy of the download (own materials for red accents, yellow
+  running lights, unlit reflectors, a removed rear bench) and a `patch_scene.py` / `fix_scene.py` after the export
+  (plates moved to where the model's own sat, a rear plate into an estate's tailgate recess, BMW's rear track). They
+  live in `.scratch/private/<carId>/` with a `build_private.sh` that runs them in order; never commit them.
+- **Per-car render options** (documented at the top of `CAR_FIXES` in `render_car.py`): `gloss_black` (regex: roof,
+  rails, spoiler in high-gloss black), `carbon` (regex: procedural clear-coated 2x2 twill, faded out where a pixel
+  cannot resolve it), `glass_unlink` / `glass_rough` (coarse side glass that mirrors the light strips as ragged bands),
+  `dark: {cabin_h, cabin_y, cabin_l, cabin_rad, cabin_floor}` (move the cabin light under the headliner so the seats
+  show through dark glass; `cabin_floor: 0` keeps it off the floor shadow). The defaults leave every other car as it
+  was. One view can get its own options with a suffixed key, `'<carId>:top'`, rendered with
+  `--car <carId>:top --views top` into the same frames folder.
+- **The app check before the migration is applied**: `CAR_ROW=<row.json>` adds the car's row and
+  `PAINT_ROWS=<paints.json>` (an array) the paints it lists that the database does not have yet, both in the test
+  browser only: `CAR_ROW=... PAINT_ROWS=... node scripts/render/frames-car.cjs <out> <carId> "<slide name>" --hero`.
+  A missing or malformed file stops the run with a message.
+- **Limited-run cars offer exactly their factory colours** (M3 CS: Signal Green, Frozen Solid White, Brooklyn Grey,
+  Black Sapphire; M3 CS Touring: British Racing Green, Laguna Seca Blue, Frozen Solid White, Black Sapphire; M4 CSL:
+  Frozen Brooklyn Grey, Alpine White, Black Sapphire). Their paints come from
+  `supabase/migrations/20261117095000_paints_limited_run_colours.sql`, which must be applied before the cars' own
+  migrations.
+- **Each car is reviewed before it is committed**: three independent reviewers (fit and compositing, materials,
+  accuracy to the real car and the data) read the frames, the app screenshots and the paint proof; a car with a
+  blocking finding is fixed and reviewed again, and only then committed with its frames, hero images and migration.
+
 ## The configurator screen is the stage look
 
 Whatever is drawn live (a car or view without a Blender frame, and the turntable of any car) sits in the

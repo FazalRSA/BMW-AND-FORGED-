@@ -9,6 +9,25 @@
 - **Finish** values come from BMW's category (UNI/MET) and the paint name ("Frozen" = matte, "Uni" = solid). Where BMW's label does not say, the finish is marked **unverified** rather than guessed.
 - **Render URLs** are in the appendix: one BMW swatch URL per paint, plus a BMW car render (the "in <paint>" colour-switch image) where bmw.co.za or bmwusa.com shows one for that paint.
 
+## Update 2026-11-17: the limited-run cars' own colours
+
+The M3 CS, M3 CS Touring and M4 CSL were sold in three or four colours only, so their catalogue entries offer exactly
+those (the precedent is the M4 CS). Five of them were not in the palette and were added to `BMW_PAINTS` and to
+`supabase/migrations/20261117095000_paints_limited_run_colours.sql` (not applied yet; it must run before the cars'
+own migrations). None of the three cars is in the SA configurator any more (all sold out), so these rows do **not**
+come from configure.bmw.co.za; every code and hex below is for the owner to confirm.
+
+| Id | Name | Code | Finish | Ref. hex (estimate) | Cars | Source and status |
+|---|---|---|---|---|---|---|
+| `frozen_solid_white` | Frozen Solid White | P91 | Frozen (matte), no metallic effect | #E9E9E6 | M3 CS, M3 CS Touring | code from paint databases (carpaints.co, car-editor.com, touch-up suppliers) |
+| `signal_green` | Signal Green | P56 | Solid (Uni) | #249A48 | M3 CS (launch colour) | code from paint databases |
+| `frozen_brooklyn_grey` | Frozen Brooklyn Grey | P8X | Frozen (matte) | #A4A9AC | M4 CSL (launch colour) | code from paint databases; hex as gloss Brooklyn Grey |
+| `british_racing_green` | British Racing Green | Individual (unpublished) | Solid (Uni) | #1F3D2B | M3 CS Touring | BMW Individual; solid because BMW's releases call only Sapphire Black metallic and UK dealers list it as "British Racing Green Solid" |
+| `laguna_seca_blue` | Laguna Seca Blue | 448 | Solid (Uni) | #3A8FD1 | M3 CS Touring (debut colour) | 448 is the original E46 code; the 2025 code is unverified |
+
+The finish numbers (roughness, metalness, clear coat) are the live ones for each finish type
+(`20261007090000_bmw_paint_corrections.sql`). Hex values are estimates from BMW's press photos, not swatch samples.
+
 ## Update 2026-10-04: verified codes, finishes and recalibration
 
 > **Status on main (2026-10-06):** this research came from draft PR #10, which was closed without merging. It
