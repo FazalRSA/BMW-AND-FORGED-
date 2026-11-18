@@ -204,6 +204,47 @@
    1.053
   ]
  },
+ "m3_cs_touring_g81": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.8014,
+    0.3465,
+    1.5196,
+    0.9901
+   ],
+   "front-right": [
+    0.7995,
+    0.3465,
+    1.5189,
+    0.9901
+   ],
+   "rear-left": [
+    -0.8014,
+    0.3465,
+    -1.3349,
+    0.9901
+   ],
+   "rear-right": [
+    0.7995,
+    0.3465,
+    -1.3356,
+    0.9901
+   ]
+  },
+  "footprint": [
+   2.42,
+   1.039
+  ]
+ },
  "m3_cs_g80": {
   "framesOnly": true,
   "views": [

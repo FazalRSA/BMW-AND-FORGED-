@@ -76,6 +76,15 @@ CAR_FIXES = {
     'm3_touring_g81': {'keep_normals': True, 'authored_lamps': True},
     'x1_u11': {'keep_normals': True, 'authored_lamps': True},
     'x3_g45': {'keep_normals': True, 'authored_lamps': True},
+    # gloss_black: the roof panel, its rails, the roof spoiler and the aerial fin (BMW: "roof and roof spoiler in Black
+    # high-gloss"). carbon: the 'carbon' mesh (splitter, front air intakes, mirror caps, diffuser) and the two bonnet
+    # indents (Object494), which BMW leaves in exposed carbon fibre.
+    'm3_cs_touring_g81': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(Circle05[789]|Circle060|Wing)$', 'carbon': r'^(carbon|Object494)$'},
+    # its top view only (--car m3_cs_touring_g81:top --views top): from above the windscreen mirrored the end and shoulder
+    # strips as a hash of pale bars. Blurred (glass_rough 0.3) they are one soft sheen, so the glass still reads as glass
+    # (with the strips unlinked it was a black hole), and a brighter cabin light shows the interior through the side glass.
+    'm3_cs_touring_g81:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0},
+                              'gloss_black': r'^(Circle05[789]|Circle060|Wing)$', 'carbon': r'^(carbon|Object494)$'},
     # glass_unlink: its coarse side and rear glazing mirrored the strips as ragged, grainy bands, so those panes reflect only
     # the soft room; so do the headlamp covers, which mirrored them as hairline scribbles in the wheel close-up. The
     # windscreen keeps its clean strip highlight, except from above (--car m3_cs_g80:top --views top), where it mirrored the

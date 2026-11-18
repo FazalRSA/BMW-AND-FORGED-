@@ -295,6 +295,36 @@ export const BMW_MODELS: CarModel[] = [
     paintIds: ['signal_green', 'frozen_solid_white', 'brooklyn_grey', 'black_sapphire'],
     modelUrl: null,
     modelLengthM: 4.795
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 CS Touring 2025", Zifir3D): no modelUrl, see the iX3 above. The model
+    // is the M3 Touring's body with the CS parts, and its splitter adds 37 mm: scaled to BMW's 4.796 m (modelLengthM)
+    // the wheelbase would be 1% short, so the frames were rendered at the M3 Touring's scale instead (wheelbase
+    // 2.854 m, the model 4.84 m long; public/models/CREDITS.md).
+    id: 'm3_cs_touring_g81',
+    name: 'BMW M3 CS Touring',
+    badge: 'M3 CS Touring G81',
+    generation: 'G81',
+    chassisCode: 'G81 M3 CS Touring',
+    // BMW's technical data sheet for the M3 CS Touring (BMW Media information 01/2025) and BMW Group South Africa's
+    // release of 30 Jan 2025, which quotes the same figures: 405 kW (550 PS, 543 hp), 650 Nm, 0-100 km/h 3.5 s, 9.5J x 19
+    // front and 10.5J x 20 rear, 4,796 mm long. Bolt pattern and centre bore are the G-series hub values, not in the
+    // data sheet; offsets are not published. Sold in four paints only (below; BMW's "Sapphire Black" is
+    // black_sapphire). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '543 HP / 405 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'touring',
+    paintIds: ['british_racing_green', 'laguna_seca_blue', 'frozen_solid_white', 'black_sapphire'],
+    modelUrl: null,
+    modelLengthM: 4.796
   }
 ];
 
