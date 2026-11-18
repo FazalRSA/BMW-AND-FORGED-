@@ -470,6 +470,46 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.755
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw x5 2023", Zifir3D): no modelUrl, see the iX3 above. The download is about
+    // 1.144 times life size in every axis (no stray object); the frames are scaled by the wheelbase (BMW's 2.975 m),
+    // which leaves the body 4.983 m long, 48 mm over BMW's 4.935 m (modelLengthM; public/models/CREDITS.md). It has the
+    // xLine look (chrome kidney grille, satin aluminium window surround and roof rails, silver underride) and the
+    // charging flap on the left front wing but only an "X5" badge, so it is labelled the plug-in hybrid xDrive50e.
+    id: 'x5_g05',
+    name: 'BMW X5 xDrive50e',
+    badge: 'X5 xDrive50e G05',
+    generation: 'G05',
+    chassisCode: 'G05 X5 xDrive50e',
+    // 2023 facelift (LCI). BMW Group technical data sheet "BMW X5" (02/2023): 3.0 six-cylinder petrol plug-in hybrid,
+    // 360 kW (489 hp) and 700 Nm system output, 0-100 km/h 4.8 s, 4,935 mm long, wheelbase 2,975 mm; the BMW Group's
+    // launch release "The new BMW X5 and the new BMW X6" (8 February 2023) gives the same 360 kW, 700 Nm and 4.8 s.
+    // South Africa: TimesLive (9 February 2023: sales from Q3 2023, xLine and 20-inch wheels standard) and The Citizen
+    // (10 July 2023: South African prices, xDrive50e listed). The 20 x 9J / 20 x 10.5J mixed set is BMW's style 738 as
+    // listed for the facelift elsewhere, an estimate for South Africa. Bolt pattern and centre bore are the G-series hub
+    // values, not in the data sheet. paintIds: the facelift palette. The launch release names the new colours for all
+    // models (Blue Ridge Mountain, the launch colour, first; Brooklyn Grey, Skyscraper Grey, BMW Individual Frozen Pure
+    // Grey, which touch-up suppliers list as C5A for the 2025 X5); the rest are BMW's 2024 X5 palette (Manhattan; BMW
+    // Individual Dravit Grey, Tanzanite Blue II and Ametrin), less M Marina Bay Blue (M60i only). Availability of each on
+    // the South African xDrive50e (Carbon Black and Frozen Pure Grey above all): Owner to confirm.
+    engine: '3.0L Turbo Inline-6 Plug-in Hybrid',
+    power: '489 HP / 360 kW',
+    torque: '700 Nm (516 lb-ft)',
+    acceleration: '0-100 km/h in 4.8s',
+    recommendedWheelFitment: {
+      front: '20 x 9J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'blue_ridge_mountain', 'mineral_white', 'alpine_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey',
+      'skyscraper_grey', 'manhattan', 'dravit_grey', 'tanzanite_blue_ii', 'ametrin', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.935
   }
 ];
 
@@ -553,6 +593,12 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'frozen_brooklyn_grey', name: 'Frozen Brooklyn Grey', code: 'P8X', hex: '#a4a9ac', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // M4 CSL launch colour: Brooklyn Grey (C4P) in matte
   { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual solid: BMW's releases call only Sapphire Black metallic and UK dealers list it as "British Racing Green Solid"; paint code unverified
   { id: 'laguna_seca_blue', name: 'Laguna Seca Blue', code: '448', hex: '#3a8fd1', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; 448 is the original E46 code, the 2025 code is unverified
+  // X5 facelift colours (2026-11-18, supabase/migrations/20261117105900_paints_x5_facelift_colours.sql). Codes from two
+  // touch-up suppliers (paintscratch, Automotive Touchup) and BMW Ireland's 2019 X5 brochure (X1B); hex values are
+  // estimates from photos, not colour-managed data. Owner to confirm.
+  { id: 'blue_ridge_mountain', name: 'Blue Ridge Mountain', code: 'C35', hex: '#3a5563', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // X5 facelift launch colour: a dark slate blue with a green undertone
+  { id: 'manhattan', name: 'Manhattan', code: 'C3D', hex: '#646d63', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // a green-grey (US dealers: "Manhattan Green")
+  { id: 'ametrin', name: 'Ametrin', code: 'X1B', hex: '#4b3d43', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // BMW Individual: a dark violet-grey with a bronze flop
 ];
 
 export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {

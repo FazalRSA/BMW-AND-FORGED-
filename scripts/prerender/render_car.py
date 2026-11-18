@@ -90,6 +90,16 @@ CAR_FIXES = {
     'x3_30e_g45': {'keep_normals': True, 'authored_lamps': True},
     'x3_30e_g45:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}},
     'x3_30e_g45:ftq': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^Plane_055_side$', 'glass_unlink_lights': r'^rim'},
+    # the X5 xDrive50e in the xLine look (car id x5_g05); its bright trim, lamps and split brakes are fixed in the private copy.
+    # dark: with the default cabin light (low, small) the tall cabin read as black behind the side glass, with only the low
+    # strip's band in it; a brighter, wider light under the headliner (light-linked to the car, so the floor shadow keeps its
+    # size) shows the seats, headrests and steering wheel faintly through the side glass and windscreen, as on the X3 G45.
+    # :top (--car x5_g05:top --views top): as the X3 30e's top view, the windscreen mirrored the overhead strips as a wavy
+    # pale X; blurred (glass_rough 0.3) it is one soft sheen, and the brighter cabin light (off the floor) keeps the seats
+    # readable under the panoramic roof.
+    'x5_g05': {'keep_normals': True, 'authored_lamps': True,
+               'dark': {'cabin_h': 1.45, 'cabin_y': 0.35, 'cabin_w': 1.5, 'cabin_l': 2.0, 'cabin_rad': 5.0, 'cabin_floor': 0}},
+    'x5_g05:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0}},
     # gloss_black: the roof panel, its rails, the roof spoiler and the aerial fin (BMW: "roof and roof spoiler in Black
     # high-gloss"). carbon: the 'carbon' mesh (splitter, front air intakes, mirror caps, diffuser) and the two bonnet
     # indents (Object494), which BMW leaves in exposed carbon fibre.
