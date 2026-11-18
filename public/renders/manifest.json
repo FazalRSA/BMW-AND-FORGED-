@@ -367,5 +367,46 @@
    2.412,
    1.04
   ]
+ },
+ "m4_convertible_g83": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7995,
+    0.3468,
+    1.5387,
+    0.9908
+   ],
+   "front-right": [
+    0.8008,
+    0.3468,
+    1.5387,
+    0.9908
+   ],
+   "rear-left": [
+    -0.7995,
+    0.3468,
+    -1.3172,
+    0.9908
+   ],
+   "rear-right": [
+    0.8008,
+    0.3468,
+    -1.3172,
+    0.9908
+   ]
+  },
+  "footprint": [
+   2.412,
+   1.04
+  ]
  }
 }

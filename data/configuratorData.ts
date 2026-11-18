@@ -395,6 +395,46 @@ export const BMW_MODELS: CarModel[] = [
     paintIds: ['frozen_brooklyn_grey', 'alpine_white', 'black_sapphire'],
     modelUrl: null,
     modelLengthM: 4.794
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M4 Convertible 2025", Zifir3D): no modelUrl, see the iX3 above. The model
+    // is the same author's facelifted M4 body (as m4_g82) with the black fabric soft top closed; its badges are already
+    // the Competition's black, and the frames add their silver edge and the Competition script, as on m4_g82. Rendered
+    // at the model's own size: 4.806 m long, wheelbase 2.856 m (BMW: 4.801 m and 2.857 m). The live wheels sit at the
+    // model's own 1.600 m track front and rear, centred in its arches (BMW: 1,617 mm front, 1,605 mm rear, so the fronts
+    // sit 8 mm a side inboard and the rears 2-3 mm). The soft top stands 1.425 m high against BMW's 1,399 mm (about 8 mm
+    // of it the model's larger tyres), left as modelled (public/models/CREDITS.md).
+    id: 'm4_convertible_g83',
+    name: 'BMW M4 Convertible',
+    badge: 'M4 Convertible G83',
+    generation: 'G83',
+    chassisCode: 'G83 M4 Convertible',
+    // 2024 facelift (LCI), M4 Competition Convertible with M xDrive, the only M4 Convertible sold in South Africa.
+    // BMW's technical data sheet (BMW Group, 01/2024, also attached to BMW Group South Africa's launch release) and
+    // cars.co.za's South African launch report, which quote the same figures: 390 kW (530 PS, 523 hp), 650 Nm,
+    // 0-100 km/h 3.7 s, 9.5J x 19 front and 10.5J x 20 rear, 4,801 mm long. Bolt pattern and centre bore are the
+    // G-series hub values, not in the data sheet (66.6 mm not confirmed against a BMW document); BMW does not publish
+    // the offsets. Paints: from BMW South Africa's configurator for this car (docs/bmw-factory-paints.md, section 6):
+    // the launch colour first (BMW Individual Velvet Orchid II, the colour of BMW's facelift photos), the eight no-cost
+    // series colours, and the BMW Individual Frozen Deep Grey, which the SA configurator offers on this car only (P7X).
+    // Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 390 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.7s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'convertible',
+    paintIds: [
+      'velvet_orchid_ii', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'sao_paulo_yellow', 'brooklyn_grey',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_deep_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.801
   }
 ];
 

@@ -50,6 +50,8 @@ DERIVE = a.studio == 'dark' and not a.two_render
 #  glass_unlink: light-link the crisp reflection strips (strip/low/shoulder/rim lights) away from the glass, so the
 #        glass reflects only the soft room (world, overhead panel, gradient wall) and never a ragged white bar.
 #        True = every glass mesh; a regex string = only the meshes whose name matches.
+#  glass_unlink_lights: regex of the light names glass_unlink keeps off that glass (default: every strip, the regex
+#        below), e.g. r'^rim' to drop only the end rim strips and keep the long strips' soft bands.
 #  dark_glass: regex of meshes rendered as flat, dark, glossy glass (no transmission, so no cabin shows through),
 #        e.g. a panoramic roof seen from above. Its material is copied, so the other windows are untouched.
 #  view_gain: {view: {light-name prefix: factor}} scales those lights for one view only (e.g. a roof that clips from above).
@@ -124,6 +126,14 @@ CAR_FIXES = {
     'm4_g82:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
     'm4_g82:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Plane_076|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Circle_061)$', 'dark_glass_rough': 0.06,
                    'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
+    # The same author's M4 with a soft top (the coupe's meshes and names; the roof is fabric, its look written into the
+    # scene by the private patch). As m4_g82: side panes (Plane_065), rear window (Object558) and headlamp covers off the
+    # strips, the windscreen (Circle_059) keeps its highlight, the cabin light under the top, the carbon mesh as twill.
+    # :front: every pane off the strips. :top: windscreen and rear window as dark glass that keeps the strips.
+    'm4_convertible_g83': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Object558|headlamp_Circle_011)', 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
+    'm4_convertible_g83:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
+    'm4_convertible_g83:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Object558)$', 'dark_glass_rough': 0.06,
+                               'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors
@@ -503,8 +513,9 @@ if fix.get('glass_unlink') and a.studio == 'dark':
     rc = bpy.data.collections.new('light_receivers')
     for o in sc.objects:
         if o not in glass_objs and o.type in ('MESH',): rc.objects.link(o)
+    gl = fix.get('glass_unlink_lights', r'(strip|low|shoulder|rim)')   # which lights; the default is every crisp strip
     for o in sc.objects:
-        if o.type == 'LIGHT' and re.match(r'(strip|low|shoulder|rim)', o.name): o.light_linking.receiver_collection = rc
+        if o.type == 'LIGHT' and re.match(gl, o.name): o.light_linking.receiver_collection = rc
 
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'
 if a.threads: sc.render.threads_mode = 'FIXED'; sc.render.threads = a.threads
