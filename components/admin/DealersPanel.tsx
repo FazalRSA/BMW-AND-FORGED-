@@ -15,6 +15,8 @@ import {
   removeDealerUser,
   saveDealer
 } from '../../services/dealerService';
+import { listAgents, SalesAgent } from '../../services/salesService';
+import { DealerSalesSetup } from './DealerSalesSetup';
 
 const inputCls =
   'w-full bg-[#0d0d0d] border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-[#CF9F52]';
@@ -23,6 +25,8 @@ const inputCls =
 export const DealersPanel: React.FC = () => {
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [users, setUsers] = useState<DealerUser[]>([]);
+  const [agents, setAgents] = useState<SalesAgent[]>([]);
+  const [salesSetupError, setSalesSetupError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState({ name: '', city: '', phone: '', email: '' });
@@ -37,6 +41,14 @@ export const DealersPanel: React.FC = () => {
       setError(null);
     } catch (e) {
       setError((e as Error).message);
+    }
+    // Agents load on their own, so the dealers still show before the sales migration is applied
+    try {
+      setAgents(await listAgents());
+      setSalesSetupError(null);
+    } catch (e) {
+      setAgents([]);
+      setSalesSetupError((e as Error).message);
     }
     setLoading(false);
   }, []);
@@ -71,6 +83,7 @@ export const DealersPanel: React.FC = () => {
         finishes: those stay with FORGED.
       </p>
       {error && <p className="text-xs text-red-400">{error}</p>}
+      {salesSetupError && <p className="text-xs text-amber-300">{salesSetupError}</p>}
 
       <form onSubmit={create} className="grid gap-3 rounded-xl border border-white/10 bg-[#0d0d0d] p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_2fr_auto]">
         <input required value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Dealership name" aria-label="Dealership name" className={inputCls} />
@@ -118,6 +131,8 @@ export const DealersPanel: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                {!salesSetupError && <DealerSalesSetup dealer={d} agents={agents.filter((a) => a.dealer_id === d.id)} act={act} />}
 
                 <div className="mt-4 border-t border-white/10 pt-3">
                   <div className="mb-2 text-[11px] uppercase tracking-widest text-neutral-500">Can sign in at /dealer</div>

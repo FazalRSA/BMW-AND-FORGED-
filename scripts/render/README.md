@@ -40,3 +40,12 @@ page it runs in.
 `swap-perf.cjs` measures wheel swaps in the real configurator: it taps every wheel twice (and
 changes the size twice) at desktop and phone sizes, and writes each tap's long tasks and the time
 until the new spokes are in the scene to a JSON file (see its header; `cold` and `preload` modes).
+
+## Rim thumbnails (`rim-thumbs.cjs`, `rim-thumbs-pack.py`)
+The collection cards, the wheels step and the rim page label use thumbnails rendered from each rim's own GLB,
+one per wheel and stocked finish (`public/rim-thumbs/<wheel>/<finish>.webp`, listed in `data/rimThumbs.json`).
+`rim-thumbs.html` mounts the shared wheel viewer face-on on a transparent page with the configurator's finish
+recipe; `node scripts/render/rim-thumbs.cjs [wheelId ...]` writes raw PNGs to `.scratch/rim-thumbs/`, then
+`python3 scripts/render/rim-thumbs-pack.py` trims them and rewrites the manifest. Re-run both after a finish's
+values change or a wheel/finish is added; a finish with no render falls back to the tinted photo.
+`?hex=&metal=&rough=&coat=` on the harness page tries other finish values for comparison.

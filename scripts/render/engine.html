@@ -35,7 +35,13 @@ let wheel = WHEEL_DESIGNS.find((w) => w.id === wq) || WHEEL_DESIGNS[+wq] || WHEE
 // rimModel=/path.glb puts a 3D rim file on the chosen wheel (rimFlip=1 if its face points inward)
 if (q.get('rimModel')) wheel = { ...wheel, modelUrl: q.get('rimModel'), modelFlip: !!q.get('rimFlip') };
 e.applyWheelDesign(wheel);
-e.applyWheelFinish(STATIC_CATALOG.finishes[q.get('finish')||'liquid_metal'] || STATIC_CATALOG.finishes.liquid_metal);
+// fhex= fmetal= frough= fcoat= try other values for the finish (comparison renders)
+const fin = { ...(STATIC_CATALOG.finishes[q.get('finish')||'liquid_metal'] || STATIC_CATALOG.finishes.liquid_metal) };
+if (q.get('fhex')) fin.hex = '#' + q.get('fhex');
+if (q.has('fmetal')) fin.metalness = +q.get('fmetal');
+if (q.has('frough')) fin.roughness = +q.get('frough');
+if (q.has('fcoat')) fin.clearcoat = +q.get('fcoat');
+e.applyWheelFinish(fin);
 e.setRimSize(q.get('size')||'20"');
 e.loadCar(car).then(r=>{if (q.get('rendered')) e.setRenderedBody(true); e.setCameraPreset(q.get('view')||'frontThreeQuarter',{instant:true}); window.done=r; window.mode=r;});
 </script></body></html>

@@ -257,7 +257,7 @@ the sheet (they are the same for both sizes, as the sheet gives one price per de
 | **FSA003** | 20", 21" | Silver, Hyper Black | R75 000 |
 | **FSA004** | 20", 21" | Silver, Hyper Black, Gloss Black | R70 000 |
 | **FF-1** | 20", 21" | Silver, Liquid Metal | R80 000; Liquid Metal R95 000 |
-| **FF-3** | 20", 21" | Pure Bronze, Glossy Black, Liquid Metal | R80 000; Liquid Metal R95 000 |
+| **FF-3** | 20", 21" | Pure Bronze, Gloss Black, Liquid Metal | R80 000; Liquid Metal R95 000 |
 
 The sheet's fitment notes (the car each set was listed for, PCD, offset, centre bore) are in each wheel's
 description. The configurator still lets a customer put any of the six on any of the four cars: the sheet
@@ -337,7 +337,7 @@ Before launch:
 | 2 | A **Google Cloud account** for the sign-in client, or approval to use ours | Outstanding work 2: customer accounts and the garage |
 | 3 | The **licence terms** for the four car packages, and the remaining prepared packages | Outstanding work 3: the cars stay prototype assets until confirmed; the deleted cars can be restored by your developer when their packages arrive |
 | 4 | Any **change to the stock sheet** (a set sold, a new design, a price) | The configurator mirrors the sheet; CAD or 3D file for any new design (section 7) |
-| 5 | Confirm the **contact details** customers see | The site and the PDF show forgedsa1@gmail.com and +27 82 123 4567 |
+| 5 | Confirm the **contact details** customers see | The site and the PDF show forgedsa1@gmail.com and +27 82 000 0000 |
 | 6 | **Legal review** of Terms and Delivery, and the [bracketed] details | Outstanding work 4; required before taking orders |
 | 7 | The **hexagon monogram** file (PNG or SVG with transparency) | Browser tab icon and social avatar |
 | 8 | **Wheel weights**, if you want them shown | The weight panel appears automatically once a wheel has weights |

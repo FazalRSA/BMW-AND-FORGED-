@@ -81,8 +81,10 @@ keeps its own "The wheels" link and social icons.
 
 ## Docs
 
-`docs/PHOTOREAL_SPEC.md` (photoreal goal + sprints), `README.md`, `docs/HANDOVER.md` (technical), `docs/CLIENT_HANDOVER.md` + PDF (client),
+`docs/MAP.md` (navigation: cars, photorealism, wheels, how they combine), `README.md`,
+`docs/HANDOVER.md` (technical), `docs/CLIENT_HANDOVER.md` + PDF (client),
 `docs/WHEEL_PIPELINE.md`, `docs/SKILLS.md` (this skill set).
+`docs/archive/PHOTOREAL_SPEC.md` is the superseded October 2026 photoreal plan, kept for history.
 
 ## Conventions
 
