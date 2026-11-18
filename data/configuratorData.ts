@@ -174,7 +174,7 @@ export const BMW_MODELS: CarModel[] = [
     bodyStyle: 'sedan',
     paintIds: [
       'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
-      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue', 'frozen_pure_grey'
     ],
     modelUrl: null,
     modelLengthM: 4.79
@@ -202,7 +202,7 @@ export const BMW_MODELS: CarModel[] = [
     bodyStyle: 'touring',
     paintIds: [
       'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
-      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue_c6r', 'frozen_pure_grey'
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue', 'frozen_pure_grey'
     ],
     modelUrl: null,
     modelLengthM: 4.8
@@ -264,6 +264,137 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.755
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw m3 cs", Zifir3D): no modelUrl, see the iX3 above. The frames are scaled
+    // by the wheelbase (BMW's 2.857 m), not the length: the model's splitter blade stood 34 mm proud of its bumper
+    // (about 1 mm on the car) and was slid back in the private copy, which leaves the model 4.803 m long, 8 mm over
+    // BMW's 4.795 m (modelLengthM; public/models/CREDITS.md).
+    id: 'm3_cs_g80',
+    name: 'BMW M3 CS',
+    badge: 'M3 CS G80',
+    generation: 'G80',
+    chassisCode: 'G80 M3 CS',
+    // BMW's technical data sheet for the M3 CS (BMW Media Information 01/2023) and the South African launch reports
+    // (cars.co.za, citizen.co.za: 20 cars, all sold before they landed), which quote the same figures: 405 kW (550 PS,
+    // 543 hp), 650 Nm, 0-100 km/h 3.4 s, 9.5J x 19 front and 10.5J x 20 rear, 4,795 mm long. Bolt pattern and centre
+    // bore are the G-series hub values, not in the data sheet (66.6 mm not confirmed against a BMW document); BMW does
+    // not publish the offsets (parts retailers list ET20 on both axles). Sold in four paints only (below; BMW's
+    // "Sapphire Black" is black_sapphire). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '543 HP / 405 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.4s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'sedan',
+    paintIds: ['signal_green', 'frozen_solid_white', 'brooklyn_grey', 'black_sapphire'],
+    modelUrl: null,
+    modelLengthM: 4.795
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M3 CS Touring 2025", Zifir3D): no modelUrl, see the iX3 above. The model
+    // is the M3 Touring's body with the CS parts, and its splitter adds 37 mm: scaled to BMW's 4.796 m (modelLengthM)
+    // the wheelbase would be 1% short, so the frames were rendered at the M3 Touring's scale instead (wheelbase
+    // 2.854 m, the model 4.84 m long; public/models/CREDITS.md).
+    id: 'm3_cs_touring_g81',
+    name: 'BMW M3 CS Touring',
+    badge: 'M3 CS Touring G81',
+    generation: 'G81',
+    chassisCode: 'G81 M3 CS Touring',
+    // BMW's technical data sheet for the M3 CS Touring (BMW Media information 01/2025) and BMW Group South Africa's
+    // release of 30 Jan 2025, which quotes the same figures: 405 kW (550 PS, 543 hp), 650 Nm, 0-100 km/h 3.5 s, 9.5J x 19
+    // front and 10.5J x 20 rear, 4,796 mm long. Bolt pattern and centre bore are the G-series hub values, not in the
+    // data sheet; offsets are not published. Sold in four paints only (below; BMW's "Sapphire Black" is
+    // black_sapphire). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '543 HP / 405 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'touring',
+    paintIds: ['british_racing_green', 'laguna_seca_blue', 'frozen_solid_white', 'black_sapphire'],
+    modelUrl: null,
+    modelLengthM: 4.796
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M4 Coupe 2024", Zifir3D): no modelUrl, see the iX3 above. The model is
+    // the facelifted G82 with the high-gloss black steel roof and glass sunroof (BMW's no-cost alternative to the
+    // carbon roof) and carbon mirror caps, boot lip, intake inserts and diffuser. It is badged plain "M4"; the frames
+    // carry the Competition's badges (black letters with a silver edge, the Competition script added). Rendered at the
+    // model's own size: 4.806 m long, wheelbase 2.856 m (BMW: 4.801 m and 2.857 m). The live wheels sit at the model's
+    // own 1.601 m track front and rear, centred in its arches (BMW: 1,617 mm front, 1,605 mm rear; CREDITS.md).
+    id: 'm4_g82',
+    name: 'BMW M4 Competition',
+    badge: 'M4 Competition G82',
+    generation: 'G82',
+    chassisCode: 'G82 M4 Competition',
+    // 2024 facelift (LCI), M4 Competition Coupé with M xDrive, the only M4 Coupé sold in South Africa besides the CS.
+    // BMW's technical data sheet (BMW Media Information 01/2024) and the South African launch reports (cars.co.za,
+    // citizen.co.za, toprated.co.za), which quote the same figures: 390 kW (530 PS, 523 hp), 650 Nm, 0-100 km/h 3.5 s,
+    // 9.5J x 19 front and 10.5J x 20 rear, 4,801 mm long. Bolt pattern and centre bore are the G-series hub values, not
+    // in the data sheet (66.6 mm not confirmed against a BMW document); BMW does not publish the offsets. Paints: from
+    // BMW South Africa's configurator for this car (docs/bmw-factory-paints.md, section 5): the eight no-cost series
+    // colours, the launch colour first, and the BMW Individual special-order Frozen Portimao Blue, which is X1E on the
+    // G8x M3/M4 (C6R is the G87/F74 code for the same name). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 390 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.5s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'coupe',
+    paintIds: [
+      'sao_paulo_yellow', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'brooklyn_grey', 'skyscraper_grey',
+      'black_sapphire', 'alpine_white', 'frozen_portimao_blue'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.801
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw m4 csl", Zifir3D): no modelUrl, see the iX3 above. The model's carbon
+    // splitter and diffuser stand 39 mm and 21 mm proud of its bumpers: scaled to BMW's 4.794 m (modelLengthM) the
+    // wheelbase would be 0.8% short, so the frames were rendered with the wheelbase at BMW's 2.857 m instead (the model
+    // 4.831 m long), the live wheels at BMW's 1,623 / 1,609 mm tracks. The model's roof stands 50 mm above BMW's 1,386 mm
+    // height, left as modelled (public/models/CREDITS.md).
+    id: 'm4_csl_g82',
+    name: 'BMW M4 CSL',
+    badge: 'M4 CSL G82',
+    generation: 'G82',
+    chassisCode: 'G82 M4 CSL',
+    // BMW's technical data sheet for the M4 CSL (BMW Group, 05/2022) and the South African launch reports (cars.co.za,
+    // citizen.co.za: 15 of the 1,000 cars built came to South Africa, all sold), which quote the same figures: 405 kW
+    // (550 PS, 543 hp), 650 Nm, 0-100 km/h 3.7 s, 9.5J x 19 front and 10.5J x 20 rear, 4,794 mm long. Bolt pattern and
+    // centre bore are the G-series hub values, not in the data sheet (66.6 mm not confirmed against a BMW document);
+    // BMW does not publish the offsets (parts retailers list ET20 on both axles). Sold in three paints only (below, the
+    // launch colour first; BMW's "Sapphire Black" is black_sapphire). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '543 HP / 405 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.7s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'coupe',
+    paintIds: ['frozen_brooklyn_grey', 'alpine_white', 'black_sapphire'],
+    modelUrl: null,
+    modelLengthM: 4.794
   }
 ];
 
@@ -345,7 +476,7 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'frozen_solid_white', name: 'Frozen Solid White', code: 'P91', hex: '#e9e9e6', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // matte white without metallic effect (M3 CS, M3 CS Touring)
   { id: 'signal_green', name: 'Signal Green', code: 'P56', hex: '#249a48', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS launch colour
   { id: 'frozen_brooklyn_grey', name: 'Frozen Brooklyn Grey', code: 'P8X', hex: '#a4a9ac', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // M4 CSL launch colour: Brooklyn Grey (C4P) in matte
-  { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual, paint code and finish unverified
+  { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual solid: BMW's releases call only Sapphire Black metallic and UK dealers list it as "British Racing Green Solid"; paint code unverified
   { id: 'laguna_seca_blue', name: 'Laguna Seca Blue', code: '448', hex: '#3a8fd1', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; 448 is the original E46 code, the 2025 code is unverified
 ];
 

@@ -9,7 +9,8 @@
  * --hero also writes public/hero/<carId>-1600.webp and -960.webp from the summary's front three-quarter still (the
  * frame recoloured in the slide's paint, with the live forged wheels on top): a frames-only car has no Cycles hero batch.
  * Supabase writes are answered locally (never a real lead). CAR_ROW=<json> adds the car's row to the catalogue read, in
- * the test browser only, before its migration is applied. SwiftShader: several minutes.
+ * the test browser only, before its migration is applied; PAINT_ROWS=<json> does the same for paints rows (an array)
+ * the car lists that are not in the database yet. SwiftShader: several minutes.
  */
 const { chromium } = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 const fs = require('fs');
@@ -17,6 +18,26 @@ const path = require('path');
 const [,, OUT, CAR, SLIDE, flag] = process.argv;
 if (!OUT || !CAR || !SLIDE) { console.error('usage: frames-car.cjs <outDir> <carId> "<slide name>" [--hero]'); process.exit(2); }
 const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearThreeQuarter'], ['Wheel', 'frontWheel'], ['Top', 'top']];
+
+// CAR_ROW and PAINT_ROWS (below) name JSON files. A missing, unreadable or wrongly shaped file stops the run here,
+// before the browser starts, with the variable and the file in the message.
+function readJsonFromEnv(name, isValid, expected) {
+  const file = process.env[name];
+  if (!file) return null;
+  let data;
+  try {
+    data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    console.error(`${name}=${file}: ${e.message}`);
+    process.exit(2);
+  }
+  if (!isValid(data)) { console.error(`${name}=${file}: expected ${expected}`); process.exit(2); }
+  return data;
+}
+const CAR_ROW = readJsonFromEnv('CAR_ROW', (d) => !!d && typeof d === 'object' && !Array.isArray(d) && typeof d.id === 'string',
+  'one cars row (an object with an id)');
+const PAINT_ROWS = readJsonFromEnv('PAINT_ROWS', (d) => Array.isArray(d) && d.every((x) => !!x && typeof x.id === 'string'),
+  'an array of paints rows, each with an id');
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
@@ -30,8 +51,8 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
   await p.route(/supabase\.co\/(rest|functions)\//, (r) => (['GET', 'HEAD'].includes(r.request().method()) ? r.continue() : r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })));
   // CAR_ROW=<json file>: a cars row to add to the live catalogue's answer, in this browser only, for a car whose
   // migration is not applied yet (the row as the migration inserts it). Nothing is written to the database.
-  if (process.env.CAR_ROW) {
-    const row = JSON.parse(fs.readFileSync(process.env.CAR_ROW, 'utf8'));
+  if (CAR_ROW) {
+    const row = CAR_ROW;
     await p.route(/supabase\.co\/rest\/v1\/cars\?/, async (r) => {
       try {
         const res = await r.fetch();
@@ -40,6 +61,23 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
         await r.fulfill({ response: res, json: rows });
       } catch (e) {
         problems.push(`could not add the CAR_ROW to the catalogue read: ${e.message}`);
+        await r.continue().catch(() => {});
+      }
+    });
+  }
+  // PAINT_ROWS=<json file>: paints rows (an array, as their migration inserts them) added to the live paints read the
+  // same way, for paints that are not in the database yet (a limited-run car's own colours). Without them the car
+  // would open, and its --hero still would be shot, in a fallback paint instead of the slide's.
+  if (PAINT_ROWS) {
+    const extra = PAINT_ROWS;
+    await p.route(/supabase\.co\/rest\/v1\/paints\?/, async (r) => {
+      try {
+        const res = await r.fetch();
+        const rows = await res.json();
+        if (Array.isArray(rows)) for (const row of extra) if (!rows.some((x) => x.id === row.id)) rows.push(row);
+        await r.fulfill({ response: res, json: rows });
+      } catch (e) {
+        problems.push(`could not add the PAINT_ROWS to the catalogue read: ${e.message}`);
         await r.continue().catch(() => {});
       }
     });
@@ -76,6 +114,13 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
     const imgs = [...document.querySelectorAll('img')].map((i) => i.src).filter((s) => s.startsWith('data:image/jpeg'));
     return imgs.length >= 3 ? imgs : null;
   }, null, { timeout: 180000 }).then((h) => h.jsonValue()).catch(() => []);
+  // The page's fade-in (animate-fade / animate-rise, about 1.5 s) only starts once the stills are drawn and the main
+  // thread is free again: let it finish, or the screenshot shows the page dimmed.
+  await p.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations().filter((a) => a.effect && Number.isFinite(a.effect.getComputedTiming().endTime)).map((a) => a.finished.catch(() => {}))),
+    new Promise((r) => setTimeout(r, 6000)),
+  ])).catch(() => {});
+  await p.waitForTimeout(300);
   await shot('summary');
   if (stills.length < 3) problems.push(`summary has ${stills.length} stills, expected 3`);
   stills.forEach((s, i) => fs.writeFileSync(path.join(OUT, `${CAR}-still-${i}.jpg`), Buffer.from(s.split(',')[1], 'base64')));
