@@ -203,5 +203,46 @@
    2.378,
    1.053
   ]
+ },
+ "m3_cs_g80": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.787,
+    0.3401,
+    1.5433,
+    0.9716
+   ],
+   "front-right": [
+    0.7927,
+    0.3401,
+    1.5436,
+    0.9716
+   ],
+   "rear-left": [
+    -0.787,
+    0.3401,
+    -1.3139,
+    0.9716
+   ],
+   "rear-right": [
+    0.7927,
+    0.3401,
+    -1.3135,
+    0.9716
+   ]
+  },
+  "footprint": [
+   2.402,
+   1.039
+  ]
  }
 }

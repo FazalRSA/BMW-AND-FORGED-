@@ -76,6 +76,13 @@ CAR_FIXES = {
     'm3_touring_g81': {'keep_normals': True, 'authored_lamps': True},
     'x1_u11': {'keep_normals': True, 'authored_lamps': True},
     'x3_g45': {'keep_normals': True, 'authored_lamps': True},
+    # glass_unlink: its coarse side and rear glazing mirrored the strips as ragged, grainy bands, so those panes reflect only
+    # the soft room; so do the headlamp covers, which mirrored them as hairline scribbles in the wheel close-up. The
+    # windscreen keeps its clean strip highlight, except from above (--car m3_cs_g80:top --views top), where it mirrored the
+    # end strips as scribbles. dark: without those reflections the glasshouse was flat black, so the cabin light sits under
+    # the headliner (at the belt line it lights only what the doors hide), brighter, and off the floor.
+    'm3_cs_g80': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_0(45|46|50|52)|headlamp_(Circle_011|Plane_003))', 'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
+    'm3_cs_g80:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors

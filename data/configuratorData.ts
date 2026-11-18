@@ -264,6 +264,37 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.755
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw m3 cs", Zifir3D): no modelUrl, see the iX3 above. The frames are scaled
+    // by the wheelbase (BMW's 2.857 m), not the length: the model's splitter blade stood 34 mm proud of its bumper
+    // (about 1 mm on the car) and was slid back in the private copy, which leaves the model 4.803 m long, 8 mm over
+    // BMW's 4.795 m (modelLengthM; public/models/CREDITS.md).
+    id: 'm3_cs_g80',
+    name: 'BMW M3 CS',
+    badge: 'M3 CS G80',
+    generation: 'G80',
+    chassisCode: 'G80 M3 CS',
+    // BMW's technical data sheet for the M3 CS (BMW Media Information 01/2023) and the South African launch reports
+    // (cars.co.za, citizen.co.za: 20 cars, all sold before they landed), which quote the same figures: 405 kW (550 PS,
+    // 543 hp), 650 Nm, 0-100 km/h 3.4 s, 9.5J x 19 front and 10.5J x 20 rear, 4,795 mm long. Bolt pattern and centre
+    // bore are the G-series hub values, not in the data sheet (66.6 mm not confirmed against a BMW document); BMW does
+    // not publish the offsets (parts retailers list ET20 on both axles). Sold in four paints only (below; BMW's
+    // "Sapphire Black" is black_sapphire). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '543 HP / 405 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.4s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'sedan',
+    paintIds: ['signal_green', 'frozen_solid_white', 'brooklyn_grey', 'black_sapphire'],
+    modelUrl: null,
+    modelLengthM: 4.795
   }
 ];
 
