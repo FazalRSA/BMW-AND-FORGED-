@@ -19,6 +19,26 @@ const [,, OUT, CAR, SLIDE, flag] = process.argv;
 if (!OUT || !CAR || !SLIDE) { console.error('usage: frames-car.cjs <outDir> <carId> "<slide name>" [--hero]'); process.exit(2); }
 const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearThreeQuarter'], ['Wheel', 'frontWheel'], ['Top', 'top']];
 
+// CAR_ROW and PAINT_ROWS (below) name JSON files. A missing, unreadable or wrongly shaped file stops the run here,
+// before the browser starts, with the variable and the file in the message.
+function readJsonFromEnv(name, isValid, expected) {
+  const file = process.env[name];
+  if (!file) return null;
+  let data;
+  try {
+    data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    console.error(`${name}=${file}: ${e.message}`);
+    process.exit(2);
+  }
+  if (!isValid(data)) { console.error(`${name}=${file}: expected ${expected}`); process.exit(2); }
+  return data;
+}
+const CAR_ROW = readJsonFromEnv('CAR_ROW', (d) => !!d && typeof d === 'object' && !Array.isArray(d) && typeof d.id === 'string',
+  'one cars row (an object with an id)');
+const PAINT_ROWS = readJsonFromEnv('PAINT_ROWS', (d) => Array.isArray(d) && d.every((x) => !!x && typeof x.id === 'string'),
+  'an array of paints rows, each with an id');
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -31,8 +51,8 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
   await p.route(/supabase\.co\/(rest|functions)\//, (r) => (['GET', 'HEAD'].includes(r.request().method()) ? r.continue() : r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })));
   // CAR_ROW=<json file>: a cars row to add to the live catalogue's answer, in this browser only, for a car whose
   // migration is not applied yet (the row as the migration inserts it). Nothing is written to the database.
-  if (process.env.CAR_ROW) {
-    const row = JSON.parse(fs.readFileSync(process.env.CAR_ROW, 'utf8'));
+  if (CAR_ROW) {
+    const row = CAR_ROW;
     await p.route(/supabase\.co\/rest\/v1\/cars\?/, async (r) => {
       try {
         const res = await r.fetch();
@@ -48,8 +68,8 @@ const VIEWS = [['Front', 'frontThreeQuarter'], ['Side', 'side'], ['Rear', 'rearT
   // PAINT_ROWS=<json file>: paints rows (an array, as their migration inserts them) added to the live paints read the
   // same way, for paints that are not in the database yet (a limited-run car's own colours). Without them the car
   // would open, and its --hero still would be shot, in a fallback paint instead of the slide's.
-  if (process.env.PAINT_ROWS) {
-    const extra = JSON.parse(fs.readFileSync(process.env.PAINT_ROWS, 'utf8'));
+  if (PAINT_ROWS) {
+    const extra = PAINT_ROWS;
     await p.route(/supabase\.co\/rest\/v1\/paints\?/, async (r) => {
       try {
         const res = await r.fetch();
