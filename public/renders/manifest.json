@@ -285,5 +285,46 @@
    2.402,
    1.039
   ]
+ },
+ "m4_csl_g82": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.8112,
+    0.3428,
+    1.5253,
+    0.9793
+   ],
+   "front-right": [
+    0.8112,
+    0.3428,
+    1.5253,
+    0.9793
+   ],
+   "rear-left": [
+    -0.8045,
+    0.3428,
+    -1.3318,
+    0.9793
+   ],
+   "rear-right": [
+    0.8045,
+    0.3428,
+    -1.3318,
+    0.9793
+   ]
+  },
+  "footprint": [
+   2.416,
+   1.037
+  ]
  }
 }

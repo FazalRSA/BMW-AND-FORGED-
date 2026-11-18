@@ -92,6 +92,24 @@ CAR_FIXES = {
     # the headliner (at the belt line it lights only what the doors hide), brighter, and off the floor.
     'm3_cs_g80': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_0(45|46|50|52)|headlamp_(Circle_011|Plane_003))', 'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
     'm3_cs_g80:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
+    # as the M3 CS (same author's glazing): the side and rear panes (Plane_065, Plane_076, Circle_061) and the headlamp
+    # covers (hairline scribbles over the yellow running lights in the wheel close-up) off the strips; the windscreen
+    # (Circle_059) keeps its highlight. dark: the cabin light under the headliner, as on the M4, so the two seats read
+    # through the glass. carbon: splitter, air curtains, mirror caps, sills and diffuser (24698910__11603P001), the bonnet
+    # channels and the roof, all exposed clear-coated carbon on the car. Front three-quarter, rear three-quarter, wheel.
+    # :soft (--views side,top): with the strips unlinked the side glass was one flat black shape and, from above, the
+    # windscreen and rear window black holes; linked they mirrored the strips as ragged bands and scribbles. Blurred
+    # (glass_rough 0.3, as the M3 CS Touring's top view) they are one soft sheen, so the glass reads as tinted glass.
+    # :front (--views front): every pane off the strips; straight ahead the windscreen mirrored them as two pale bars.
+    'm4_csl_g82': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Plane_076|Circle_061|headlamp_(Circle_011|Plane_003))$',
+                   'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0},
+                   'carbon': r'^(24698910__11603P001|Circle_004|Circle_020)$'},
+    'm4_csl_g82:soft': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^headlamp_(Circle_011|Plane_003)$', 'glass_rough': 0.3,
+                        'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0},
+                        'carbon': r'^(24698910__11603P001|Circle_004|Circle_020)$'},
+    'm4_csl_g82:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Circle_059|Plane_065|Plane_076|Circle_061|headlamp_(Circle_011|Plane_003))$',
+                         'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0},
+                         'carbon': r'^(24698910__11603P001|Circle_004|Circle_020)$'},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors

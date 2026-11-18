@@ -325,6 +325,38 @@ export const BMW_MODELS: CarModel[] = [
     paintIds: ['british_racing_green', 'laguna_seca_blue', 'frozen_solid_white', 'black_sapphire'],
     modelUrl: null,
     modelLengthM: 4.796
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw m4 csl", Zifir3D): no modelUrl, see the iX3 above. The model's carbon
+    // splitter and diffuser stand 39 mm and 21 mm proud of its bumpers: scaled to BMW's 4.794 m (modelLengthM) the
+    // wheelbase would be 0.8% short, so the frames were rendered with the wheelbase at BMW's 2.857 m instead (the model
+    // 4.831 m long), the live wheels at BMW's 1,623 / 1,609 mm tracks. The model's roof stands 50 mm above BMW's 1,386 mm
+    // height, left as modelled (public/models/CREDITS.md).
+    id: 'm4_csl_g82',
+    name: 'BMW M4 CSL',
+    badge: 'M4 CSL G82',
+    generation: 'G82',
+    chassisCode: 'G82 M4 CSL',
+    // BMW's technical data sheet for the M4 CSL (BMW Group, 05/2022) and the South African launch reports (cars.co.za,
+    // citizen.co.za: 15 of the 1,000 cars built came to South Africa, all sold), which quote the same figures: 405 kW
+    // (550 PS, 543 hp), 650 Nm, 0-100 km/h 3.7 s, 9.5J x 19 front and 10.5J x 20 rear, 4,794 mm long. Bolt pattern and
+    // centre bore are the G-series hub values, not in the data sheet (66.6 mm not confirmed against a BMW document);
+    // BMW does not publish the offsets (parts retailers list ET20 on both axles). Sold in three paints only (below, the
+    // launch colour first; BMW's "Sapphire Black" is black_sapphire). Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '543 HP / 405 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.7s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'coupe',
+    paintIds: ['frozen_brooklyn_grey', 'alpine_white', 'black_sapphire'],
+    modelUrl: null,
+    modelLengthM: 4.794
   }
 ];
 
