@@ -30,7 +30,10 @@ export const HERO_SLIDES: HeroSlide[] = [
   { carId: 'm3_cs_g80', name: 'BMW M3 CS', paint: 'Signal Green', paintId: 'signal_green' },
   { carId: 'm3_cs_touring_g81', name: 'BMW M3 CS Touring', paint: 'Laguna Seca Blue', paintId: 'laguna_seca_blue' },
   { carId: 'm4_g82', name: 'BMW M4 Competition', paint: 'São Paulo Yellow', paintId: 'sao_paulo_yellow' },
-  { carId: 'm4_csl_g82', name: 'BMW M4 CSL', paint: 'Frozen Brooklyn Grey Metallic', paintId: 'frozen_brooklyn_grey' }
+  { carId: 'm4_csl_g82', name: 'BMW M4 CSL', paint: 'Frozen Brooklyn Grey Metallic', paintId: 'frozen_brooklyn_grey' },
+  { carId: 'm4_convertible_g83', name: 'BMW M4 Convertible', paint: 'Velvet Orchid II Metallic', paintId: 'velvet_orchid_ii' },
+  { carId: 'x3_30e_g45', name: 'BMW X3', paint: 'Arctic Race Blue Metallic', paintId: 'arctic_race_blue' },
+  { carId: 'x5_g05', name: 'BMW X5', paint: 'Blue Ridge Mountain Metallic', paintId: 'blue_ridge_mountain' }
 ];
 
 const WHEEL_THRESHOLD = 40; // px of scroll in one gesture before it moves one car

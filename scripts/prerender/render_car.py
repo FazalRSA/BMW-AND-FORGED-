@@ -50,6 +50,8 @@ DERIVE = a.studio == 'dark' and not a.two_render
 #  glass_unlink: light-link the crisp reflection strips (strip/low/shoulder/rim lights) away from the glass, so the
 #        glass reflects only the soft room (world, overhead panel, gradient wall) and never a ragged white bar.
 #        True = every glass mesh; a regex string = only the meshes whose name matches.
+#  glass_unlink_lights: regex of the light names glass_unlink keeps off that glass (default: every strip, the regex
+#        below), e.g. r'^rim' to drop only the end rim strips and keep the long strips' soft bands.
 #  dark_glass: regex of meshes rendered as flat, dark, glossy glass (no transmission, so no cabin shows through),
 #        e.g. a panoramic roof seen from above. Its material is copied, so the other windows are untouched.
 #  view_gain: {view: {light-name prefix: factor}} scales those lights for one view only (e.g. a roof that clips from above).
@@ -76,6 +78,28 @@ CAR_FIXES = {
     'm3_touring_g81': {'keep_normals': True, 'authored_lamps': True},
     'x1_u11': {'keep_normals': True, 'authored_lamps': True},
     'x3_g45': {'keep_normals': True, 'authored_lamps': True},
+    # the X3 30e xDrive Standard Model (car id x3_30e_g45); its bright trim, sill inserts and lamps are fixed in the private copy.
+    # :top (--car x3_30e_g45:top --views top): from above the windscreen and the panoramic roof mirrored the end and shoulder
+    # strips as pale crossing bars; blurred (glass_rough 0.3, as the M3 CS Touring's top view) they are one soft sheen, and a
+    # brighter cabin light, linked to the car only so the floor shadow keeps its size, lights the cabin. At the studio's
+    # dimmed IOR the blurred glass was a near-black hole; glass's own IOR (glass_ior 1.5, as the M4's top view) gives the
+    # windscreen and roof a broad soft sheen of the overhead light, so they read as tinted glass.
+    # :ftq (--views frontThreeQuarter): the side panes (split off as Plane_055_side in the private copy) off the end rim
+    # strips only: the high one behind the car, seen end-on in the rear door glass, was a pale smudge. The long strips stay
+    # linked (with every strip off, the side glass was one flat black shape).
+    'x3_30e_g45': {'keep_normals': True, 'authored_lamps': True},
+    'x3_30e_g45:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}},
+    'x3_30e_g45:ftq': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^Plane_055_side$', 'glass_unlink_lights': r'^rim'},
+    # the X5 xDrive50e in the xLine look (car id x5_g05); its bright trim, lamps and split brakes are fixed in the private copy.
+    # dark: with the default cabin light (low, small) the tall cabin read as black behind the side glass, with only the low
+    # strip's band in it; a brighter, wider light under the headliner (light-linked to the car, so the floor shadow keeps its
+    # size) shows the seats, headrests and steering wheel faintly through the side glass and windscreen, as on the X3 G45.
+    # :top (--car x5_g05:top --views top): as the X3 30e's top view, the windscreen mirrored the overhead strips as a wavy
+    # pale X; blurred (glass_rough 0.3) it is one soft sheen, and the brighter cabin light (off the floor) keeps the seats
+    # readable under the panoramic roof.
+    'x5_g05': {'keep_normals': True, 'authored_lamps': True,
+               'dark': {'cabin_h': 1.45, 'cabin_y': 0.35, 'cabin_w': 1.5, 'cabin_l': 2.0, 'cabin_rad': 5.0, 'cabin_floor': 0}},
+    'x5_g05:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0}},
     # gloss_black: the roof panel, its rails, the roof spoiler and the aerial fin (BMW: "roof and roof spoiler in Black
     # high-gloss"). carbon: the 'carbon' mesh (splitter, front air intakes, mirror caps, diffuser) and the two bonnet
     # indents (Object494), which BMW leaves in exposed carbon fibre.
@@ -124,6 +148,14 @@ CAR_FIXES = {
     'm4_g82:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
     'm4_g82:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Plane_076|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Circle_061)$', 'dark_glass_rough': 0.06,
                    'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
+    # The same author's M4 with a soft top (the coupe's meshes and names; the roof is fabric, its look written into the
+    # scene by the private patch). As m4_g82: side panes (Plane_065), rear window (Object558) and headlamp covers off the
+    # strips, the windscreen (Circle_059) keeps its highlight, the cabin light under the top, the carbon mesh as twill.
+    # :front: every pane off the strips. :top: windscreen and rear window as dark glass that keeps the strips.
+    'm4_convertible_g83': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|Object558|headlamp_Circle_011)', 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
+    'm4_convertible_g83:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
+    'm4_convertible_g83:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Object558)$', 'dark_glass_rough': 0.06,
+                               'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors
@@ -503,8 +535,9 @@ if fix.get('glass_unlink') and a.studio == 'dark':
     rc = bpy.data.collections.new('light_receivers')
     for o in sc.objects:
         if o not in glass_objs and o.type in ('MESH',): rc.objects.link(o)
+    gl = fix.get('glass_unlink_lights', r'(strip|low|shoulder|rim)')   # which lights; the default is every crisp strip
     for o in sc.objects:
-        if o.type == 'LIGHT' and re.match(r'(strip|low|shoulder|rim)', o.name): o.light_linking.receiver_collection = rc
+        if o.type == 'LIGHT' and re.match(gl, o.name): o.light_linking.receiver_collection = rc
 
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'
 if a.threads: sc.render.threads_mode = 'FIXED'; sc.render.threads = a.threads

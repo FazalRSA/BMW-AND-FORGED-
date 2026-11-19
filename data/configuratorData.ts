@@ -395,6 +395,121 @@ export const BMW_MODELS: CarModel[] = [
     paintIds: ['frozen_brooklyn_grey', 'alpine_white', 'black_sapphire'],
     modelUrl: null,
     modelLengthM: 4.794
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M4 Convertible 2025", Zifir3D): no modelUrl, see the iX3 above. The model
+    // is the same author's facelifted M4 body (as m4_g82) with the black fabric soft top closed; its badges are already
+    // the Competition's black, and the frames add their silver edge and the Competition script, as on m4_g82. Rendered
+    // at the model's own size: 4.806 m long, wheelbase 2.856 m (BMW: 4.801 m and 2.857 m). The live wheels sit at the
+    // model's own 1.600 m track front and rear, centred in its arches (BMW: 1,617 mm front, 1,605 mm rear, so the fronts
+    // sit 8 mm a side inboard and the rears 2-3 mm). The soft top stands 1.425 m high against BMW's 1,399 mm (about 8 mm
+    // of it the model's larger tyres), left as modelled (public/models/CREDITS.md).
+    id: 'm4_convertible_g83',
+    name: 'BMW M4 Convertible',
+    badge: 'M4 Convertible G83',
+    generation: 'G83',
+    chassisCode: 'G83 M4 Convertible',
+    // 2024 facelift (LCI), M4 Competition Convertible with M xDrive, the only M4 Convertible sold in South Africa.
+    // BMW's technical data sheet (BMW Group, 01/2024, also attached to BMW Group South Africa's launch release) and
+    // cars.co.za's South African launch report, which quote the same figures: 390 kW (530 PS, 523 hp), 650 Nm,
+    // 0-100 km/h 3.7 s, 9.5J x 19 front and 10.5J x 20 rear, 4,801 mm long. Bolt pattern and centre bore are the
+    // G-series hub values, not in the data sheet (66.6 mm not confirmed against a BMW document); BMW does not publish
+    // the offsets. Paints: from BMW South Africa's configurator for this car (docs/bmw-factory-paints.md, section 6):
+    // the launch colour first (BMW Individual Velvet Orchid II, the colour of BMW's facelift photos), the eight no-cost
+    // series colours, and the BMW Individual Frozen Deep Grey, which the SA configurator offers on this car only (P7X).
+    // Owner to confirm.
+    engine: '3.0L S58 Twin-Turbo Inline-6',
+    power: '523 HP / 390 kW',
+    torque: '650 Nm (479 lb-ft)',
+    acceleration: '0-100 km/h in 3.7s',
+    recommendedWheelFitment: {
+      front: '19 x 9.5J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'convertible',
+    paintIds: [
+      'velvet_orchid_ii', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'sao_paulo_yellow', 'brooklyn_grey',
+      'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_deep_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.801
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw x3 2025", Zifir3D): no modelUrl, see the iX3 above. The id was chosen for
+    // the X3 20d, but the model is badged "X3 30e" and has the plug-in hybrid's charging flap on the left front wing, so
+    // it is the X3 30e xDrive, in the Standard line (not M Sport): satin aluminium window surround, roof rails and kidney
+    // grille, silver underride strips and ribbed sill inserts. Frames scaled by the wheelbase (BMW's 2.865 m): the model
+    // is then 4.769 m long, 14 mm over BMW's 4.755 m (modelLengthM; public/models/CREDITS.md).
+    id: 'x3_30e_g45',
+    name: 'BMW X3 30e xDrive',
+    badge: 'X3 30e xDrive G45',
+    generation: 'G45',
+    chassisCode: 'G45 X3 30e',
+    // BMW's technical specifications for the X3 (06/2024), X3 30e xDrive: 220 kW (299 hp) and 450 Nm system output,
+    // 0-100 km/h 6.2 s, 8.5J x 19 with 245/50 R19, 4,755 mm long, wheelbase 2,865 mm. South Africa: BMW Group South
+    // Africa's launch release (19-inch wheels standard on the 30e) and cars.co.za (X3 30e xDrive in the Standard line
+    // at R1 260 000 at launch; 220 kW, 450 Nm, 6.2 s). Bolt pattern and centre bore are the G-series hub values, not in
+    // BMW's sheet. paintIds: the Standard line's palette in BMW South Africa's configurator as read for the X3 20d
+    // xDrive (2026-11-17), assumed the same for the 30e; Brooklyn Grey is M Sport only. Owner to confirm.
+    engine: '2.0L Turbo Inline-4 Plug-in Hybrid',
+    power: '299 HP / 220 kW',
+    torque: '450 Nm (332 lb-ft)',
+    acceleration: '0-100 km/h in 6.2s',
+    recommendedWheelFitment: {
+      front: '19 x 8.5J',
+      rear: '19 x 8.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'alpine_white', 'black_sapphire', 'mineral_white', 'skyscraper_grey', 'sophisto_grey_brilliant_effect', 'dune_grey',
+      'arctic_race_blue', 'fire_red', 'tanzanite_blue_ii'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.755
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "Bmw x5 2023", Zifir3D): no modelUrl, see the iX3 above. The download is about
+    // 1.144 times life size in every axis (no stray object); the frames are scaled by the wheelbase (BMW's 2.975 m),
+    // which leaves the body 4.983 m long, 48 mm over BMW's 4.935 m (modelLengthM; public/models/CREDITS.md). It has the
+    // xLine look (chrome kidney grille, satin aluminium window surround and roof rails, silver underride) and the
+    // charging flap on the left front wing but only an "X5" badge, so it is labelled the plug-in hybrid xDrive50e.
+    id: 'x5_g05',
+    name: 'BMW X5 xDrive50e',
+    badge: 'X5 xDrive50e G05',
+    generation: 'G05',
+    chassisCode: 'G05 X5 xDrive50e',
+    // 2023 facelift (LCI). BMW Group technical data sheet "BMW X5" (02/2023): 3.0 six-cylinder petrol plug-in hybrid,
+    // 360 kW (489 hp) and 700 Nm system output, 0-100 km/h 4.8 s, 4,935 mm long, wheelbase 2,975 mm; the BMW Group's
+    // launch release "The new BMW X5 and the new BMW X6" (8 February 2023) gives the same 360 kW, 700 Nm and 4.8 s.
+    // South Africa: TimesLive (9 February 2023: sales from Q3 2023, xLine and 20-inch wheels standard) and The Citizen
+    // (10 July 2023: South African prices, xDrive50e listed). The 20 x 9J / 20 x 10.5J mixed set is BMW's style 738 as
+    // listed for the facelift elsewhere, an estimate for South Africa. Bolt pattern and centre bore are the G-series hub
+    // values, not in the data sheet. paintIds: the facelift palette. The launch release names the new colours for all
+    // models (Blue Ridge Mountain, the launch colour, first; Brooklyn Grey, Skyscraper Grey, BMW Individual Frozen Pure
+    // Grey, which touch-up suppliers list as C5A for the 2025 X5); the rest are BMW's 2024 X5 palette (Manhattan; BMW
+    // Individual Dravit Grey, Tanzanite Blue II and Ametrin), less M Marina Bay Blue (M60i only). Availability of each on
+    // the South African xDrive50e (Carbon Black and Frozen Pure Grey above all): Owner to confirm.
+    engine: '3.0L Turbo Inline-6 Plug-in Hybrid',
+    power: '489 HP / 360 kW',
+    torque: '700 Nm (516 lb-ft)',
+    acceleration: '0-100 km/h in 4.8s',
+    recommendedWheelFitment: {
+      front: '20 x 9J',
+      rear: '20 x 10.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'blue_ridge_mountain', 'mineral_white', 'alpine_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey',
+      'skyscraper_grey', 'manhattan', 'dravit_grey', 'tanzanite_blue_ii', 'ametrin', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.935
   }
 ];
 
@@ -478,6 +593,12 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'frozen_brooklyn_grey', name: 'Frozen Brooklyn Grey', code: 'P8X', hex: '#a4a9ac', type: 'Frozen', roughness: 0.55, metalness: 0.4, clearcoat: 0.0, clearcoatRoughness: 0.5 }, // M4 CSL launch colour: Brooklyn Grey (C4P) in matte
   { id: 'british_racing_green', name: 'British Racing Green', code: 'Individual', hex: '#1f3d2b', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; BMW Individual solid: BMW's releases call only Sapphire Black metallic and UK dealers list it as "British Racing Green Solid"; paint code unverified
   { id: 'laguna_seca_blue', name: 'Laguna Seca Blue', code: '448', hex: '#3a8fd1', type: 'Uni', roughness: 0.5, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M3 CS Touring; 448 is the original E46 code, the 2025 code is unverified
+  // X5 facelift colours (2026-11-18, supabase/migrations/20261117105900_paints_x5_facelift_colours.sql). Codes from two
+  // touch-up suppliers (paintscratch, Automotive Touchup) and BMW Ireland's 2019 X5 brochure (X1B); hex values are
+  // estimates from photos, not colour-managed data. Owner to confirm.
+  { id: 'blue_ridge_mountain', name: 'Blue Ridge Mountain', code: 'C35', hex: '#3a5563', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // X5 facelift launch colour: a dark slate blue with a green undertone
+  { id: 'manhattan', name: 'Manhattan', code: 'C3D', hex: '#646d63', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // a green-grey (US dealers: "Manhattan Green")
+  { id: 'ametrin', name: 'Ametrin', code: 'X1B', hex: '#4b3d43', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // BMW Individual: a dark violet-grey with a bronze flop
 ];
 
 export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {
