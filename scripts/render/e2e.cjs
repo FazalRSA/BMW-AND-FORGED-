@@ -366,7 +366,10 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
     const wheelLine = () => text(p.locator('aside .text-\\[16px\\] + div, aside .border-t .truncate.text-\\[12px\\]'));
     /** the selected wheel's code (shown by the stepped panel; the viewer shows the name) */
     const wheelCode = async () => {
-      if (await p.locator('aside .text-bronze').count()) return text(p.locator('aside .text-bronze').first());
+      // (the drawer's bronze label is the wheel's code or, on the current layout, its style: take the one that is a code)
+      const bronze = (await p.locator('aside .text-bronze').allTextContents()).map((t) => t.replace(/\s+/g, ' ').trim());
+      const fromBronze = bronze.find((t) => WHEELS.some((w) => w.code === t));
+      if (fromBronze) return fromBronze;
       const name = await heroName();
       return WHEELS.find((w) => w.name === name)?.code || name;
     };
@@ -967,7 +970,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         await ready();
         await act(btn('The wheels'));
         await waitPath('/forged');
-        const codes = await p.locator('main li .text-bronze, li .text-bronze').allTextContents();
+        const codes = await p.locator('li .text-\\[17px\\].font-bold').allTextContents();
         order = codes.map((c) => WHEELS.find((w) => w.code === c.trim())?.id).filter(Boolean);
         assert(order.length === WHEELS.length, `${order.length} cards for ${WHEELS.length} wheels`);
       });
@@ -976,7 +979,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
       const F = 'forged';
       for (const id of order) {
         const w = WHEELS.find((x) => x.id === id);
-        const card = () => p.locator('li').filter({ has: p.locator('.text-bronze', { hasText: w.code }) });
+        const card = () => p.locator('li').filter({ has: p.locator('.text-\\[17px\\].font-bold', { hasText: new RegExp(`^${w.code}$`) }) });
         await check(F, `${w.code} "360°" -> /rims/${id}; Back -> /forged`, async () => {
           await act(card().getByRole('button', { name: '360°' }));
           await waitPath(`/rims/${id}`);
@@ -1036,7 +1039,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
       await check(R, `open ${order[0]} from /forged ("Back" label)`, async () => {
         if (pathname() !== '/forged') { await go('/forged'); await p.locator('h1').first().waitFor({ timeout: 240000 }); }
         const w0 = WHEELS.find((x) => x.id === order[0]);
-        await act(p.locator('li').filter({ has: p.locator('.text-bronze', { hasText: w0.code }) }).getByRole('button', { name: '360°' }));
+        await act(p.locator('li').filter({ has: p.locator('.text-\\[17px\\].font-bold', { hasText: new RegExp(`^${w0.code}$`) }) }).getByRole('button', { name: '360°' }));
         await waitPath(`/rims/${order[0]}`);
         await btn('Back').waitFor();
       });
@@ -1186,7 +1189,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         // a wheel other than the first, in a finish that is not its default when it has one
         const pool = order.slice(1).map((x) => WHEELS.find((y) => y.id === x));
         const w = pool.find((x) => x.available_variants.some((f) => f !== x.default_variant && FINISHES[f])) || pool[0] || WHEELS.find((x) => x.id === order[0]);
-        await act(p.locator('li').filter({ has: p.locator('.text-bronze', { hasText: w.code }) }).getByRole('button', { name: '360°' }));
+        await act(p.locator('li').filter({ has: p.locator('.text-\\[17px\\].font-bold', { hasText: new RegExp(`^${w.code}$`) }) }).getByRole('button', { name: '360°' }));
         await waitPath(`/rims/${w.id}`);
         const fin = FINISHES[w.available_variants.find((f) => f !== w.default_variant && FINISHES[f]) || w.default_variant];
         await act(p.locator(`aside button[title="${fin}"], aside button[title^="${fin} · "]`));
