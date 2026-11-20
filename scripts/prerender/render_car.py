@@ -186,6 +186,19 @@ CAR_FIXES = {
                           'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
     'm340i_touring_g21:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5},
                               'gloss_black': r'^(shadowline_.*|kidney_mesh_lci)$'},
+    # The BMW M240i xDrive Coupé before the 2024 update (G42; car id m240i_g42; same author as the m4_g82). gloss_black:
+    # the M High-gloss Shadow Line window surround (Object024) and pillar trim (Object023), the mirror bases (Object050),
+    # the side-skirt inserts (Object013), the front spoiler lip (Plane007) and the rear apron inlay (Plane015), all
+    # high-gloss black on the 2022-2024 car (BMW press kit 07/2021), which the satin black of unnamed trim made plastic.
+    # dark: the M4's cabin light under the headliner (a coupe cabin of the same layout, 12 mm higher), so the seats show
+    # through the side glass instead of black panes. :top (--car m240i_g42:top --views top): from above the windscreen
+    # (Object022) and rear window (Plane005) mirrored the strips as wavy pale bars; as on the m4_g82's top view they are
+    # dark glass that keeps the strips as crisp bars, the side panes (Object025) stay off the strips.
+    'm240i_g42': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(Object0(13|23|24|50)|Plane0(07|15))$',
+                  'dark': {'cabin_h': 1.23, 'cabin_y': 0.35, 'cabin_l': 1.3, 'cabin_rad': 2.0, 'cabin_floor': 0}},
+    'm240i_g42:top': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(Object0(13|23|24|50)|Plane0(07|15))$',
+                      'glass_unlink': r'^(Object025|headlamp_Object035)$', 'dark_glass': r'^(Object022|Plane005)$', 'dark_glass_rough': 0.06,
+                      'dark': {'cabin_h': 1.23, 'cabin_y': 0.35, 'cabin_l': 1.3, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors

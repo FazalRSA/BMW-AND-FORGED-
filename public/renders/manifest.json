@@ -572,5 +572,46 @@
    2.387,
    1.034
   ]
+ },
+ "m240i_g42": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7761,
+    0.3375,
+    1.4497,
+    0.9642
+   ],
+   "front-right": [
+    0.7718,
+    0.3375,
+    1.4501,
+    0.9642
+   ],
+   "rear-left": [
+    -0.7761,
+    0.3375,
+    -1.2913,
+    0.9642
+   ],
+   "rear-right": [
+    0.7718,
+    0.3375,
+    -1.2908,
+    0.9642
+   ]
+  },
+  "footprint": [
+   2.307,
+   1.052
+  ]
  }
 }
