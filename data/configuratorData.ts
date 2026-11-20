@@ -551,6 +551,45 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.938
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW 3-Series Touring", Zifir3D): no modelUrl, see the iX3 above. The download
+    // is the facelifted G21 as a 330e M Sport; the M340i's own parts (BMW press kit 05/2022: mesh kidney grille in the
+    // bright surround, M mirror caps in high-gloss black, M High-gloss Shadowline trim and roof rails, trapezoid
+    // tailpipes; the M340i badge) were built onto it in the private copy, the charging flaps closed, the tyres set to
+    // BMW's 662 mm and the body lowered 10 mm for the M Sport suspension. Scaled by the wheelbase (BMW's 2.851 m), which
+    // leaves the body 4.767 m long, 53 mm over BMW's 4.714 m (modelLengthM; public/models/CREDITS.md).
+    id: 'm340i_touring_g21',
+    name: 'BMW M340i Touring',
+    badge: 'M340i Touring G21',
+    generation: 'G21',
+    chassisCode: 'G21 M340i xDrive Touring',
+    // BMW does not sell the 3 Series Touring in South Africa (only the M3 Touring): BMW South Africa sells the M340i as a
+    // Sedan (285 kW, 0-100 km/h 4.3 s). So these are the Touring's own European figures, from BMW's press kit and
+    // technical data sheets (05/2022, 05/2024): 275 kW (374 hp), 500 Nm, 0-100 km/h 4.6 s, 4,714 mm long, wheelbase
+    // 2,851 mm, 48 V mild hybrid. 19-inch M light-alloy wheels per BMW's press release of 17 May 2022 (the data sheet's
+    // tyre table also lists 7.5J x 18 / 8.5J x 18); the 19 x 8J / 19 x 8.5J widths (styles 791 M / 995 M) are from
+    // genuine-parts listings, an estimate; bolt pattern and centre bore are the G-series hub values, not in the data
+    // sheet. paintIds: BMW's 3 Series colours offered on the M340i (launch range 05/2022 and the 2024 update's Arctic Race
+    // Blue and Fire Red; M Brooklyn Grey, the slide's colour, first). Solid Black (668), Melbourne Red (A75) and Phytonic
+    // Blue (C1M) are not in BMW_PAINTS yet. Owner to confirm.
+    engine: '3.0L B58 Turbo Inline-6 48V Mild Hybrid',
+    power: '374 HP / 275 kW',
+    torque: '500 Nm (369 lb-ft)',
+    acceleration: '0-100 km/h in 4.6s',
+    recommendedWheelFitment: {
+      front: '19 x 8J',
+      rear: '19 x 8.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'touring',
+    paintIds: [
+      'brooklyn_grey', 'alpine_white', 'mineral_white', 'black_sapphire', 'skyscraper_grey', 'portimao_blue',
+      'arctic_race_blue', 'fire_red', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.714
   }
 ];
 

@@ -531,5 +531,46 @@
    2.486,
    1.109
   ]
+ },
+ "m340i_touring_g21": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7709,
+    0.331,
+    1.574,
+    0.9457
+   ],
+   "front-right": [
+    0.7709,
+    0.331,
+    1.5741,
+    0.9457
+   ],
+   "rear-left": [
+    -0.7709,
+    0.331,
+    -1.2771,
+    0.9457
+   ],
+   "rear-right": [
+    0.7708,
+    0.331,
+    -1.277,
+    0.9457
+   ]
+  },
+  "footprint": [
+   2.387,
+   1.034
+  ]
  }
 }

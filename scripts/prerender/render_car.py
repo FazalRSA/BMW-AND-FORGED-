@@ -172,6 +172,20 @@ CAR_FIXES = {
     'm4_convertible_g83:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
     'm4_convertible_g83:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Object558)$', 'dark_glass_rough': 0.06,
                                'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
+    # The BMW M340i xDrive Touring (G21 facelift; car id m340i_touring_g21), built in the private copy from the same author's
+    # 3 Series Touring (a 330e M Sport): mesh kidney insert, M mirror caps, Shadowline trim, trapezoid tailpipes, badges.
+    # gloss_black: the M High-gloss Shadowline parts (window surround, roof rails, B/C-pillar covers, mirror triangles), the
+    # M mirror caps (BMW: "Black high-gloss") and the kidney mesh, which the satin black of unnamed trim would make plastic.
+    # :top (--car m340i_touring_g21:top --views top): as the X3 30e's top view (same author's glazing), the windscreen
+    # mirrored the end and shoulder strips as a pale X; blurred (glass_rough 0.3) at glass's own IOR it is one soft sheen.
+    # glass_unlink: the two outer tail-lamp lenses mirrored the strips as white squiggles across the lit lower bar (rear
+    # three-quarter); unlinked they reflect only the soft room, as on the x5m_f95. dark: the M3 CS's cabin light (same
+    # G2x cabin), so the seats show through the glass instead of near-black panes.
+    'm340i_touring_g21': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(shadowline_.*|kidney_mesh_lci)$',
+                          'glass_unlink': r'^backlamp_Main_Mesh_0(27|32)$',
+                          'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
+    'm340i_touring_g21:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5},
+                              'gloss_black': r'^(shadowline_.*|kidney_mesh_lci)$'},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors
