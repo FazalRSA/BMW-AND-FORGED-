@@ -49,6 +49,8 @@ other files.
     no GLB served, wheels and a per-view depth mask from `public/renders/manifest.json`. Runbook:
     `docs/ADD_PREPARED_CAR.md`, "Frames-only cars" (`prepare_blend.py`, `render_depth.py`, `frames-only.sh`).
     First one: the BMW iX3 M60 (`ix3_m60`).
+  - The full frames-only process (private fixes, review loop, defects and their fixes): the
+    `forgedsa-frames-only-car` skill.
   - Those pages do not say anything about trademarks or real car brands, or whether the licence
     continues after a subscription ends. Both are open questions for the owner: ask before using one.
 

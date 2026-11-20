@@ -490,5 +490,128 @@
    2.491,
    1.099
   ]
+ },
+ "x5m_f95": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.8336,
+    0.3734,
+    1.5825,
+    1.0667
+   ],
+   "front-right": [
+    0.8336,
+    0.3734,
+    1.5825,
+    1.0667
+   ],
+   "rear-left": [
+    -0.8336,
+    0.3734,
+    -1.3921,
+    1.0667
+   ],
+   "rear-right": [
+    0.8336,
+    0.3734,
+    -1.3921,
+    1.0667
+   ]
+  },
+  "footprint": [
+   2.486,
+   1.109
+  ]
+ },
+ "m340i_touring_g21": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7709,
+    0.331,
+    1.574,
+    0.9457
+   ],
+   "front-right": [
+    0.7709,
+    0.331,
+    1.5741,
+    0.9457
+   ],
+   "rear-left": [
+    -0.7709,
+    0.331,
+    -1.2771,
+    0.9457
+   ],
+   "rear-right": [
+    0.7708,
+    0.331,
+    -1.277,
+    0.9457
+   ]
+  },
+  "footprint": [
+   2.387,
+   1.034
+  ]
+ },
+ "m240i_g42": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.7761,
+    0.3375,
+    1.4497,
+    0.9642
+   ],
+   "front-right": [
+    0.7718,
+    0.3375,
+    1.4501,
+    0.9642
+   ],
+   "rear-left": [
+    -0.7761,
+    0.3375,
+    -1.2913,
+    0.9642
+   ],
+   "rear-right": [
+    0.7718,
+    0.3375,
+    -1.2908,
+    0.9642
+   ]
+  },
+  "footprint": [
+   2.307,
+   1.052
+  ]
  }
 }

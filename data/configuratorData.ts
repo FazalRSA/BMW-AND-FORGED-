@@ -510,6 +510,129 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.935
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW X5 M Competition", Zifir3D): no modelUrl, see the iX3 above. The model is
+    // the F95 before the 2023 facelift: Laserlight headlamps with two hexagonal running rings, a kidney grille with
+    // vertical double bars, L-shaped tail lamps, "X5 M" and "competition" on the tailgate. The download is about 1.04
+    // times life size (no stray object); the frames are scaled by the wheelbase (BMW's 2.972 m), which leaves the body
+    // 4.963 m long, 25 mm over BMW's 4.938 m (modelLengthM; public/models/CREDITS.md). The live wheels sit at the
+    // model's own 1.667 m track front and rear, centred in its arches (BMW: 1,699 mm front, 1,688 mm rear).
+    id: 'x5m_f95',
+    name: 'BMW X5 M Competition',
+    badge: 'X5 M Competition F95',
+    generation: 'F95',
+    chassisCode: 'F95 X5 M Competition',
+    // 2020-2023 car (the 2023 facelift added a 48 V mild hybrid and slimmer headlamps). BMW's technical data sheet
+    // "Specifications of the BMW X5 M, valid from 03/2021" (Competition: 460 kW / 625 hp, 750 Nm, 0-100 km/h 3.8 s,
+    // 4,938 x 2,015 x 1,748 mm, wheelbase 2,972 mm, 10.5J x 21 front and 11.5J x 22 rear) and BMW South Africa's
+    // launch release (7 July 2020: Competition only in South Africa, the same 460 kW, 750 Nm and 3.8 s, 21-inch front
+    // and 22-inch rear M wheels standard); cars.co.za quotes the same figures. BMW's documents give no engine code (S63
+    // from parts listings). Bolt pattern and centre bore are the G-series hub values from fitment guides, not in the
+    // data sheet; BMW does not publish the offsets. Paints: the launch range in BMW USA's launch release, the launch
+    // colour Marina Bay Blue first with the other two M colours (Toronto Red, Donington Grey), then Carbon Black, Black
+    // Sapphire, Alpine White, Mineral White, Manhattan, BMW Individual Tanzanite Blue II and Ametrin, and BMW
+    // Individual Frozen Black, offered for the X5 M from autumn 2020 (bmwblog, 7 September 2020). The South African
+    // configurator of the time is no longer online: Owner to confirm.
+    engine: '4.4L S63 Twin-Turbo V8',
+    power: '625 HP / 460 kW',
+    torque: '750 Nm (553 lb-ft)',
+    acceleration: '0-100 km/h in 3.8s',
+    recommendedWheelFitment: {
+      front: '21 x 10.5J',
+      rear: '22 x 11.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'marina_bay_blue', 'toronto_red', 'donington_grey', 'carbon_black', 'black_sapphire', 'alpine_white', 'mineral_white',
+      'manhattan', 'tanzanite_blue_ii', 'ametrin', 'frozen_black'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.938
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW M240i coupe", Zifir3D): no modelUrl, see the iX3 above. The model is the
+    // M240i xDrive before the 2024 update (2022-2024 cars): Cerium Grey kidney surround, side-intake trims, mirror caps,
+    // tailpipe trims and badges, high-gloss black side skirts and rear apron inlay (BMW press kit 07/2021). The download
+    // is about 1.03 times life size; the frames are scaled by the wheelbase (BMW's 2.741 m), which puts the painted body
+    // at 4.551 m (BMW: 4.548 m, modelLengthM) and the model at 4.580 m over its front lip and diffuser, which stand proud
+    // of the bumpers (public/models/CREDITS.md). The live wheels sit at the model's own 1.548 m track front and rear,
+    // centred in its arches (BMW gives 1,575 mm front and 1,587 mm rear for the 2 Series Coupé).
+    id: 'm240i_g42',
+    name: 'BMW M240i',
+    badge: 'M240i xDrive G42',
+    generation: 'G42',
+    chassisCode: 'G42 M240i xDrive',
+    // BMW Group South Africa (release of 13 June 2024) and the South African launch reports (cars.co.za, Double Apex,
+    // 2022): 285 kW, 500 Nm, 0-100 km/h 4.3 s (Europe: 275 kW / 374 hp); 387 HP is 285 kW in metric horsepower. BMW's
+    // technical data sheet (06/2024): 4,548 mm long, wheelbase 2,741 mm, 19-inch M wheels 8J x 19 front and 8.5J x 19 rear
+    // on 225/40 R19 and 255/35 R19. Bolt pattern from genuine-wheel listings (BMW 36118089892 / 36118089895), the centre
+    // bore is the G-series hub value and the engine code B58 is from parts listings, none of them in BMW's sheet; BMW does
+    // not publish the offsets. Paints: the 2022-2024 car's range only, to match the car shown (press kit 07/2021, BMW
+    // Ireland's M240i brochure, cars.com's 2022 M240i colour list), the launch colour Thundernight (exclusive to the 2 Series
+    // Coupé) first and Melbourne Red (A75) as its red. The 2024 update's Fire Red, Skyscraper Grey and Zandvoort Blue are
+    // left out: they came with its gloss-black trim, which the frames do not show. BMW Individual Frozen Pure Grey and
+    // Frozen Portimao Blue (added in 2023); the latter is listed under C6R, the code of the M2 G87 built alongside it (the
+    // G42's own code not confirmed). Owner to confirm.
+    engine: '3.0L B58 Turbo Inline-6',
+    power: '387 HP / 285 kW',
+    torque: '500 Nm (369 lb-ft)',
+    acceleration: '0-100 km/h in 4.3s',
+    recommendedWheelFitment: {
+      front: '19 x 8J',
+      rear: '19 x 8.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'coupe',
+    paintIds: [
+      'thundernight', 'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'portimao_blue', 'melbourne_red',
+      'frozen_pure_grey', 'frozen_portimao_blue_c6r'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.548
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW 3-Series Touring", Zifir3D): no modelUrl, see the iX3 above. The download
+    // is the facelifted G21 as a 330e M Sport; the M340i's own parts (BMW press kit 05/2022: mesh kidney grille in the
+    // bright surround, M mirror caps in high-gloss black, M High-gloss Shadowline trim and roof rails, trapezoid
+    // tailpipes; the M340i badge) were built onto it in the private copy, the charging flaps closed, the tyres set to
+    // BMW's 662 mm and the body lowered 10 mm for the M Sport suspension. Scaled by the wheelbase (BMW's 2.851 m), which
+    // leaves the body 4.767 m long, 53 mm over BMW's 4.714 m (modelLengthM; public/models/CREDITS.md).
+    id: 'm340i_touring_g21',
+    name: 'BMW M340i Touring',
+    badge: 'M340i Touring G21',
+    generation: 'G21',
+    chassisCode: 'G21 M340i xDrive Touring',
+    // BMW does not sell the 3 Series Touring in South Africa (only the M3 Touring): BMW South Africa sells the M340i as a
+    // Sedan (285 kW, 0-100 km/h 4.3 s). So these are the Touring's own European figures, from BMW's press kit and
+    // technical data sheets (05/2022, 05/2024): 275 kW (374 hp), 500 Nm, 0-100 km/h 4.6 s, 4,714 mm long, wheelbase
+    // 2,851 mm, 48 V mild hybrid. 19-inch M light-alloy wheels per BMW's press release of 17 May 2022 (the data sheet's
+    // tyre table also lists 7.5J x 18 / 8.5J x 18); the 19 x 8J / 19 x 8.5J widths (styles 791 M / 995 M) are from
+    // genuine-parts listings, an estimate; bolt pattern and centre bore are the G-series hub values, not in the data
+    // sheet. paintIds: BMW's 3 Series colours offered on the M340i (launch range 05/2022 and the 2024 update's Arctic Race
+    // Blue and Fire Red; M Brooklyn Grey, the slide's colour, first), and Melbourne Red (A75), the launch range's red, since
+    // it joined BMW_PAINTS with the M240i. Solid Black (668) and Phytonic Blue (C1M) are not in BMW_PAINTS yet. Owner to
+    // confirm.
+    engine: '3.0L B58 Turbo Inline-6 48V Mild Hybrid',
+    power: '374 HP / 275 kW',
+    torque: '500 Nm (369 lb-ft)',
+    acceleration: '0-100 km/h in 4.6s',
+    recommendedWheelFitment: {
+      front: '19 x 8J',
+      rear: '19 x 8.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'touring',
+    paintIds: [
+      'brooklyn_grey', 'alpine_white', 'mineral_white', 'black_sapphire', 'skyscraper_grey', 'portimao_blue',
+      'arctic_race_blue', 'fire_red', 'melbourne_red', 'frozen_pure_grey'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.714
   }
 ];
 
@@ -599,6 +722,16 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'blue_ridge_mountain', name: 'Blue Ridge Mountain', code: 'C35', hex: '#3a5563', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // X5 facelift launch colour: a dark slate blue with a green undertone
   { id: 'manhattan', name: 'Manhattan', code: 'C3D', hex: '#646d63', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // a green-grey (US dealers: "Manhattan Green")
   { id: 'ametrin', name: 'Ametrin', code: 'X1B', hex: '#4b3d43', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // BMW Individual: a dark violet-grey with a bronze flop
+  // X5 M colour (2026-11-20, supabase/migrations/20261117106900_paints_x5m_donington_grey.sql): one of the three M colours
+  // of the 2020 X5 M launch range (BMW USA's launch release: Donington Grey, Marina Bay Blue, Toronto Red). Code C28 from
+  // touch-up paint suppliers (paintscratch, Automotive Touchup), not a BMW document; hex is an estimate from photos, not
+  // colour-managed data. Owner to confirm.
+  { id: 'donington_grey', name: 'Donington Grey', code: 'C28', hex: '#62686a', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M colour: a mid grey with a cool blue-green cast
+  // M240i colour (2026-11-20, supabase/migrations/20261117107900_paints_melbourne_red.sql): Melbourne Red metallic, the
+  // red of the 2 Series Coupé before its 2024 update (cars.com's 2022 M240i xDrive colour list; Fire Red only reached the
+  // two-door with the update, per BMW Group Asia's 2024 Singapore launch release). Code A75 from paint suppliers (The Spray Source, paintscratch),
+  // not a BMW document; hex is an estimate from photos, not colour-managed data. Owner to confirm.
+  { id: 'melbourne_red', name: 'Melbourne Red', code: 'A75', hex: '#901c26', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // a deep red, darker and a little bluer than Fire Red
 ];
 
 export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {

@@ -100,6 +100,22 @@ CAR_FIXES = {
     'x5_g05': {'keep_normals': True, 'authored_lamps': True,
                'dark': {'cabin_h': 1.45, 'cabin_y': 0.35, 'cabin_w': 1.5, 'cabin_l': 2.0, 'cabin_rad': 5.0, 'cabin_floor': 0}},
     'x5_g05:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0}},
+    # the X5 M Competition before the 2023 facelift (car id x5m_f95; same author as the x5_g05); its lamps, badges, black
+    # chrome tailpipes and mirror caps are fixed in the private copy. gloss_black: the Competition's high-gloss black kidney
+    # surround and bars, M gills, window surround and pillar trims, roof rails, roof-spoiler trim, side-intake frames and
+    # diffuser (satin black, the default for unnamed trim, read as unfinished plastic next to the paint). dark: the x5_g05's
+    # cabin light (same G05 cabin) under the headliner, so the seats show through the side glass. glass_unlink: where the
+    # fender part of each tail lamp ends at the tailgate split, its red cover glass mirrored the rim strip behind the car
+    # and the long strip as a pale inverted V across the top light bar (rear three-quarter and side views); the two cover
+    # meshes reflect only the soft room, so the split reads as the thin dark line it is on the car.
+    # :top (--car x5m_f95:top --views top): as the x5_g05's top view, the windscreen mirrored the overhead strips as a wavy
+    # pale X; blurred (glass_rough 0.3) it is one soft sheen, with the x5_g05's top-view cabin light.
+    'x5m_f95': {'keep_normals': True, 'authored_lamps': True,
+                'gloss_black': r'^(Hood_001|Plane_003|Front_Fender_00[12]|Back_Fender_00[12]|Plane_02[2345]|Roof_00[12]|Roof_006|Roof_Wing_00[12]|Fron_Bumper_004|Back_Bumper_004)$',
+                'glass_unlink': r'^backlamp_Back_Bumper_0(07|15)$',
+                'dark': {'cabin_h': 1.45, 'cabin_y': 0.35, 'cabin_w': 1.5, 'cabin_l': 2.0, 'cabin_rad': 5.0, 'cabin_floor': 0}},
+    'x5m_f95:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0},
+                    'gloss_black': r'^(Hood_001|Plane_003|Front_Fender_00[12]|Back_Fender_00[12]|Plane_02[2345]|Roof_00[12]|Roof_006|Roof_Wing_00[12]|Fron_Bumper_004|Back_Bumper_004)$'},
     # gloss_black: the roof panel, its rails, the roof spoiler and the aerial fin (BMW: "roof and roof spoiler in Black
     # high-gloss"). carbon: the 'carbon' mesh (splitter, front air intakes, mirror caps, diffuser) and the two bonnet
     # indents (Object494), which BMW leaves in exposed carbon fibre.
@@ -156,6 +172,33 @@ CAR_FIXES = {
     'm4_convertible_g83:front': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': True, 'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0}, 'carbon': r'^carbon$'},
     'm4_convertible_g83:top': {'keep_normals': True, 'authored_lamps': True, 'glass_unlink': r'^(Plane_065|headlamp_Circle_011)', 'dark_glass': r'^(Circle_059|Object558)$', 'dark_glass_rough': 0.06,
                                'dark': {'cabin_h': 1.22, 'cabin_y': 0.43, 'cabin_l': 1.35, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}, 'carbon': r'^carbon$'},
+    # The BMW M340i xDrive Touring (G21 facelift; car id m340i_touring_g21), built in the private copy from the same author's
+    # 3 Series Touring (a 330e M Sport): mesh kidney insert, M mirror caps, Shadowline trim, trapezoid tailpipes, badges.
+    # gloss_black: the M High-gloss Shadowline parts (window surround, roof rails, B/C-pillar covers, mirror triangles), the
+    # M mirror caps (BMW: "Black high-gloss") and the kidney mesh, which the satin black of unnamed trim would make plastic.
+    # :top (--car m340i_touring_g21:top --views top): as the X3 30e's top view (same author's glazing), the windscreen
+    # mirrored the end and shoulder strips as a pale X; blurred (glass_rough 0.3) at glass's own IOR it is one soft sheen.
+    # glass_unlink: the two outer tail-lamp lenses mirrored the strips as white squiggles across the lit lower bar (rear
+    # three-quarter); unlinked they reflect only the soft room, as on the x5m_f95. dark: the M3 CS's cabin light (same
+    # G2x cabin), so the seats show through the glass instead of near-black panes.
+    'm340i_touring_g21': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(shadowline_.*|kidney_mesh_lci)$',
+                          'glass_unlink': r'^backlamp_Main_Mesh_0(27|32)$',
+                          'dark': {'cabin_h': 1.29, 'cabin_y': 0.525, 'cabin_l': 1.55, 'cabin_rad': 2.0, 'cabin_floor': 0}},
+    'm340i_touring_g21:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5},
+                              'gloss_black': r'^(shadowline_.*|kidney_mesh_lci)$'},
+    # The BMW M240i xDrive Coupé before the 2024 update (G42; car id m240i_g42; same author as the m4_g82). gloss_black:
+    # the M High-gloss Shadow Line window surround (Object024) and pillar trim (Object023), the mirror bases (Object050),
+    # the side-skirt inserts (Object013), the front spoiler lip (Plane007) and the rear apron inlay (Plane015), all
+    # high-gloss black on the 2022-2024 car (BMW press kit 07/2021), which the satin black of unnamed trim made plastic.
+    # dark: the M4's cabin light under the headliner (a coupe cabin of the same layout, 12 mm higher), so the seats show
+    # through the side glass instead of black panes. :top (--car m240i_g42:top --views top): from above the windscreen
+    # (Object022) and rear window (Plane005) mirrored the strips as wavy pale bars; as on the m4_g82's top view they are
+    # dark glass that keeps the strips as crisp bars, the side panes (Object025) stay off the strips.
+    'm240i_g42': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(Object0(13|23|24|50)|Plane0(07|15))$',
+                  'dark': {'cabin_h': 1.23, 'cabin_y': 0.35, 'cabin_l': 1.3, 'cabin_rad': 2.0, 'cabin_floor': 0}},
+    'm240i_g42:top': {'keep_normals': True, 'authored_lamps': True, 'gloss_black': r'^(Object0(13|23|24|50)|Plane0(07|15))$',
+                      'glass_unlink': r'^(Object025|headlamp_Object035)$', 'dark_glass': r'^(Object022|Plane005)$', 'dark_glass_rough': 0.06,
+                      'dark': {'cabin_h': 1.23, 'cabin_y': 0.35, 'cabin_l': 1.3, 'cabin_rad': 2.0, 'cabin_floor': 0, 'glass_ior': 1.5}},
 }
 LAMP_MATS = {  # source part name in the mesh name: Principled inputs
     'Lights_Common': {'Base Color': (0.7, 0.7, 0.71, 1), 'Metallic': 1.0, 'Roughness': 0.15},  # reflectors
