@@ -510,6 +510,47 @@ export const BMW_MODELS: CarModel[] = [
     ],
     modelUrl: null,
     modelLengthM: 4.935
+  },
+  {
+    // Frames-only (Blendkit Royalty Free "BMW X5 M Competition", Zifir3D): no modelUrl, see the iX3 above. The model is
+    // the F95 before the 2023 facelift: Laserlight headlamps with two hexagonal running rings, a kidney grille with
+    // vertical double bars, L-shaped tail lamps, "X5 M" and "competition" on the tailgate. The download is about 1.04
+    // times life size (no stray object); the frames are scaled by the wheelbase (BMW's 2.972 m), which leaves the body
+    // 4.963 m long, 25 mm over BMW's 4.938 m (modelLengthM; public/models/CREDITS.md). The live wheels sit at the
+    // model's own 1.667 m track front and rear, centred in its arches (BMW: 1,699 mm front, 1,688 mm rear).
+    id: 'x5m_f95',
+    name: 'BMW X5 M Competition',
+    badge: 'X5 M Competition F95',
+    generation: 'F95',
+    chassisCode: 'F95 X5 M Competition',
+    // 2020-2023 car (the 2023 facelift added a 48 V mild hybrid and slimmer headlamps). BMW's technical data sheet
+    // "Specifications of the BMW X5 M, valid from 03/2021" (Competition: 460 kW / 625 hp, 750 Nm, 0-100 km/h 3.8 s,
+    // 4,938 x 2,015 x 1,748 mm, wheelbase 2,972 mm, 10.5J x 21 front and 11.5J x 22 rear) and BMW South Africa's
+    // launch release (7 July 2020: Competition only in South Africa, the same 460 kW, 750 Nm and 3.8 s, 21-inch front
+    // and 22-inch rear M wheels standard); cars.co.za quotes the same figures. BMW's documents give no engine code (S63
+    // from parts listings). Bolt pattern and centre bore are the G-series hub values from fitment guides, not in the
+    // data sheet; BMW does not publish the offsets. Paints: the launch range in BMW USA's launch release, the launch
+    // colour Marina Bay Blue first with the other two M colours (Toronto Red, Donington Grey), then Carbon Black, Black
+    // Sapphire, Alpine White, Mineral White, Manhattan, BMW Individual Tanzanite Blue II and Ametrin, and BMW
+    // Individual Frozen Black, offered for the X5 M from autumn 2020 (bmwblog, 7 September 2020). The South African
+    // configurator of the time is no longer online: Owner to confirm.
+    engine: '4.4L S63 Twin-Turbo V8',
+    power: '625 HP / 460 kW',
+    torque: '750 Nm (553 lb-ft)',
+    acceleration: '0-100 km/h in 3.8s',
+    recommendedWheelFitment: {
+      front: '21 x 10.5J',
+      rear: '22 x 11.5J',
+      pcd: '5x112',
+      cb: '66.6mm'
+    },
+    bodyStyle: 'suv',
+    paintIds: [
+      'marina_bay_blue', 'toronto_red', 'donington_grey', 'carbon_black', 'black_sapphire', 'alpine_white', 'mineral_white',
+      'manhattan', 'tanzanite_blue_ii', 'ametrin', 'frozen_black'
+    ],
+    modelUrl: null,
+    modelLengthM: 4.938
   }
 ];
 
@@ -599,6 +640,11 @@ export const BMW_PAINTS: PaintColor[] = [
   { id: 'blue_ridge_mountain', name: 'Blue Ridge Mountain', code: 'C35', hex: '#3a5563', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // X5 facelift launch colour: a dark slate blue with a green undertone
   { id: 'manhattan', name: 'Manhattan', code: 'C3D', hex: '#646d63', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // a green-grey (US dealers: "Manhattan Green")
   { id: 'ametrin', name: 'Ametrin', code: 'X1B', hex: '#4b3d43', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // BMW Individual: a dark violet-grey with a bronze flop
+  // X5 M colour (2026-11-20, supabase/migrations/20261117106900_paints_x5m_donington_grey.sql): one of the three M colours
+  // of the 2020 X5 M launch range (BMW USA's launch release: Donington Grey, Marina Bay Blue, Toronto Red). Code C28 from
+  // touch-up paint suppliers (paintscratch, Automotive Touchup), not a BMW document; hex is an estimate from photos, not
+  // colour-managed data. Owner to confirm.
+  { id: 'donington_grey', name: 'Donington Grey', code: 'C28', hex: '#62686a', type: 'Metallic', roughness: 0.45, metalness: 0.8, clearcoat: 1.0, clearcoatRoughness: 0.05 }, // M colour: a mid grey with a cool blue-green cast
 ];
 
 export const WHEEL_FINISHES: Record<FinishVariantKey, WheelFinish> = {

@@ -100,6 +100,22 @@ CAR_FIXES = {
     'x5_g05': {'keep_normals': True, 'authored_lamps': True,
                'dark': {'cabin_h': 1.45, 'cabin_y': 0.35, 'cabin_w': 1.5, 'cabin_l': 2.0, 'cabin_rad': 5.0, 'cabin_floor': 0}},
     'x5_g05:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0}},
+    # the X5 M Competition before the 2023 facelift (car id x5m_f95; same author as the x5_g05); its lamps, badges, black
+    # chrome tailpipes and mirror caps are fixed in the private copy. gloss_black: the Competition's high-gloss black kidney
+    # surround and bars, M gills, window surround and pillar trims, roof rails, roof-spoiler trim, side-intake frames and
+    # diffuser (satin black, the default for unnamed trim, read as unfinished plastic next to the paint). dark: the x5_g05's
+    # cabin light (same G05 cabin) under the headliner, so the seats show through the side glass. glass_unlink: where the
+    # fender part of each tail lamp ends at the tailgate split, its red cover glass mirrored the rim strip behind the car
+    # and the long strip as a pale inverted V across the top light bar (rear three-quarter and side views); the two cover
+    # meshes reflect only the soft room, so the split reads as the thin dark line it is on the car.
+    # :top (--car x5m_f95:top --views top): as the x5_g05's top view, the windscreen mirrored the overhead strips as a wavy
+    # pale X; blurred (glass_rough 0.3) it is one soft sheen, with the x5_g05's top-view cabin light.
+    'x5m_f95': {'keep_normals': True, 'authored_lamps': True,
+                'gloss_black': r'^(Hood_001|Plane_003|Front_Fender_00[12]|Back_Fender_00[12]|Plane_02[2345]|Roof_00[12]|Roof_006|Roof_Wing_00[12]|Fron_Bumper_004|Back_Bumper_004)$',
+                'glass_unlink': r'^backlamp_Back_Bumper_0(07|15)$',
+                'dark': {'cabin_h': 1.45, 'cabin_y': 0.35, 'cabin_w': 1.5, 'cabin_l': 2.0, 'cabin_rad': 5.0, 'cabin_floor': 0}},
+    'x5m_f95:top': {'keep_normals': True, 'authored_lamps': True, 'glass_rough': 0.3, 'dark': {'cabin_rad': 2.0, 'cabin_floor': 0},
+                    'gloss_black': r'^(Hood_001|Plane_003|Front_Fender_00[12]|Back_Fender_00[12]|Plane_02[2345]|Roof_00[12]|Roof_006|Roof_Wing_00[12]|Fron_Bumper_004|Back_Bumper_004)$'},
     # gloss_black: the roof panel, its rails, the roof spoiler and the aerial fin (BMW: "roof and roof spoiler in Black
     # high-gloss"). carbon: the 'carbon' mesh (splitter, front air intakes, mirror caps, diffuser) and the two bonnet
     # indents (Object494), which BMW leaves in exposed carbon fibre.

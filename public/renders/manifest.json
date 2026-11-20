@@ -490,5 +490,46 @@
    2.491,
    1.099
   ]
+ },
+ "x5m_f95": {
+  "framesOnly": true,
+  "views": [
+   "front",
+   "frontThreeQuarter",
+   "frontWheel",
+   "rearThreeQuarter",
+   "side",
+   "top"
+  ],
+  "wheels": {
+   "front-left": [
+    -0.8336,
+    0.3734,
+    1.5825,
+    1.0667
+   ],
+   "front-right": [
+    0.8336,
+    0.3734,
+    1.5825,
+    1.0667
+   ],
+   "rear-left": [
+    -0.8336,
+    0.3734,
+    -1.3921,
+    1.0667
+   ],
+   "rear-right": [
+    0.8336,
+    0.3734,
+    -1.3921,
+    1.0667
+   ]
+  },
+  "footprint": [
+   2.486,
+   1.109
+  ]
  }
 }
