@@ -32,8 +32,12 @@ ap.add_argument('--two-render', action='store_true',
 ap.add_argument('--seed', type=int, default=0, help='Cycles seed (for noise-floor tests)')
 ap.add_argument('--wheels', default='', help="json from export-scene.cjs / wheelpos.cjs: [[x, y, z, radius, width] x4]; default <glb minus .glb>.wheels.json")
 ap.add_argument('--threads', type=int, default=0, help='CPU threads for Cycles (0 = all)')
+ap.add_argument('--hero', default='', help="welcome still instead of frames: '<#hex>,<Metallic|Solid|Frozen>' paints the body, "
+                'mounts --rims at the wheel positions with tyres, discs and calipers, a polished floor, and renders ONE beauty '
+                'image of --views (default frontThreeQuarter) to <out>/hero.png (needs --studio dark)')
+ap.add_argument('--rims', default='', help='front[,rear] rim GLB for --hero, decoded (no meshopt), real scale, axis Y, face -Y')
 a = ap.parse_args()
-DERIVE = a.studio == 'dark' and not a.two_render
+DERIVE = a.studio == 'dark' and not a.two_render and not a.hero
 
 # Per-car fixes, keyed by car id (--car, or the output folder name as render-all.sh passes it).
 #  hide: multi-variant source models stack alternative parts (tuner kits, CS/Competition panels)
@@ -582,6 +586,76 @@ if fix.get('glass_unlink') and a.studio == 'dark':
     for o in sc.objects:
         if o.type == 'LIGHT' and re.match(gl, o.name): o.light_linking.receiver_collection = rc
 
+
+if a.hero:
+    # Welcome still: everything the frames leave to the live engine is rendered here instead, as the first
+    # four cars' Cycles stills were: real tyres, the shop's rim, a disc and caliper, a polished floor, the paint itself.
+    if a.studio != 'dark' or not WHEELS: sys.exit('--hero needs --studio dark and the wheel positions (.wheels.json)')
+    rim_files = (a.rims.split(',') + [''])[:2]
+    if not rim_files[0]: sys.exit('--hero needs --rims <front.glb>[,<rear.glb>]')
+    for o in [o for o in sc.objects if o.type == 'MESH' and o.data.materials and o.data.materials[0].name == 'rubber']:
+        bpy.data.objects.remove(o, do_unlink=True)   # the stand-ins; real tyres below
+    def matp(name, col, met, rough, coat=0.0):
+        m = bpy.data.materials.new(name); m.use_nodes = True; b = m.node_tree.nodes['Principled BSDF']
+        b.inputs['Base Color'].default_value = (*col, 1); b.inputs['Metallic'].default_value = met
+        b.inputs['Roughness'].default_value = rough; b.inputs['Coat Weight'].default_value = coat
+        return m
+    rubber = matp('hero_rubber', (0.022, 0.022, 0.023), 0.0, 0.62)
+    disc_m = matp('hero_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
+    cal_m = matp('hero_caliper', (0.55, 0.02, 0.02), 0.0, 0.3, 1.0)
+    def load_rim(path):
+        before = set(bpy.data.objects)
+        try: bpy.ops.import_scene.gltf(filepath=path)
+        except RuntimeError as e: sys.exit(f'--rims {path}: {e}')
+        parts = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+        if not parts: sys.exit(f'--rims {path}: no meshes')
+        for o in parts:   # bake transforms (the importer's Y-up root included) so the parts join and place as one object
+            mw = o.matrix_world.copy(); o.parent = None; o.data.transform(mw); o.matrix_world = mathutils.Matrix()
+        bpy.ops.object.select_all(action='DESELECT')
+        for o in parts: o.select_set(True)
+        bpy.context.view_layer.objects.active = parts[0]; bpy.ops.object.join()
+        rim = bpy.context.view_layer.objects.active
+        rad = max(max(abs(v.co.x), abs(v.co.z)) for v in rim.data.vertices)
+        return rim, rad
+    rims = [load_rim(f) for f in rim_files if f]
+    for i, (x, y, z, r, wd) in enumerate(WHEELS):
+        src, rad = rims[min(i // 2, len(rims) - 1)]   # wheels.json lists the front pair first
+        sgn = 1 if x > 0 else -1
+        ro = r * 0.78                                  # rim outer radius: a 20-inch rim on the car's own tyre
+        rim = src.copy(); rim.data = src.data; sc.collection.objects.link(rim)
+        rim.rotation_mode = 'XYZ'   # glTF imports use quaternions, which would ignore rotation_euler
+        rim.scale = (ro / rad,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
+        rim.location = (x, y, z)
+        ri = ro * 0.97; bpy.ops.mesh.primitive_torus_add(major_radius=(r + ri) / 2, minor_radius=(r - ri) / 2,
+                                                         major_segments=96, minor_segments=24, location=(x, y, z), rotation=(0, math.pi / 2, 0))
+        ty = bpy.context.object; ty.scale = (1, 1, wd / (r - ri)); ty.data.materials.append(rubber)
+        for pl in ty.data.polygons: pl.use_smooth = True
+        bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=ri * 0.78, depth=0.03, location=(x - sgn * 0.07, y, z), rotation=(0, math.pi / 2, 0))
+        bpy.context.object.data.materials.append(disc_m)
+        cy_off = 0.62 * ri * 0.78; front = i < 2
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(x - sgn * 0.045, y + (cy_off if front else -cy_off) * 0.7, z + cy_off * 0.7))
+        cal = bpy.context.object; cal.scale = (0.07, 0.15, 0.09); cal.rotation_euler = (math.radians(45 if front else -45), 0, 0)
+        cal.data.materials.append(cal_m)
+    for o in (src for src, _ in rims): bpy.data.objects.remove(o, do_unlink=True)
+    floor.is_shadow_catcher = False   # a real floor: the light pool and the car's reflection are in the picture
+    fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
+    fb.inputs['Base Color'].default_value = (0.26, 0.26, 0.27, 1); fb.inputs['Roughness'].default_value = 0.3
+    sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0   # a black void, as the reference stills
+    HERO_KEY = float(os.environ.get('HERO_KEY', '1500'))   # the key light's watts: it throws the pool on the floor
+    cam0 = cams.get((a.views or 'frontThreeQuarter').split(',')[0])
+    if cam0:
+        cpos = cam0.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
+        kpos = tgt + (cpos - tgt) * 0.12 + mathutils.Vector((0, 0, H + 2.2))   # over the car: the pool falls off towards the camera
+        key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, HERO_KEY)
+        key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
+        cam0.data.lens *= float(os.environ.get('HERO_ZOOM', '1.3'))
+    hx, kind = (a.hero.split(',') + ['Metallic'])[:2]
+    srgb = [int(hx.strip().lstrip('#')[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb]
+    pb.inputs['Base Color'].default_value = (*lin, 1)
+    met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (0.75, 0.38, 1.0))
+    pb.inputs['Metallic'].default_value = met; pb.inputs['Roughness'].default_value = rough; pb.inputs['Coat Weight'].default_value = coat
+
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'
 if a.threads: sc.render.threads_mode = 'FIXED'; sc.render.threads = a.threads
 sc.cycles.seed = a.seed; sc.cycles.samples = a.samples; sc.cycles.use_denoising = True
@@ -651,6 +725,17 @@ if DERIVE:
     SETS = {'gloss': (0.30, 1.0, 0.0), 'matte': (0.55, 0.0, 0.0), 'flake': (FLAKE_ROUGH, 1.0, 1.0)}
     fo = setup_derive()
 views = a.views.split(',') if a.views else list(cams)
+if a.hero:
+    v = views[0] if a.views else 'frontThreeQuarter'
+    if v not in cams: sys.exit(f'--hero: no camera CAM_{v} in {a.glb}')
+    sc.camera = cams[v]; sc.render.film_transparent = False
+    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.8'))
+    sc.render.resolution_x = a.width; sc.render.resolution_y = round(a.width * 9 / 16)
+    sc.render.image_settings.color_mode = 'RGB'
+    os.makedirs(a.out, exist_ok=True); sc.render.filepath = os.path.join(a.out, 'hero.png')
+    bpy.ops.render.render(write_still=True)
+    if not os.path.exists(sc.render.filepath): sys.exit(f'--hero: no file written at {sc.render.filepath}')
+    print('rendered', sc.render.filepath, flush=True); sys.exit(0)
 base_energy = {o.name: o.data.energy for o in sc.objects if o.type == 'LIGHT'}
 for v in views:
     sc.camera = cams[v]
