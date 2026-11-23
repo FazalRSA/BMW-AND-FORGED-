@@ -261,7 +261,13 @@ for kv in filter(None, a.dark_set.split(',')):
 # Tyre stand-ins (--studio dark): where the live engine puts the wheels. The GLB has none (the engine draws them), so the
 # stand-ins only cast the contact shadow, darken the arches and show in the paint's reflections.
 _wj = a.wheels or re.sub(r'\.glb$', '', a.glb) + '.wheels.json'
-WHEELS = json.load(open(_wj)) if os.path.exists(_wj) else fix.get('wheels')
+if os.path.exists(_wj):
+    try:
+        with open(_wj) as _f: WHEELS = json.load(_f)
+    except (OSError, ValueError) as e:
+        sys.exit(f'{_wj}: {e}')
+else:
+    WHEELS = fix.get('wheels')
 if a.studio == 'dark' and not WHEELS: print('WARNING: no wheel positions (%s): no contact shadows or dark arches. Run export-scene.cjs or wheelpos.cjs.' % _wj)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -682,6 +688,11 @@ if a.hero:
     met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (0.75, 0.38, 1.0))
     pb.inputs['Metallic'].default_value = met; pb.inputs['Roughness'].default_value = rough; pb.inputs['Coat Weight'].default_value = coat
 
+def ensure_dir(path):
+    """Creates an output folder, or stops naming it (a full disk or a read-only mount is not a traceback)."""
+    try: os.makedirs(path, exist_ok=True)
+    except OSError as e: sys.exit(f'cannot create the output folder {path}: {e}')
+
 def srgb_lin(hx, what):
     hx = hx.strip().lstrip('#')
     if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f'{what}: {hx!r} is not a #rrggbb colour')
@@ -693,7 +704,7 @@ if a.wheel_layer:
     # shadows, reflections) and hide what they cover (the far wheels behind the body), but render transparent.
     if a.studio != 'dark' or not WHEELS: sys.exit('--wheel-layer needs --studio dark and the wheel positions (.wheels.json)')
     try:
-        LAYERS = json.load(open(a.wheel_layer))
+        with open(a.wheel_layer) as f: LAYERS = json.load(f)
         for e in LAYERS: e['name'], e['rims'][0], e['finish'][3], float(e['inches'])
     except (OSError, ValueError, KeyError, IndexError, TypeError) as e:
         sys.exit(f'--wheel-layer {a.wheel_layer}: {e!r} (expected a list of {{name, rims, finish, inches}})')
@@ -928,7 +939,7 @@ if a.plate:
     sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
     for v in views:
         if v not in cams: sys.exit(f'--plate: no camera CAM_{v} in {a.glb}')
-        sc.camera = cams[v]; os.makedirs(os.path.join(a.out, v), exist_ok=True)
+        sc.camera = cams[v]; ensure_dir(os.path.join(a.out, v))
         sc.render.filepath = os.path.join(a.out, v, 'plate.png'); bpy.ops.render.render(write_still=True)
         if not os.path.exists(sc.render.filepath): sys.exit(f'--plate: no file written at {sc.render.filepath}')
         print('rendered', sc.render.filepath, flush=True)
@@ -943,8 +954,7 @@ if a.wheel_layer:
         made, fin = build_wheels(e)
         for v in todo:
             sc.camera = cams[v]; d = os.path.join(a.out, v, 'wheels')
-            try: os.makedirs(d, exist_ok=True)
-            except OSError as e: sys.exit(f'--wheel-layer: cannot create {d}: {e}')
+            ensure_dir(d)
             place_fill(cams[v])
             box = wheel_box(cams[v])
             if not box: print('no wheels in view', v, flush=True); continue
@@ -971,7 +981,7 @@ if a.hero:
     sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
     sc.render.resolution_x = a.width; sc.render.resolution_y = round(a.width * 9 / 16)
     sc.render.image_settings.color_mode = 'RGB'
-    os.makedirs(a.out, exist_ok=True); sc.render.filepath = os.path.join(a.out, 'hero.png')
+    ensure_dir(a.out); sc.render.filepath = os.path.join(a.out, 'hero.png')
     bpy.ops.render.render(write_still=True)
     if not os.path.exists(sc.render.filepath): sys.exit(f'--hero: no file written at {sc.render.filepath}')
     print('rendered', sc.render.filepath, flush=True); sys.exit(0)
@@ -982,7 +992,7 @@ for v in views:
         if o.type == 'LIGHT':
             g = next((f for k, f in fix.get('view_gain', {}).get(v, {}).items() if o.name.startswith(k)), 1.0)
             o.data.energy = base_energy[o.name] * g
-    os.makedirs(os.path.join(a.out, v), exist_ok=True)
+    ensure_dir(os.path.join(a.out, v))
     if DERIVE:
         for sname, (rough, coat, metal) in SETS.items():
             if a.passes and not any(x.startswith(sname) for x in a.passes.split(',')): continue
