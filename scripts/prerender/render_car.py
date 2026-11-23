@@ -749,6 +749,8 @@ if a.wheel_layer:
         for o in [o for o in bpy.data.objects if o not in before and o != rim]: bpy.data.objects.remove(o, do_unlink=True)
         sc.collection.objects.unlink(rim) if rim.name in sc.collection.objects else None
         for c in list(rim.users_collection): c.objects.unlink(rim)
+        if not rim.data.materials:   # the website's one-mesh rims carry no material: give the slot the finish can replace
+            rim.data.materials.append(bpy.data.materials.new('rim_slot'))
         vs = rim.data.vertices
         rad = max(max(abs(v.co.x), abs(v.co.z)) for v in vs); ymin = min(v.co.y for v in vs)
         rim_cache[path] = (rim, rad, ymin)
