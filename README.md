@@ -117,10 +117,16 @@ project is not linked to this repo, so a merge alone deploys nothing (`docs/HAND
 
 ## The admin panel (`/admin`)
 
+**For sign-in steps (including first-time/forgot-password) and a ready-to-run demo script, see
+[`docs/ADMIN_AND_DEMO.md`](docs/ADMIN_AND_DEMO.md).**
+
 Sign in with an email that's in the `admin_users` table (Supabase enforces this with row-level
 security, not just the UI — see `supabase/migrations/20260922000000_catalog_schema.sql`). There are
-exactly **four tabs: Cars, Wheels, Finishes, Paints.** (Calipers exist in the schema but are no
-longer a customer-facing option and have no admin tab — don't look for one.)
+**seven tabs**: the four catalogue tabs — **Cars, Wheels, Finishes, Paints** — plus **Enquiries**
+(every lead, assign to a dealership, reply, export), **Dealers** (add/switch dealerships and who
+may sign in at `/dealer`) and **Sales** (sales agents, recorded sales, dealership commission).
+(Calipers exist in the schema but are no longer a customer-facing option and have no admin tab —
+don't look for one.)
 
 Every tab works the same way: pick a row to edit it, or **New** to start one, fill in the fields,
 **Save**. **Delete** asks for confirmation — untick "Visible" instead if you just want to hide
