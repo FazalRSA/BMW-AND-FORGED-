@@ -693,7 +693,7 @@ if a.wheel_layer:
     # shadows, reflections) and hide what they cover (the far wheels behind the body), but render transparent.
     if a.studio != 'dark' or not WHEELS: sys.exit('--wheel-layer needs --studio dark and the wheel positions (.wheels.json)')
     try:
-        LAYERS = json.load(open(a.wheel_layer))
+        with open(a.wheel_layer) as f: LAYERS = json.load(f)
         for e in LAYERS: e['name'], e['rims'][0], e['finish'][3], float(e['inches'])
     except (OSError, ValueError, KeyError, IndexError, TypeError) as e:
         sys.exit(f'--wheel-layer {a.wheel_layer}: {e!r} (expected a list of {{name, rims, finish, inches}})')
