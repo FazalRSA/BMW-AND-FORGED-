@@ -200,6 +200,17 @@ check in the browser's network tab that no `.glb` is requested for it on the wel
   accuracy to the real car and the data) read the frames, the app screenshots and the paint proof; a car with a
   blocking finding is fixed and reviewed again, and only then committed with its frames, hero images and migration.
 
+### What the X5 M Competition, M340i Touring and M240i needed (2026-11-20)
+
+- **Fix at the cause, then measure**: grille inserts standing proud of the intake frame (saw-teeth past the nose in the
+  wheel view), tailpipe finishers hanging below the apron or past it in profile, satin trim (Cerium Grey) and chrome
+  that read black or plastic, outer tail-lamp lenses that mirror the strips (`glass_unlink`), near-black glass (the
+  `dark` cabin light). Each was fixed in the private model or `CAR_FIXES` and confirmed by a second review.
+- **`render_depth.py --hide`** matches a view rendered with `render_car.py --hide` (the front plate in the wheel view).
+- **Paints follow the model year shown**: a missing launch colour goes into `BMW_PAINTS` with its own paints migration
+  that sorts before the car's (Donington Grey for the X5 M, Melbourne Red for the M240i).
+- The whole process, the review loop and a table of defects and fixes: the `forgedsa-frames-only-car` skill.
+
 ## The configurator screen is the stage look
 
 Whatever is drawn live (a car or view without a Blender frame, and the turntable of any car) sits in the

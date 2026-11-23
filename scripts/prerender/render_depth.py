@@ -10,7 +10,7 @@ CarConfiguratorEngine.FRAMES_DEPTH_RANGE.
 
   blender -b --python scripts/prerender/render_depth.py -- scene.glb public/renders/<carId> [--width 1440] [--views a,b]
 """
-import argparse, os, sys
+import argparse, os, re, sys
 import bpy
 import numpy as np
 
@@ -22,11 +22,23 @@ ap = argparse.ArgumentParser()
 ap.add_argument('glb'); ap.add_argument('out')
 ap.add_argument('--width', type=int, default=1440, help='match the frames (render_car.py --width)')
 ap.add_argument('--views', default='')
+ap.add_argument('--hide', default='', help="regex of object names to leave out, as render_car.py --hide, so a view "
+                "rendered with parts hidden (a front plate seen edge-on) gets a depth that matches its frames")
 a = ap.parse_args(argv)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=a.glb)
 sc = bpy.context.scene
+if a.hide:
+    try:
+        hide_re = re.compile(a.hide)
+    except re.error as e:
+        sys.exit(f'--hide {a.hide!r} is not a valid regular expression: {e}')
+    gone = [o for o in sc.objects if o.type == 'MESH' and hide_re.search(o.name)]
+    if not gone:   # a depth that silently keeps the part would no longer match frames rendered without it
+        sys.exit(f'--hide {a.hide!r} matches no mesh in {a.glb}: check the name against the frames render')
+    for o in gone: bpy.data.objects.remove(o, do_unlink=True)
+    print(f'hidden from depth: {len(gone)} objects matching {a.hide!r}')
 cams = {o.name.split('CAM_', 1)[1].split('.')[0]: o for o in sc.objects if o.type == 'CAMERA' and 'CAM_' in o.name}
 if not cams:
     sys.exit(f'no CAM_<view> cameras in {a.glb}: export it with export-scene.cjs')
