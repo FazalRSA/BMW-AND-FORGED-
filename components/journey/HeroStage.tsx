@@ -7,6 +7,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { cx } from './ui';
 
+/**
+ * Stamp on every hero image URL. The stills keep their names when re-rendered and /hero/ is cached for a day plus a week of
+ * stale-while-revalidate, so bump this whenever public/hero/* changes (phones kept showing the old M3 Touring still).
+ */
+export const HERO_VERSION = '20261123b';
+export const heroUrl = (carId: string, width: 960 | 1600) => `/hero/${carId}-${width}.webp?v=${HERO_VERSION}`;
+
 /** One car on the welcome stage: a Cycles still rendered in the reference studio (public/hero/<carId>-<w>.webp). */
 export interface HeroSlide {
   carId: string;
@@ -129,8 +136,8 @@ export const HeroStage: React.FC<{ slides: HeroSlide[]; index: number; prev: num
       return (
         <img
           key={s.carId}
-          src={`/hero/${s.carId}-1600.webp`}
-          srcSet={`/hero/${s.carId}-960.webp 960w, /hero/${s.carId}-1600.webp 1600w`}
+          src={heroUrl(s.carId, 1600)}
+          srcSet={`${heroUrl(s.carId, 960)} 960w, ${heroUrl(s.carId, 1600)} 1600w`}
           sizes={SIZES}
           alt={active ? `${s.name} in ${s.paint}` : ''}
           aria-hidden={!active}
