@@ -33,12 +33,14 @@ export interface Profile {
   brakeSystem: BrakeSystem | null;
   preferredFinishId: string | null;
   marketingOptIn: boolean;
+  /** When the marketing choice was last changed (set by the database, the consent record). */
+  marketingOptInAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 /** The editable part of a profile (the email comes from the Google account and is not the customer's to change: the column grant excludes it). */
-export type ProfilePatch = Partial<Omit<Profile, 'id' | 'email' | 'createdAt' | 'updatedAt'>>;
+export type ProfilePatch = Partial<Omit<Profile, 'id' | 'email' | 'createdAt' | 'updatedAt' | 'marketingOptInAt'>>;
 
 /** A build in the garage. */
 export interface GarageBuild {
@@ -237,6 +239,7 @@ type ProfileRow = {
   brake_system: string | null;
   preferred_finish_id: string | null;
   marketing_opt_in: boolean | null;
+  marketing_opt_in_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -254,6 +257,7 @@ const fromRow = (r: ProfileRow): Profile => ({
   brakeSystem: (BRAKE_SYSTEMS as readonly string[]).includes(r.brake_system ?? '') ? (r.brake_system as BrakeSystem) : null,
   preferredFinishId: r.preferred_finish_id,
   marketingOptIn: !!r.marketing_opt_in,
+  marketingOptInAt: r.marketing_opt_in_at ?? null,
   createdAt: r.created_at,
   updatedAt: r.updated_at
 });
@@ -384,4 +388,30 @@ export async function deleteConfiguration(code: string): Promise<void> {
   const { data, error } = await supabase.from('saved_configurations').delete().eq('code', code).select('code');
   if (error) throw new Error(error.message);
   if (!data?.length) throw new BuildMissingError();
+}
+
+// ----------------------------------------------------
+// A customer's own data (POPIA): access and deletion
+// ----------------------------------------------------
+
+/**
+ * Everything stored about the signed-in customer as one JSON document (the account, profile, saved builds and the
+ * enquiries sent with it), through `export_my_data` (supabase/migrations/20261124090000_shared_accounts_and_mailer.sql).
+ */
+export async function exportMyData(): Promise<Record<string, unknown>> {
+  const { data, error } = await supabase.rpc('export_my_data');
+  if (error) throw new Error(error.message);
+  return (data ?? {}) as Record<string, unknown>;
+}
+
+/**
+ * Deletes the signed-in customer's account (the login, profile and saved builds) through `delete_my_account`; enquiries
+ * already sent stay with the business as sales records. The session is dropped here at once: the access token would
+ * otherwise stay valid until it expires. The same account is the website's, so the website signs out the next time it checks.
+ */
+export async function deleteMyAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw new Error(error.message);
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+  publish(null);
 }
