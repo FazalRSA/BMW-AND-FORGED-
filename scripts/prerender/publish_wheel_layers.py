@@ -75,7 +75,11 @@ def main():
                     continue   # a render a restart cut short
                 name = os.path.basename(png)[:-4]
                 webp = os.path.join(out_dir, name + '.webp')
-                if not os.path.exists(webp) or os.path.getmtime(webp) < os.path.getmtime(png):
+                try:
+                    stale = not os.path.exists(webp) or os.path.getmtime(webp) < os.path.getmtime(png)
+                except OSError:
+                    continue   # the render was replaced or removed while this ran: the next publish picks it up
+                if stale:
                     try:
                         im = np.asarray(Image.open(png).convert('RGBA'))
                     except OSError as e:
