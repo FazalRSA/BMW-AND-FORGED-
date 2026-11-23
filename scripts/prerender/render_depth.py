@@ -30,8 +30,13 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=a.glb)
 sc = bpy.context.scene
 if a.hide:
-    hide_re = re.compile(a.hide)
+    try:
+        hide_re = re.compile(a.hide)
+    except re.error as e:
+        sys.exit(f'--hide {a.hide!r} is not a valid regular expression: {e}')
     gone = [o for o in sc.objects if o.type == 'MESH' and hide_re.search(o.name)]
+    if not gone:   # a depth that silently keeps the part would no longer match frames rendered without it
+        sys.exit(f'--hide {a.hide!r} matches no mesh in {a.glb}: check the name against the frames render')
     for o in gone: bpy.data.objects.remove(o, do_unlink=True)
     print(f'hidden from depth: {len(gone)} objects matching {a.hide!r}')
 cams = {o.name.split('CAM_', 1)[1].split('.')[0]: o for o in sc.objects if o.type == 'CAMERA' and 'CAM_' in o.name}
