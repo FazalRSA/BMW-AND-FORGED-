@@ -896,10 +896,10 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     id: 'forged_fsa002',
     code: 'FSA002',
     name: 'FSA002',
-    subtitle: 'Fifteen-spoke monoblock',
+    subtitle: 'Forked-spoke monoblock',
     style: 'Monoblock Forged',
     spokeType: 'multi',
-    spokeCount: 15,
+    spokeCount: 10,
     weightFrontKg: 0,
     weightRearKg: 0,
     weightSavingsKg: 0,
@@ -907,13 +907,13 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     pricePerSet: 4120.88,
     priceBySize: { '20"': 4120.88, '21"': 4120.88 },
     priceByFinish: { polished_face: 4670.33 },
-    description: 'Fifteen-spoke forged monoblock in Gold, HyperBlack or PolishedFace. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
-    highlights: ['Forged monoblock', 'Gold, HyperBlack or PolishedFace', 'PCD 5×112 · ET8/15 · CB 66.6'],
-    availableVariants: ['gold', 'hyper_black', 'polished_face'],
-    defaultVariant: 'gold',
+    description: 'Forked-spoke forged monoblock in HyperBlack or PolishedFace. In stock for the M3 Competition Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
+    highlights: ['Forged monoblock', 'HyperBlack or PolishedFace', 'PCD 5×112 · ET8/15 · CB 66.6'],
+    availableVariants: ['hyper_black', 'polished_face'],
+    defaultVariant: 'hyper_black',
     imageUrl: '/rim-images/forged_fsa002.webp',
     imageExtrude: false,
-    modelUrl: '/models/rims/forged_fsa002.glb',
+    modelUrl: '/models/rims/forged_fsa002-v2.glb',
     modelFlip: false
   },
   {
@@ -930,13 +930,13 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     standardSizes: ['20"', '21"'],
     pricePerSet: 4120.88,
     priceBySize: { '20"': 4120.88, '21"': 4120.88 },
-    description: 'Fifteen straight, evenly spaced spokes from a five-lug hub to a slim outer lip, in Silver or HyperBlack. In stock for the M3 Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
-    highlights: ['Fifteen straight spokes', 'Silver or HyperBlack', 'PCD 5×112 · ET8/15 · CB 66.6'],
-    availableVariants: ['silver', 'hyper_black'],
+    description: 'Fifteen straight, evenly spaced spokes from a five-lug hub to a slim outer lip, in Gold, Silver or HyperBlack. In stock for the M3 Sedan and M3 Competition Sedan (G80): PCD 5×112 · ET8/15 · CB 66.6.',
+    highlights: ['Fifteen straight spokes', 'Gold, Silver or HyperBlack', 'PCD 5×112 · ET8/15 · CB 66.6'],
+    availableVariants: ['gold', 'silver', 'hyper_black'],
     defaultVariant: 'silver',
     imageUrl: '/rim-images/forged_fsa_03.webp', // cut-out of the website's FSA003 photo (thumbnail only; the car uses the GLB)
     imageExtrude: false,
-    modelUrl: '/models/rims/forged_fsa_03.glb',
+    modelUrl: '/models/rims/forged_fsa_03-v2.glb',
     modelFlip: false
   },
   {
@@ -959,7 +959,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     defaultVariant: 'silver',
     imageUrl: '/rim-images/forged_fsa004.webp',
     imageExtrude: false,
-    modelUrl: '/models/rims/forged_fsa004.glb',
+    modelUrl: '/models/rims/forged_fsa004-v2.glb',
     modelFlip: false
   },
   {
@@ -983,7 +983,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     defaultVariant: 'silver',
     imageUrl: '/rim-images/sixnine_ff1.webp',
     imageExtrude: false,
-    modelUrl: '/models/rims/sixnine_ff1.glb',
+    modelUrl: '/models/rims/sixnine_ff1-v2.glb',
     modelFlip: false
   },
   {
@@ -1007,7 +1007,7 @@ export const WHEEL_DESIGNS: WheelDesign[] = [
     defaultVariant: 'pure_bronze',
     imageUrl: '/rim-images/sixnine_ff3.webp',
     imageExtrude: false,
-    modelUrl: '/models/rims/sixnine_ff3.glb',
+    modelUrl: '/models/rims/sixnine_ff3-v2.glb',
     modelFlip: false
   }
 ];

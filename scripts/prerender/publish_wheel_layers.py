@@ -6,14 +6,14 @@ through the same curve here, once, so they sit on the body with the same contras
 alpha, cropped to the wheels:
 
   public/renders/<car>/<view>/wheels/<design>__<finish>__<inches>.webp
-  public/renders/wheels.json   {"names": [...], "cars": {car: {view: [[x0, y0, x1, y1], [name index, ...]]}}}
+  public/renders/wheels.json   {"v": stamp, "names": [...], "cars": {car: {view: [[x0, y0, x1, y1], [name index, ...]]}}}
 
 The box is where the crop sits in the frame, as fractions from the top left. A car, view or combination missing from
 the index draws the live WebGL wheels instead, so a batch can be published while it is still running.
 
   python3 scripts/prerender/publish_wheel_layers.py .scratch/wl/out [public/renders]
 """
-import glob, json, os, sys
+import glob, hashlib, json, os, sys
 
 import numpy as np
 from PIL import Image
@@ -93,8 +93,23 @@ def main():
                 if name not in names:
                     names.append(name)
                 idx.append(names.index(name))
+            # a layer file with no render behind it is stale (a size or design that was dropped or is being re-rendered): remove it
+            keep = {os.path.basename(g)[:-4] + '.webp' for g in glob.glob(os.path.join(d, '*.png')) if not g.endswith('.tmp.png')}
+            for old_webp in glob.glob(os.path.join(out_dir, '*.webp')):
+                if os.path.basename(old_webp) not in keep:
+                    try:
+                        os.remove(old_webp)
+                    except OSError as e:
+                        sys.exit(f'{old_webp}: {e}')
             if idx:
                 cars.setdefault(car, {})[view] = [box, sorted(idx)]
+    # v: changes whenever a layer file changes; the app adds it to each layer URL, so a re-rendered layer is never served
+    # from a stale cache (the files keep their names)
+    try:
+        webps = sorted(glob.glob(os.path.join(dst, '*', '*', 'wheels', '*.webp')))
+        stamp = hashlib.sha1(''.join(f'{w}:{os.path.getmtime(w)}' for w in webps).encode()).hexdigest()[:10]
+    except OSError as e:
+        sys.exit(f'cannot read the layer files in {dst}: {e}')
     try:
         os.makedirs(dst, exist_ok=True)
     except OSError as e:
@@ -102,7 +117,7 @@ def main():
     index = os.path.join(dst, 'wheels.json')
     try:
         with open(index, 'w') as f:
-            json.dump({'names': names, 'cars': cars}, f, separators=(',', ':'))
+            json.dump({'v': stamp, 'names': names, 'cars': cars}, f, separators=(',', ':'))
     except OSError as e:
         sys.exit(f'{index}: {e}')
     n = sum(len(v[1]) for c in cars.values() for v in c.values())

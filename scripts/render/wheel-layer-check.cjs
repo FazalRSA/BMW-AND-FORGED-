@@ -7,7 +7,8 @@
  *   bunx vite --host 127.0.0.1 --port 5173            # dev server, in another shell
  *   node scripts/render/wheel-layer-check.cjs <outDir> <carId> "<slide name>" "<wheel code>" "<finish name>"
  *
- * Supabase writes are answered locally (never a real lead). SwiftShader: a few minutes.
+ * Supabase writes are answered locally (never a real lead). WHEEL_ROWS=<json file> merges partial wheels rows into the
+ * catalogue read (see below). SwiftShader: a few minutes.
  */
 const { chromium } = require(process.env.PLAYWRIGHT || '/opt/node22/lib/node_modules/playwright');
 const fs = require('fs');
@@ -27,6 +28,26 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const problems = [];
   p.on('pageerror', (e) => problems.push('pageerror ' + e.message));
   await p.route(/supabase\.co\/(rest|functions)\//, (r) => (['GET', 'HEAD'].includes(r.request().method()) ? r.continue() : r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })));
+  // (registered after the generic route above: Playwright runs the newest matching route first)
+  // WHEEL_ROWS=<json file>: partial wheels rows (an array with ids) merged into the live catalogue's answer, in this browser
+  // only, to check a catalogue change (a new rim file, changed finishes) before its migration is applied. Nothing is written.
+  const rowsFile = process.env.WHEEL_ROWS;
+  if (rowsFile) {
+    let extra;
+    try { extra = JSON.parse(fs.readFileSync(rowsFile, 'utf8')); } catch (e) { console.error(`WHEEL_ROWS=${rowsFile}: ${e.message}`); process.exit(2); }
+    if (!Array.isArray(extra) || extra.some((x) => !x || typeof x.id !== 'string')) { console.error(`WHEEL_ROWS=${rowsFile}: expected an array of rows with an id`); process.exit(2); }
+    await p.route(/supabase\.co\/rest\/v1\/wheels\?/, async (r) => {
+      try {
+        const res = await r.fetch();
+        const rows = await res.json();
+        if (Array.isArray(rows)) for (const x of extra) { const row = rows.find((y) => y.id === x.id); if (row) Object.assign(row, x); }
+        await r.fulfill({ response: res, json: rows });
+      } catch (e) {
+        problems.push(`could not merge WHEEL_ROWS into the catalogue read: ${e.message}`);
+        await r.continue().catch(() => {});
+      }
+    });
+  }
   const tag = `${CAR}-${WHEEL}-${FINISH}`.replace(/[^A-Za-z0-9_-]+/g, '_');
   const shot = (name) => p.screenshot({ path: path.join(OUT, `${tag}-${name}.png`), timeout: 120000 });
   const log = (s) => console.log(`${CAR}: ${s}`);

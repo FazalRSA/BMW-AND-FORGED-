@@ -24,7 +24,7 @@ import {
 import { forgetLocalConfiguration } from '../../services/journeyService';
 import { Alert, Button, Divider, Eyebrow, Modal, Status, cx } from './ui';
 import { shortModelName } from './carNames';
-import { HERO_SLIDES } from './HeroStage';
+import { HERO_SLIDES, heroUrl } from './HeroStage';
 
 export interface AccountSheetProps {
   open: boolean;
@@ -118,7 +118,7 @@ const StageStill: React.FC<{ carId?: string }> = ({ carId }) => {
       }}
     >
       <img
-        src={`/hero/${slide.carId}-960.webp`}
+        src={heroUrl(slide.carId, 960)}
         alt=""
         draggable={false}
         decoding="async"
