@@ -942,7 +942,9 @@ if a.wheel_layer:
         if not todo: continue
         made, fin = build_wheels(e)
         for v in todo:
-            sc.camera = cams[v]; d = os.path.join(a.out, v, 'wheels'); os.makedirs(d, exist_ok=True)
+            sc.camera = cams[v]; d = os.path.join(a.out, v, 'wheels')
+            try: os.makedirs(d, exist_ok=True)
+            except OSError as e: sys.exit(f'--wheel-layer: cannot create {d}: {e}')
             place_fill(cams[v])
             box = wheel_box(cams[v])
             if not box: print('no wheels in view', v, flush=True); continue

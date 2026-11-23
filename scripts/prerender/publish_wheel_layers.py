@@ -49,7 +49,11 @@ def main():
     if not os.path.isdir(src):
         sys.exit(f'{src}: no such folder (render_car.py --wheel-layer output)')
     names, cars, written = [], {}, 0
-    for car in sorted(os.listdir(src)):
+    try:
+        car_dirs = sorted(os.listdir(src))
+    except OSError as e:
+        sys.exit(f'{src}: {e}')
+    for car in car_dirs:
         for view in VIEWS:
             d = os.path.join(src, car, view, 'wheels')
             box_path = os.path.join(d, 'box.json')
@@ -61,7 +65,10 @@ def main():
             except (OSError, ValueError) as e:
                 sys.exit(f'{box_path}: {e}')
             out_dir = os.path.join(dst, car, view, 'wheels')
-            os.makedirs(out_dir, exist_ok=True)
+            try:
+                os.makedirs(out_dir, exist_ok=True)
+            except OSError as e:
+                sys.exit(f'{out_dir}: {e}')
             idx = []
             for png in sorted(glob.glob(os.path.join(d, '*.png'))):
                 if png.endswith('.tmp.png'):
@@ -84,7 +91,10 @@ def main():
                 idx.append(names.index(name))
             if idx:
                 cars.setdefault(car, {})[view] = [box, sorted(idx)]
-    os.makedirs(dst, exist_ok=True)
+    try:
+        os.makedirs(dst, exist_ok=True)
+    except OSError as e:
+        sys.exit(f'{dst}: {e}')
     index = os.path.join(dst, 'wheels.json')
     try:
         with open(index, 'w') as f:
