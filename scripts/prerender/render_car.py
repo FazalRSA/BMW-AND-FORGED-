@@ -641,7 +641,7 @@ if a.hero:
     fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
     fb.inputs['Base Color'].default_value = (0.26, 0.26, 0.27, 1); fb.inputs['Roughness'].default_value = 0.3
     sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0   # a black void, as the reference stills
-    HERO_KEY = float(os.environ.get('HERO_KEY', '1500'))   # the key light's watts: it throws the pool on the floor
+    HERO_KEY = float(os.environ.get('HERO_KEY', '450'))   # the key light's watts: it throws the pool on the floor
     cam0 = cams.get((a.views or 'frontThreeQuarter').split(',')[0])
     if cam0:
         cpos = cam0.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
@@ -650,7 +650,9 @@ if a.hero:
         key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
         cam0.data.lens *= float(os.environ.get('HERO_ZOOM', '1.3'))
     hx, kind = (a.hero.split(',') + ['Metallic'])[:2]
-    srgb = [int(hx.strip().lstrip('#')[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    hx = hx.strip().lstrip('#')
+    if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f"--hero {a.hero!r}: expected '<#rrggbb>,<Metallic|Solid|Frozen>'")
+    srgb = [int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4)]
     lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb]
     pb.inputs['Base Color'].default_value = (*lin, 1)
     met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (0.75, 0.38, 1.0))
@@ -729,7 +731,7 @@ if a.hero:
     v = views[0] if a.views else 'frontThreeQuarter'
     if v not in cams: sys.exit(f'--hero: no camera CAM_{v} in {a.glb}')
     sc.camera = cams[v]; sc.render.film_transparent = False
-    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.8'))
+    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
     sc.render.resolution_x = a.width; sc.render.resolution_y = round(a.width * 9 / 16)
     sc.render.image_settings.color_mode = 'RGB'
     os.makedirs(a.out, exist_ok=True); sc.render.filepath = os.path.join(a.out, 'hero.png')
