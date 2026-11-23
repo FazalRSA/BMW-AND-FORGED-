@@ -688,6 +688,11 @@ if a.hero:
     met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (0.75, 0.38, 1.0))
     pb.inputs['Metallic'].default_value = met; pb.inputs['Roughness'].default_value = rough; pb.inputs['Coat Weight'].default_value = coat
 
+def ensure_dir(path):
+    """Creates an output folder, or stops naming it (a full disk or a read-only mount is not a traceback)."""
+    try: os.makedirs(path, exist_ok=True)
+    except OSError as e: sys.exit(f'cannot create the output folder {path}: {e}')
+
 def srgb_lin(hx, what):
     hx = hx.strip().lstrip('#')
     if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f'{what}: {hx!r} is not a #rrggbb colour')
@@ -934,7 +939,7 @@ if a.plate:
     sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
     for v in views:
         if v not in cams: sys.exit(f'--plate: no camera CAM_{v} in {a.glb}')
-        sc.camera = cams[v]; os.makedirs(os.path.join(a.out, v), exist_ok=True)
+        sc.camera = cams[v]; ensure_dir(os.path.join(a.out, v))
         sc.render.filepath = os.path.join(a.out, v, 'plate.png'); bpy.ops.render.render(write_still=True)
         if not os.path.exists(sc.render.filepath): sys.exit(f'--plate: no file written at {sc.render.filepath}')
         print('rendered', sc.render.filepath, flush=True)
@@ -949,8 +954,7 @@ if a.wheel_layer:
         made, fin = build_wheels(e)
         for v in todo:
             sc.camera = cams[v]; d = os.path.join(a.out, v, 'wheels')
-            try: os.makedirs(d, exist_ok=True)
-            except OSError as e: sys.exit(f'--wheel-layer: cannot create {d}: {e}')
+            ensure_dir(d)
             place_fill(cams[v])
             box = wheel_box(cams[v])
             if not box: print('no wheels in view', v, flush=True); continue
@@ -977,7 +981,7 @@ if a.hero:
     sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
     sc.render.resolution_x = a.width; sc.render.resolution_y = round(a.width * 9 / 16)
     sc.render.image_settings.color_mode = 'RGB'
-    os.makedirs(a.out, exist_ok=True); sc.render.filepath = os.path.join(a.out, 'hero.png')
+    ensure_dir(a.out); sc.render.filepath = os.path.join(a.out, 'hero.png')
     bpy.ops.render.render(write_still=True)
     if not os.path.exists(sc.render.filepath): sys.exit(f'--hero: no file written at {sc.render.filepath}')
     print('rendered', sc.render.filepath, flush=True); sys.exit(0)
@@ -988,7 +992,7 @@ for v in views:
         if o.type == 'LIGHT':
             g = next((f for k, f in fix.get('view_gain', {}).get(v, {}).items() if o.name.startswith(k)), 1.0)
             o.data.energy = base_energy[o.name] * g
-    os.makedirs(os.path.join(a.out, v), exist_ok=True)
+    ensure_dir(os.path.join(a.out, v))
     if DERIVE:
         for sname, (rough, coat, metal) in SETS.items():
             if a.passes and not any(x.startswith(sname) for x in a.passes.split(',')): continue
