@@ -74,6 +74,22 @@ export const loadStillsManifest = async (): Promise<Record<string, string[]>> =>
   return out;
 };
 
+/**
+ * Studio plates (public/renders/plates.json, { carId: [view, ...] }): the welcome stills' floor, light pool and black
+ * void rendered in Cycles per car and view without the car (render_car.py --plate), drawn behind the body frame in
+ * place of the CSS gradient backdrop. A car or view without one keeps the gradient.
+ */
+export const loadPlates = (): Promise<Record<string, string[]>> =>
+  fetch('/renders/plates.json').then((r) => (r.ok ? (r.json() as Promise<Record<string, string[]>>) : {})).catch(() => ({} as Record<string, string[]>));
+export const plateUrl = (carId: string, view: CameraViewPreset) => `/renders/${carId}/${view}/plate.webp`;
+const plateImage = (url: string): Promise<HTMLImageElement | null> =>
+  new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => resolve(null); // a missing plate falls back to the gradient
+    im.src = url;
+  });
+
 const toLin = new Float32Array(256).map((_, i) => {
   const c = i / 255;
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -365,12 +381,19 @@ export async function renderedStills(engine: CarConfiguratorEngine, carId: strin
   const frame: Frame = { left: (outW - bw * k) / 2, top: (outH - bh * k) / 2, width: bw * k, height: bh * k };
   const wheels = await engine.captureWheelLayers(views, Math.round(frame.width));
   if (wheels.length !== views.length) return [];
+  const plates = await loadPlates();
+  const plateImgs = await Promise.all(views.map((v) => (plates[carId]?.includes(v) ? plateImage(plateUrl(carId, v)) : Promise.resolve(null))));
   return bodies.map((body, i) => {
     const c = document.createElement('canvas');
     c.width = outW;
     c.height = outH;
     const g = c.getContext('2d')!;
-    paintBackdrop(g, outW, outH, frame, views[i]);
+    const plate = plateImgs[i];
+    if (plate) {
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, outW, outH);
+      g.drawImage(plate, frame.left, frame.top, frame.width, frame.height);
+    } else paintBackdrop(g, outW, outH, frame, views[i]);
     const layer = document.createElement('canvas'); // putImageData replaces pixels, so the body goes through a canvas to blend
     layer.width = bw;
     layer.height = bh;

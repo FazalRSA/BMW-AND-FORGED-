@@ -35,9 +35,12 @@ ap.add_argument('--threads', type=int, default=0, help='CPU threads for Cycles (
 ap.add_argument('--hero', default='', help="welcome still instead of frames: '<#hex>,<Metallic|Solid|Frozen>' paints the body, "
                 'mounts --rims at the wheel positions with tyres, discs and calipers, a polished floor, and renders ONE beauty '
                 'image of --views (default frontThreeQuarter) to <out>/hero.png (needs --studio dark)')
+ap.add_argument('--plate', action='store_true', help='studio plates instead of frames: the --hero studio (black void, polished floor, '
+                'the key light over the car) with the car removed, one <out>/<view>/plate.png per view at the frames\' camera and size; '
+                'the configurator draws it behind the body frame, which carries the car\'s own shadow (needs --studio dark)')
 ap.add_argument('--rims', default='', help='front[,rear] rim GLB for --hero, decoded (no meshopt), real scale, axis Y, face -Y')
 a = ap.parse_args()
-DERIVE = a.studio == 'dark' and not a.two_render and not a.hero
+DERIVE = a.studio == 'dark' and not a.two_render and not a.hero and not a.plate
 
 # Per-car fixes, keyed by car id (--car, or the output folder name as render-all.sh passes it).
 #  hide: multi-variant source models stack alternative parts (tuner kits, CS/Competition panels)
@@ -587,6 +590,22 @@ if fix.get('glass_unlink') and a.studio == 'dark':
         if o.type == 'LIGHT' and re.match(gl, o.name): o.light_linking.receiver_collection = rc
 
 
+if a.plate:
+    # Studio plate: the welcome stills' floor, light pool and black void, without the car (its frames bring the body and
+    # its shadow). The key light sits where the hero still's does: placed from the front three-quarter camera, so the
+    # pool is the same physical light in every view.
+    if a.studio != 'dark': sys.exit('--plate needs --studio dark')
+    for o in [o for o in sc.objects if o.type == 'MESH' and o != floor]: bpy.data.objects.remove(o, do_unlink=True)
+    floor.is_shadow_catcher = False
+    fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
+    fb.inputs['Base Color'].default_value = (0.26, 0.26, 0.27, 1); fb.inputs['Roughness'].default_value = 0.3
+    sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0
+    ck = cams.get('frontThreeQuarter') or next(iter(cams.values()))
+    cpos = ck.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
+    kpos = tgt + (cpos - tgt) * 0.12 + mathutils.Vector((0, 0, H + 2.2))
+    key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, float(os.environ.get('HERO_KEY', '450')))
+    key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
+
 if a.hero:
     # Welcome still: everything the frames leave to the live engine is rendered here instead, as the first
     # four cars' Cycles stills were: real tyres, the shop's rim, a disc and caliper, a polished floor, the paint itself.
@@ -727,6 +746,16 @@ if DERIVE:
     SETS = {'gloss': (0.30, 1.0, 0.0), 'matte': (0.55, 0.0, 0.0), 'flake': (FLAKE_ROUGH, 1.0, 1.0)}
     fo = setup_derive()
 views = a.views.split(',') if a.views else list(cams)
+if a.plate:
+    sc.render.film_transparent = False; sc.render.image_settings.color_mode = 'RGB'
+    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
+    for v in views:
+        if v not in cams: sys.exit(f'--plate: no camera CAM_{v} in {a.glb}')
+        sc.camera = cams[v]; os.makedirs(os.path.join(a.out, v), exist_ok=True)
+        sc.render.filepath = os.path.join(a.out, v, 'plate.png'); bpy.ops.render.render(write_still=True)
+        if not os.path.exists(sc.render.filepath): sys.exit(f'--plate: no file written at {sc.render.filepath}')
+        print('rendered', sc.render.filepath, flush=True)
+    sys.exit(0)
 if a.hero:
     v = views[0] if a.views else 'frontThreeQuarter'
     if v not in cams: sys.exit(f'--hero: no camera CAM_{v} in {a.glb}')

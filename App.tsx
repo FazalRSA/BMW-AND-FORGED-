@@ -25,7 +25,7 @@ import { AccountSheet } from './components/journey/AccountSheet';
 import { Button, IconButton } from './components/journey/ui';
 import { UserRound } from 'lucide-react';
 import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
-import { backdropCss, hasBodies, loadFramesCars, loadStillsManifest, renderedStills, type FramesLayout } from './services/renderedBody';
+import { backdropCss, hasBodies, loadFramesCars, loadPlates, loadStillsManifest, plateUrl, renderedStills, type FramesLayout } from './services/renderedBody';
 
 // Pages off the main journey load on demand
 const ForgedPage = lazy(() => import('./components/ForgedPage').then((m) => ({ default: m.ForgedPage })));
@@ -171,9 +171,11 @@ export const App: React.FC = () => {
   const [renderedCars, setRenderedCars] = useState<Record<string, string[]>>({});
   // Cars whose summary and PDF stills are Blender renders: those above, plus the ones that only have stills (renders/stills.json)
   const [stillCars, setStillCars] = useState<Record<string, string[]>>({});
+  const [plates, setPlates] = useState<Record<string, string[]>>({});
   useEffect(() => {
     loadRenderManifest().then(setRenderedCars);
     loadStillsManifest().then(setStillCars);
+    loadPlates().then(setPlates);
   }, []);
   const [stage, setStage] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -384,6 +386,7 @@ export const App: React.FC = () => {
   // A frames-only car is always its frame (it has no live body for the turntable to show)
   const framesCar = !!framesCars[selectedCar.id];
   const rendered = route.name === 'configure' && (framesCar || !autoRotate) && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
+  const hasPlate = rendered && (plates[selectedCar.id]?.includes(cameraView) ?? false);
   const renderedRef = useRef(rendered);
   renderedRef.current = rendered;
   const computeStage = useCallback(() => {
@@ -801,8 +804,16 @@ export const App: React.FC = () => {
       <div
         aria-hidden
         className="absolute inset-0 z-[4] pointer-events-none transition-opacity duration-500"
-        style={{ background: backdropFrame ? backdropCss(backdropFrame, cameraView) : undefined, opacity: rendered && stage ? 1 : 0 }}
+        style={{ background: hasPlate ? '#000' : backdropFrame ? backdropCss(backdropFrame, cameraView) : undefined, opacity: rendered && stage ? 1 : 0 }}
       />
+      {/* The Cycles studio plate behind the body (render_car.py --plate): the welcome stills' floor and light pool */}
+      {rendered && stage && hasPlate && (
+        <div
+          aria-hidden
+          className="absolute z-[4] pointer-events-none"
+          style={{ ...stage, ...stageEdgeFade(stage), background: `url(${plateUrl(selectedCar.id, cameraView)}) center / 100% 100% no-repeat` }}
+        />
+      )}
 
       {rendered && stage && (
         <div className="absolute z-[5] pointer-events-none" style={{ ...stage, ...stageEdgeFade(stage) }}>
