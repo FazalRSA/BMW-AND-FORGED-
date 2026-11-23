@@ -132,7 +132,7 @@ Wheels tab → open a wheel → edit the **"Sizes & set prices"** grid (one row 
 for a set of four; add or remove sizes with the buttons). On Save, the overall "from" price and the
 list of offered sizes are **computed automatically** from that grid — you never edit those two
 fields directly. Prices are stored in USD and shown per region (`config/brand.ts formatMoney`; ZA =
-USD × 18.2, so R75 000 is stored as 4120.88). A finish that costs more (Polished Face, Liquid Metal)
+USD × 18.2, so R75 000 is stored as 4120.88). A finish that costs more (PolishedFace, LiquidMetal)
 goes in **"Dearer finishes"** on the same wheel; blank means the same price as the others.
 
 ### The wheels on offer: the stock sheet
@@ -179,7 +179,7 @@ in the FORGED Drive folder; edit it like any spreadsheet.
 | `code` | `FSA-02` | optional; becomes the wheel id (`forged_fsa_02`), keep it stable |
 | `sizes` | `19\|20\|21\|22` | separate values with `\|` |
 | `prices_zar` or `prices_usd` | `68000\|74000\|82000\|92000` | set of four, one per size |
-| `finishes` | `Liquid Metal\|Silver` | any finish in the `wheel_finishes` table: Liquid Metal, Bronze Matte, Gloss Black, Silver, Gold, Hyper Black, Polished Face, Pure Bronze, Black Matte (and Satin Gold, Gunmetal Matte) |
+| `finishes` | `LiquidMetal\|Silver` | any finish in the `wheel_finishes` table: LiquidMetal, BronzeMatte, GlossBlack, Silver, Gold, HyperBlack, PolishedFace, PureBronze, BlackMatte (and SatinGold, GunmetalMatte) |
 | optional | `subtitle`, `description`, `highlights` (split on `\|`), `style`, `skip` (`yes` = leave alone), `notes` | AI writes the copy if blank |
 
 Each photo is cut out (rim only, transparent gaps), then posted to the Supabase function
