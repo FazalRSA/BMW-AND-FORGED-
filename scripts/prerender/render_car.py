@@ -261,7 +261,13 @@ for kv in filter(None, a.dark_set.split(',')):
 # Tyre stand-ins (--studio dark): where the live engine puts the wheels. The GLB has none (the engine draws them), so the
 # stand-ins only cast the contact shadow, darken the arches and show in the paint's reflections.
 _wj = a.wheels or re.sub(r'\.glb$', '', a.glb) + '.wheels.json'
-WHEELS = json.load(open(_wj)) if os.path.exists(_wj) else fix.get('wheels')
+if os.path.exists(_wj):
+    try:
+        with open(_wj) as _f: WHEELS = json.load(_f)
+    except (OSError, ValueError) as e:
+        sys.exit(f'{_wj}: {e}')
+else:
+    WHEELS = fix.get('wheels')
 if a.studio == 'dark' and not WHEELS: print('WARNING: no wheel positions (%s): no contact shadows or dark arches. Run export-scene.cjs or wheelpos.cjs.' % _wj)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
