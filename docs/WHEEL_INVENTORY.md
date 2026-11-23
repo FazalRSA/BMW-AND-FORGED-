@@ -15,11 +15,11 @@ Source of truth: Supabase `public.wheels` and `public.wheel_finishes` (migration
 | Sheet name | Catalogue id | Sizes | Finishes (sheet → finish id) | Set price (ZAR → USD stored) | 3D files | Fitment (sheet) |
 |---|---|---|---|---|---|---|
 | FSA001 (2-piece) | `forged_fsa001` | 19", 20" | Black Matte → `black_matte` | R90 000 → 4945.05 | `forged_fsa001.glb` + `forged_fsa001-rear.glb` (staggered; website `stf399-front/rear.glb`) | M3 Sedan (G80), PCD 5×112, ET8/15, CB 66.6 |
-| FSA002 | `forged_fsa002` | 20", 21" | Gold → `gold`; Hyper Black → `hyper_black`; Polished Face → `polished_face` | R75 000 → 4120.88; Polished Face R85 000 → 4670.33 | `forged_fsa002.glb` (website `fsa002.glb`) | M3 Competition Sedan (G80), PCD 5×112, ET8/15, CB 66.6 |
-| FSA003 | `forged_fsa_03` (kept: older share codes point at it) | 20", 21" | Silver → `silver`; Hyper Black → `hyper_black` | R75 000 → 4120.88 | `forged_fsa_03.glb` (website `fsa003.glb`); thumbnail cut from the website photo | M3 Sedan (G80), PCD 5×112, ET8/15, CB 66.6 |
-| FSA004 | `forged_fsa004` | 20", 21" | Silver → `silver`; Hyper Black → `hyper_black`; Gloss Black → `black` | R70 000 → 3846.15 | `forged_fsa004.glb` (website `fsa004.glb`) | M3 Sedan / M3 Competition (G80), PCD 5×112, ET8/15, CB 66.6 |
-| FF-1 | `sixnine_ff1` | 20", 21" | Silver → `silver`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff1.glb` (website `ff-1.glb`) | M3 Sedan / M3 Competition (G80), PCD 5×112, ET15/20 (ET15/17 for Liquid Metal), CB 66.6 |
-| FF-3 | `sixnine_ff3` | 20", 21" | Pure Bronze → `pure_bronze`; Gloss Black → `black`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff3.glb` (website `ff-3.glb`) | M3 Competition Sedan (G80), PCD 5×112, ET15/17, CB 66.6 |
+| FSA002 | `forged_fsa002` | 20", 21" | Hyper Black → `hyper_black`; Polished Face → `polished_face` (the forked-spoke wheel; the gold 15-spoke wheel the sheet once listed here is the FSA003) | R75 000 → 4120.88; Polished Face R85 000 → 4670.33 | `forged_fsa002-v2.glb` (website `fsa002-forked-v3.glb`) | M3 Competition Sedan (G80), PCD 5×112, ET8/15, CB 66.6 |
+| FSA003 | `forged_fsa_03` (kept: older share codes point at it) | 20", 21" | Gold → `gold`; Silver → `silver`; Hyper Black → `hyper_black` | R75 000 → 4120.88 | `forged_fsa_03-v2.glb` (website `fsa003-v5.glb`) | M3 Sedan (G80), PCD 5×112, ET8/15, CB 66.6 |
+| FSA004 | `forged_fsa004` | 20", 21" | Silver → `silver`; Hyper Black → `hyper_black`; Gloss Black → `black` | R70 000 → 3846.15 | `forged_fsa004-v2.glb` (website `fsa004-v5.glb`) | M3 Sedan / M3 Competition (G80), PCD 5×112, ET8/15, CB 66.6 |
+| FF-1 | `sixnine_ff1` | 20", 21" | Silver → `silver`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff1-v2.glb` (website `ff-1-sixnine-v3.glb`) | M3 Sedan / M3 Competition (G80), PCD 5×112, ET15/20 (ET15/17 for Liquid Metal), CB 66.6 |
+| FF-3 | `sixnine_ff3` | 20", 21" | Pure Bronze → `pure_bronze`; Gloss Black → `black`; Liquid Metal → `liquid_metal` | R80 000 → 4395.60; Liquid Metal R95 000 → 5219.78 | `sixnine_ff3-v2.glb` (website `ff-3-sixnine-v3.glb`) | M3 Competition Sedan (G80), PCD 5×112, ET15/17, CB 66.6 |
 
 Notes
 
@@ -77,3 +77,11 @@ wheels and for any wheel the owner ticks them on.
 4. Render the wheel on the car before telling anyone it is live (`visual-qa` skill):
    `node scripts/render/shoot.cjs <out> shots.json` with `"q": "&look=stage"` (what `/configure` draws), and open
    `/rims/<id>` to check it in the wheel studio.
+
+## Rims match the website (2026-11-23)
+
+The rim files are the website's own (Forgedwebsite `public/models/wheels/`, packed with `scripts/ingest-rim.mjs`), named with a
+version suffix (`-v2`) because `/models/` is cached for a day plus a week of stale-while-revalidate: a changed file keeps its name only
+if nobody has cached it. The old files stay in `public/models/rims/` until nothing points at them. FSA001 was already the website's
+`stf399` wheel (same size to the millimetre) and was left as it was. Wheel layers and catalogue thumbnails are Cycles renders of these
+files with finish recipes matched to the website's product photographs (`scripts/prerender/wheel-combos.ts`, `finish_calibrate.py`).

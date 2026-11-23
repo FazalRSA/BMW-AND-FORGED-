@@ -601,6 +601,12 @@ if fix.get('glass_unlink') and a.studio == 'dark':
         if o.type == 'LIGHT' and re.match(gl, o.name): o.light_linking.receiver_collection = rc
 
 
+def srgb_lin(hx, what):
+    hx = hx.strip().lstrip('#')
+    if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f'{what}: {hx!r} is not a #rrggbb colour')
+    return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4))]
+
+
 if a.plate:
     # Studio plate: the welcome stills' floor, light pool and black void, without the car (its frames bring the body and
     # its shadow). The key light sits where the hero still's does: placed from the front three-quarter camera, so the
@@ -614,7 +620,7 @@ if a.plate:
     ck = cams.get('frontThreeQuarter') or next(iter(cams.values()))
     cpos = ck.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
     kpos = tgt + (cpos - tgt) * 0.12 + mathutils.Vector((0, 0, H + 2.2))
-    key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, float(os.environ.get('HERO_KEY', '450')))
+    key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, float(os.environ.get('HERO_KEY', '500')))
     key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
 
 if a.hero:
@@ -630,6 +636,8 @@ if a.hero:
         b.inputs['Base Color'].default_value = (*col, 1); b.inputs['Metallic'].default_value = met
         b.inputs['Roughness'].default_value = rough; b.inputs['Coat Weight'].default_value = coat
         return m
+    for o in [o for o in sc.objects if o.type == 'MESH' and re.match(r'(?i)^plate', o.name)]:
+        bpy.data.objects.remove(o, do_unlink=True)   # the app's placeholder plates: the reference stills have none
     rubber = matp('hero_rubber', (0.022, 0.022, 0.023), 0.0, 0.62)
     disc_m = matp('hero_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
     cal_m = matp('hero_caliper', (0.55, 0.02, 0.02), 0.0, 0.3, 1.0)
@@ -648,10 +656,17 @@ if a.hero:
         rad = max(max(abs(v.co.x), abs(v.co.z)) for v in rim.data.vertices)
         return rim, rad
     rims = [load_rim(f) for f in rim_files if f]
+    # the configurator's finish on every rim mesh (HERO_RIMFINISH "#hex,metalness,roughness,clearcoat"; default a deep satin black like the reference stills' wheels), not the
+    # file's own barrel/face materials (silver barrel, black face), which is not what a customer can order
+    _rf = os.environ.get('HERO_RIMFINISH', '#121315,0,0.38,0.6').split(',')
+    _rm = matp('hero_rim', srgb_lin(_rf[0], 'HERO_RIMFINISH'), float(_rf[1]), float(_rf[2]), float(_rf[3]))
+    for src, _ in rims:
+        if not src.data.materials: src.data.materials.append(_rm)
+        for sl in src.material_slots: sl.link = 'DATA'; sl.material = _rm
     for i, (x, y, z, r, wd) in enumerate(WHEELS):
         src, rad = rims[min(i // 2, len(rims) - 1)]   # wheels.json lists the front pair first
         sgn = 1 if x > 0 else -1
-        ro = r * 0.78                                  # rim outer radius: a 20-inch rim on the car's own tyre
+        ro = min(0.262, r - 0.04)                      # rim lip radius: a 20-inch rim on the car's own factory tyre
         rim = src.copy(); rim.data = src.data; sc.collection.objects.link(rim)
         rim.rotation_mode = 'XYZ'   # glTF imports use quaternions, which would ignore rotation_euler
         rim.scale = (ro / rad,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
@@ -669,34 +684,52 @@ if a.hero:
     for o in (src for src, _ in rims): bpy.data.objects.remove(o, do_unlink=True)
     floor.is_shadow_catcher = False   # a real floor: the light pool and the car's reflection are in the picture
     fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
-    fb.inputs['Base Color'].default_value = (0.26, 0.26, 0.27, 1); fb.inputs['Roughness'].default_value = 0.3
+    _fl = float(os.environ.get('HERO_FLOOR', '0.10'))
+    fb.inputs['Base Color'].default_value = (_fl, _fl, _fl * 1.03, 1); fb.inputs['Roughness'].default_value = float(os.environ.get('HERO_FLOOR_ROUGH', '0.3'))
     sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0   # a black void, as the reference stills
-    HERO_KEY = float(os.environ.get('HERO_KEY', '450'))   # the key light's watts: it throws the pool on the floor
+    HERO_KEY = float(os.environ.get('HERO_KEY', '500'))   # the key light's watts: it throws the pool on the floor
     cam0 = cams.get((a.views or 'frontThreeQuarter').split(',')[0])
     if cam0:
         cpos = cam0.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
-        kpos = tgt + (cpos - tgt) * 0.12 + mathutils.Vector((0, 0, H + 2.2))   # over the car: the pool falls off towards the camera
-        key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, HERO_KEY)
+        kshift = float(os.environ.get('HERO_KEYSHIFT', '0.4')); kh = float(os.environ.get('HERO_KEYH', '1.8')); ks = float(os.environ.get('HERO_KEYSIZE', '0.55'))
+        kpos = tgt + (cpos - tgt) * kshift + mathutils.Vector((0, 0, H + kh))   # over the car: the pool falls off towards the camera
+        key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9 * ks, L * 0.6 * ks, HERO_KEY)
         key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
-        cam0.data.lens *= float(os.environ.get('HERO_ZOOM', '1.3'))
+        # (The defaults below are the reference stills' look, tuned against the 11 Nov M5 still: HERO_CAMDIST=0 keeps the stage camera.)
+        # Optional hard strips for the edge lights of the reference stills: HERO_STRIPS="<watts>" puts one tall strip each side of the
+        # car (reflected along the shoulder line and bonnet edge) and a low one on the far side that lights the floor under the car.
+        sw = float(os.environ.get('HERO_STRIPS', '0'))
+        if sw > 0:
+            fwd = mathutils.Vector((cpos.x - tgt.x, cpos.y - tgt.y, 0)).normalized(); side = mathutils.Vector((-fwd.y, fwd.x, 0))
+            for nm, off, hh, wgt in (('hero_strip_a', side * (L * 0.75), H * 0.75, sw), ('hero_strip_b', -side * (L * 0.75), H * 0.75, sw), ('hero_floor_strip', -side * (L * 0.6) - fwd * (L * 0.2), 0.25, sw * 1.6)):
+                sp = tgt + off + mathutils.Vector((0, 0, hh)); st = softbox(nm, sp, (0, 0, 0), L * 0.8, 0.5 if hh > 0.5 else 0.35, wgt)
+                st.rotation_euler = (tgt + mathutils.Vector((0, 0, H * 0.3)) - sp).to_track_quat('-Z', 'Y').to_euler()
+        key.data.spread = math.radians(float(os.environ.get('HERO_SPREAD', '55')))   # narrower = a pool with falloff, not an even wash
+        if os.environ.get('HERO_CAMDIST', '1.1') != '0':
+            # The reference stills' camera: close, low and wide, from the stage camera's side. HERO_CAMDIST (x car length), HERO_CAMH (m),
+            # HERO_LENS (mm), HERO_SHIFT (frame fraction, + moves the car left); HERO_CAMHF sets the height as a fraction of the car's height.
+            hc = bpy.data.cameras.new('hero_cam'); hc.lens = float(os.environ.get('HERO_LENS', '32')); hc.sensor_width = cam0.data.sensor_width
+            hc.shift_x = float(os.environ.get('HERO_SHIFT', '0')); ho = bpy.data.objects.new('hero_cam', hc); sc.collection.objects.link(ho)
+            fl = mathutils.Vector((cpos.x - tgt.x, cpos.y - tgt.y, 0)).normalized()
+            ho.location = tgt + fl * (L * float(os.environ.get('HERO_CAMDIST', '1.1'))) + mathutils.Vector((0, 0, H * float(os.environ.get('HERO_CAMHF', '0.4')) if not os.environ.get('HERO_CAMH') else float(os.environ['HERO_CAMH'])))
+            ho.rotation_euler = (tgt + mathutils.Vector((0, 0, H * 0.42)) - ho.location).to_track_quat('-Z', 'Y').to_euler()
+            cams[(a.views or 'frontThreeQuarter').split(',')[0]] = ho
+        else:
+            cam0.data.lens *= float(os.environ.get('HERO_ZOOM', '1.3'))
     hx, kind = (a.hero.split(',') + ['Metallic'])[:2]
     hx = hx.strip().lstrip('#')
     if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f"--hero {a.hero!r}: expected '<#rrggbb>,<Metallic|Solid|Frozen>'")
     srgb = [int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4)]
     lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb]
-    pb.inputs['Base Color'].default_value = (*lin, 1)
-    met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (0.75, 0.38, 1.0))
+    pg = float(os.environ.get('HERO_PAINTGAIN', '0.55'))   # the reference stills' paint is deeper than the pigment hex lit by this key
+    pb.inputs['Base Color'].default_value = (*(c * pg for c in lin), 1)
+    met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (float(os.environ.get('HERO_METALLIC', '0.75')), float(os.environ.get('HERO_PAINTROUGH', '0.38')), 1.0))
     pb.inputs['Metallic'].default_value = met; pb.inputs['Roughness'].default_value = rough; pb.inputs['Coat Weight'].default_value = coat
 
 def ensure_dir(path):
     """Creates an output folder, or stops naming it (a full disk or a read-only mount is not a traceback)."""
     try: os.makedirs(path, exist_ok=True)
     except OSError as e: sys.exit(f'cannot create the output folder {path}: {e}')
-
-def srgb_lin(hx, what):
-    hx = hx.strip().lstrip('#')
-    if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f'{what}: {hx!r} is not a #rrggbb colour')
-    return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4))]
 
 if a.wheel_layer:
     # Path-traced wheels for the configurator: what the live WebGL wheels draw, rendered in the frames' own studio so
@@ -749,6 +782,8 @@ if a.wheel_layer:
         for o in [o for o in bpy.data.objects if o not in before and o != rim]: bpy.data.objects.remove(o, do_unlink=True)
         sc.collection.objects.unlink(rim) if rim.name in sc.collection.objects else None
         for c in list(rim.users_collection): c.objects.unlink(rim)
+        if not rim.data.materials:   # the website's one-mesh rims carry no material: give the slot the finish can replace
+            rim.data.materials.append(bpy.data.materials.new('rim_slot'))
         vs = rim.data.vertices
         rad = max(max(abs(v.co.x), abs(v.co.z)) for v in vs); ymin = min(v.co.y for v in vs)
         rim_cache[path] = (rim, rad, ymin)
@@ -804,15 +839,17 @@ if a.wheel_layer:
 
     def build_wheels(e):
         """The four wheels of one layer, as the engine mounts them (mountRimModel, rimLayout): the rim's largest
-        dimension is a 20-inch rim on a 0.35 m tyre, scaled by inches/20; its face sits 12 mm inside the tyre's outer
-        plane; the tyre keeps its size and the sidewall thins as the rim grows."""
+        dimension is the rim's lip radius for its size; its face sits 12 mm inside the tyre's outer plane; the tyre keeps the
+        car's own size and the sidewall thins as the rim grows."""
         hx, met, rough, coat = e['finish']
         fin = matp('finish_' + e['name'], srgb_lin(hx, e['name']), float(met), float(rough), float(coat))
         made = []
         for i, (x, y, z, r, wd) in enumerate(WHEELS):
             src, rad, ymin = load_rim(e['rims'][min(i // 2, len(e['rims']) - 1)])   # front pair first
             sgn = 1 if x > 0 else -1; s = r / 0.35
-            ro = r * (0.26 / 0.35) * float(e['inches']) / 20
+            # the rim's lip radius for its size (a 20-inch rim is 0.262 m on every car), inside the car's own tyre: a bigger rim on the
+            # same tyre thins the sidewall, as plus-sizing does; the tyre radius r is the factory tyre's (from the car's model)
+            ro = min(float(e['inches']) * 0.0127 + 0.008, r - 0.04)
             rim = src.copy(); sc.collection.objects.link(rim)
             for sl in rim.material_slots: sl.link = 'OBJECT'; sl.material = fin
             k = ro / rad; rim.rotation_mode = 'XYZ'
@@ -978,7 +1015,7 @@ if a.hero:
     v = views[0] if a.views else 'frontThreeQuarter'
     if v not in cams: sys.exit(f'--hero: no camera CAM_{v} in {a.glb}')
     sc.camera = cams[v]; sc.render.film_transparent = False
-    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
+    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '-0.5'))
     sc.render.resolution_x = a.width; sc.render.resolution_y = round(a.width * 9 / 16)
     sc.render.image_settings.color_mode = 'RGB'
     ensure_dir(a.out); sc.render.filepath = os.path.join(a.out, 'hero.png')

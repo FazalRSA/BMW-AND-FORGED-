@@ -89,10 +89,10 @@ export const plateUrl = (carId: string, view: CameraViewPreset) => `/renders/${c
  * `cars[car][view]` is [box, indexes into names]; the box is where the cropped image sits in the frame (fractions of
  * the frame, from the top left). Anything not listed falls back to the live WebGL wheels.
  */
-export type WheelLayers = { names: string[]; cars: Record<string, Partial<Record<CameraViewPreset, [[number, number, number, number], number[]]>>> };
+export type WheelLayers = { v?: string; names: string[]; cars: Record<string, Partial<Record<CameraViewPreset, [[number, number, number, number], number[]]>>> };
 export const NO_WHEEL_LAYERS: WheelLayers = { names: [], cars: {} };
 export const loadWheelLayers = (): Promise<WheelLayers> =>
-  fetch('/renders/wheels.json')
+  fetch('/renders/wheels.json', { cache: 'no-cache' }) // revalidated each visit: layers are re-rendered under the same names
     .then((r) => (r.ok ? r.json() : NO_WHEEL_LAYERS))
     .then((j: WheelLayers) => (Array.isArray(j?.names) && j.cars && typeof j.cars === 'object' ? j : NO_WHEEL_LAYERS))
     .catch(() => NO_WHEEL_LAYERS);
@@ -103,7 +103,7 @@ export function wheelLayerFor(layers: WheelLayers, carId: string, view: CameraVi
   const name = `${wheelId}__${finishId}__${parseInt(size, 10)}`;
   const i = layers.names.indexOf(name);
   if (i < 0 || !entry[1].includes(i)) return null;
-  return { url: `/renders/${carId}/${view}/wheels/${name}.webp`, box: entry[0] };
+  return { url: `/renders/${carId}/${view}/wheels/${name}.webp${layers.v ? `?v=${layers.v}` : ''}`, box: entry[0] };
 }
 const plateImage = (url: string): Promise<HTMLImageElement | null> =>
   new Promise((resolve) => {
