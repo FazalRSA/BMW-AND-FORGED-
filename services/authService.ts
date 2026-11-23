@@ -412,6 +412,7 @@ export async function exportMyData(): Promise<Record<string, unknown>> {
 export async function deleteMyAccount(): Promise<void> {
   const { error } = await supabase.rpc('delete_my_account');
   if (error) throw new Error(error.message);
-  await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+  // The login is already gone server-side, so this local sign-out may be refused; the session is dropped below either way.
+  await supabase.auth.signOut({ scope: 'local' }).catch((e) => console.warn('Sign out after account deletion:', e instanceof Error ? e.message : e));
   publish(null);
 }
