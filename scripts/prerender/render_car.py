@@ -32,8 +32,20 @@ ap.add_argument('--two-render', action='store_true',
 ap.add_argument('--seed', type=int, default=0, help='Cycles seed (for noise-floor tests)')
 ap.add_argument('--wheels', default='', help="json from export-scene.cjs / wheelpos.cjs: [[x, y, z, radius, width] x4]; default <glb minus .glb>.wheels.json")
 ap.add_argument('--threads', type=int, default=0, help='CPU threads for Cycles (0 = all)')
+ap.add_argument('--hero', default='', help="welcome still instead of frames: '<#hex>,<Metallic|Solid|Frozen>' paints the body, "
+                'mounts --rims at the wheel positions with tyres, discs and calipers, a polished floor, and renders ONE beauty '
+                'image of --views (default frontThreeQuarter) to <out>/hero.png (needs --studio dark)')
+ap.add_argument('--plate', action='store_true', help='studio plates instead of frames: the --hero studio (black void, polished floor, '
+                'the key light over the car) with the car removed, one <out>/<view>/plate.png per view at the frames\' camera and size; '
+                'the configurator draws it behind the body frame, which carries the car\'s own shadow (needs --studio dark)')
+ap.add_argument('--wheel-layer', default='', help='path-traced wheel layers instead of frames: a json list of '
+                '{"name", "rims": [front, rear?], "finish": ["#hex", metallic, roughness, clearcoat], "inches"}; for each entry and '
+                'view, the rims (finish on every mesh, as the engine), tyres, discs and calipers at the wheel positions, lit by the '
+                'frames\' studio with the body and floor as holdouts, cropped to the wheels: <out>/<view>/wheels/<name>.png, '
+                'plus box.json (the crop, as fractions of the frame); files already there are kept (needs --studio dark)')
+ap.add_argument('--rims', default='', help='front[,rear] rim GLB for --hero, decoded (no meshopt), real scale, axis Y, face -Y')
 a = ap.parse_args()
-DERIVE = a.studio == 'dark' and not a.two_render
+DERIVE = a.studio == 'dark' and not a.two_render and not a.hero and not a.plate and not a.wheel_layer
 
 # Per-car fixes, keyed by car id (--car, or the output folder name as render-all.sh passes it).
 #  hide: multi-variant source models stack alternative parts (tuner kits, CS/Competition panels)
@@ -582,6 +594,266 @@ if fix.get('glass_unlink') and a.studio == 'dark':
     for o in sc.objects:
         if o.type == 'LIGHT' and re.match(gl, o.name): o.light_linking.receiver_collection = rc
 
+
+if a.plate:
+    # Studio plate: the welcome stills' floor, light pool and black void, without the car (its frames bring the body and
+    # its shadow). The key light sits where the hero still's does: placed from the front three-quarter camera, so the
+    # pool is the same physical light in every view.
+    if a.studio != 'dark': sys.exit('--plate needs --studio dark')
+    for o in [o for o in sc.objects if o.type == 'MESH' and o != floor]: bpy.data.objects.remove(o, do_unlink=True)
+    floor.is_shadow_catcher = False
+    fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
+    fb.inputs['Base Color'].default_value = (0.26, 0.26, 0.27, 1); fb.inputs['Roughness'].default_value = 0.3
+    sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0
+    ck = cams.get('frontThreeQuarter') or next(iter(cams.values()))
+    cpos = ck.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
+    kpos = tgt + (cpos - tgt) * 0.12 + mathutils.Vector((0, 0, H + 2.2))
+    key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, float(os.environ.get('HERO_KEY', '450')))
+    key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
+
+if a.hero:
+    # Welcome still: everything the frames leave to the live engine is rendered here instead, as the first
+    # four cars' Cycles stills were: real tyres, the shop's rim, a disc and caliper, a polished floor, the paint itself.
+    if a.studio != 'dark' or not WHEELS: sys.exit('--hero needs --studio dark and the wheel positions (.wheels.json)')
+    rim_files = (a.rims.split(',') + [''])[:2]
+    if not rim_files[0]: sys.exit('--hero needs --rims <front.glb>[,<rear.glb>]')
+    for o in [o for o in sc.objects if o.type == 'MESH' and o.data.materials and o.data.materials[0].name == 'rubber']:
+        bpy.data.objects.remove(o, do_unlink=True)   # the stand-ins; real tyres below
+    def matp(name, col, met, rough, coat=0.0):
+        m = bpy.data.materials.new(name); m.use_nodes = True; b = m.node_tree.nodes['Principled BSDF']
+        b.inputs['Base Color'].default_value = (*col, 1); b.inputs['Metallic'].default_value = met
+        b.inputs['Roughness'].default_value = rough; b.inputs['Coat Weight'].default_value = coat
+        return m
+    rubber = matp('hero_rubber', (0.022, 0.022, 0.023), 0.0, 0.62)
+    disc_m = matp('hero_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
+    cal_m = matp('hero_caliper', (0.55, 0.02, 0.02), 0.0, 0.3, 1.0)
+    def load_rim(path):
+        before = set(bpy.data.objects)
+        try: bpy.ops.import_scene.gltf(filepath=path)
+        except RuntimeError as e: sys.exit(f'--rims {path}: {e}')
+        parts = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+        if not parts: sys.exit(f'--rims {path}: no meshes')
+        for o in parts:   # bake transforms (the importer's Y-up root included) so the parts join and place as one object
+            mw = o.matrix_world.copy(); o.parent = None; o.data.transform(mw); o.matrix_world = mathutils.Matrix()
+        bpy.ops.object.select_all(action='DESELECT')
+        for o in parts: o.select_set(True)
+        bpy.context.view_layer.objects.active = parts[0]; bpy.ops.object.join()
+        rim = bpy.context.view_layer.objects.active
+        rad = max(max(abs(v.co.x), abs(v.co.z)) for v in rim.data.vertices)
+        return rim, rad
+    rims = [load_rim(f) for f in rim_files if f]
+    for i, (x, y, z, r, wd) in enumerate(WHEELS):
+        src, rad = rims[min(i // 2, len(rims) - 1)]   # wheels.json lists the front pair first
+        sgn = 1 if x > 0 else -1
+        ro = r * 0.78                                  # rim outer radius: a 20-inch rim on the car's own tyre
+        rim = src.copy(); rim.data = src.data; sc.collection.objects.link(rim)
+        rim.rotation_mode = 'XYZ'   # glTF imports use quaternions, which would ignore rotation_euler
+        rim.scale = (ro / rad,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
+        rim.location = (x, y, z)
+        ri = ro * 0.97; bpy.ops.mesh.primitive_torus_add(major_radius=(r + ri) / 2, minor_radius=(r - ri) / 2,
+                                                         major_segments=96, minor_segments=24, location=(x, y, z), rotation=(0, math.pi / 2, 0))
+        ty = bpy.context.object; ty.scale = (1, 1, wd / (r - ri)); ty.data.materials.append(rubber)
+        for pl in ty.data.polygons: pl.use_smooth = True
+        bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=ri * 0.78, depth=0.03, location=(x - sgn * 0.07, y, z), rotation=(0, math.pi / 2, 0))
+        bpy.context.object.data.materials.append(disc_m)
+        cy_off = 0.62 * ri * 0.78; front = i < 2
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(x - sgn * 0.045, y + (cy_off if front else -cy_off) * 0.7, z + cy_off * 0.7))
+        cal = bpy.context.object; cal.scale = (0.07, 0.15, 0.09); cal.rotation_euler = (math.radians(45 if front else -45), 0, 0)
+        cal.data.materials.append(cal_m)
+    for o in (src for src, _ in rims): bpy.data.objects.remove(o, do_unlink=True)
+    floor.is_shadow_catcher = False   # a real floor: the light pool and the car's reflection are in the picture
+    fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
+    fb.inputs['Base Color'].default_value = (0.26, 0.26, 0.27, 1); fb.inputs['Roughness'].default_value = 0.3
+    sc.world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.0   # a black void, as the reference stills
+    HERO_KEY = float(os.environ.get('HERO_KEY', '450'))   # the key light's watts: it throws the pool on the floor
+    cam0 = cams.get((a.views or 'frontThreeQuarter').split(',')[0])
+    if cam0:
+        cpos = cam0.matrix_world.translation; tgt = mathutils.Vector((cx, cy, 0))
+        kpos = tgt + (cpos - tgt) * 0.12 + mathutils.Vector((0, 0, H + 2.2))   # over the car: the pool falls off towards the camera
+        key = softbox('hero_key', kpos, (0, 0, 0), L * 0.9, L * 0.6, HERO_KEY)
+        key.rotation_euler = (tgt - kpos).to_track_quat('-Z', 'Y').to_euler()
+        cam0.data.lens *= float(os.environ.get('HERO_ZOOM', '1.3'))
+    hx, kind = (a.hero.split(',') + ['Metallic'])[:2]
+    hx = hx.strip().lstrip('#')
+    if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f"--hero {a.hero!r}: expected '<#rrggbb>,<Metallic|Solid|Frozen>'")
+    srgb = [int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb]
+    pb.inputs['Base Color'].default_value = (*lin, 1)
+    met, rough, coat = {'Solid': (0.0, 0.35, 1.0), 'Frozen': (0.5, 0.55, 0.0)}.get(kind.strip(), (0.75, 0.38, 1.0))
+    pb.inputs['Metallic'].default_value = met; pb.inputs['Roughness'].default_value = rough; pb.inputs['Coat Weight'].default_value = coat
+
+def srgb_lin(hx, what):
+    hx = hx.strip().lstrip('#')
+    if not re.fullmatch(r'[0-9a-fA-F]{6}', hx): sys.exit(f'{what}: {hx!r} is not a #rrggbb colour')
+    return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4))]
+
+if a.wheel_layer:
+    # Path-traced wheels for the configurator: what the live WebGL wheels draw, rendered in the frames' own studio so
+    # they sit in it like the body does. Body and floor stay in the scene as holdouts: they shade the wheels (arch
+    # shadows, reflections) and hide what they cover (the far wheels behind the body), but render transparent.
+    if a.studio != 'dark' or not WHEELS: sys.exit('--wheel-layer needs --studio dark and the wheel positions (.wheels.json)')
+    try:
+        LAYERS = json.load(open(a.wheel_layer))
+        for e in LAYERS: e['name'], e['rims'][0], e['finish'][3], float(e['inches'])
+    except (OSError, ValueError, KeyError, IndexError, TypeError) as e:
+        sys.exit(f'--wheel-layer {a.wheel_layer}: {e!r} (expected a list of {{name, rims, finish, inches}})')
+    for e in LAYERS:
+        if not re.fullmatch(r'[A-Za-z0-9_.-]+', e['name']): sys.exit(f'--wheel-layer: bad name {e["name"]!r}')
+    for o in [o for o in sc.objects if o.type == 'MESH' and o.data.materials and o.data.materials[0].name == 'rubber']:
+        bpy.data.objects.remove(o, do_unlink=True)   # the stand-in tyres; real ones below
+    floor.is_shadow_catcher = False
+    for o in sc.objects:
+        if o.type == 'MESH': o.is_holdout = True
+    receivers = bpy.data.collections.get('light_receivers')   # glass_unlink: the strips light only what is in it
+
+    def matp(name, col, met, rough, coat=0.0, coat_rough=0.03):
+        m = bpy.data.materials.new(name); b = m.node_tree.nodes['Principled BSDF']
+        b.inputs['Base Color'].default_value = (*col, 1); b.inputs['Metallic'].default_value = met
+        b.inputs['Roughness'].default_value = rough; b.inputs['Coat Weight'].default_value = coat
+        b.inputs['Coat Roughness'].default_value = coat_rough
+        return m
+    rubber = matp('layer_rubber', (0.028, 0.027, 0.026), 0.0, 0.62)           # wheelKit's #302e2d
+    # a faint grain on the rubber, as moulded tyres have, so the sidewall is not a flat black sheet
+    _n = rubber.node_tree.nodes; _tex = _n.new('ShaderNodeTexNoise'); _tex.inputs['Scale'].default_value = 900
+    _bump = _n.new('ShaderNodeBump'); _bump.inputs['Strength'].default_value = 0.08
+    rubber.node_tree.links.new(_tex.outputs['Fac'], _bump.inputs['Height'])
+    rubber.node_tree.links.new(_bump.outputs['Normal'], _n['Principled BSDF'].inputs['Normal'])
+    disc_m = matp('layer_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
+    hat_m = matp('layer_hat', (0.08, 0.08, 0.085), 0.8, 0.45)                 # the dark disc bell
+    cal_m = matp('layer_caliper', srgb_lin('c01824', 'caliper'), 0.0, 0.3, 1.0)   # wheelKit's M Competition Red
+    rim_cache = {}
+    def load_rim(path):
+        if path in rim_cache: return rim_cache[path]
+        before = set(bpy.data.objects)
+        try: bpy.ops.import_scene.gltf(filepath=path)
+        except RuntimeError as e: sys.exit(f'--wheel-layer rim {path}: {e}')
+        parts = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
+        if not parts: sys.exit(f'--wheel-layer rim {path}: no meshes')
+        for o in parts:
+            mw = o.matrix_world.copy(); o.parent = None; o.data.transform(mw); o.matrix_world = mathutils.Matrix()
+        bpy.ops.object.select_all(action='DESELECT')
+        for o in parts: o.select_set(True)
+        bpy.context.view_layer.objects.active = parts[0]; bpy.ops.object.join()
+        rim = bpy.context.view_layer.objects.active
+        for o in [o for o in bpy.data.objects if o not in before and o != rim]: bpy.data.objects.remove(o, do_unlink=True)
+        sc.collection.objects.unlink(rim) if rim.name in sc.collection.objects else None
+        for c in list(rim.users_collection): c.objects.unlink(rim)
+        vs = rim.data.vertices
+        rad = max(max(abs(v.co.x), abs(v.co.z)) for v in vs); ymin = min(v.co.y for v in vs)
+        rim_cache[path] = (rim, rad, ymin)
+        return rim_cache[path]
+
+    def tyre(x, y, z, r, ri, wd):
+        """A tyre turned from a profile around the axle (X): bead, gently bulged flat sidewalls, rounded shoulders and a
+        tread with three circumferential grooves, as wheelKit's buildTyre, not a torus."""
+        h = r - ri; hw = wd / 2; gd = min(0.008, h * 0.06)
+        side = [(-0.90, ri), (-0.97, ri + 0.2 * h), (-1.0, ri + 0.5 * h), (-0.985, ri + 0.78 * h), (-0.94, r - 0.035 * h),
+                (-0.86, r - 0.004), (-0.78, r)]
+        tread = []
+        for c in (-0.45, 0.0, 0.45):   # grooves 12 mm wide
+            g = 0.012 / hw * 0.5 if hw > 0 else 0.03
+            tread += [(c - g, r), (c - g, r - gd), (c + g, r - gd), (c + g, r)]
+        prof = side + tread + [(-a, rr) for a, rr in reversed(side)]
+        bm = bmesh.new()
+        vs = [bm.verts.new((a * hw, 0, rr)) for a, rr in prof]
+        es = [bm.edges.new((vs[k], vs[k + 1])) for k in range(len(vs) - 1)]
+        bmesh.ops.spin(bm, geom=vs + es, cent=(0, 0, 0), axis=(1, 0, 0), angle=2 * math.pi, steps=144, use_merge=True)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        me = bpy.data.meshes.new('layer_tyre'); bm.to_mesh(me); bm.free()
+        ob = bpy.data.objects.new('layer_tyre', me); sc.collection.objects.link(ob)
+        ob.location = (x, y, z); me.materials.append(rubber)
+        for pl in me.polygons: pl.use_smooth = True
+        return ob
+
+    def caliper(x, y, z, disc_r, s, toward):
+        """A fixed caliper over the top of the disc, towards the car's end (toward +1 front / -1 rear wheels): an
+        annular sector that hugs the disc (76 degrees, from 0.56 to 1.1 x its radius), straddling it, bevelled so its
+        edges catch the light like the engine's cast caliper."""
+        bm = bmesh.new(); n = 14; a0, a1 = math.radians(16), math.radians(92); r0, r1 = disc_r * 0.56, disc_r * 1.1
+        half = 0.065 * s
+        ring = []
+        for side in (-half, half):
+            for r in (r0, r1):
+                ring.append([bm.verts.new((side, -toward * math.cos(a0 + (a1 - a0) * k / n) * r, math.sin(a0 + (a1 - a0) * k / n) * r))
+                             for k in range(n + 1)])
+        (il, ol, ir, orr) = ring
+        for k in range(n):
+            for q in ((il[k], il[k + 1], ol[k + 1], ol[k]), (ir[k], orr[k], orr[k + 1], ir[k + 1]),
+                      (ol[k], ol[k + 1], orr[k + 1], orr[k]), (il[k], ir[k], ir[k + 1], il[k + 1])):
+                bm.faces.new(q)
+        for e_ in (0, n):
+            bm.faces.new((il[e_], ol[e_], orr[e_], ir[e_]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        me = bpy.data.meshes.new('layer_caliper'); bm.to_mesh(me); bm.free()
+        ob = bpy.data.objects.new('layer_caliper', me); sc.collection.objects.link(ob)
+        ob.location = (x, y, z); me.materials.append(cal_m)
+        bv = ob.modifiers.new('bevel', 'BEVEL'); bv.width = 0.006 * s; bv.segments = 3; bv.limit_method = 'ANGLE'
+        for pl in me.polygons: pl.use_smooth = True
+        return ob
+
+    def build_wheels(e):
+        """The four wheels of one layer, as the engine mounts them (mountRimModel, rimLayout): the rim's largest
+        dimension is a 20-inch rim on a 0.35 m tyre, scaled by inches/20; its face sits 12 mm inside the tyre's outer
+        plane; the tyre keeps its size and the sidewall thins as the rim grows."""
+        hx, met, rough, coat = e['finish']
+        fin = matp('finish_' + e['name'], srgb_lin(hx, e['name']), float(met), float(rough), float(coat))
+        made = []
+        for i, (x, y, z, r, wd) in enumerate(WHEELS):
+            src, rad, ymin = load_rim(e['rims'][min(i // 2, len(e['rims']) - 1)])   # front pair first
+            sgn = 1 if x > 0 else -1; s = r / 0.35
+            ro = r * (0.26 / 0.35) * float(e['inches']) / 20
+            rim = src.copy(); sc.collection.objects.link(rim)
+            for sl in rim.material_slots: sl.link = 'OBJECT'; sl.material = fin
+            k = ro / rad; rim.rotation_mode = 'XYZ'
+            rim.scale = (k,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
+            rim.location = (x + sgn * (wd / 2 - 0.012 * s + ymin * k), y, z)
+            ri = min(ro * 0.97, r - 0.03)
+            ty = tyre(x, y, z, r, ri, wd)
+            bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=ro * 0.78, depth=0.03, location=(x - sgn * 0.07 * s, y, z),
+                                                rotation=(0, math.pi / 2, 0))
+            dk = bpy.context.object; dk.data.materials.append(disc_m)
+            bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=ro * 0.78 * 0.5, depth=0.05, location=(x - sgn * 0.05 * s, y, z),
+                                                rotation=(0, math.pi / 2, 0))
+            hat = bpy.context.object; hat.data.materials.append(hat_m)
+            cal = caliper(x - sgn * 0.07 * s, y, z, ro * 0.78, s, 1 if i < 2 else -1)
+            made += [rim, ty, dk, hat, cal]
+        if receivers:
+            for o in made: receivers.objects.link(o)
+        for o in made[0::5]: fill_rx.objects.link(o)   # the rims only: lit rubber turns grey
+        return made, fin
+
+    # The wheel fill: a low softbox beside the camera that lights only the wheels (light linking), as a car photographer
+    # strips light along the wheels. Without it the dark studio leaves dark finishes (Hyper Black, Gloss Black) murky
+    # where the live engine's environment gives their spoke edges a highlight. Placed per view in the render loop.
+    WHEEL_FILL = float(os.environ.get('WHEEL_FILL', '90'))
+    fill_rx = bpy.data.collections.new('wheel_fill_receivers')
+    wheel_fill = softbox('wheel_fill', (0, 0, 0), (0, 0, 0), 3.0, 1.0, WHEEL_FILL)
+    wheel_fill.visible_camera = False
+    wheel_fill.light_linking.receiver_collection = fill_rx
+    wz = sum(w[2] for w in WHEELS) / len(WHEELS)
+    def place_fill(cam):
+        tgt = mathutils.Vector((cx, cy, wz)); cpos = cam.matrix_world.translation
+        flat = mathutils.Vector((cpos.x - tgt.x, cpos.y - tgt.y, 0))
+        if flat.length < 1e-3: flat = mathutils.Vector((0, -1, 0))
+        pos = tgt + flat.normalized() * 4.5 + mathutils.Vector((0, 0, 0.35))   # same distance in every view
+        wheel_fill.location = pos
+        wheel_fill.rotation_euler = (tgt - pos).to_track_quat('-Z', 'Y').to_euler()
+
+    def wheel_box(cam):
+        """The wheels' extent in this camera's frame (fractions, top-left origin), padded; None when off frame."""
+        from bpy_extras.object_utils import world_to_camera_view
+        us, vs = [], []
+        for (x, y, z, r, wd) in WHEELS:
+            for dx in (-wd / 2, wd / 2):
+                for dy in (-r, r):
+                    for dz in (-r, r):
+                        p = world_to_camera_view(sc, cam, mathutils.Vector((x + dx, y + dy, z + dz)))
+                        if p.z > 0: us.append(p.x); vs.append(1 - p.y)
+        if not us: return None
+        pad = 0.015
+        box = [max(0.0, min(us) - pad), max(0.0, min(vs) - pad), min(1.0, max(us) + pad), min(1.0, max(vs) + pad)]
+        return box if box[2] > box[0] and box[3] > box[1] else None
+
 sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'
 if a.threads: sc.render.threads_mode = 'FIXED'; sc.render.threads = a.threads
 sc.cycles.seed = a.seed; sc.cycles.samples = a.samples; sc.cycles.use_denoising = True
@@ -651,6 +923,58 @@ if DERIVE:
     SETS = {'gloss': (0.30, 1.0, 0.0), 'matte': (0.55, 0.0, 0.0), 'flake': (FLAKE_ROUGH, 1.0, 1.0)}
     fo = setup_derive()
 views = a.views.split(',') if a.views else list(cams)
+if a.plate:
+    sc.render.film_transparent = False; sc.render.image_settings.color_mode = 'RGB'
+    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
+    for v in views:
+        if v not in cams: sys.exit(f'--plate: no camera CAM_{v} in {a.glb}')
+        sc.camera = cams[v]; os.makedirs(os.path.join(a.out, v), exist_ok=True)
+        sc.render.filepath = os.path.join(a.out, v, 'plate.png'); bpy.ops.render.render(write_still=True)
+        if not os.path.exists(sc.render.filepath): sys.exit(f'--plate: no file written at {sc.render.filepath}')
+        print('rendered', sc.render.filepath, flush=True)
+    sys.exit(0)
+if a.wheel_layer:
+    sc.render.image_settings.color_mode = 'RGBA'
+    for v in views:
+        if v not in cams: sys.exit(f'--wheel-layer: no camera CAM_{v} in {a.glb}')
+    for e in LAYERS:
+        todo = [v for v in views if not os.path.exists(os.path.join(a.out, v, 'wheels', e['name'] + '.png'))]
+        if not todo: continue
+        made, fin = build_wheels(e)
+        for v in todo:
+            sc.camera = cams[v]; d = os.path.join(a.out, v, 'wheels')
+            try: os.makedirs(d, exist_ok=True)
+            except OSError as e: sys.exit(f'--wheel-layer: cannot create {d}: {e}')
+            place_fill(cams[v])
+            box = wheel_box(cams[v])
+            if not box: print('no wheels in view', v, flush=True); continue
+            try:
+                with open(os.path.join(d, 'box.json'), 'w') as f: json.dump([round(b, 5) for b in box], f)
+            except OSError as e: sys.exit(f'--wheel-layer: cannot write {d}/box.json: {e}')
+            # Blender's border is bottom-left origin; the crop keeps only the wheels' rectangle
+            sc.render.use_border = True; sc.render.use_crop_to_border = True
+            sc.render.border_min_x, sc.render.border_max_x = box[0], box[2]
+            sc.render.border_min_y, sc.render.border_max_y = 1 - box[3], 1 - box[1]
+            out = os.path.join(d, e['name'] + '.png'); sc.render.filepath = out + '.tmp.png'
+            bpy.ops.render.render(write_still=True)
+            if not os.path.exists(sc.render.filepath): sys.exit(f'--wheel-layer: no file written at {sc.render.filepath}')
+            try: os.replace(sc.render.filepath, out)   # only complete files count as done (a restart mid-write leaves .tmp)
+            except OSError as e: sys.exit(f'--wheel-layer: cannot move {sc.render.filepath} to {out}: {e}')
+            print('rendered', out, flush=True)
+        for o in made: bpy.data.objects.remove(o, do_unlink=True)
+        bpy.data.materials.remove(fin)
+    sys.exit(0)
+if a.hero:
+    v = views[0] if a.views else 'frontThreeQuarter'
+    if v not in cams: sys.exit(f'--hero: no camera CAM_{v} in {a.glb}')
+    sc.camera = cams[v]; sc.render.film_transparent = False
+    sc.view_settings.exposure += float(os.environ.get('HERO_EV', '0.0'))
+    sc.render.resolution_x = a.width; sc.render.resolution_y = round(a.width * 9 / 16)
+    sc.render.image_settings.color_mode = 'RGB'
+    os.makedirs(a.out, exist_ok=True); sc.render.filepath = os.path.join(a.out, 'hero.png')
+    bpy.ops.render.render(write_still=True)
+    if not os.path.exists(sc.render.filepath): sys.exit(f'--hero: no file written at {sc.render.filepath}')
+    print('rendered', sc.render.filepath, flush=True); sys.exit(0)
 base_energy = {o.name: o.data.energy for o in sc.objects if o.type == 'LIGHT'}
 for v in views:
     sc.camera = cams[v]

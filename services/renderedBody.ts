@@ -74,6 +74,45 @@ export const loadStillsManifest = async (): Promise<Record<string, string[]>> =>
   return out;
 };
 
+/**
+ * Studio plates (public/renders/plates.json, { carId: [view, ...] }): the welcome stills' floor, light pool and black
+ * void rendered in Cycles per car and view without the car (render_car.py --plate), drawn behind the body frame in
+ * place of the CSS gradient backdrop. A car or view without one keeps the gradient.
+ */
+export const loadPlates = (): Promise<Record<string, string[]>> =>
+  fetch('/renders/plates.json').then((r) => (r.ok ? (r.json() as Promise<Record<string, string[]>>) : {})).catch(() => ({} as Record<string, string[]>));
+export const plateUrl = (carId: string, view: CameraViewPreset) => `/renders/${carId}/${view}/plate.webp`;
+
+/**
+ * Path-traced wheel layers (render_car.py --wheel-layer, publish_wheel_layers.py): the rims, tyres, discs and calipers
+ * rendered in each view's studio with the body as a holdout, so they sit on the frame exactly as the body does.
+ * `cars[car][view]` is [box, indexes into names]; the box is where the cropped image sits in the frame (fractions of
+ * the frame, from the top left). Anything not listed falls back to the live WebGL wheels.
+ */
+export type WheelLayers = { names: string[]; cars: Record<string, Partial<Record<CameraViewPreset, [[number, number, number, number], number[]]>>> };
+export const NO_WHEEL_LAYERS: WheelLayers = { names: [], cars: {} };
+export const loadWheelLayers = (): Promise<WheelLayers> =>
+  fetch('/renders/wheels.json')
+    .then((r) => (r.ok ? r.json() : NO_WHEEL_LAYERS))
+    .then((j: WheelLayers) => (Array.isArray(j?.names) && j.cars && typeof j.cars === 'object' ? j : NO_WHEEL_LAYERS))
+    .catch(() => NO_WHEEL_LAYERS);
+/** The layer for this car, view, wheel, finish and size ('20"'), or null when it has not been rendered. */
+export function wheelLayerFor(layers: WheelLayers, carId: string, view: CameraViewPreset, wheelId: string, finishId: string, size: string) {
+  const entry = layers.cars[carId]?.[view];
+  if (!entry) return null;
+  const name = `${wheelId}__${finishId}__${parseInt(size, 10)}`;
+  const i = layers.names.indexOf(name);
+  if (i < 0 || !entry[1].includes(i)) return null;
+  return { url: `/renders/${carId}/${view}/wheels/${name}.webp`, box: entry[0] };
+}
+const plateImage = (url: string): Promise<HTMLImageElement | null> =>
+  new Promise((resolve) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => resolve(null); // a missing plate falls back to the gradient
+    im.src = url;
+  });
+
 const toLin = new Float32Array(256).map((_, i) => {
   const c = i / 255;
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -358,26 +397,53 @@ export const hasBodies = (manifest: Record<string, string[]>, carId: string, vie
  * loses a sliver top and bottom; the wheel close-up already fills its frame, so there is no seam at its sides).
  * Resolves to [] when the wheel layers are unavailable (the caller falls back to the live 3D stills).
  */
-export async function renderedStills(engine: CarConfiguratorEngine, carId: string, paint: PaintColor, views: CameraViewPreset[], outW = 1600, outH = 900): Promise<string[]> {
+export async function renderedStills(
+  engine: CarConfiguratorEngine,
+  carId: string,
+  paint: PaintColor,
+  views: CameraViewPreset[],
+  outW = 1600,
+  outH = 900,
+  /** The wheel choice: a view with a path-traced layer for it uses that, as the configurator does, else the live wheels */
+  choice?: { wheelId: string; finishId: string; size: string }
+): Promise<string[]> {
   const bodies = await Promise.all(views.map((v) => recolouredBody(carId, v, paint)));
   const { width: bw, height: bh } = bodies[0];
   const k = Math.max(outW / bw, outH / bh);
   const frame: Frame = { left: (outW - bw * k) / 2, top: (outH - bh * k) / 2, width: bw * k, height: bh * k };
   const wheels = await engine.captureWheelLayers(views, Math.round(frame.width));
   if (wheels.length !== views.length) return [];
+  const plates = await loadPlates();
+  const plateImgs = await Promise.all(views.map((v) => (plates[carId]?.includes(v) ? plateImage(plateUrl(carId, v)) : Promise.resolve(null))));
+  const layers = choice ? await loadWheelLayers() : NO_WHEEL_LAYERS;
+  const layerImgs = await Promise.all(
+    views.map((v) => {
+      const l = choice && wheelLayerFor(layers, carId, v, choice.wheelId, choice.finishId, choice.size);
+      return l ? plateImage(l.url).then((im) => (im ? { im, box: l.box } : null)) : Promise.resolve(null);
+    })
+  );
   return bodies.map((body, i) => {
     const c = document.createElement('canvas');
     c.width = outW;
     c.height = outH;
     const g = c.getContext('2d')!;
-    paintBackdrop(g, outW, outH, frame, views[i]);
+    const plate = plateImgs[i];
+    if (plate) {
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, outW, outH);
+      g.drawImage(plate, frame.left, frame.top, frame.width, frame.height);
+    } else paintBackdrop(g, outW, outH, frame, views[i]);
     const layer = document.createElement('canvas'); // putImageData replaces pixels, so the body goes through a canvas to blend
     layer.width = bw;
     layer.height = bh;
     layer.getContext('2d')!.putImageData(body, 0, 0);
     g.imageSmoothingQuality = 'high';
     g.drawImage(layer, frame.left, frame.top, frame.width, frame.height);
-    g.drawImage(wheels[i], frame.left, frame.top, frame.width, frame.height);
+    const wl = layerImgs[i];
+    if (wl) {
+      const [x0, y0, x1, y1] = wl.box;
+      g.drawImage(wl.im, frame.left + x0 * frame.width, frame.top + y0 * frame.height, (x1 - x0) * frame.width, (y1 - y0) * frame.height);
+    } else g.drawImage(wheels[i], frame.left, frame.top, frame.width, frame.height);
     return c.toDataURL('image/jpeg', 0.92);
   });
 }

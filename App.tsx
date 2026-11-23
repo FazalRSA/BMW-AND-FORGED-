@@ -25,7 +25,7 @@ import { AccountSheet } from './components/journey/AccountSheet';
 import { Button, IconButton } from './components/journey/ui';
 import { UserRound } from 'lucide-react';
 import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
-import { backdropCss, hasBodies, loadFramesCars, loadStillsManifest, renderedStills, type FramesLayout } from './services/renderedBody';
+import { backdropCss, hasBodies, loadFramesCars, loadPlates, loadStillsManifest, loadWheelLayers, NO_WHEEL_LAYERS, plateUrl, renderedStills, wheelLayerFor, type FramesLayout, type WheelLayers } from './services/renderedBody';
 
 // Pages off the main journey load on demand
 const ForgedPage = lazy(() => import('./components/ForgedPage').then((m) => ({ default: m.ForgedPage })));
@@ -171,9 +171,13 @@ export const App: React.FC = () => {
   const [renderedCars, setRenderedCars] = useState<Record<string, string[]>>({});
   // Cars whose summary and PDF stills are Blender renders: those above, plus the ones that only have stills (renders/stills.json)
   const [stillCars, setStillCars] = useState<Record<string, string[]>>({});
+  const [plates, setPlates] = useState<Record<string, string[]>>({});
+  const [wheelLayers, setWheelLayers] = useState<WheelLayers>(NO_WHEEL_LAYERS);
   useEffect(() => {
     loadRenderManifest().then(setRenderedCars);
     loadStillsManifest().then(setStillCars);
+    loadPlates().then(setPlates);
+    loadWheelLayers().then(setWheelLayers);
   }, []);
   const [stage, setStage] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -384,6 +388,15 @@ export const App: React.FC = () => {
   // A frames-only car is always its frame (it has no live body for the turntable to show)
   const framesCar = !!framesCars[selectedCar.id];
   const rendered = route.name === 'configure' && (framesCar || !autoRotate) && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
+  const hasPlate = rendered && (plates[selectedCar.id]?.includes(cameraView) ?? false);
+  // The path-traced wheels for this view and wheel choice (render_car.py --wheel-layer), drawn over the body; the live
+  // wheels hide only once the image is in, so a choice without a layer (or one still loading) shows the live ones
+  const wheelLayer = rendered ? wheelLayerFor(wheelLayers, selectedCar.id, cameraView, selectedWheel.id, selectedFinish.id, selectedSize) : null;
+  const [wheelLayerLoaded, setWheelLayerLoaded] = useState<string | null>(null);
+  const wheelLayerShown = !!wheelLayer && wheelLayerLoaded === wheelLayer.url;
+  useEffect(() => {
+    engineRef.current?.setWheelsHidden(wheelLayerShown);
+  }, [wheelLayerShown, selectedCar.id]);
   const renderedRef = useRef(rendered);
   renderedRef.current = rendered;
   const computeStage = useCallback(() => {
@@ -705,9 +718,9 @@ export const App: React.FC = () => {
       const take = () => {
         if (token !== stillsToken.current) return;
         // Cars with pre-rendered bodies get stills made the way the configurator draws them (same body, tone curve and
-        // backdrop, live wheels on top); the others, or if that fails, the live 3D car
+        // backdrop, the path-traced wheels or else the live ones on top); the others, or if that fails, the live 3D car
         if (!hasBodies(stillCars, selectedCar.id, views)) return live();
-        renderedStills(engine, selectedCar.id, selectedPaint, views)
+        renderedStills(engine, selectedCar.id, selectedPaint, views, 1600, 900, { wheelId: selectedWheel.id, finishId: selectedFinish.id, size: selectedSize })
           .then((imgs) => (imgs.length === views.length ? token === stillsToken.current && setSummaryImages(imgs) : live()))
           .catch(live);
       };
@@ -801,12 +814,40 @@ export const App: React.FC = () => {
       <div
         aria-hidden
         className="absolute inset-0 z-[4] pointer-events-none transition-opacity duration-500"
-        style={{ background: backdropFrame ? backdropCss(backdropFrame, cameraView) : undefined, opacity: rendered && stage ? 1 : 0 }}
+        style={{ background: hasPlate ? '#000' : backdropFrame ? backdropCss(backdropFrame, cameraView) : undefined, opacity: rendered && stage ? 1 : 0 }}
       />
+      {/* The Cycles studio plate behind the body (render_car.py --plate): the welcome stills' floor and light pool */}
+      {rendered && stage && hasPlate && (
+        <div
+          aria-hidden
+          className="absolute z-[4] pointer-events-none"
+          style={{ ...stage, ...stageEdgeFade(stage), background: `url(${plateUrl(selectedCar.id, cameraView)}) center / 100% 100% no-repeat` }}
+        />
+      )}
 
       {rendered && stage && (
         <div className="absolute z-[5] pointer-events-none" style={{ ...stage, ...stageEdgeFade(stage) }}>
           <RenderedCarView carId={selectedCar.id} view={cameraView} paint={selectedPaint} />
+        </div>
+      )}
+
+      {rendered && stage && wheelLayer && (
+        <div aria-hidden className="absolute z-[6] pointer-events-none" style={{ ...stage, ...stageEdgeFade(stage) }}>
+          <img
+            key={wheelLayer.url}
+            src={wheelLayer.url}
+            alt=""
+            draggable={false}
+            onLoad={() => setWheelLayerLoaded(wheelLayer.url)}
+            className="absolute"
+            style={{
+              left: `${wheelLayer.box[0] * 100}%`,
+              top: `${wheelLayer.box[1] * 100}%`,
+              width: `${(wheelLayer.box[2] - wheelLayer.box[0]) * 100}%`,
+              height: `${(wheelLayer.box[3] - wheelLayer.box[1]) * 100}%`,
+              opacity: wheelLayerShown ? 1 : 0,
+            }}
+          />
         </div>
       )}
 

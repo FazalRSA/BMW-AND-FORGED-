@@ -2657,6 +2657,15 @@ export class CarConfiguratorEngine {
   private renderEnvTarget: THREE.WebGLRenderTarget | null = null;
   private renderEnvLoading: Promise<THREE.WebGLRenderTarget | null> | null = null;
   private liveEnv: { env: THREE.Texture | null; intensity: number; rotation: THREE.Euler } | null = null;
+  /**
+   * Hides the live wheels while the configurator shows a path-traced wheel layer over the rendered body
+   * (public/renders/wheels.json, drawn by App).
+   */
+  public setWheelsHidden(hidden: boolean) {
+    if (this.wheelsGroup.visible === !hidden) return;
+    this.wheelsGroup.visible = !hidden;
+    this.requestRender();
+  }
   public setRenderedBody(on: boolean) {
     if (on === this.renderedBody) return;
     this.renderedBody = on;

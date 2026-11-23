@@ -211,6 +211,42 @@ check in the browser's network tab that no `.glb` is requested for it on the wel
   that sorts before the car's (Donington Grey for the X5 M, Melbourne Red for the M240i).
 - The whole process, the review loop and a table of defects and fixes: the `forgedsa-frames-only-car` skill.
 
+## Path-traced wheel layers (2026-11-23)
+
+On a rendered view the wheels are Cycles images too, not the live WebGL wheels: each stock wheel in each finish and
+size, rendered per car and view in the frames' own studio. The body and floor stay in the scene as **holdouts**, so
+they shade the wheels (arch shadows, reflections) and hide what they cover (the far wheels), yet render transparent;
+the image is cropped to the wheels. `App.tsx` draws it over the body frame and hides the live wheels
+(`engine.setWheelsHidden`) once it has loaded; a car, view, wheel, finish or size without a layer keeps the live
+wheels. The summary and PDF stills use the same layers (`renderedStills`, `choice`).
+
+The wheels are built as the engine mounts them (`mountRimModel`, `rimLayout`): the rim's largest dimension is a
+20-inch rim on a 0.35 m tyre, times inches/20; its face 12 mm inside the tyre's outer plane; the tyre keeps its size;
+the catalogue finish on every rim mesh; a tyre turned from a profile (bead, flat sidewalls, shoulders, three tread
+grooves); a disc with a dark bell and an M Competition Red caliper (`#c01824`) behind the spokes. One extra light, the
+**wheel fill** (`WHEEL_FILL`, 90 W, a 3 x 1 m softbox 4.5 m out towards the camera at wheel height), is light-linked to
+the rims only: without it the dark studio leaves Hyper Black and Gloss Black murky where the live wheels' environment
+lights their spoke edges; on the tyres it turned the rubber grey (tried at 120 and 300 W, and 40 W: too little).
+
+```bash
+# 1. plain copies of the rim GLBs for Blender (bpy has no meshopt decoder), same names
+node scripts/plates/decode-rims.mjs .scratch/wl/rims
+# 2. render (about 3 s a layer on 4 CPU threads; 19 cars x 14 wheel-finishes x 2 sizes x 6 views is about 3 hours)
+PATH=/opt/bpyenv/bin:$PATH scripts/prerender/wheel-layers.sh .scratch/wl/rims .scratch/wl/out [car ...]
+# 3. publish (any time, also while 2 runs): recolourInto's exposure and Neutral curve, WebP, public/renders/wheels.json
+python3 scripts/prerender/publish_wheel_layers.py .scratch/wl/out
+```
+
+- Files: `public/renders/<car>/<view>/wheels/<wheel>__<finish>__<inches>.webp` (10-15 KB each) and the index
+  `public/renders/wheels.json` (`{names, cars: {car: {view: [box, name indexes]}}}`; box = the crop in the frame, as
+  fractions from the top left).
+- **Re-render** a car's layers after its frames change (same camera and holdout geometry), and every layer of a
+  finish whose colour, metalness, roughness or clear coat is changed in `/admin` (the layers bake the catalogue's
+  values; `wheel-combos.ts` reads them). A new stock wheel needs its rim decoded and the batch run again: finished files
+  are kept, so only the new ones render.
+- A car with `glass_unlink` keeps the strip lights linked to the wheels (they join `light_receivers`), so its wheels
+  are lit like every other car's.
+
 ## The configurator screen is the stage look
 
 Whatever is drawn live (a car or view without a Blender frame, and the turntable of any car) sits in the
