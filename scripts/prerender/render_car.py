@@ -666,7 +666,7 @@ if a.hero:
     for i, (x, y, z, r, wd) in enumerate(WHEELS):
         src, rad = rims[min(i // 2, len(rims) - 1)]   # wheels.json lists the front pair first
         sgn = 1 if x > 0 else -1
-        ro = r * 0.78                                  # rim outer radius: a 20-inch rim on the car's own tyre
+        ro = min(0.262, r - 0.04)                      # rim lip radius: a 20-inch rim on the car's own factory tyre
         rim = src.copy(); rim.data = src.data; sc.collection.objects.link(rim)
         rim.rotation_mode = 'XYZ'   # glTF imports use quaternions, which would ignore rotation_euler
         rim.scale = (ro / rad,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
@@ -839,15 +839,17 @@ if a.wheel_layer:
 
     def build_wheels(e):
         """The four wheels of one layer, as the engine mounts them (mountRimModel, rimLayout): the rim's largest
-        dimension is a 20-inch rim on a 0.35 m tyre, scaled by inches/20; its face sits 12 mm inside the tyre's outer
-        plane; the tyre keeps its size and the sidewall thins as the rim grows."""
+        dimension is the rim's lip radius for its size; its face sits 12 mm inside the tyre's outer plane; the tyre keeps the
+        car's own size and the sidewall thins as the rim grows."""
         hx, met, rough, coat = e['finish']
         fin = matp('finish_' + e['name'], srgb_lin(hx, e['name']), float(met), float(rough), float(coat))
         made = []
         for i, (x, y, z, r, wd) in enumerate(WHEELS):
             src, rad, ymin = load_rim(e['rims'][min(i // 2, len(e['rims']) - 1)])   # front pair first
             sgn = 1 if x > 0 else -1; s = r / 0.35
-            ro = r * (0.26 / 0.35) * float(e['inches']) / 20
+            # the rim's lip radius for its size (a 20-inch rim is 0.262 m on every car), inside the car's own tyre: a bigger rim on the
+            # same tyre thins the sidewall, as plus-sizing does; the tyre radius r is the factory tyre's (from the car's model)
+            ro = min(float(e['inches']) * 0.0127 + 0.008, r - 0.04)
             rim = src.copy(); sc.collection.objects.link(rim)
             for sl in rim.material_slots: sl.link = 'OBJECT'; sl.material = fin
             k = ro / rad; rim.rotation_mode = 'XYZ'
