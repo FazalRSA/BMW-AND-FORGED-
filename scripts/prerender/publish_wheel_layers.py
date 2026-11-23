@@ -93,6 +93,14 @@ def main():
                 if name not in names:
                     names.append(name)
                 idx.append(names.index(name))
+            # a layer file with no render behind it is stale (a size or design that was dropped or is being re-rendered): remove it
+            keep = {os.path.basename(g)[:-4] + '.webp' for g in glob.glob(os.path.join(d, '*.png')) if not g.endswith('.tmp.png')}
+            for old_webp in glob.glob(os.path.join(out_dir, '*.webp')):
+                if os.path.basename(old_webp) not in keep:
+                    try:
+                        os.remove(old_webp)
+                    except OSError as e:
+                        sys.exit(f'{old_webp}: {e}')
             if idx:
                 cars.setdefault(car, {})[view] = [box, sorted(idx)]
     # v: changes whenever a layer file changes; the app adds it to each layer URL, so a re-rendered layer is never served
