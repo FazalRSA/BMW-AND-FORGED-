@@ -613,5 +613,37 @@
    2.307,
    1.052
   ]
- }
+ },
+ "m4_cs_g82": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "m2_g87": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "m5_g90": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "m5_touring_g99": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ]
 }
