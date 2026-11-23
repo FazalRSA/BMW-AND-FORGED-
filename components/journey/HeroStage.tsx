@@ -11,7 +11,7 @@ import { cx } from './ui';
  * Stamp on every hero image URL. The stills keep their names when re-rendered and /hero/ is cached for a day plus a week of
  * stale-while-revalidate, so bump this whenever public/hero/* changes (phones kept showing the old M3 Touring still).
  */
-export const HERO_VERSION = '20261123b';
+export const HERO_VERSION = '20261123c';
 export const heroUrl = (carId: string, width: 960 | 1600) => `/hero/${carId}-${width}.webp?v=${HERO_VERSION}`;
 
 /** One car on the welcome stage: a Cycles still rendered in the reference studio (public/hero/<carId>-<w>.webp). */
