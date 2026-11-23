@@ -1032,7 +1032,7 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
         await p.waitForFunction((t) => (document.querySelector('aside')?.textContent || '').includes('Finish · ' + t), name, { timeout: WAIT }).catch(() => { throw new Error(`finish ${name} not shown in the details`); });
         if (studio) await attrIs(finishChip(name), 'aria-pressed', 'true', `studio chip ${name}`);
       };
-      /** "Model: ⌀520 × 245 mm" in the studio's badge (the size of the model on stage) */
+      /** "Model: ⌀520 × 245 mm" in the studio's badge: only the advanced stage has it, so on the rim page this is empty */
       const modelLine = async () => /Model: [^A-Za-z]*mm/.exec((await text(stage)) || '')?.[0] || '';
       const staggered = (w) => !!w.rear_model_url && w.rear_model_url !== w.model_url;
 
@@ -1059,13 +1059,17 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
           const titles = await chips.evaluateAll((els) => els.map((e) => e.getAttribute('title')));
           assert(titles.length === finishNames.length && titles.every((t, j) => t === finishNames[j] || t.startsWith(finishNames[j] + ' · ')), `finish swatches "${titles.join('", "')}" for ${finishNames.join(', ')}`);
           if (studio) {
+            // (the shared viewer draws its Finish row only for a wheel with more than one finish)
             const labels = await stage.locator('button[aria-label^="Select "][aria-label$=" finish"]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
-            assert(labels.join(' | ') === finishNames.map((f) => `Select ${f} finish`).join(' | '), `studio finish chips: ${labels.join(', ')}`);
-            assert((await stage.locator('[role="group"][aria-label="Axle"]').count()) === (staggered(w) ? 1 : 0), staggered(w) ? 'a staggered set without Front / Rear' : 'Front / Rear on a wheel with one model');
+            const wantChips = finishNames.length > 1 ? finishNames.map((f) => `Select ${f} finish`) : [];
+            assert(labels.join(' | ') === wantChips.join(' | '), `studio finish chips: "${labels.join(', ')}" for ${finishNames.length} finish(es)`);
+            // (the shared viewer's Front / Rear chips, only for a set with its own rear file)
+            const axleChips = (await chip('Front').count()) + (await chip('Rear').count());
+            assert(axleChips === (staggered(w) ? 2 : 0), staggered(w) ? 'a staggered set without Front / Rear' : 'Front / Rear on a wheel with one model');
           }
           // each finish from the details, then back through them from the studio's own chips: the two stay in step
-          for (let j = 0; j < finishNames.length; j++) { await act(chips.nth(j)); await finishShown(finishNames[j], studio); }
-          if (studio) for (let j = finishNames.length - 1; j >= 0; j--) { await act(finishChip(finishNames[j])); await finishShown(finishNames[j], true); }
+          for (let j = 0; j < finishNames.length; j++) { await act(chips.nth(j)); await finishShown(finishNames[j], studio && finishNames.length > 1); }
+          if (studio && finishNames.length > 1) for (let j = finishNames.length - 1; j >= 0; j--) { await act(finishChip(finishNames[j])); await finishShown(finishNames[j], true); }
           if (studio) assert((await studioState()) === 'ready', `the wheel studio is "${await studioState()}" after the finishes`);
           return `${finishNames.length} finish${finishNames.length === 1 ? '' : 'es'}${studio ? `, ${await modelLine()}` : ', photo (no model)'}`;
         });
@@ -1081,61 +1085,61 @@ const slug = (s) => s.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0
             await pressed('Rear', true);
             await pressed('Front', false);
             await studioReady();
-            await p.waitForFunction(() => document.querySelector('.wheel-stage b')?.textContent.trim() === 'Rear', null, { timeout: WAIT }).catch(() => { throw new Error('the badge does not say Rear'); });
             const rear = await modelLine();
             await act(chip('Front'));
             await pressed('Front', true);
             await pressed('Rear', false);
             await studioReady();
-            await p.waitForFunction(() => document.querySelector('.wheel-stage b')?.textContent.trim() === 'Front', null, { timeout: WAIT }).catch(() => { throw new Error('the badge does not say Front'); });
             return `front ${front || '(not measured)'}, rear ${rear || '(not measured)'}`;
           });
         }
         if (i === 0) {
-          await check(R, 'studio views Face / 3/4 / Side / Back / Top (a view stops the orbit)', async () => {
+          // (first: a click scrolls the chip row, which would hide how the controls open)
+          await check(R, 'studio controls: one panel, no chip more than half out of sight', async () => {
+            await studioReady();
+            const panel = stage.getByRole('group', { name: '3D view controls' });
+            await panel.waitFor({ timeout: WAIT });
+            assert(await chip('Enquire').isVisible(), 'no Enquire chip in the panel');
+            // the chip rows scroll sideways when they are wider than the panel; what shows on first sight is the panel clipped by
+            // every scrolling or clipping ancestor
+            const cut = await panel.getByRole('button').evaluateAll((els) => els.map((e) => {
+              const r = e.getBoundingClientRect();
+              let left = 0, right = innerWidth;
+              for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) {
+                if (getComputedStyle(a).overflowX !== 'visible') { const b = a.getBoundingClientRect(); left = Math.max(left, b.left); right = Math.min(right, b.right); }
+              }
+              const shown = Math.max(0, Math.min(r.right, right) - Math.max(r.left, left));
+              return { t: e.textContent.trim(), px: Math.round(r.width - shown), half: shown < r.width / 2 };
+            }).filter((c) => c.px > 1));
+            const hidden = cut.filter((c) => c.half);
+            assert(!hidden.length, `chips more than half out of sight: ${hidden.map((c) => `${c.t} (${c.px}px)`).join(', ')}`);
+            return cut.length ? `cut at the edge, reachable by scrolling: ${cut.map((c) => `${c.t} ${c.px}px`).join(', ')}` : 'every chip fully in view';
+          });
+          await check(R, 'studio views Face / 3/4 / Side / Back / Top', async () => {
             await studioReady();
             const VIEWS = ['Face', '3/4', 'Side', 'Back', 'Top'];
             for (const v of VIEWS) assert((await chip(v).count()) === 1, `no "${v}" chip`);
-            // it opens on 3/4 and still (the orbit is a toggle: on load it used to carry the wheel round to its barrel)
+            // it opens on 3/4, and exactly one view is on at a time
             await pressed('3/4', true);
-            await pressed('Orbit', false);
-            await act(chip('Orbit'));
-            await pressed('Orbit', true);
             for (const v of ['Face', 'Side', 'Back', 'Top', '3/4']) {
               await act(chip(v));
               for (const o of VIEWS) await pressed(o, o === v);
-              await pressed('Orbit', false);
             }
+            assert((await studioState()) === 'ready', `the wheel studio is "${await studioState()}" after the views`);
           });
-          await check(R, 'studio toggles Orbit / Spin wheel / Exploded / Wireframe / Bolts / Cap', async () => {
+          await check(R, 'studio "Exploded" toggle (the only Show toggle on this stage)', async () => {
             await studioReady();
-            // Exploded, Bolts and Cap are only offered when the model has the parts (Brake check when it has brakes)
-            const offered = [];
-            for (const t of ['Orbit', 'Spin wheel', 'Exploded', 'Wireframe', 'Bolts', 'Cap', 'Brake check']) if (await chip(t).count()) offered.push(t);
-            for (const must of ['Orbit', 'Spin wheel', 'Wireframe']) assert(offered.includes(must), `no "${must}" toggle (offered: ${offered.join(', ')})`);
-            // as the studio starts: the wheel still and whole, its bolts and cap on (Orbit is on until a view is chosen or the wheel dragged)
-            const START = { 'Spin wheel': 'false', Exploded: 'false', Wireframe: 'false', Bolts: 'true', Cap: 'true', 'Brake check': 'false' };
-            for (const t of offered) {
-              const was = await chip(t).getAttribute('aria-pressed');
-              if (t in START) assert(was === START[t], `"${t}" starts ${was === 'true' ? 'on' : 'off'}`);
-              await act(chip(t));
-              await pressed(t, was !== 'true');
-              await act(chip(t));
-              await pressed(t, was === 'true');
-            }
-            assert((await studioState()) === 'ready', `the wheel studio is "${await studioState()}" after the toggles`);
-            return offered.join(', ');
-          });
-          await check(R, 'studio "Controls" card collapses and expands', async () => {
-            const card = stage.getByRole('button', { name: /^Controls/ });
-            await attrIs(card, 'aria-expanded', 'true', 'Controls');
-            await act(card);
-            await attrIs(card, 'aria-expanded', 'false', 'Controls');
-            await chip('Face').waitFor({ state: 'detached', timeout: WAIT }).catch(() => { throw new Error('the view chips still show in the collapsed card'); });
-            assert(await chip('Enquire').isVisible(), 'Enquire went with the card');
-            await act(card);
-            await attrIs(card, 'aria-expanded', 'true', 'Controls');
-            await chip('Face').waitFor({ timeout: WAIT });
+            // the shared viewer's simple stage has no Orbit, Spin wheel, Wireframe, Bolts or Cap toggles any more
+            for (const gone of ['Orbit', 'Spin wheel', 'Wireframe', 'Bolts', 'Cap']) assert((await chip(gone).count()) === 0, `a "${gone}" toggle is back: this check needs the new list`);
+            // Exploded is offered only when the model comes apart
+            if (!(await chip('Exploded').count())) return 'not offered for this model';
+            await pressed('Exploded', false);
+            await act(chip('Exploded'));
+            await pressed('Exploded', true);
+            await act(chip('Exploded'));
+            await pressed('Exploded', false);
+            assert((await studioState()) === 'ready', `the wheel studio is "${await studioState()}" after Exploded`);
+            return 'Exploded on and off';
           });
           await check(R, 'sizes change the price', async () => {
             const sz = p.locator('aside .grid > button');
