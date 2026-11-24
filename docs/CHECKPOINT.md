@@ -205,7 +205,7 @@ collection `feedback` (doc ids `car_<carId>`, `rim_<wheelId>`, `details_<wheelId
       spins still have the older plain hub and flat face: re-render them from the same spec keys when convenient.
 - [ ] **Owner round 2**: re-check FSA-14, 09, 02, 04 and the M3 Touring lamps on the review page (answers in `rim2_<id>`
       and `recheck_m3t_headlights`); cars and the other spins still unmarked.
-- [ ] **Broken social links** (config/brand.ts): YouTube @ForgedSA 404, TikTok @forgedsa not found, www.forgedsa.com
+- [ ] **Broken social links** (config/brand.ts): YouTube @ForgedSA 404, TikTok @forgedsa not found, www.forgedsa.co.za
       doesn't connect, Instagram unverifiable (login wall). Need the real handles from the owner.
 - [ ] Real names, sizes and prices for FSA-12/13/14 → `/admin` or a migration, mirrored in `data/configuratorData.ts`
       (owner: keep placeholders for now). Contact phone/email stay placeholders (owner's choice).

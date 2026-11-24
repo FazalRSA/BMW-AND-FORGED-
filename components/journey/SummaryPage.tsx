@@ -280,6 +280,60 @@ export const SummaryPage: React.FC<SummaryProps> = (p) => {
           </aside>
         </div>
 
+        {/* TÜV, warranties and contact. Wording in BRAND.assurance is awaiting owner confirmation; the phone and
+            Google review rows only appear once the owner has supplied them (BRAND.contact). */}
+        <section aria-label="Assurance and contact" className="mt-16 space-y-6">
+          <div className="rounded-[24px] ring-1 ring-line p-6 sm:p-8">
+            <Eyebrow>{BRAND.assurance.tuv.title}</Eyebrow>
+            <p className="mt-3 text-[14px] leading-relaxed">{BRAND.assurance.tuv.text}</p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {BRAND.assurance.warranties.map((w) => (
+              <div key={w.id} className="rounded-[24px] ring-1 ring-line p-6 sm:p-8">
+                <Eyebrow>{w.title}</Eyebrow>
+                <h3 className="mt-3 text-[17px] font-semibold">{w.headline}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed">{w.text}</p>
+                <p className="mt-3 text-[12px] leading-relaxed text-mute">{w.excludes}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[12px] leading-relaxed text-mute">{BRAND.assurance.claims}</p>
+          <div className="rounded-[24px] ring-1 ring-line p-6 sm:p-8">
+            <Eyebrow>Contact us</Eyebrow>
+            <ul className="mt-4 space-y-2 text-[14px]">
+              <li>
+                Website:{' '}
+                <a href={BRAND.contact.websiteUrl} className="underline underline-offset-2 hover:text-gold">
+                  {BRAND.contact.website}
+                </a>
+              </li>
+              {BRAND.contact.subedarPhone && (
+                <li>
+                  Subedar:{' '}
+                  <a href={`tel:${BRAND.contact.subedarPhone.replace(/\s+/g, '')}`} className="underline underline-offset-2 hover:text-gold">
+                    {BRAND.contact.subedarPhone}
+                  </a>
+                </li>
+              )}
+              {BRAND.social.filter((s) => s.id === 'instagram').map((s) => (
+                <li key={s.id}>
+                  Instagram:{' '}
+                  <a href={s.url} className="underline underline-offset-2 hover:text-gold">
+                    {s.handle}
+                  </a>
+                </li>
+              ))}
+              {BRAND.contact.googleReviewUrl && (
+                <li>
+                  <a href={BRAND.contact.googleReviewUrl} className="underline underline-offset-2 hover:text-gold">
+                    Review us on Google
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+        </section>
+
         <div className="mt-16 flex justify-center">
           <Button variant="secondary" onClick={p.onBack}>
             <ArrowLeft className="h-4 w-4" strokeWidth={1.8} />
