@@ -610,6 +610,35 @@ def srgb_lin(hx, what):
     return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4))]
 
 
+def profile_tyre(rubber, x, y, z, r, ri, wd):
+    """A tyre turned from a profile around the axle (X): bead, gently bulged flat sidewalls, rounded shoulders and a
+    tread with three circumferential grooves, as wheelKit's buildTyre, not a torus."""
+    h = r - ri; hw = wd / 2; gd = min(0.008, h * 0.06)
+    if os.environ.get('TYRE_OLD'):
+        side = [(-0.90, ri), (-0.97, ri + 0.2 * h), (-1.0, ri + 0.5 * h), (-0.985, ri + 0.78 * h), (-0.94, r - 0.035 * h),
+                (-0.86, r - 0.004), (-0.78, r)]
+    else:
+        # a real tyre's section is only a little wider than its tread: nearly straight sidewalls, a tight shoulder radius
+        # (the earlier profile bulged 22 % of the half-width past the tread edge and read as a balloon)
+        side = [(-0.90, ri), (-0.955, ri + 0.12 * h), (-0.985, ri + 0.4 * h), (-0.99, ri + 0.65 * h), (-0.965, r - 0.09 * h),
+                (-0.925, r - 0.025 * h), (-0.88, r - 0.003), (-0.84, r)]
+    tread = []
+    for c in (-0.45, 0.0, 0.45):   # grooves 12 mm wide
+        g = 0.012 / hw * 0.5 if hw > 0 else 0.03
+        tread += [(c - g, r), (c - g, r - gd), (c + g, r - gd), (c + g, r)]
+    prof = side + tread + [(-a, rr) for a, rr in reversed(side)]
+    bm = bmesh.new()
+    vs = [bm.verts.new((a * hw, 0, rr)) for a, rr in prof]
+    es = [bm.edges.new((vs[k], vs[k + 1])) for k in range(len(vs) - 1)]
+    bmesh.ops.spin(bm, geom=vs + es, cent=(0, 0, 0), axis=(1, 0, 0), angle=2 * math.pi, steps=144, use_merge=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new('layer_tyre'); bm.to_mesh(me); bm.free()
+    ob = bpy.data.objects.new('layer_tyre', me); sc.collection.objects.link(ob)
+    ob.location = (x, y, z); me.materials.append(rubber)
+    for pl in me.polygons: pl.use_smooth = True
+    return ob
+
+
 if a.plate:
     # Studio plate: the welcome stills' floor, light pool and black void, without the car (its frames bring the body and
     # its shadow). The key light sits where the hero still's does: placed from the front three-quarter camera, so the
@@ -644,6 +673,8 @@ if a.hero:
     rubber = matp('hero_rubber', (0.022, 0.022, 0.023), 0.0, 0.62)
     disc_m = matp('hero_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
     cal_m = matp('hero_caliper', (0.55, 0.02, 0.02), 0.0, 0.3, 1.0)
+    steel_m = matp('hero_cal_steel', (0.045, 0.045, 0.05), 1.0, 0.4)
+    pad_m = matp('hero_cal_pad', (0.018, 0.018, 0.018), 0.0, 0.85)
     def load_rim(path):
         before = set(bpy.data.objects)
         try: bpy.ops.import_scene.gltf(filepath=path)
@@ -674,16 +705,12 @@ if a.hero:
         rim.rotation_mode = 'XYZ'   # glTF imports use quaternions, which would ignore rotation_euler
         rim.scale = (ro / rad,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
         rim.location = (x, y, z)
-        ri = ro * 0.97; bpy.ops.mesh.primitive_torus_add(major_radius=(r + ri) / 2, minor_radius=(r - ri) / 2,
-                                                         major_segments=96, minor_segments=24, location=(x, y, z), rotation=(0, math.pi / 2, 0))
-        ty = bpy.context.object; ty.scale = (1, 1, wd / (r - ri)); ty.data.materials.append(rubber)
-        for pl in ty.data.polygons: pl.use_smooth = True
+        ri = ro * 0.97
+        profile_tyre(rubber, x, y, z, r, ri, wd)   # the same turned tyre as the wheel layers (a scaled torus read as a bubble)
         bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=ri * 0.78, depth=0.03, location=(x - sgn * 0.07, y, z), rotation=(0, math.pi / 2, 0))
         bpy.context.object.data.materials.append(disc_m)
-        cy_off = 0.62 * ri * 0.78; front = i < 2
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(x - sgn * 0.045, y + (cy_off if front else -cy_off) * 0.7, z + cy_off * 0.7))
-        cal = bpy.context.object; cal.scale = (0.07, 0.15, 0.09); cal.rotation_euler = (math.radians(45 if front else -45), 0, 0)
-        cal.data.materials.append(cal_m)
+        front = i < 2; s_ = r / 0.35
+        caliper_mod.make(bpy, bmesh, mathutils, sc, (cal_m, steel_m, pad_m), x - sgn * 0.07 * s_, y, z, ri * 0.78, s_, -1, sgn, front, rim)
     for o in (src for src, _ in rims): bpy.data.objects.remove(o, do_unlink=True)
     floor.is_shadow_catcher = False   # a real floor: the light pool and the car's reflection are in the picture
     fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
@@ -796,26 +823,7 @@ if a.wheel_layer:
         return rim_cache[path]
 
     def tyre(x, y, z, r, ri, wd):
-        """A tyre turned from a profile around the axle (X): bead, gently bulged flat sidewalls, rounded shoulders and a
-        tread with three circumferential grooves, as wheelKit's buildTyre, not a torus."""
-        h = r - ri; hw = wd / 2; gd = min(0.008, h * 0.06)
-        side = [(-0.90, ri), (-0.97, ri + 0.2 * h), (-1.0, ri + 0.5 * h), (-0.985, ri + 0.78 * h), (-0.94, r - 0.035 * h),
-                (-0.86, r - 0.004), (-0.78, r)]
-        tread = []
-        for c in (-0.45, 0.0, 0.45):   # grooves 12 mm wide
-            g = 0.012 / hw * 0.5 if hw > 0 else 0.03
-            tread += [(c - g, r), (c - g, r - gd), (c + g, r - gd), (c + g, r)]
-        prof = side + tread + [(-a, rr) for a, rr in reversed(side)]
-        bm = bmesh.new()
-        vs = [bm.verts.new((a * hw, 0, rr)) for a, rr in prof]
-        es = [bm.edges.new((vs[k], vs[k + 1])) for k in range(len(vs) - 1)]
-        bmesh.ops.spin(bm, geom=vs + es, cent=(0, 0, 0), axis=(1, 0, 0), angle=2 * math.pi, steps=144, use_merge=True)
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        me = bpy.data.meshes.new('layer_tyre'); bm.to_mesh(me); bm.free()
-        ob = bpy.data.objects.new('layer_tyre', me); sc.collection.objects.link(ob)
-        ob.location = (x, y, z); me.materials.append(rubber)
-        for pl in me.polygons: pl.use_smooth = True
-        return ob
+        return profile_tyre(rubber, x, y, z, r, ri, wd)
 
     def caliper(x, y, z, disc_r, s, toward, sgn, front, rim):
         """The fixed monobloc caliper (scripts/prerender/caliper.py): a clean C-section casting, six piston bosses, bridge bolts, never trimmed to the spokes."""
