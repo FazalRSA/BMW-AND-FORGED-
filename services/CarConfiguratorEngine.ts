@@ -97,6 +97,8 @@ export class CarConfiguratorEngine {
   private ownDiscMeshes = new Map<string, THREE.Object3D[]>();
   /** Copies of the car's painted caliper material, recoloured by applyCaliperColor. */
   private ownCaliperPaints: THREE.MeshStandardMaterial[] = [];
+  /** True when the car's own model has calipers (ours then stay hidden, except over a pre-rendered body, which has none). */
+  private hasModelCalipers = false;
   /** Factory rim diameter (inches) of each axle from the car's fitment; null when not known. */
   private factoryInches: { front: number | null; rear: number | null } = { front: null, rear: null };
   /** The chosen rim diameter in inches. */
@@ -1397,6 +1399,7 @@ export class CarConfiguratorEngine {
     if (corners.size === 4) CarConfiguratorEngine.stripLeftoverWheelParts(model, [...corners.values()]);
 
     // The model's own calipers replace ours (they match its brakes and arches)
+    this.hasModelCalipers = modelCalipers;
     this.wheelAssemblies.forEach((a) => (a.caliper.visible = !modelCalipers));
     this.applyOwnPartsVisibility();
 
@@ -2741,8 +2744,10 @@ export class CarConfiguratorEngine {
       }
     });
     if (this.contactShadow) this.contactShadow.group.visible = !on;
+    // over a pre-rendered body (whose model calipers are depth-only) ours draw; back on the live body the model's own calipers
+    // take over again, otherwise both show, one on top of the other
     this.wheelAssemblies.forEach((a) => {
-      if (on) a.caliper.visible = true;
+      a.caliper.visible = on ? true : !this.hasModelCalipers;
     });
     this.syncFramesDepth();
   }
