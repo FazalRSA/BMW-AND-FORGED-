@@ -28,21 +28,28 @@ overview is [`docs/CLIENT_HANDOVER.md`](docs/CLIENT_HANDOVER.md) (branded PDF:
 
 ## 📖 The customer journey
 
-1. **Welcome** – a dark studio stage that cycles studio renders of the four prepared BMW M cars (M2 CS, M4 CS,
-   M5, M5 Touring; the older models stay in the catalogue, hidden, until their prepared packages arrive). This is
-   where the car is chosen: arrows, scroll, keyboard, swipe or dots. Pick a region and currency (South Africa /
-   ZAR by default); **Enter** opens the configurator on the car showing. There is no separate showroom page.
-2. **Configure** – a live car on a dark stage modelled on the welcome stills (black backdrop, a pool of light on a
-   pale floor) with the "FORGED" plates (the M5 shows its pre-rendered Blender frames in the fixed views
-   instead), and the stepped drawer (a bottom sheet on phones, a side panel on wider
-   screens): Overview, then Paint, Wheels, Size and Finish, with the live set price. Camera chips (Front, Side,
-   Rear, Wheel, Top) and a turntable button sit over the stage; **Change model** goes back to the welcome.
-   **More options** (the … button in the drawer header) holds Region, Load a configuration, Account & garage,
-   the links to The wheels, Enquire, Delivery & fitment, Terms & conditions and Credits, and Start again; it
-   replaces the hamburger menu and top bar, which went with the showroom.
-   Every wheel is a real 3D rim from the stock sheet.
-3. **Summary** – studio stills of the build, share code and link, PDF spec sheet (email + mobile
-   required), enquiry form, the visualisation notice, **Save to garage** when signed in.
+1. **Welcome** – a dark studio stage that cycles studio stills of the cars in the line-up (19 BMW M, X and 2/3/4
+   Series models; four of them, the M2 CS, M4 CS, M5 and M5 Touring, also have a live 3D body). This is where the car
+   is chosen: arrows, scroll, keyboard, swipe or dots. Pick a region and currency (South Africa / ZAR by default);
+   **Enter** opens the configurator on the car showing. There is no separate showroom page.
+2. **Configure** – the car on a dark stage modelled on the welcome stills (black backdrop, a pool of light on a pale
+   floor), with the stepped drawer (a bottom sheet on phones, a side panel on wider screens): Overview, then Paint,
+   Wheels, Size and Finish, with the live set price. Every car is shown as path-traced (Cycles) frames recoloured per
+   paint, with path-traced wheel layers for each wheel, size and finish ([`docs/ADD_PREPARED_CAR.md`](docs/ADD_PREPARED_CAR.md));
+   a wheel choice without a layer falls back to the live WebGL wheels. The five views (Front, Side, Rear, Wheel,
+   Top) are **hotspots on the car**: a white circle with the view name on a thin leader line to the part it shows.
+   **Dragging turns the car**: the four live-3D cars hand the drag to the live engine; the others step through their
+   rendered angles (rear 3/4, side, front 3/4, front) with a cross-fade. A smooth 360 for the frames-only cars would
+   need many more rendered angles. **Change model** goes back to the welcome. **More options** (the … button in the
+   drawer header) holds Region, Load a configuration, Account & garage, the links to The wheels, Enquire, Delivery &
+   fitment, Terms & conditions and Credits, and Start again. Every wheel is a real 3D rim from the stock sheet.
+3. **Summary** – studio stills of the build, share code and link, PDF spec sheet (email + mobile required), enquiry
+   form, the visualisation notice, **Save to garage** when signed in, and the assurance section: TÜV certified, the
+   structural-integrity warranty and the 3-year finish warranty, each with its disclaimers, and the contact block
+   (www.forgedsa.co.za, Instagram, and the owner's phone and Google review link once supplied). The PDF is three
+   pages and carries the same section. The wording lives in `BRAND.assurance` and is **awaiting owner confirmation**;
+   Subedar's number and the Google review link are the empty `subedarPhone` and `googleReviewUrl` fields in
+   `config/brand.ts`, and their rows print only when set.
 4. **Account** (optional) – Google sign-in via Supabase Auth; the garage lists the customer's saved
    builds (share codes mapped to their account) and pre-fills the PDF gate and enquiry form.
    See [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
