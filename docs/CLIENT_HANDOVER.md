@@ -117,7 +117,7 @@ The whole site now follows the FORGEDSA Official Brand Design System:
 - **Type:** Satoshi for headlines, Inter for everything else, exactly as the kit specifies.
 - **Logo:** the gold FORGEDSA wordmark in the header of every page and on the PDF. We cut it out of the
   image you sent (which had a printed checkerboard, not real transparency).
-- **Social channels:** Instagram @ForgedSA, TikTok @ForgedSA, YouTube /ForgedSA and www.forgedsa.com
+- **Social channels:** Instagram @ForgedSA, TikTok @ForgedSA, YouTube /ForgedSA and www.forgedsa.co.za
   appear on the welcome screen, in the footer and in the PDF.
 - **Favicon (browser tab icon):** a temporary gold "F". Send us the hexagon monogram and we swap it in.
 
@@ -337,7 +337,7 @@ Before launch:
 | 2 | A **Google Cloud account** for the sign-in client, or approval to use ours | Outstanding work 2: customer accounts and the garage |
 | 3 | The **licence terms** for the four car packages, and the remaining prepared packages | Outstanding work 3: the cars stay prototype assets until confirmed; the deleted cars can be restored by your developer when their packages arrive |
 | 4 | Any **change to the stock sheet** (a set sold, a new design, a price) | The configurator mirrors the sheet; CAD or 3D file for any new design (section 7) |
-| 5 | Confirm the **contact details** customers see | The site and the PDF show forgedsa1@gmail.com and +27 82 000 0000 |
+| 5 | Confirm the **contact details** customers see | The site footer shows forgedsa1@gmail.com and a placeholder phone; the Summary and PDF show Subedar's number and the Google review link only once supplied (BRAND.contact.subedarPhone, googleReviewUrl) |
 | 6 | **Legal review** of Terms and Delivery, and the [bracketed] details | Outstanding work 4; required before taking orders |
 | 7 | The **hexagon monogram** file (PNG or SVG with transparency) | Browser tab icon and social avatar |
 | 8 | **Wheel weights**, if you want them shown | The weight panel appears automatically once a wheel has weights |
