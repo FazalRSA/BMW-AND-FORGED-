@@ -121,14 +121,17 @@ Deno.serve(async (req) => {
   const { data: finishRows, error: finishErr } = await supabase.from('wheel_finishes').select('id, name');
   if (finishErr) return json(500, { error: finishErr.message });
   const knownFinishes = new Set((finishRows ?? []).map((f) => f.id as string));
+  // Finish names are written as one word ("GlossBlack"), but a sheet may still say "Gloss Black":
+  // the key drops spaces, hyphens and underscores, so both spellings (and the id) find the finish.
+  const finishKey = (s: string) => slug(s).replace(/_/g, '');
   const finishByKey = new Map<string, string>();
   (finishRows ?? []).forEach((f) => {
-    finishByKey.set(slug(f.id as string), f.id as string);
-    finishByKey.set(slug(f.name as string), f.id as string);
+    finishByKey.set(finishKey(f.id as string), f.id as string);
+    finishByKey.set(finishKey(f.name as string), f.id as string);
   });
   const requested = (w.finishes ?? []).map((f) => String(f).trim()).filter(Boolean);
-  const finishes = requested.map((f) => finishByKey.get(slug(f)) ?? slug(f));
-  const unknown = requested.filter((f) => !finishByKey.has(slug(f)));
+  const finishes = requested.map((f) => finishByKey.get(finishKey(f)) ?? slug(f));
+  const unknown = requested.filter((f) => !finishByKey.has(finishKey(f)));
   if (unknown.length) {
     const valid = (finishRows ?? []).map((f) => `${f.id} (${f.name})`).join(', ');
     dataIssues.push(`unknown finishes: ${unknown.join(', ')}; valid: ${valid}`);
