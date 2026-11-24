@@ -29,20 +29,24 @@ const rimFile = (url: string) => {
 };
 
 /**
- * Photo-matched Cycles recipes: [hex, metalness, roughness, clearcoat] per catalogue finish, replacing the catalogue's own
- * numbers for the path-traced layers only. The catalogue's numbers are tuned for the live WebGL wheels; Cycles reflects the
- * studio properly, so the same numbers come out darker and glossier than the website's product photographs. These were
- * calibrated against those photographs (scripts/prerender/finish_calibrate.py, white photo studio, face-on): the median
- * colour of the wheel is within a few levels of the photo for each. A finish not listed uses the catalogue's numbers
- * (gloss black and satin black already matched).
+ * Photo-matched Cycles recipes per catalogue finish, replacing the catalogue's own numbers for the path-traced layers only:
+ * [hex, metalness, roughness, clearcoat, coatRoughness, brush, grain, barrelTone]. The catalogue's numbers are tuned for the
+ * live WebGL wheels; Cycles reflects the studio properly, so the same numbers come out glossier than the website's product
+ * photographs. `brush` is the anisotropy of the brushed streaks (along the spokes on the face, spun on the barrel and cap;
+ * 0 keeps a plain colour), `grain` the +-roughness spread of those streaks, `barrelTone` the barrel's colour multiplier (the
+ * photos' barrels are darker and satin). See scripts/prerender/rim_finish.py. Calibrated against the website photographs with
+ * scripts/prerender/finish_calibrate.py (white studio, face-on) by median colour and by looking at full and macro crops side
+ * by side (.scratch/finish2): silver on FSA004, hyper_black and gold on FSA003; pure_bronze, liquid_metal and polished_face
+ * have no matching photo in the repo and follow the same surface family. A finish not listed uses the catalogue's numbers
+ * (gloss black and satin black already matched) with the cap mark and steel lugs only.
  */
-const PHOTO_RECIPES: Record<string, [string, number, number, number]> = {
-  hyper_black: ['#686a6d', 1, 0.24, 0.8],
-  silver: ['#cacaca', 1, 0.38, 0],
-  pure_bronze: ['#5b3e30', 1, 0.32, 0.4],
-  liquid_metal: ['#a4a7ab', 1, 0.16, 0.8],
-  polished_face: ['#c9c9c9', 1, 0.25, 0],
-  gold: ['#c6b690', 1, 0.5, 0.1]
+const PHOTO_RECIPES: Record<string, (string | number)[]> = {
+  hyper_black: ['#727276', 1, 0.38, 0, 0.03, 0.8, 0.3, 0.9],
+  silver: ['#cecece', 1, 0.42, 0, 0.03, 0.8, 0.3, 1],
+  pure_bronze: ['#9a6f55', 1, 0.45, 0, 0.03, 0.7, 0.25, 0.9],
+  liquid_metal: ['#d8dbdf', 1, 0.12, 0, 0.03, 0.4, 0.08, 0.95],
+  polished_face: ['#e0e0e0', 1, 0.16, 0, 0.03, 0.3, 0.06, 0.9],
+  gold: ['#d6c39d', 1, 0.5, 0, 0.03, 0.5, 0.2, 0.95]
 };
 
 const combos = [];
