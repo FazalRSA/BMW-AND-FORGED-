@@ -37,6 +37,8 @@ run() { # <combos file> <views>
     if [ ! -f "$g" ]; then echo "== $car: no scene at $g, skipped"; continue; fi
     extra=()
     [ "$car" = m2_g87 ] && extra=(--hide '^Combined3DWheel')   # the M2 file's own wheel rings, as for its hero still
+    # the car's own factory tyres (extract-all-tyres.sh), sized to the rim fitted; the four prepared cars (/tmp/prerender) keep theirs
+    tb="$(dirname "$g")/factory_tyres.blend"; [ -f "$tb" ] && extra+=(--tyres-blend "$tb")
     echo "== $car $2 ($(date +%T))"
     if flock /tmp/forged-heavy.lock "$PY" scripts/prerender/render_car.py "$g" "$OUT/$car" --car "$car" --studio dark \
          --samples 12 --width 1440 --views "$2" --wheel-layer "$1" "${extra[@]}" > "$OUT/last.log" 2>&1; then
