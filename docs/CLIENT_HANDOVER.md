@@ -98,8 +98,8 @@ are reached from **More options** in the configurator and from the footer; the w
   3D rims (section 7).
 - **Size:** only the sizes the sheet lists for that wheel (19" and 20" for FSA001; 20" and 21" for the
   others), each with its own price.
-- **Finish:** only the finishes the sheet lists for that wheel: Gold, Hyper Black, Polished Face, Silver,
-  Gloss Black, Pure Bronze, Liquid Metal (chrome) and Black Matte. Polished Face (FSA002) and Liquid Metal
+- **Finish:** only the finishes the sheet lists for that wheel: Gold, HyperBlack, PolishedFace, Silver,
+  GlossBlack, PureBronze, LiquidMetal (chrome) and BlackMatte. PolishedFace (FSA002) and LiquidMetal
   (FF-1, FF-3) cost more, and the price shown rises when they are chosen.
 
 ---
@@ -252,12 +252,12 @@ the sheet (they are the same for both sizes, as the sheet gives one price per de
 
 | Wheel | Sizes | Finishes | Set price |
 |---|---|---|---|
-| **FSA001** (2-piece, staggered: different front and rear rims) | 19", 20" | Black Matte | R90 000 |
-| **FSA002** (forked-spoke) | 20", 21" | Hyper Black, Polished Face | R75 000; Polished Face R85 000 |
-| **FSA003** (fifteen-spoke) | 20", 21" | Gold, Silver, Hyper Black | R75 000 |
-| **FSA004** | 20", 21" | Silver, Hyper Black, Gloss Black | R70 000 |
-| **FF-1** | 20", 21" | Silver, Liquid Metal | R80 000; Liquid Metal R95 000 |
-| **FF-3** | 20", 21" | Pure Bronze, Gloss Black, Liquid Metal | R80 000; Liquid Metal R95 000 |
+| **FSA001** (2-piece, staggered: different front and rear rims) | 19", 20" | BlackMatte | R90 000 |
+| **FSA002** (forked-spoke) | 20", 21" | HyperBlack, PolishedFace | R75 000; PolishedFace R85 000 |
+| **FSA003** (fifteen-spoke) | 20", 21" | Gold, Silver, HyperBlack | R75 000 |
+| **FSA004** | 20", 21" | Silver, HyperBlack, GlossBlack | R70 000 |
+| **FF-1** | 20", 21" | Silver, LiquidMetal | R80 000; LiquidMetal R95 000 |
+| **FF-3** | 20", 21" | PureBronze, GlossBlack, LiquidMetal | R80 000; LiquidMetal R95 000 |
 
 The sheet's fitment notes (the car each set was listed for, PCD, offset, centre bore) are in each wheel's
 description. The configurator still lets a customer put any of the six on any of the four cars: the sheet
