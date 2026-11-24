@@ -58,6 +58,8 @@ export interface ConfiguratorProps {
   step: ConfigStep;
   onStep: (step: ConfigStep) => void;
   cameraView: CameraViewPreset;
+  /** The views are hotspots on the car (App.tsx draws them); the chip bar below stays only while the live car shows */
+  hotspots?: boolean;
   autoRotate: boolean;
   onCamera: (view: CameraViewPreset) => void;
   /** Absent for a frames-only car (its body is fixed images: no turntable). */
@@ -123,23 +125,28 @@ const StepDrawer: React.FC<ConfiguratorProps> = (p) => {
 
       {/* Camera controls, centred under the car */}
       {/* Centred in the part of the screen the controls leave (panel mode), or just above the sheet */}
+      {(!p.hotspots || p.onToggleRotate) && (
       <div className="absolute z-30 left-[calc((100%-var(--panel-w))/2)] -translate-x-1/2 bottom-8 short:bottom-3 sheet:left-1/2 sheet:bottom-[calc(var(--sheet-h)+14px)] animate-rise delay-300">
         <div className="flex items-center gap-0.5 rounded-full bg-surface/85 backdrop-blur-md p-1 ring-1 ring-line shadow-float max-w-[calc(100vw-var(--panel-w)-24px)] sheet:max-w-[calc(100vw-24px)] overflow-x-auto no-scrollbar">
-          {VIEWS.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => p.onCamera(v.id)}
-              className={cx(
-                'h-10 min-w-10 shrink-0 rounded-full px-3 tracking-[0.1em] [@media(max-width:374px)]:px-2 [@media(max-width:374px)]:tracking-[0.04em] sm:px-4 text-[10px] sm:text-[10.5px] font-semibold uppercase sm:tracking-[0.14em] transition-all duration-300 ease-lux',
-                p.cameraView === v.id ? 'bg-gold text-carbon' : 'text-mute hover:text-ink'
-              )}
-            >
-              {v.label}
-            </button>
-          ))}
+          {!p.hotspots && (
+            <>
+            {VIEWS.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => p.onCamera(v.id)}
+                className={cx(
+                  'h-10 min-w-10 shrink-0 rounded-full px-3 tracking-[0.1em] [@media(max-width:374px)]:px-2 [@media(max-width:374px)]:tracking-[0.04em] sm:px-4 text-[10px] sm:text-[10.5px] font-semibold uppercase sm:tracking-[0.14em] transition-all duration-300 ease-lux',
+                  p.cameraView === v.id ? 'bg-gold text-carbon' : 'text-mute hover:text-ink'
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+            </>
+          )}
           {p.onToggleRotate && (
             <>
-              <span className="mx-0.5 sm:mx-1 h-5 w-px bg-line" />
+              {!p.hotspots && <span className="mx-0.5 sm:mx-1 h-5 w-px bg-line" />}
               <IconButton label={p.autoRotate ? 'Stop turntable' : 'Turntable'} onClick={p.onToggleRotate} active={p.autoRotate} className="h-10 w-10 shrink-0">
                 {p.autoRotate ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 translate-x-px" />}
               </IconButton>
@@ -147,6 +154,7 @@ const StepDrawer: React.FC<ConfiguratorProps> = (p) => {
           )}
         </div>
       </div>
+      )}
 
       {/* Panel: right column on desktop, bottom sheet on phones */}
       <aside
