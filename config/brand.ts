@@ -48,10 +48,12 @@ export const BRAND = {
     ember: '#FF5A00' // Electric Orange: main action buttons only (site, PDF, lead email)
   },
 
-  // Phone and email are the owner's (2026-11-12). The email is the FORGEDSA inbox that also receives the new-lead emails.
+  // Contact details as on the website (src/config/site.ts of Forgedwebsite), confirmed by the owner on 2026-11-23: customers write to
+  // admin@forgedsa.co.za, the mailbox every FORGEDSA email is sent from (emails/config.mjs). The team's own inbox for new-lead
+  // notices (forgedsa1@gmail.com) is emails/config.mjs teamTo, not a customer-facing address.
   contact: {
-    email: 'forgedsa1@gmail.com',
-    phone: '+27 82 000 0000', // placeholder: NOT printed on the Summary or the PDF (only subedarPhone is)
+    email: 'admin@forgedsa.co.za',
+    phone: '+27 83 447 2654', // the website's number (owner, 2026-11-23); the Summary and PDF print subedarPhone, not this
     website: 'www.forgedsa.co.za',
     websiteUrl: 'https://www.forgedsa.co.za',
     // OWNER TO SUPPLY both: Summary + PDF print these rows only when non-empty. Never put a guess here.
@@ -60,7 +62,7 @@ export const BRAND = {
   },
 
   social: [
-    { id: 'instagram', label: 'Instagram', handle: '@ForgedSA', url: 'https://www.instagram.com/forgedsa' },
+    { id: 'instagram', label: 'Instagram', handle: '@forged_sa1', url: 'https://www.instagram.com/forged_sa1/' },
     { id: 'tiktok', label: 'TikTok', handle: '@ForgedSA', url: 'https://www.tiktok.com/@forgedsa' },
     { id: 'youtube', label: 'YouTube', handle: '/ForgedSA', url: 'https://www.youtube.com/@ForgedSA' },
     { id: 'website', label: 'Website', handle: 'www.forgedsa.co.za', url: 'https://www.forgedsa.co.za' }

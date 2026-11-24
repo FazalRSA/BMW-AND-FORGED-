@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit && node scripts/wheel-viewer-sync.mjs verify",
+    "lint": "tsc --noEmit && node scripts/wheel-viewer-sync.mjs verify && node scripts/emails-build.mjs --check",
+    "emails:build": "node scripts/emails-build.mjs",
+    "emails:test": "node --test emails/mailer.test.mjs",
+    "emails:preview": "node scripts/emails-preview.mjs",
     "rim:convert": "node scripts/cad-to-glb.mjs"
   },
   "dependencies": {

@@ -5,6 +5,11 @@ description: Operate, change or debug the FORGEDSA new-lead email. Every PDF dow
 
 # Lead email automation
 
+> **Superseded in part (2026-11-23).** New mail goes through the signed-event mailer "FORGEDSA · Mailer" from admin@forgedsa.co.za
+> (`emails/*.mjs`, `n8n/mailer.code.js`, docs/EMAILS.md). The flow below is the **fallback** that still runs until the two Vault
+> entries `mailer_webhook_url` and `mailer_signing_key` are set; the trigger function is now the one in
+> `20261124090000_shared_accounts_and_mailer.sql`. Never put the mailer's webhook path or key in the repo.
+
 ## Flow
 
 ```

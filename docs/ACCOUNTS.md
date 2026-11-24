@@ -1,5 +1,14 @@
 # Customer accounts: Google sign-in and the garage
 
+> **One account for the configurator and the website (2026-11-23).** The website (Forgedwebsite, `/account`) signs in through
+> this same Supabase project, so a Google account is one user, one profile and one garage on both sites. Browsers keep a
+> session per origin, so a customer signs in once on each site (one click); true single sign-on would need both under one
+> parent domain. The sheet is now three tabs (Garage, Profile, Privacy), with an email choice (`marketing_opt_in`, off by
+> default, with a consent timestamp), **Download my data** (`export_my_data()`) and **Delete my account** (`delete_my_account()`:
+> login, profile and saved builds; enquiries already sent stay as sales records). Welcome and enquiry emails: `docs/EMAILS.md`.
+> Migration: `20261124090000_shared_accounts_and_mailer.sql`. **Owner step for the website:** Supabase, Authentication,
+> URL Configuration: add `https://www.forgedsa.co.za/**` and `https://forgedsa.co.za/**` to the Redirect URLs.
+
 Customers can sign in with Google and keep a **garage** of saved builds. Everything still works
 without an account exactly as before: share codes, PDF downloads and enquiries from anonymous
 visitors are unchanged, and the admin at `/admin` (email + password, allowlist `public.admin_users`)
