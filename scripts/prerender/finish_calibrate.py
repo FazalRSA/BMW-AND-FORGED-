@@ -5,11 +5,14 @@ FINISH_RECIPES (scripts/prerender/wheel-combos.ts).
 
   python scripts/prerender/finish_calibrate.py -- <rim.glb> <trials.json> <out dir> [--size 520] [--samples 48]
 
-trials.json: [{"name": "a", "finish": ["#hex", metallic, roughness, clearcoat, coat_roughness?, anisotropic?]}, ...]
+trials.json: [{"name": "a", "finish": ["#hex", metallic, roughness, clearcoat, coat_roughness?, brush?, grain?, barrel_tone?]}, ...]
+(brush = anisotropy of the streaks, grain = +-roughness spread, barrel_tone = colour multiplier of the barrel; see rim_finish.py)
 Writes <out dir>/<name>.png for each trial (the rim is decoded glTF in metres, axle on glTF Z, face +Z).
 """
 import argparse, json, math, os, re, sys
 import bpy, mathutils
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rim_finish   # brushed face/barrel/cap/lugs materials, shared with render_car.py
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 ap = argparse.ArgumentParser()
@@ -41,19 +44,18 @@ parts = [o for o in sc.objects if o.type == 'MESH']
 if not parts: sys.exit(f'{a.rim}: no meshes')
 for o in parts:
     mw = o.matrix_world.copy(); o.parent = None; o.data.transform(mw); o.matrix_world = mathutils.Matrix()
+rim_finish.tag(bpy, parts); cap_r = rim_finish.cap_radius(parts)
 bpy.ops.object.select_all(action='DESELECT')
 for o in parts: o.select_set(True)
 bpy.context.view_layer.objects.active = parts[0]; bpy.ops.object.join()
 rim = bpy.context.view_layer.objects.active
 for o in [o for o in sc.objects if o.type != 'MESH' or o != rim]: bpy.data.objects.remove(o, do_unlink=True)
-if not rim.data.materials: rim.data.materials.append(bpy.data.materials.new('rim'))
-for sl in rim.material_slots: sl.link = 'OBJECT'
 xs = [v.co.x for v in rim.data.vertices]; zs = [v.co.z for v in rim.data.vertices]
 diameter = max(max(xs) - min(xs), max(zs) - min(zs))
 
 # the white seamless of a product shot: a bright room (the metal reflects it) and two large soft lights
 w = bpy.data.worlds.new('W'); sc.world = w; w.use_nodes = True
-bg = w.node_tree.nodes['Background']; bg.inputs['Color'].default_value = (1, 1, 1, 1); bg.inputs['Strength'].default_value = float(os.environ.get('CAL_WORLD', '0.8'))
+bg = w.node_tree.nodes['Background']; bg.inputs['Color'].default_value = (1, 1, 1, 1); bg.inputs['Strength'].default_value = float(os.environ.get('CAL_WORLD', '0.5'))
 # (the backdrop itself is transparent and composited on white by the sheet; the wheel reflects this bright room)
 def softbox(name, loc, sx, sy, energy):
     l = bpy.data.lights.new(name, 'AREA'); l.shape = 'RECTANGLE'; l.size, l.size_y, l.energy = sx, sy, energy
@@ -61,7 +63,7 @@ def softbox(name, loc, sx, sy, energy):
     ob.rotation_euler = (mathutils.Vector((0, 0, 0)) - mathutils.Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
     return ob
 d = diameter
-KEY = float(os.environ.get('CAL_KEY', '10')); FILL = float(os.environ.get('CAL_FILL', '5'))
+KEY = float(os.environ.get('CAL_KEY', '30')); FILL = float(os.environ.get('CAL_FILL', '8'))
 BOX = float(os.environ.get('CAL_BOX', '1.0'))
 softbox('key', (-d * 1.4, -d * 2.2, d * 1.6), d * 1.8 * BOX, d * 1.8 * BOX, KEY)
 softbox('fill', (d * 1.8, -d * 2.0, -d * 0.2), d * 1.6 * BOX, d * 1.6 * BOX, FILL)
@@ -80,13 +82,7 @@ sc.render.film_transparent = True   # the sheet composites on white, so only the
 sc.render.image_settings.file_format = 'PNG'; sc.render.image_settings.color_mode = 'RGBA'
 
 for t in TRIALS:
-    hx, met, rough, coat = t['finish'][:4]
-    mat = bpy.data.materials.new(t['name']); b = mat.node_tree.nodes['Principled BSDF']
-    b.inputs['Base Color'].default_value = (*srgb_lin(hx), 1); b.inputs['Metallic'].default_value = float(met)
-    b.inputs['Roughness'].default_value = float(rough); b.inputs['Coat Weight'].default_value = float(coat)
-    b.inputs['Coat Roughness'].default_value = float(t['finish'][4]) if len(t['finish']) > 4 else 0.03
-    if len(t['finish']) > 5: b.inputs['Anisotropic'].default_value = float(t['finish'][5])
-    for sl in rim.material_slots: sl.material = mat
+    rim_finish.apply(rim, rim_finish.materials(bpy, t['name'], t['finish'], cap_r, diameter / 2))
     path = os.path.join(a.out, t['name'] + '.png'); sc.render.filepath = path
     bpy.ops.render.render(write_still=True)
     if not os.path.exists(path): sys.exit(f'no file written at {path}')

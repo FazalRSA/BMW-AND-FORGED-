@@ -10,6 +10,9 @@ Background is transparent; the floor is a shadow catcher.
 """
 import argparse, json, math, os, re, sys
 import bpy, bmesh, mathutils
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import caliper as caliper_mod   # the monobloc caliper (scripts/prerender/caliper.py)
+import rim_finish               # brushed rim finishes by part (scripts/prerender/rim_finish.py)
 
 ap = argparse.ArgumentParser()
 ap.add_argument('glb'); ap.add_argument('out')
@@ -765,6 +768,8 @@ if a.wheel_layer:
     disc_m = matp('layer_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
     hat_m = matp('layer_hat', (0.08, 0.08, 0.085), 0.8, 0.45)                 # the dark disc bell
     cal_m = matp('layer_caliper', srgb_lin('c01824', 'caliper'), 0.0, 0.3, 1.0)   # wheelKit's M Competition Red
+    steel_m = matp('layer_cal_steel', (0.045, 0.045, 0.05), 1.0, 0.4)           # bridge bolts, bleed nipple
+    pad_m = matp('layer_cal_pad', (0.018, 0.018, 0.018), 0.0, 0.85)             # friction material
     rim_cache = {}
     def load_rim(path):
         if path in rim_cache: return rim_cache[path]
@@ -775,10 +780,11 @@ if a.wheel_layer:
         if not parts: sys.exit(f'--wheel-layer rim {path}: no meshes')
         for o in parts:
             mw = o.matrix_world.copy(); o.parent = None; o.data.transform(mw); o.matrix_world = mathutils.Matrix()
+        rim_finish.tag(bpy, parts); cap_r = rim_finish.cap_radius(parts)   # face / barrel / cap / lugs keep their own slots
         bpy.ops.object.select_all(action='DESELECT')
         for o in parts: o.select_set(True)
         bpy.context.view_layer.objects.active = parts[0]; bpy.ops.object.join()
-        rim = bpy.context.view_layer.objects.active
+        rim = bpy.context.view_layer.objects.active; rim['cap_r'] = cap_r
         for o in [o for o in bpy.data.objects if o not in before and o != rim]: bpy.data.objects.remove(o, do_unlink=True)
         sc.collection.objects.unlink(rim) if rim.name in sc.collection.objects else None
         for c in list(rim.users_collection): c.objects.unlink(rim)
@@ -811,38 +817,16 @@ if a.wheel_layer:
         for pl in me.polygons: pl.use_smooth = True
         return ob
 
-    def caliper(x, y, z, disc_r, s, toward):
-        """A fixed caliper over the top of the disc, towards the car's end (toward +1 front / -1 rear wheels): an
-        annular sector that hugs the disc (76 degrees, from 0.56 to 1.1 x its radius), straddling it, bevelled so its
-        edges catch the light like the engine's cast caliper."""
-        bm = bmesh.new(); n = 14; a0, a1 = math.radians(16), math.radians(92); r0, r1 = disc_r * 0.56, disc_r * 1.1
-        half = 0.065 * s
-        ring = []
-        for side in (-half, half):
-            for r in (r0, r1):
-                ring.append([bm.verts.new((side, -toward * math.cos(a0 + (a1 - a0) * k / n) * r, math.sin(a0 + (a1 - a0) * k / n) * r))
-                             for k in range(n + 1)])
-        (il, ol, ir, orr) = ring
-        for k in range(n):
-            for q in ((il[k], il[k + 1], ol[k + 1], ol[k]), (ir[k], orr[k], orr[k + 1], ir[k + 1]),
-                      (ol[k], ol[k + 1], orr[k + 1], orr[k]), (il[k], ir[k], ir[k + 1], il[k + 1])):
-                bm.faces.new(q)
-        for e_ in (0, n):
-            bm.faces.new((il[e_], ol[e_], orr[e_], ir[e_]))
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        me = bpy.data.meshes.new('layer_caliper'); bm.to_mesh(me); bm.free()
-        ob = bpy.data.objects.new('layer_caliper', me); sc.collection.objects.link(ob)
-        ob.location = (x, y, z); me.materials.append(cal_m)
-        bv = ob.modifiers.new('bevel', 'BEVEL'); bv.width = 0.006 * s; bv.segments = 3; bv.limit_method = 'ANGLE'
-        for pl in me.polygons: pl.use_smooth = True
-        return ob
+    def caliper(x, y, z, disc_r, s, toward, sgn, front, rim):
+        """The fixed monobloc caliper (scripts/prerender/caliper.py): a clean C-section casting, six piston bosses, bridge bolts, never trimmed to the spokes."""
+        return caliper_mod.make(bpy, bmesh, mathutils, sc, (cal_m, steel_m, pad_m), x, y, z, disc_r, s, toward, sgn, front, rim)
 
     def build_wheels(e):
         """The four wheels of one layer, as the engine mounts them (mountRimModel, rimLayout): the rim's largest
         dimension is the rim's lip radius for its size; its face sits 12 mm inside the tyre's outer plane; the tyre keeps the
         car's own size and the sidewall thins as the rim grows."""
-        hx, met, rough, coat = e['finish']
-        fin = matp('finish_' + e['name'], srgb_lin(hx, e['name']), float(met), float(rough), float(coat))
+        srgb_lin(e['finish'][0], e['name'])   # a bad colour stops the batch here
+        fin = {}   # rim file -> {role: material} (the cap's mark is sized to each rim's own cap)
         made = []
         for i, (x, y, z, r, wd) in enumerate(WHEELS):
             src, rad, ymin = load_rim(e['rims'][min(i // 2, len(e['rims']) - 1)])   # front pair first
@@ -851,7 +835,9 @@ if a.wheel_layer:
             # same tyre thins the sidewall, as plus-sizing does; the tyre radius r is the factory tyre's (from the car's model)
             ro = min(float(e['inches']) * 0.0127 + 0.008, r - 0.04)
             rim = src.copy(); sc.collection.objects.link(rim)
-            for sl in rim.material_slots: sl.link = 'OBJECT'; sl.material = fin
+            pth = e['rims'][min(i // 2, len(e['rims']) - 1)]
+            if pth not in fin: fin[pth] = rim_finish.materials(bpy, 'finish_' + e['name'], e['finish'], src['cap_r'], rad, 'sixnine' not in pth)
+            rim_finish.apply(rim, fin[pth])
             k = ro / rad; rim.rotation_mode = 'XYZ'
             rim.scale = (k,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
             rim.location = (x + sgn * (wd / 2 - 0.012 * s + ymin * k), y, z)
@@ -863,12 +849,13 @@ if a.wheel_layer:
             bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=ro * 0.78 * 0.5, depth=0.05, location=(x - sgn * 0.05 * s, y, z),
                                                 rotation=(0, math.pi / 2, 0))
             hat = bpy.context.object; hat.data.materials.append(hat_m)
-            cal = caliper(x - sgn * 0.07 * s, y, z, ro * 0.78, s, 1 if i < 2 else -1)
+            # trailing side on every wheel (behind the axle, as BMW fits them): it shows through the spokes in the 3/4 views
+            cal = caliper(x - sgn * 0.07 * s, y, z, ro * 0.78, s, -1, sgn, i < 2, rim)
             made += [rim, ty, dk, hat, cal]
         if receivers:
             for o in made: receivers.objects.link(o)
         for o in made[0::5]: fill_rx.objects.link(o)   # the rims only: lit rubber turns grey
-        return made, fin
+        return made, [m for d in fin.values() for m in d.values()]
 
     # The wheel fill: a low softbox beside the camera that lights only the wheels (light linking), as a car photographer
     # strips light along the wheels. Without it the dark studio leaves dark finishes (Hyper Black, Gloss Black) murky
@@ -1009,7 +996,7 @@ if a.wheel_layer:
             except OSError as e: sys.exit(f'--wheel-layer: cannot move {sc.render.filepath} to {out}: {e}')
             print('rendered', out, flush=True)
         for o in made: bpy.data.objects.remove(o, do_unlink=True)
-        bpy.data.materials.remove(fin)
+        for m in fin: bpy.data.materials.remove(m)
     sys.exit(0)
 if a.hero:
     v = views[0] if a.views else 'frontThreeQuarter'

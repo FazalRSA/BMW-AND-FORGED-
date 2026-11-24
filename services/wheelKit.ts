@@ -2261,20 +2261,20 @@ function caliperDecalMaterial() {
 
 /**
  * Six-piston fixed monoblock caliper, modelled on the BMW M Compound front caliper:
- * - one-piece body around the disc with generously rounded edges and slightly tapered ends;
+ * - one-piece cast block around the disc: flat radial ends, tapered lower corners, firm edge radii;
  * - a raised, softly bevelled outer face carrying the M decal along the arc;
- * - the pad window on the radial top with the pads, the retaining pin and the anti-rattle spring;
+ * - six piston bosses on the outer face (two rows of three, each in a dark seal gap), the M decal between the rows;
  * - hex bridge bolts and bleed nipples with rubber caps at the ends.
- * Front about 278 mm long, rear (four-piston look) 230 mm.
+ * About a third of the disc's circumference: front 112 degrees, rear 94.
  */
 export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boolean): THREE.Group {
   const L = rimLayout(d);
   const Rd = L.discRadius;
   const rIn = Rd - 0.066;
-  const rOut = Rd + 0.024;
-  const span = THREE.MathUtils.degToRad(d.isFront ? 84 : 70); // ~278 / 230 mm along the disc
+  const rOut = Rd + 0.016;
+  const span = THREE.MathUtils.degToRad(d.isFront ? 112 : 94); // about a third of the disc's circumference
   const halfW = L.discThickness / 2 + (d.isFront ? 0.038 : 0.032); // disc plane to outer face
-  const key = `${Rd}|${span}|${halfW}|v2`;
+  const key = `${Rd}|${span}|${halfW}|v4`;
   let geos = caliperGeoCache.get(key);
   if (!geos) {
     const kidney = (r0: number, r1: number, b0: number, b1: number) => {
@@ -2286,6 +2286,21 @@ export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boo
       sh.absarc(Math.cos(b0) * mr, Math.sin(b0) * mr, er, b0 + Math.PI, b0 + Math.PI * 2, false);
       return sh;
     };
+    // a cast block, not a sausage: flat radial ends and the lower corners tapered up into the end faces
+    const block = (r0: number, r1: number, b0: number, b1: number) => {
+      const sh = new THREE.Shape();
+      const pt = (r: number, a: number) => new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r);
+      const t = 0.016, dA = (b1 - b0) * 0.13;
+      const p0 = pt(r0 + t, b0), p1 = pt(r1, b0), p2 = pt(r0 + t, b1), p3 = pt(r0, b1 - dA);
+      sh.moveTo(p0.x, p0.y);
+      sh.lineTo(p1.x, p1.y);
+      sh.absarc(0, 0, r1, b0, b1, false);
+      sh.lineTo(p2.x, p2.y);
+      sh.lineTo(p3.x, p3.y);
+      sh.absarc(0, 0, r0, b1 - dA, b0 + dA, true);
+      sh.lineTo(p0.x, p0.y);
+      return sh;
+    };
     const a0 = Math.PI / 2 - span / 2, a1 = Math.PI / 2 + span / 2; // centred on +Y (top) before rotation
     const at = (f: number) => a0 + (a1 - a0) * f;
     const polar = (r: number, a: number, z: number) => new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, z);
@@ -2293,7 +2308,7 @@ export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boo
     // body: the outer half is the deep, rounded part seen through the spokes
     // a cast body: firm 7 mm radius on the edges (a soft "sausage" edge reads as a toy)
     const bev = 0.007;
-    const body = new THREE.ExtrudeGeometry(kidney(rIn, rOut, a0, a1), {
+    const body = new THREE.ExtrudeGeometry(block(rIn, rOut, a0, a1), {
       depth: halfW * 2 - bev * 2,
       curveSegments: 48,
       bevelEnabled: true,
@@ -2320,12 +2335,13 @@ export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boo
     const rMid = (rIn + rOut) / 2 - 0.004;
 
     // decal plate (UVs along the arc, see caliperDecalTexture)
-    const decalShape = kidney(rIn + 0.016, rOut - 0.017, at(0.12), at(0.88));
+    const dR0 = rMid - 0.008, dR1 = rMid + 0.008, dA0 = at(0.42), dA1 = at(0.58);
+    const decalShape = kidney(dR0, dR1, dA0, dA1);
     const decal = new THREE.ShapeGeometry(decalShape, 64);
     {
       const pos = decal.attributes.position as THREE.BufferAttribute;
       const uv = new Float32Array(pos.count * 2);
-      const r0 = rIn + 0.016, r1 = rOut - 0.017, b0 = at(0.12), b1 = at(0.88);
+      const r0 = dR0, r1 = dR1, b0 = dA0, b1 = dA1;
       for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i), y = pos.getY(i);
         const a = Math.atan2(y, x), r = Math.hypot(x, y);
@@ -2336,32 +2352,24 @@ export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boo
       decal.translate(0, 0, halfW + 0.0052);
     }
 
-    // pad window on the radial top: a dark recess, with the pads' backing plates either side of
-    // the disc, the retaining pin across and the anti-rattle spring
-    const winSpan = (a1 - a0) * 0.42;
-    const winShape = new THREE.Shape();
-    {
-      const w0 = Math.PI / 2 - winSpan / 2, w1 = Math.PI / 2 + winSpan / 2;
-      const ri = rOut - 0.004, ro = rOut + 0.0008;
-      winShape.absarc(0, 0, ro, w0, w1, false);
-      winShape.absarc(0, 0, ri, w1, w0, true);
+    // six piston bosses on the outer face (two rows of three), each in a dark seal gap
+    const boss: THREE.BufferGeometry[] = [];
+    const seals: THREE.BufferGeometry[] = [];
+    for (const rr of [rMid - 0.0245, rMid + 0.0245]) {
+      for (const f of [0.2, 0.5, 0.8]) {
+        const p = polar(rr, at(f), 0);
+        const seal = new THREE.CylinderGeometry(0.0128, 0.0128, 0.0012, 40);
+        seal.rotateX(Math.PI / 2);
+        seal.translate(p.x, p.y, halfW + 0.0042);
+        seals.push(seal);
+        const b = new THREE.CylinderGeometry(0.0095, 0.011, 0.0044, 40);
+        b.rotateX(Math.PI / 2);
+        b.translate(p.x, p.y, halfW + 0.0058);
+        boss.push(b);
+      }
     }
-    const win = new THREE.ExtrudeGeometry(winShape, { depth: halfW * 1.4, curveSegments: 24, bevelEnabled: false });
-    win.translate(0, 0, -halfW * 0.7);
+    const win = mergeGeometries(seals)!;
     const metal: THREE.BufferGeometry[] = [];
-    const pin = new THREE.CylinderGeometry(0.0028, 0.0028, halfW * 1.9, 16);
-    pin.rotateX(Math.PI / 2);
-    pin.translate(0, rOut - 0.0005, 0);
-    metal.push(pin);
-    // spring: a bent flat strip over the pin, with two legs
-    const spring = new THREE.BoxGeometry(winSpan * rOut * 0.85, 0.0016, 0.014);
-    spring.translate(0, rOut + 0.0018, 0);
-    metal.push(spring);
-    for (const sx of [-1, 1]) {
-      const leg = new THREE.BoxGeometry(0.004, 0.0016, halfW * 1.1);
-      leg.translate(sx * winSpan * rOut * 0.42, rOut + 0.0018, 0);
-      metal.push(leg);
-    }
     // bridge bolts (hex, on the outer face at both ends) and bleed nipples (radial top ends)
     for (const f of [0.06, 0.94]) {
       const hex = new THREE.CylinderGeometry(0.0062, 0.0062, 0.006, 6);
@@ -2402,7 +2410,7 @@ export function buildCaliper(d: WheelDims, mats: WheelKitMaterials, isRight: boo
       backing.clone().translate(0, 0, -L.discThickness / 2 - 0.0155)
     ])!;
     const flat = (list: THREE.BufferGeometry[]) => mergeGeometries(list.map((g0) => (g0.index ? g0.toNonIndexed() : g0)))!;
-    geos = [mergeGeometries([body, face].map((g0) => (g0.index ? g0.toNonIndexed() : g0)))!, decal, win, flat(metal), flat(caps), pads, backs];
+    geos = [mergeGeometries([body, face, ...boss].map((g0) => (g0.index ? g0.toNonIndexed() : g0)))!, decal, win, flat(metal), flat(caps), pads, backs];
     for (const gg of geos) {
       gg.rotateY(Math.PI / 2); // shape plane -> disc plane (YZ), extrusion -> axle
       gg.computeVertexNormals();
