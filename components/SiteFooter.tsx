@@ -46,11 +46,13 @@ export const SiteFooter: React.FC<{ className?: string }> = ({ className }) => (
               {BRAND.contact.email}
             </a>
           </li>
-          <li>
-            <a href={`tel:${BRAND.contact.phone.replace(/\s+/g, '')}`} className="hover:text-gold transition-colors">
-              {BRAND.contact.phone}
-            </a>
-          </li>
+          {BRAND.contact.subedarPhone && (
+            <li>
+              <a href={`tel:${BRAND.contact.subedarPhone.replace(/\s+/g, '')}`} className="hover:text-gold transition-colors">
+                {BRAND.contact.subedarPhone}
+              </a>
+            </li>
+          )}
           {BRAND.social.map((s) => (
             <li key={s.id}>
               <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">

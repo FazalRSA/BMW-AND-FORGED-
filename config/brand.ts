@@ -51,15 +51,19 @@ export const BRAND = {
   // Phone and email are the owner's (2026-11-12). The email is the FORGEDSA inbox that also receives the new-lead emails.
   contact: {
     email: 'forgedsa1@gmail.com',
-    phone: '+27 82 000 0000',
-    website: 'www.forgedsa.com'
+    phone: '+27 82 000 0000', // placeholder: NOT printed on the Summary or the PDF (only subedarPhone is)
+    website: 'www.forgedsa.co.za',
+    websiteUrl: 'https://www.forgedsa.co.za',
+    // OWNER TO SUPPLY both: Summary + PDF print these rows only when non-empty. Never put a guess here.
+    subedarPhone: '', // Subedar's number, e.g. '+27 ...'
+    googleReviewUrl: '' // the Google review link (https://g.page/r/.../review)
   },
 
   social: [
     { id: 'instagram', label: 'Instagram', handle: '@ForgedSA', url: 'https://www.instagram.com/forgedsa' },
     { id: 'tiktok', label: 'TikTok', handle: '@ForgedSA', url: 'https://www.tiktok.com/@forgedsa' },
     { id: 'youtube', label: 'YouTube', handle: '/ForgedSA', url: 'https://www.youtube.com/@ForgedSA' },
-    { id: 'website', label: 'Website', handle: 'www.forgedsa.com', url: 'https://www.forgedsa.com' }
+    { id: 'website', label: 'Website', handle: 'www.forgedsa.co.za', url: 'https://www.forgedsa.co.za' }
   ] as SocialLink[],
 
   /**
@@ -73,6 +77,32 @@ export const BRAND = {
     { id: 'finish', label: 'Finish', headline: '3-year warranty', detail: 'on the wheel finish', full: '3-year warranty on the finish' },
     { id: 'wheel', label: 'Wheel', headline: 'Lifetime warranty', detail: 'Not for neglect', full: 'Lifetime warranty on the wheel', note: 'Does not cover neglect.' }
   ] as { id: string; label: string; headline: string; detail: string; full: string; note?: string }[],
+
+  /**
+   * Summary + PDF "assurance" sections. OWNER TO CONFIRM WORDING: built on the owner's credentials above (TÜV certified,
+   * lifetime warranty on the wheel not for neglect, 3-year warranty on the finish) with conservative, generic
+   * disclaimers. No certificate number, standard or extra period has been given, so none is stated.
+   */
+  assurance: {
+    tuv: { title: 'TÜV certified', text: 'FORGEDSA wheels are TÜV certified. Ask our team for the certification details that apply to your wheel.' },
+    warranties: [
+      {
+        id: 'structural',
+        title: 'Structural integrity warranty',
+        headline: 'Lifetime warranty on the wheel',
+        text: 'Covers manufacturing defects in material or workmanship that affect the structural integrity of the wheel, under normal road use.',
+        excludes: 'Not covered: impact, kerb or pothole damage; track or competition use; modification or repair by others; incorrect fitment or wheel-bolt torque; neglect; chemical or pressure-wash damage; accident damage.'
+      },
+      {
+        id: 'finish',
+        title: 'Finish warranty',
+        headline: '3-year warranty on the finish',
+        text: 'Covers peeling, delamination or corrosion of the finish that results from a manufacturing defect.',
+        excludes: 'Not covered: stone chips; kerb rash; harsh or acidic cleaners; neglected brake dust; damage from impact, accident or modification.'
+      }
+    ],
+    claims: 'To make a claim, send your proof of purchase and photos. We inspect the wheel before any claim is accepted. This does not limit your rights under the Consumer Protection Act.'
+  },
 
   /** The visualisation disclaimer, shown on the summary page before the PDF and the enquiry. */
   visualisationNotice:

@@ -42,7 +42,7 @@ description: Apply or change the FORGEDSA brand across the site, PDF brochure, l
   image whose checkerboard was printed in, not real transparency.
   - Keep logo heights small in headers: sm `h-3.5`, md `h-4 sm:h-5`, lg `h-6 sm:h-8`.
 - **Favicon:** a temporary gold "F" until the hexagon monogram arrives.
-- **Social:** Instagram @ForgedSA, TikTok @ForgedSA, YouTube /ForgedSA, www.forgedsa.com. They appear
+- **Social:** Instagram @ForgedSA, TikTok @ForgedSA, YouTube /ForgedSA, www.forgedsa.co.za. They appear
   on the welcome screen, menu, `components/SiteFooter.tsx` and the PDF.
 
 ## Checklist for a new branded surface

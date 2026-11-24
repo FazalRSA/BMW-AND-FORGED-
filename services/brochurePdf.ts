@@ -102,7 +102,7 @@ function iconPng(path: string, px = 96) {
   return c.toDataURL('image/png');
 }
 
-/** Two-page A4 spec sheet in the FORGEDSA dark style, generated in the browser (no server needed). */
+/** Three-page A4 spec sheet in the FORGEDSA dark style, generated in the browser (no server needed). */
 export async function downloadBrochurePdf(input: BrochureInput) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -133,7 +133,7 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     body();
     doc.setFontSize(8);
     doc.setTextColor(...MUTE);
-    doc.text(pdfText(`Configuration ${input.code}  ·  ${new Date().toLocaleDateString(input.region.locale)}  ·  ${page}/2`), W - M, 15.5, { align: 'right' });
+    doc.text(pdfText(`Configuration ${input.code}  ·  ${new Date().toLocaleDateString(input.region.locale)}  ·  ${page}/3`), W - M, 15.5, { align: 'right' });
     doc.setDrawColor(...GOLD);
     doc.setLineWidth(0.3);
     doc.line(M, 21, W - M, 21);
@@ -157,7 +157,8 @@ export async function downloadBrochurePdf(input: BrochureInput) {
     });
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTE);
-    doc.text(`${BRAND.contact.email}  ·  ${BRAND.contact.phone}`, M, 283);
+    // The placeholder BRAND.contact.phone is never printed; Subedar's number is on page 3 once supplied
+    doc.text(`${BRAND.contact.email}  ·  ${BRAND.contact.website}`, M, 283);
     doc.link(M, 280, doc.getTextWidth(BRAND.contact.email), 4, { url: `mailto:${BRAND.contact.email}` });
     doc.text('Visualisation only. Final specification, fitment and price are confirmed with our team.', W - M, 283, { align: 'right' });
     doc.text(`Terms: ${origin}/terms  ·  Delivery & fitment: ${origin}/delivery`, M, 288);
@@ -427,6 +428,73 @@ export async function downloadBrochurePdf(input: BrochureInput) {
   doc.setTextColor(...MUTE);
   doc.text(reopen, M + 7 + ctaW + 5, y + 30.5);
   doc.link(M + 7 + ctaW + 5, y + 27, doc.getTextWidth(reopen), 5, { url: reopen });
+  footer();
+
+  // Page 3: TÜV, warranties and contact. OWNER TO CONFIRM WORDING (BRAND.assurance); the phone and Google review
+  // rows print only when the owner has supplied them (BRAND.contact.subedarPhone / googleReviewUrl).
+  doc.addPage();
+  header(3);
+  const A = BRAND.assurance;
+  const tw = W - 2 * M - 14;
+  const wrapP = (t: string, w: number) => doc.splitTextToSize(pdfText(t), w) as string[];
+  y = 32;
+  const panel = (title: string, lines: { text: string; size: number; color: [number, number, number]; bold?: boolean }[]) => {
+    const rows = lines.map((l) => {
+      l.bold ? heading('bold') : body();
+      doc.setFontSize(l.size);
+      return { ...l, wrapped: wrapP(l.text, tw) };
+    });
+    const h = 14 + rows.reduce((a, r) => a + r.wrapped.length * (r.size * 0.45) + 2.5, 0);
+    doc.setFillColor(...GUNMETAL);
+    doc.roundedRect(M, y, W - 2 * M, h, 3, 3, 'F');
+    eyebrow(title, M + 7, y + 8);
+    let ty = y + 15;
+    rows.forEach((r) => {
+      r.bold ? heading('bold') : body();
+      doc.setFontSize(r.size);
+      doc.setTextColor(...r.color);
+      doc.text(r.wrapped, M + 7, ty);
+      ty += r.wrapped.length * (r.size * 0.45) + 2.5;
+    });
+    y += h + 6;
+  };
+  panel(A.tuv.title, [{ text: A.tuv.text, size: 9.5, color: INK }]);
+  A.warranties.forEach((w) =>
+    panel(w.title, [
+      { text: w.headline, size: 11, color: INK, bold: true },
+      { text: w.text, size: 9.5, color: INK },
+      { text: w.excludes, size: 8.5, color: MUTE }
+    ])
+  );
+  body();
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTE);
+  const claims = wrapP(A.claims, W - 2 * M);
+  doc.text(claims, M, y);
+  y += claims.length * 4 + 6;
+
+  // Contact block
+  const rowsC: { label: string; value: string; url: string }[] = [
+    { label: 'Website', value: BRAND.contact.website, url: BRAND.contact.websiteUrl }
+  ];
+  if (BRAND.contact.subedarPhone) rowsC.push({ label: 'Subedar', value: BRAND.contact.subedarPhone, url: `tel:${BRAND.contact.subedarPhone.replace(/\s+/g, '')}` });
+  const ig = BRAND.social.find((s) => s.id === 'instagram');
+  if (ig) rowsC.push({ label: 'Instagram', value: ig.handle, url: ig.url });
+  if (BRAND.contact.googleReviewUrl) rowsC.push({ label: 'Google review', value: 'Review us on Google', url: BRAND.contact.googleReviewUrl });
+  const ch = 14 + rowsC.length * 7;
+  doc.setFillColor(...GUNMETAL);
+  doc.roundedRect(M, y, W - 2 * M, ch, 3, 3, 'F');
+  eyebrow('Contact us', M + 7, y + 8);
+  rowsC.forEach((r, i) => {
+    const ry = y + 16 + i * 7;
+    body();
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTE);
+    doc.text(r.label, M + 7, ry);
+    doc.setTextColor(...INK);
+    doc.text(pdfText(r.value), M + 38, ry);
+    doc.link(M + 38, ry - 4, doc.getTextWidth(pdfText(r.value)), 5, { url: r.url });
+  });
   footer();
 
   doc.save(`${BRAND.name.toLowerCase()}-${input.car.id}-${input.code}.pdf`);

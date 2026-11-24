@@ -88,7 +88,7 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const chip = p.getByRole('button', { name: new RegExp(`^${label}$`) }).first();
     if (await chip.count()) { await chip.click(); await p.waitForTimeout(6000); }
     const state = await p.evaluate(() => {
-      const img = [...document.querySelectorAll('img')].find((i) => i.src.includes('/wheels/') && i.src.endsWith('.webp'));
+      const img = [...document.querySelectorAll('img')].find((i) => i.src.includes('/wheels/') && new URL(i.src).pathname.endsWith('.webp')); // the URL carries ?v=<stamp>
       return { src: img ? new URL(img.src).pathname : null, shown: !!img && img.complete && getComputedStyle(img).opacity === '1' };
     });
     const listed = !!index?.cars?.[CAR]?.[view] && !!state.src;
