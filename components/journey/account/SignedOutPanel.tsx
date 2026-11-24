@@ -7,7 +7,7 @@ import React from 'react';
 import { FileText, FolderOpen, Lock, MonitorSmartphone } from 'lucide-react';
 import { BRAND } from '../../../config/brand';
 import { Alert, Eyebrow, Status } from '../ui';
-import { HERO_SLIDES } from '../HeroStage';
+import { HERO_SLIDES, heroUrl } from '../HeroStage';
 import { GoogleButton } from './accountUi';
 
 /** What an account is for, in the customer's terms (each line is something the app really does with it). */
@@ -36,7 +36,7 @@ const StageStill: React.FC<{ carId?: string }> = ({ carId }) => {
         maskComposite: 'intersect'
       }}
     >
-      <img src={`/hero/${slide.carId}-960.webp`} alt="" draggable={false} decoding="async" className="absolute left-1/2 top-1/2 w-[122%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none" />
+      <img src={heroUrl(slide.carId, 960)} alt="" draggable={false} decoding="async" className="absolute left-1/2 top-1/2 w-[122%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none" />
     </div>
   );
 };

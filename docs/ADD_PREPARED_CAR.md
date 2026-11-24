@@ -211,6 +211,25 @@ check in the browser's network tab that no `.glb` is requested for it on the wel
   that sorts before the car's (Donington Grey for the X5 M, Melbourne Red for the M240i).
 - The whole process, the review loop and a table of defects and fixes: the `forgedsa-frames-only-car` skill.
 
+## Welcome stills (public/hero)
+
+The first four stills (M2 CS, M4 CS, M5, M5 Touring) were made on 11 Nov from the owner's reference studio scene
+(`scripts/cycles/batch_stills.py` opens `/home/claude/m2/out/BMW_M2_CS_G87_clean_studio.blend`, which is not in the repo) and are the
+quality bar: a near-black void, deep saturated paint, a hard overhead key with falloff, a dark floor with a bright pool under the car's
+far side, and a close, low, wide-angle camera. On 23 Nov they were overwritten by a flatter first version of `render_car.py --hero`
+(a big even softbox over a bright grey floor, a far camera): phones then showed the originals from cache and the M3 Touring's old
+pre-Cycles still, which is how the gap was noticed.
+
+`render_car.py --hero` now defaults to a recipe tuned against the 11 Nov M5 (M5, X5 M and M3 Touring checked): key 500 W, 0.55 x size,
+55 degree spread, 0.4 of the way to the camera, 1.8 m up; floor albedo 0.10; EV -0.5; a hero camera 1.1 car lengths out, at 0.4 of the
+car's height, 32 mm. Every value has a `HERO_*` environment override (`HERO_CAMDIST=0` keeps the stage camera). `scripts/prerender/pack-heroes.py` packs the renders. The rims take one deep satin black finish (`HERO_RIMFINISH`), the paint pigment is
+scaled by `HERO_PAINTGAIN` 0.55, and the app's placeholder plates are left out. Before replacing a still, put the old and new side by side
+(`git show 588c06b:public/hero/<car>-1600.webp`) and keep the better one: on 23 Nov the four originals were still more dramatic than the
+tuned render (lower, closer camera, harder contrast), so they stay, with their own wheels (not FSA001); the other 15 cars use the render.
+
+`/hero/` is cached for a day plus a week and the stills keep their names, so `HERO_VERSION` in `components/journey/HeroStage.tsx`
+is part of every still's URL: bump it whenever a still changes.
+
 ## Path-traced wheel layers (2026-11-23)
 
 On a rendered view the wheels are Cycles images too, not the live WebGL wheels: each stock wheel in each finish and

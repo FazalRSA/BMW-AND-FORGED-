@@ -253,8 +253,8 @@ the sheet (they are the same for both sizes, as the sheet gives one price per de
 | Wheel | Sizes | Finishes | Set price |
 |---|---|---|---|
 | **FSA001** (2-piece, staggered: different front and rear rims) | 19", 20" | Black Matte | R90 000 |
-| **FSA002** | 20", 21" | Gold, Hyper Black, Polished Face | R75 000; Polished Face R85 000 |
-| **FSA003** | 20", 21" | Silver, Hyper Black | R75 000 |
+| **FSA002** (forked-spoke) | 20", 21" | Hyper Black, Polished Face | R75 000; Polished Face R85 000 |
+| **FSA003** (fifteen-spoke) | 20", 21" | Gold, Silver, Hyper Black | R75 000 |
 | **FSA004** | 20", 21" | Silver, Hyper Black, Gloss Black | R70 000 |
 | **FF-1** | 20", 21" | Silver, Liquid Metal | R80 000; Liquid Metal R95 000 |
 | **FF-3** | 20", 21" | Pure Bronze, Gloss Black, Liquid Metal | R80 000; Liquid Metal R95 000 |

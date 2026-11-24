@@ -28,6 +28,23 @@ const rimFile = (url: string) => {
   return f;
 };
 
+/**
+ * Photo-matched Cycles recipes: [hex, metalness, roughness, clearcoat] per catalogue finish, replacing the catalogue's own
+ * numbers for the path-traced layers only. The catalogue's numbers are tuned for the live WebGL wheels; Cycles reflects the
+ * studio properly, so the same numbers come out darker and glossier than the website's product photographs. These were
+ * calibrated against those photographs (scripts/prerender/finish_calibrate.py, white photo studio, face-on): the median
+ * colour of the wheel is within a few levels of the photo for each. A finish not listed uses the catalogue's numbers
+ * (gloss black and satin black already matched).
+ */
+const PHOTO_RECIPES: Record<string, [string, number, number, number]> = {
+  hyper_black: ['#686a6d', 1, 0.24, 0.8],
+  silver: ['#cacaca', 1, 0.38, 0],
+  pure_bronze: ['#5b3e30', 1, 0.32, 0.4],
+  liquid_metal: ['#a4a7ab', 1, 0.16, 0.8],
+  polished_face: ['#c9c9c9', 1, 0.25, 0],
+  gold: ['#c6b690', 1, 0.5, 0.1]
+};
+
 const combos = [];
 for (const w of STATIC_CATALOG.wheels) {
   if (!w.modelUrl) continue; // the live-only legacy wheels have no rim model to render
@@ -43,7 +60,7 @@ for (const w of STATIC_CATALOG.wheels) {
       console.error(`${w.id}: finish ${id} is not in the catalogue`);
       process.exit(1);
     }
-    combos.push({ name: `${w.id}__${id}__${parseInt(size, 10)}`, rims, finish: [f.hex, f.metalness, f.roughness, f.clearcoat ?? 0], inches: parseInt(size, 10) });
+    combos.push({ name: `${w.id}__${id}__${parseInt(size, 10)}`, rims, finish: PHOTO_RECIPES[id] ?? [f.hex, f.metalness, f.roughness, f.clearcoat ?? 0], inches: parseInt(size, 10) });
   }
 }
 console.log(JSON.stringify(combos, null, 1));
