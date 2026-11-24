@@ -4,6 +4,7 @@
  */
 
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { CarConfiguratorEngine } from './services/CarConfiguratorEngine';
 import { Catalog, STATIC_CATALOG, fetchCatalog, paintsForCar, pickPaintForCar } from './services/catalogService';
 import { nearestRimSize, rimPrice, rimSizes } from './services/pricing';
@@ -24,6 +25,7 @@ import { EnquiryModal } from './components/journey/EnquiryModal';
 import { AccountSheet } from './components/journey/AccountSheet';
 import { Button, IconButton } from './components/journey/ui';
 import { UserRound } from 'lucide-react';
+import { FadeOutFrame, TURN_VIEWS, ViewHotspots } from './components/journey/ViewHotspots';
 import RenderedCarView, { RENDER_ASPECT, loadRenderManifest } from './components/journey/RenderedCarView';
 import { backdropCss, hasBodies, loadFramesCars, loadPlates, loadStillsManifest, loadWheelLayers, NO_WHEEL_LAYERS, plateUrl, renderedStills, wheelLayerFor, type FramesLayout, type WheelLayers } from './services/renderedBody';
 
@@ -181,6 +183,8 @@ export const App: React.FC = () => {
   }, []);
   const [stage, setStage] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
+  /** A drag on a GLB car's frame hands the car to the live engine (orbit with damping) until a view is picked again */
+  const [liveSpin, setLiveSpin] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [summaryImages, setSummaryImages] = useState<string[]>([]);
@@ -387,7 +391,7 @@ export const App: React.FC = () => {
   // The frames are fixed views, so the turntable (Auto-rotate) shows the live model; a view chip goes back to its frame
   // A frames-only car is always its frame (it has no live body for the turntable to show)
   const framesCar = !!framesCars[selectedCar.id];
-  const rendered = route.name === 'configure' && (framesCar || !autoRotate) && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
+  const rendered = route.name === 'configure' && (framesCar || (!autoRotate && !liveSpin)) && (renderedCars[selectedCar.id]?.includes(cameraView) ?? false);
   const hasPlate = rendered && (plates[selectedCar.id]?.includes(cameraView) ?? false);
   // The path-traced wheels for this view and wheel choice (render_car.py --wheel-layer), drawn over the body; the live
   // wheels hide only once the image is in, so a choice without a layer (or one still loading) shows the live ones
@@ -398,6 +402,50 @@ export const App: React.FC = () => {
     engineRef.current?.setWheelsHidden(wheelLayerShown);
   }, [wheelLayerShown, selectedCar.id]);
   const renderedRef = useRef(rendered);
+  // Dragging the car: a frames-only car steps through its rendered turn (rear 3/4, side, front 3/4, front) with a
+  // cross-fade, a GLB car's drag is handed to the live engine. The hotspots hide while a view is changing
+  const lastShown = useRef<{ carId: string; view: CameraViewPreset; paint: PaintColor; layer: typeof wheelLayer } | null>(null);
+  const [fading, setFading] = useState<NonNullable<typeof lastShown.current> | null>(null);
+  useEffect(() => {
+    const prev = lastShown.current;
+    if (!prev || !rendered || prev.carId !== selectedCar.id || prev.view === cameraView) return;
+    setFading(prev);
+    const t = window.setTimeout(() => setFading(null), 320);
+    return () => window.clearTimeout(t);
+  }, [cameraView]);
+  useEffect(() => {
+    lastShown.current = rendered ? { carId: selectedCar.id, view: cameraView, paint: selectedPaint, layer: wheelLayerShown ? wheelLayer : null } : null;
+  });
+  const drag = useRef<{ x: number; acc: number; live: boolean } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const onStageDown = (e: React.PointerEvent) => {
+    if (rendered && e.isPrimary && e.button === 0) drag.current = { x: e.clientX, acc: 0, live: false };
+  };
+  const onStageMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || !stage) return;
+    d.acc += e.clientX - d.x;
+    d.x = e.clientX;
+    const step = Math.max(44, stage.width * 0.1);
+    if (!framesCar) {
+      // GLB car: past a few pixels the live engine takes over, and gets the press it missed
+      if (Math.abs(d.acc) < 6 || d.live) return;
+      d.live = true;
+      flushSync(() => setLiveSpin(true));
+      containerRef.current?.dispatchEvent(new MouseEvent('mousedown', { clientX: e.clientX, clientY: e.clientY, bubbles: true }));
+      return;
+    }
+    const at = TURN_VIEWS.indexOf(cameraView);
+    if (at < 0 || Math.abs(d.acc) < step) return;
+    const next = TURN_VIEWS[at + (d.acc > 0 ? 1 : -1)]; // drag right turns the car's front towards you
+    d.acc = 0;
+    setDragging(true);
+    if (next && renderedCars[selectedCar.id]?.includes(next)) selectView(next);
+  };
+  const onStageUp = () => {
+    drag.current = null;
+    setDragging(false);
+  };
   renderedRef.current = rendered;
   const computeStage = useCallback(() => {
     const inset = controlsInset();
@@ -479,6 +527,7 @@ export const App: React.FC = () => {
   }, [route.name, booted]);
 
   const selectView = useCallback((view: CameraViewPreset) => {
+    setLiveSpin(false); // a view goes back to its frame
     setCameraView(view);
     engineRef.current?.setCameraPreset(view);
   }, []);
@@ -851,9 +900,31 @@ export const App: React.FC = () => {
         </div>
       )}
 
+      {/* The view just left, dissolving into the new one (a drag step or a hotspot) */}
+      {rendered && stage && fading && (
+        <div aria-hidden className="absolute z-[7] pointer-events-none" style={{ ...stage, ...stageEdgeFade(stage) }}>
+          <FadeOutFrame carId={fading.carId} view={fading.view} paint={fading.paint} layer={fading.layer} />
+        </div>
+      )}
+
+      {/* The camera views as hotspots on the car (the chip bar is the fallback while the live car is showing) */}
+      {rendered && stage && (
+        <ViewHotspots
+          view={cameraView}
+          stage={stage}
+          wheelBox={wheelLayers.cars[selectedCar.id]?.[cameraView]?.[0]}
+          hidden={!!fading || dragging}
+          onCamera={(view) => selectView(view)}
+        />
+      )}
+
       {/* The studio: transparent WebGL canvas over the backdrop (only the wheels in rendered mode) */}
       <div
         ref={containerRef}
+        onPointerDown={onStageDown}
+        onPointerMove={onStageMove}
+        onPointerUp={onStageUp}
+        onPointerCancel={onStageUp}
         style={rendered && stage ? stage : undefined}
         className={`absolute ${rendered && stage ? '' : 'inset-0'} z-10 transition-opacity duration-700 ${route.name === 'configure' ? 'cursor-grab active:cursor-grabbing' : ''} ${onJourney && !arriving ? 'opacity-100' : 'opacity-0'}`}
       />
@@ -922,6 +993,7 @@ export const App: React.FC = () => {
           step={step}
           onStep={changeStep}
           cameraView={cameraView}
+          hotspots={rendered && !!stage}
           autoRotate={autoRotate}
           onCamera={(view) => {
             // a view with a pre-rendered frame stops the turntable, so the frame shows

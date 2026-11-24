@@ -32,6 +32,7 @@ export interface ViewerPanelProps {
   step: ConfigStep;
   onStep: (step: ConfigStep) => void;
   cameraView: CameraViewPreset;
+  hotspots?: boolean;
   autoRotate: boolean;
   onCamera: (view: CameraViewPreset) => void;
   /** Absent for a frames-only car (no turntable). */
@@ -260,6 +261,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
             </ul>
           </section>
 
+          {!p.hotspots && (
           <section>
             <H2>View</H2>
             <div className="flex flex-wrap gap-1.5">
@@ -270,6 +272,7 @@ export const ViewerPanel: React.FC<ViewerPanelProps> = (p) => {
               ))}
             </div>
           </section>
+          )}
 
           {p.onToggleRotate && (
             <section>
