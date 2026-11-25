@@ -1,6 +1,6 @@
 """Exports one licensed car from its (fixed) .blend to a live-web GLB for the configurator engine.
 
-    blender -b --python scripts/prerender/export_web_car.py -- <car.blend> <out.glb> [--paint <material, default CarPaint>] [--caliper <colour material, e.g. MetallicRed>]
+    blender -b --python scripts/prerender/export_web_car.py -- <car.blend> <out.glb> [--paint <material, default CarPaint>] [--caliper <colour material, e.g. MetallicRed>] [--subsurf <painted-panel level, default 1>] [--smooth <degrees>]
 
 The engine reads a car's own parts by name: the paint material is called Paint, tyres/discs by material (Tire*, *Disc*), calipers by a
 material containing "caliper". It hides the stock rim by object name, and splits wheel meshes that span both sides of the car itself.
@@ -14,11 +14,13 @@ if len(argv) < 2:
     sys.exit(__doc__)
 src, dst = argv[0], argv[1]
 opts = dict(zip(argv[2::2], argv[3::2]))
-unknown = set(opts) - {'--paint', '--caliper'}
+unknown = set(opts) - {'--paint', '--caliper', '--subsurf', '--smooth'}
 if unknown or len(argv) % 2:
     sys.exit(f'unknown or unpaired options {sorted(unknown)}\n{__doc__}')
 paint_name = opts.get('--paint', 'CarPaint')
 cal_mat = opts.get('--caliper')
+smooth_deg = float(opts['--smooth']) if '--smooth' in opts else None   # re-smooth painted panels by angle (degrees) before export
+paint_levels = int(opts.get('--subsurf', 1))   # subdivision level kept on painted panels (the viewport level of the .blend, Cycles uses 2)
 try:
     bpy.ops.wm.open_mainfile(filepath=src)
 except RuntimeError as e:
@@ -135,7 +137,18 @@ for o in bpy.data.objects:
     painted = any(s.material is paint for s in o.material_slots)
     for m in o.modifiers:
         if m.type == 'SUBSURF':
-            m.levels = 1 if painted else 0
+            m.levels = paint_levels if painted else 0
+
+if smooth_deg is not None:
+    import math
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in bpy.data.objects:
+        if o.type == 'MESH' and any(s.material is paint for s in o.material_slots):
+            o.select_set(True); bpy.context.view_layer.objects.active = o
+    try:
+        bpy.ops.object.shade_smooth_by_angle(angle=math.radians(smooth_deg))
+    except RuntimeError as e:
+        sys.exit(f'{src}: shade smooth failed: {e}')
 
 # One mesh per wheel part and side: axle meshes that span both sides of the car are cut at the centre line (engine corners are per side).
 for o in [o for o in bpy.data.objects if o.type == 'MESH' and re.match(r'^(Tire|Brake|Rim|Wheel_Logo)', o.name)]:
