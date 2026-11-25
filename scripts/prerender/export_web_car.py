@@ -60,6 +60,36 @@ if cal_mat:
     if not n_cal:
         sys.exit(f'{src}: no part near a wheel uses {cal_mat}')
 
+# The engine hides a car's stock rim by the object name "Rim" and keeps tyre, disc and caliper. Blendkit cars name their rim parts anything
+# (rims_003, Wheel_001, Cylinder009), so every part at a wheel hub that is not tyre, disc or caliper becomes Rim_<name>.
+def hub_parts():
+    import mathutils
+    tyres = [o for o in bpy.data.objects if o.type == 'MESH' and any(s.material and re.match(r'TireColor', s.material.name) for s in o.material_slots)]
+    if not tyres:
+        sys.exit(f'{src}: no TireColor tyre to locate the wheels with')
+    hubs = []
+    for t in tyres:
+        pts = [t.matrix_world @ mathutils.Vector(v) for v in t.bound_box]
+        hubs.append(((min(p.y for p in pts) + max(p.y for p in pts)) / 2, (min(p.z for p in pts) + max(p.z for p in pts)) / 2,
+                     (max(p.z for p in pts) - min(p.z for p in pts)) / 2))
+    for o in bpy.data.objects:
+        if o.type != 'MESH':
+            continue
+        pts = [o.matrix_world @ mathutils.Vector(v) for v in o.bound_box]
+        cy = sum(p.y for p in pts) / 8; cz = sum(p.z for p in pts) / 8
+        if any(((cy - hy) ** 2 + (cz - hz) ** 2) ** 0.5 < 0.45 * hr for hy, hz, hr in hubs):
+            yield o
+
+renamed = 0
+for o in list(hub_parts()):
+    names = [s.material.name for s in o.material_slots if s.material]
+    if re.match(r'(Rim|Tire|Tyre|Brake)', o.name) or any(re.match(r'(TireColor|Tire$|Tire\.|BrakeDisc|Caliper_)', n) for n in names):
+        continue
+    o.name = 'Rim_' + o.name; renamed += 1
+if not renamed and not any(re.match(r'Rim', o.name) for o in bpy.data.objects):
+    sys.exit(f'{src}: found no rim parts at the wheel hubs')
+print('rim parts named Rim_*:', renamed)
+
 # Textures the download did not include (zero-size images, e.g. the M3's carbon weave and a tyre sidewall photo) break the exporter and
 # the optimizer: drop those image nodes so the shader falls back to its plain values.
 dropped = 0
@@ -71,6 +101,14 @@ for mat in bpy.data.materials:
             mat.node_tree.nodes.remove(node); dropped += 1
 if dropped:
     print('dropped', dropped, 'image nodes without data')
+
+# The engine greys a car's own tyre by multiplying its base colour (x5.5, then clamping), tuned on rubber of about 0.0044 linear.
+# Cars whose rubber is a little lighter (0.01-0.015) came out pale grey, so tyre materials are set to the tuned value.
+for mat in bpy.data.materials:
+    if mat.node_tree and re.match(r'(TireColor|Tire)(\.\d+)?$', mat.name):
+        bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+        if bsdf and not bsdf.inputs['Base Color'].links:
+            bsdf.inputs['Base Color'].default_value = (0.0044, 0.0044, 0.0044, 1.0)
 
 # Triangle budget (prepared cars are 250-330k): subdivision stays on for painted panels only, everything else exports at its base mesh.
 for o in bpy.data.objects:
@@ -107,7 +145,7 @@ for o in bpy.data.objects:
     o.select_set(o.type in ('MESH', 'EMPTY'))
 try:
     bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
-                              export_image_format='WEBP', export_materials='EXPORT')
+                              export_image_format='AUTO', export_materials='EXPORT')
 except RuntimeError as e:
     sys.exit(f'{src}: glTF export failed: {e}')
 if not os.path.isfile(dst) or os.path.getsize(dst) < 100_000:
