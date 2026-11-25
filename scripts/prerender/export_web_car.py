@@ -7,14 +7,17 @@ material containing "caliper". It hides the stock rim by object name, and splits
 So this keeps every part, renames the paint material to Paint, and gives the objects that use the caliper-colour material their own copy
 named Caliper_<colour>. Written output goes to .scratch/ (never commit it before the author's permission is filed in CREDITS.md).
 """
-import bpy, re, sys
+import bmesh, bpy, os, re, sys
 
 argv = sys.argv[sys.argv.index('--') + 1:]
 if len(argv) < 2:
     sys.exit(__doc__)
 src, dst = argv[0], argv[1]
 cal_mat = argv[2] if len(argv) > 2 else None
-bpy.ops.wm.open_mainfile(filepath=src)
+try:
+    bpy.ops.wm.open_mainfile(filepath=src)
+except RuntimeError as e:
+    sys.exit(f'{src}: cannot open: {e}')
 
 paint = bpy.data.materials.get('CarPaint')
 if not paint:
@@ -46,7 +49,6 @@ for o in bpy.data.objects:
             m.levels = 1 if painted else 0
 
 # One mesh per wheel part and side: axle meshes that span both sides of the car are cut at the centre line (engine corners are per side).
-import bmesh
 for o in [o for o in bpy.data.objects if o.type == 'MESH' and re.match(r'^(Tire|Brake|Rim|Wheel_Logo)', o.name)]:
     if o.modifiers:   # bake the (level-0) modifiers first: the cut below works on the real mesh
         dg = bpy.context.evaluated_depsgraph_get()
@@ -68,7 +70,6 @@ for o in [o for o in bpy.data.objects if o.type == 'MESH' and re.match(r'^(Tire|
 bpy.ops.object.select_all(action='DESELECT')
 for o in bpy.data.objects:
     o.select_set(o.type in ('MESH', 'EMPTY'))
-import os
 try:
     bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
                               export_image_format='WEBP', export_materials='EXPORT')
