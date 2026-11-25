@@ -58,6 +58,7 @@ Shown by `RimThumb` on the wheel picker and the rim pages.
 | `../rim-images/forged_fsa004.webp` | FSA004 | cut-out (rembg) of the owner's product photo from the FORGEDSA website | owner-supplied product photo | |
 | `../rim-images/sixnine_ff1.webp` | FF-1 | cut-out (rembg) of the owner's product photo from the FORGEDSA website | owner-supplied product photo | |
 | `../rim-images/sixnine_ff3.webp` | FF-3 | cut-out (rembg) of the owner's product photo from the FORGEDSA website | owner-supplied product photo | |
+| `m4_convertible_g83.glb` | Prepared package m4_convertible_g83.glb (Drive > 3d cars) | not stated | **Licence not confirmed** | Game-derived per the package READ ME: prototype use only until a licence is in hand. Wheels replaced in the app; paint material `Paint`. |
 
 The in-app credits page (`/credits`, copy in `config/pages.ts`) must be kept in step with this file.
 

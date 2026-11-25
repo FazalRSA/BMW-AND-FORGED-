@@ -67,7 +67,7 @@ for mat in bpy.data.materials:
     if not mat.node_tree:
         continue
     for node in [n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE']:
-        if node.image is None or not node.image.has_data:
+        if node.image is None or node.image.size[0] == 0 or node.image.size[1] == 0:   # size loads lazily-read packed images first
             mat.node_tree.nodes.remove(node); dropped += 1
 if dropped:
     print('dropped', dropped, 'image nodes without data')
@@ -97,6 +97,8 @@ for o in [o for o in bpy.data.objects if o.type == 'MESH' and re.match(r'^(Tire|
     for ob, keep_pos in ((o, True), (other, False)):
         bm = bmesh.new(); bm.from_mesh(ob.data)
         kill = [f for f in bm.faces if ((ob.matrix_world @ f.calc_center_median()).x >= 0) != keep_pos]
+        if not kill or len(kill) == len(bm.faces):   # a cut that would leave nothing (or cut nothing): keep the mesh as it is
+            bm.free(); continue
         bmesh.ops.delete(bm, geom=kill, context='FACES')
         bm.to_mesh(ob.data); bm.free()
 
