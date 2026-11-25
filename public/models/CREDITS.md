@@ -60,3 +60,7 @@ Shown by `RimThumb` on the wheel picker and the rim pages.
 | `../rim-images/sixnine_ff3.webp` | FF-3 | cut-out (rembg) of the owner's product photo from the FORGEDSA website | owner-supplied product photo | |
 
 The in-app credits page (`/credits`, copy in `config/pages.ts`) must be kept in step with this file.
+
+## Zifir3D Fedorov: permission to serve the models live (2026-11-25)
+
+All 15 Blendkit cars (Royalty Free listings, checked 2026-11-25) were previously frames-only because the licence forbids files "directly extractable in the distribution". The author has since agreed, via the site owner, to serve them as live models in this configurator. His condition: present them well, and let our wheels do his work justice. Owner to file the author's written reply (text or screenshot) next to this entry; until a car's live GLB ships, its row above still applies. Quality bar for every live car: side by side with the M2 CS, own factory tyres, brake discs and calipers, no glitches.
