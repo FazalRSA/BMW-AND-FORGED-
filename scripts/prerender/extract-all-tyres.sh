@@ -7,7 +7,10 @@ while IFS='|' read -r car blend dir; do
   f=/opt/blendkit-assets/$blend
   [ -f "$f" ] || { echo "== $car: no $f"; continue; }
   mkdir -p ".scratch/private/$dir"
-  python scripts/prerender/extract_factory_tyres.py -- "$f" ".scratch/private/$dir/factory_tyres.blend" 2>&1 | grep -E "EXTRACTED|no tyre|Error" | sed "s/^/$car: /"
+  out=$(python scripts/prerender/extract_factory_tyres.py -- "$f" ".scratch/private/$dir/factory_tyres.blend" 2>&1)
+  # a car that did not print EXTRACTED failed, whatever the reason: say so instead of skipping it quietly
+  echo "$out" | grep -E "EXTRACTED|no tyre|Error" | sed "s/^/$car: /"
+  echo "$out" | grep -q EXTRACTED || echo "$car: FAILED (no EXTRACTED line)"
 done <<'LIST'
 ix3_m60|ix3_m60/ix3_m60.blend|ix3
 m240i_g42|m240i_g42/m240i_g42_fixed.blend|m240i_g42
