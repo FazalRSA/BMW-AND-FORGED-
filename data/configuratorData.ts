@@ -433,11 +433,8 @@ export const BMW_MODELS: CarModel[] = [
       'velvet_orchid_ii', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'sao_paulo_yellow', 'brooklyn_grey',
       'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_deep_grey'
     ],
-    modelUrl: '/models/m4_convertible_g83.glb',
-    modelRotationDeg: 0,
-    modelLengthM: 4.81,
-    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
-    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
+    modelUrl: null,
+    modelLengthM: 4.801
   },
   {
     // Frames-only (Blendkit Royalty Free "Bmw x3 2025", Zifir3D): no modelUrl, see the iX3 above. The id was chosen for
