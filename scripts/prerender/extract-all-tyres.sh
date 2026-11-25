@@ -14,7 +14,6 @@ while IFS='|' read -r car blend dir; do
 done <<'LIST'
 ix3_m60|ix3_m60/ix3_m60.blend|ix3
 m240i_g42|m240i_g42/m240i_g42_fixed.blend|m240i_g42
-m340i_touring_g21|m340i_touring_g21/m340i_touring_g21.fixed.blend|m340i_touring_g21
 m3_cs_g80|m3_cs_g80/m3_cs_g80_fixed.blend|m3_cs_g80
 m3_cs_touring_g81|m3_cs_touring_g81/m3_cs_touring_g81.fixed.blend|m3_cs_touring_g81
 m3_g80|m3_g80/m3_g80.blend|m3
