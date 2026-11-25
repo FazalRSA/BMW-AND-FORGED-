@@ -102,13 +102,31 @@ for mat in bpy.data.materials:
 if dropped:
     print('dropped', dropped, 'image nodes without data')
 
-# The engine greys a car's own tyre by multiplying its base colour (x5.5, then clamping), tuned on rubber of about 0.0044 linear.
-# Cars whose rubber is a little lighter (0.01-0.015) came out pale grey, so tyre materials are set to the tuned value.
+# The engine's own-tyre path (greyCarTyre) sets the tyre colour to 5.5 and expects a dark base-colour TEXTURE to scale it; with a plain colour
+# the rubber comes out flat light grey. So the tyre materials get a tiny near-black rubber texture (sRGB 18, about 0.006 linear).
+import struct, tempfile, zlib
+def rubber_png(path, v=18, n=4):
+    # not perfectly flat: gltf-transform folds a uniform texture back into a base-colour factor, which the engine's tyre path cannot use
+    raw = b''.join(b'\x00' + b''.join(bytes([v + (x + y) % 3] * 3) for x in range(n)) for y in range(n))
+    def chunk(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+    with open(path, 'wb') as f:
+        f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', n, n, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b''))
+rubber_path = os.path.join(tempfile.mkdtemp(), 'rubber.png')
+try:
+    rubber_png(rubber_path)
+except OSError as e:
+    sys.exit(f'cannot write the rubber texture: {e}')
+try:
+    rubber = bpy.data.images.load(rubber_path)
+    rubber.colorspace_settings.name = 'sRGB'; rubber.pack()
+except RuntimeError as e:
+    sys.exit(f'cannot load the rubber texture {rubber_path}: {e}')
 for mat in bpy.data.materials:
     if mat.node_tree and re.match(r'(TireColor|Tire)(\.\d+)?$', mat.name):
         bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
         if bsdf and not bsdf.inputs['Base Color'].links:
-            bsdf.inputs['Base Color'].default_value = (0.0044, 0.0044, 0.0044, 1.0)
+            tex = mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image = rubber
+            mat.node_tree.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
 
 # Triangle budget (prepared cars are 250-330k): subdivision stays on for painted panels only, everything else exports at its base mesh.
 for o in bpy.data.objects:
