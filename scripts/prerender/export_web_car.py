@@ -19,8 +19,11 @@ if unknown or len(argv) % 2:
     sys.exit(f'unknown or unpaired options {sorted(unknown)}\n{__doc__}')
 paint_name = opts.get('--paint', 'CarPaint')
 cal_mat = opts.get('--caliper')
-smooth_deg = float(opts['--smooth']) if '--smooth' in opts else None   # re-smooth painted panels by angle (degrees) before export
-paint_levels = int(opts.get('--subsurf', 1))   # subdivision level kept on painted panels (the viewport level of the .blend, Cycles uses 2)
+try:
+    smooth_deg = float(opts['--smooth']) if '--smooth' in opts else None   # re-smooth painted panels by angle (degrees) before export
+    paint_levels = int(opts.get('--subsurf', 1))   # subdivision level kept on painted panels (the viewport level of the .blend, Cycles uses 2)
+except ValueError as e:
+    sys.exit(f'bad --smooth/--subsurf value: {e}')
 try:
     bpy.ops.wm.open_mainfile(filepath=src)
 except RuntimeError as e:
