@@ -12,6 +12,7 @@ import argparse, json, math, os, re, sys
 import bpy, bmesh, mathutils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import caliper as caliper_mod   # the monobloc caliper (scripts/prerender/caliper.py)
+import tyre_label               # the tyre's sidewall lettering (scripts/prerender/tyre_label.py)
 import rim_finish               # brushed rim finishes by part (scripts/prerender/rim_finish.py)
 
 ap = argparse.ArgumentParser()
@@ -41,6 +42,7 @@ ap.add_argument('--hero', default='', help="welcome still instead of frames: '<#
 ap.add_argument('--plate', action='store_true', help='studio plates instead of frames: the --hero studio (black void, polished floor, '
                 'the key light over the car) with the car removed, one <out>/<view>/plate.png per view at the frames\' camera and size; '
                 'the configurator draws it behind the body frame, which carries the car\'s own shadow (needs --studio dark)')
+ap.add_argument('--tyres-blend', default='', help='the car\'s own factory tyres (scripts/prerender/extract_factory_tyres.py output): used instead of the generated tyre, resized to the rim fitted')
 ap.add_argument('--wheel-layer', default='', help='path-traced wheel layers instead of frames: a json list of '
                 '{"name", "rims": [front, rear?], "finish": ["#hex", metallic, roughness, clearcoat], "inches"}; for each entry and '
                 'view, the rims (finish on every mesh, as the engine), tyres, discs and calipers at the wheel positions, lit by the '
@@ -610,6 +612,54 @@ def srgb_lin(hx, what):
     return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4))]
 
 
+def tyre_label_png(car_id, front):
+    """The sidewall lettering strip for one axle of a car, from its factory spec (scripts/prerender/factory_specs.json:
+    {car: {"tyre": {"front": {"brand", "model", "size"}, "rear": {...}}}}); None when the car has no spec (a plain tyre).
+    TYRE_LABEL_TEST="BRAND|Model|295/35 R21" forces one for a test render."""
+    t = os.environ.get('TYRE_LABEL_TEST')
+    if t:
+        brand, model, size = t.split('|')
+    else:
+        f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'factory_specs.json')
+        if not os.path.exists(f): return None
+        try:
+            with open(f) as fh: spec = json.load(fh).get(car_id, {}).get('tyre', {}).get('front' if front else 'rear')
+        except (OSError, ValueError) as e:
+            sys.exit(f'{f}: {e}')
+        if not spec or not spec.get('brand') or not spec.get('size'): return None
+        brand, model, size = spec['brand'], spec.get('model', ''), spec['size']
+    out = os.path.join('/tmp', 'tyre_labels', re.sub(r'[^A-Za-z0-9]+', '_', f'{brand}_{model}_{size}') + '.png')
+    return out if os.path.exists(out) else tyre_label.make(brand, model, size, out)
+
+
+def profile_tyre(rubber, x, y, z, r, ri, wd, label=None, sgn=1):
+    """A tyre turned from a profile around the axle (X): bead, gently bulged flat sidewalls, rounded shoulders and a
+    tread with three circumferential grooves, as wheelKit's buildTyre, not a torus."""
+    h = r - ri; hw = wd / 2; gd = min(0.008, h * 0.06)
+    # a real tyre's section is only a little wider than its tread: nearly straight sidewalls, a tight shoulder radius
+    # (the earlier profile bulged 22 % of the half-width past the tread edge and read as a balloon)
+    side = [(-0.90, ri), (-0.955, ri + 0.12 * h), (-0.985, ri + 0.4 * h), (-0.99, ri + 0.65 * h), (-0.965, r - 0.09 * h),
+            (-0.925, r - 0.025 * h), (-0.88, r - 0.003), (-0.84, r)]
+    tread = []
+    for c in (-0.45, 0.0, 0.45):   # grooves 12 mm wide
+        g = 0.012 / hw * 0.5 if hw > 0 else 0.03
+        tread += [(c - g, r), (c - g, r - gd), (c + g, r - gd), (c + g, r)]
+    prof = side + tread + [(-a, rr) for a, rr in reversed(side)]
+    bm = bmesh.new()
+    vs = [bm.verts.new((a * hw, 0, rr)) for a, rr in prof]
+    es = [bm.edges.new((vs[k], vs[k + 1])) for k in range(len(vs) - 1)]
+    bmesh.ops.spin(bm, geom=vs + es, cent=(0, 0, 0), axis=(1, 0, 0), angle=2 * math.pi, steps=144, use_merge=True)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    me = bpy.data.meshes.new('layer_tyre'); bm.to_mesh(me); bm.free()
+    ob = bpy.data.objects.new('layer_tyre', me); sc.collection.objects.link(ob)
+    mat = rubber
+    if label:   # the factory tyre's lettering (tyre_label.py) on a copy of the rubber, so the other tyres stay plain
+        mat = tyre_label.apply_to_material(bpy, rubber.copy(), label, ri, r, sgn)
+    ob.location = (x, y, z); me.materials.append(mat)
+    for pl in me.polygons: pl.use_smooth = True
+    return ob
+
+
 if a.plate:
     # Studio plate: the welcome stills' floor, light pool and black void, without the car (its frames bring the body and
     # its shadow). The key light sits where the hero still's does: placed from the front three-quarter camera, so the
@@ -644,6 +694,8 @@ if a.hero:
     rubber = matp('hero_rubber', (0.022, 0.022, 0.023), 0.0, 0.62)
     disc_m = matp('hero_disc', (0.42, 0.42, 0.43), 1.0, 0.32)
     cal_m = matp('hero_caliper', (0.55, 0.02, 0.02), 0.0, 0.3, 1.0)
+    steel_m = matp('hero_cal_steel', (0.045, 0.045, 0.05), 1.0, 0.4)
+    pad_m = matp('hero_cal_pad', (0.018, 0.018, 0.018), 0.0, 0.85)
     def load_rim(path):
         before = set(bpy.data.objects)
         try: bpy.ops.import_scene.gltf(filepath=path)
@@ -674,16 +726,12 @@ if a.hero:
         rim.rotation_mode = 'XYZ'   # glTF imports use quaternions, which would ignore rotation_euler
         rim.scale = (ro / rad,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
         rim.location = (x, y, z)
-        ri = ro * 0.97; bpy.ops.mesh.primitive_torus_add(major_radius=(r + ri) / 2, minor_radius=(r - ri) / 2,
-                                                         major_segments=96, minor_segments=24, location=(x, y, z), rotation=(0, math.pi / 2, 0))
-        ty = bpy.context.object; ty.scale = (1, 1, wd / (r - ri)); ty.data.materials.append(rubber)
-        for pl in ty.data.polygons: pl.use_smooth = True
+        ri = ro * 0.97
+        profile_tyre(rubber, x, y, z, r, ri, wd, tyre_label_png(a.car, i < 2), sgn)   # the same turned tyre as the wheel layers (a scaled torus read as a bubble)
         bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=ri * 0.78, depth=0.03, location=(x - sgn * 0.07, y, z), rotation=(0, math.pi / 2, 0))
         bpy.context.object.data.materials.append(disc_m)
-        cy_off = 0.62 * ri * 0.78; front = i < 2
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(x - sgn * 0.045, y + (cy_off if front else -cy_off) * 0.7, z + cy_off * 0.7))
-        cal = bpy.context.object; cal.scale = (0.07, 0.15, 0.09); cal.rotation_euler = (math.radians(45 if front else -45), 0, 0)
-        cal.data.materials.append(cal_m)
+        front = i < 2; s_ = r / 0.35
+        caliper_mod.make(bpy, bmesh, mathutils, sc, (cal_m, steel_m, pad_m), x - sgn * 0.07 * s_, y, z, ri * 0.78, s_, -1, sgn, front, rim)
     for o in (src for src, _ in rims): bpy.data.objects.remove(o, do_unlink=True)
     floor.is_shadow_catcher = False   # a real floor: the light pool and the car's reflection are in the picture
     fb = floor.data.materials[0].node_tree.nodes['Principled BSDF']
@@ -795,31 +843,60 @@ if a.wheel_layer:
         rim_cache[path] = (rim, rad, ymin)
         return rim_cache[path]
 
-    def tyre(x, y, z, r, ri, wd):
-        """A tyre turned from a profile around the axle (X): bead, gently bulged flat sidewalls, rounded shoulders and a
-        tread with three circumferential grooves, as wheelKit's buildTyre, not a torus."""
-        h = r - ri; hw = wd / 2; gd = min(0.008, h * 0.06)
-        side = [(-0.90, ri), (-0.97, ri + 0.2 * h), (-1.0, ri + 0.5 * h), (-0.985, ri + 0.78 * h), (-0.94, r - 0.035 * h),
-                (-0.86, r - 0.004), (-0.78, r)]
-        tread = []
-        for c in (-0.45, 0.0, 0.45):   # grooves 12 mm wide
-            g = 0.012 / hw * 0.5 if hw > 0 else 0.03
-            tread += [(c - g, r), (c - g, r - gd), (c + g, r - gd), (c + g, r)]
-        prof = side + tread + [(-a, rr) for a, rr in reversed(side)]
-        bm = bmesh.new()
-        vs = [bm.verts.new((a * hw, 0, rr)) for a, rr in prof]
-        es = [bm.edges.new((vs[k], vs[k + 1])) for k in range(len(vs) - 1)]
-        bmesh.ops.spin(bm, geom=vs + es, cent=(0, 0, 0), axis=(1, 0, 0), angle=2 * math.pi, steps=144, use_merge=True)
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        me = bpy.data.meshes.new('layer_tyre'); bm.to_mesh(me); bm.free()
-        ob = bpy.data.objects.new('layer_tyre', me); sc.collection.objects.link(ob)
-        ob.location = (x, y, z); me.materials.append(rubber)
-        for pl in me.polygons: pl.use_smooth = True
-        return ob
+    def tyre(x, y, z, r, ri, wd, front=True, sgn=1):
+        return profile_tyre(rubber, x, y, z, r, ri, wd, tyre_label_png(a.car, front), sgn)
 
     def caliper(x, y, z, disc_r, s, toward, sgn, front, rim):
         """The fixed monobloc caliper (scripts/prerender/caliper.py): a clean C-section casting, six piston bosses, bridge bolts, never trimmed to the spokes."""
         return caliper_mod.make(bpy, bmesh, mathutils, sc, (cal_m, steel_m, pad_m), x, y, z, disc_r, s, toward, sgn, front, rim)
+
+    def factory_tyres(wheels):
+        """The car's own tyres (a.tyres_blend) in place of the generated ones. `wheels` is [(x, y, z, ri, r)]: where each wheel is in this
+        scene, the bead radius the fitted rim needs and the tread radius. The original file does not place its wheels exactly where this
+        scene has them, so each tyre is first scaled and moved onto the wheel centre it belongs to (one tyre per wheel, or one mesh for the
+        pair of an axle); then the sidewall between bead and tread is stretched or squeezed radially to the new bead, as plus- or
+        minus-sizing does (the outer diameter does not change). The moulded lettering follows its tyre."""
+        import numpy as np
+        try:
+            with bpy.data.libraries.load(a.tyres_blend, link=False) as (src_, dst_):
+                dst_.objects = list(src_.objects)
+        except (OSError, RuntimeError) as e_:
+            sys.exit(f'--tyres-blend {a.tyres_blend}: {e_}')
+        obs = [o for o in dst_.objects if o is not None]
+        co_of, ctr = {}, {}
+        for o in obs:
+            sc.collection.objects.link(o)
+            co = np.empty(len(o.data.vertices) * 3); o.data.vertices.foreach_get('co', co); co = co.reshape(-1, 3)
+            co_of[o.name] = co; ctr[o.name] = np.array([(co[:, k].min() + co[:, k].max()) / 2 for k in range(3)])
+        bodies = [o for o in obs if o.get('tyre_body')]
+        if not bodies:
+            sys.exit(f'--tyres-blend {a.tyres_blend}: no tyre body mesh')
+        plan = {}   # body name -> (scale, centre, target centre, bead radius now, bead radius wanted, tread radius)
+        for o in bodies:
+            co, c = co_of[o.name], ctr[o.name]
+            wide = (co[:, 0].max() - co[:, 0].min()) > 0.5          # one mesh for both tyres of an axle
+            ay = min(wheels, key=lambda w: abs(w[1] - c[1]))[1]
+            axle = [w for w in wheels if abs(w[1] - ay) < 0.06]
+            pick = axle if wide else [min(axle, key=lambda w: abs(w[0] - c[0]))]
+            t = np.array([sum(w[0] for w in pick) / len(pick), sum(w[1] for w in pick) / len(pick), sum(w[2] for w in pick) / len(pick)])
+            rho = np.hypot(co[:, 1] - c[1], co[:, 2] - c[2])
+            r_out = float(rho.max()); k = pick[0][4] / r_out
+            plan[o.name] = (k, c, t, float(rho.min()) * k, pick[0][3], pick[0][4])
+        for o in obs:
+            co, c0 = co_of[o.name], ctr[o.name]
+            near = min(bodies, key=lambda b: float(np.sum((ctr[b.name] - c0) ** 2)))
+            k, c, t, ri_f, ri_n, r_out = plan[near.name]
+            q = (co - c) * k + t                                     # onto this scene's wheel
+            dy, dz = q[:, 1] - t[1], q[:, 2] - t[2]; rho = np.hypot(dy, dz)
+            u = np.clip((rho - ri_f) / max(r_out - ri_f, 1e-4), 0.0, 1.0)
+            new = np.where(rho >= ri_f, ri_n + (r_out - ri_n) * u, rho + (ri_n - ri_f))
+            sf = np.where(rho > 1e-6, new / np.maximum(rho, 1e-6), 1.0)
+            q[:, 1] = t[1] + dy * sf; q[:, 2] = t[2] + dz * sf
+            o.data.vertices.foreach_set('co', q.ravel()); o.data.update()
+            for slot in o.material_slots:   # the rubber is ours (matte, light-linked like the layers); the moulded lettering keeps the model's own material
+                if slot.material and re.match(r'^TireColor', slot.material.name): slot.material = rubber
+            for pl in o.data.polygons: pl.use_smooth = True
+        return obs
 
     def build_wheels(e):
         """The four wheels of one layer, as the engine mounts them (mountRimModel, rimLayout): the rim's largest
@@ -827,7 +904,10 @@ if a.wheel_layer:
         car's own size and the sidewall thins as the rim grows."""
         srgb_lin(e['finish'][0], e['name'])   # a bad colour stops the batch here
         fin = {}   # rim file -> {role: material} (the cap's mark is sized to each rim's own cap)
-        made = []
+        made = []; rims = []
+        ftyres = None
+        if a.tyres_blend:   # the car's own tyres, sized to this rim: bead radius per wheel first
+            ftyres = factory_tyres([(x, y, z, min(min(float(e['inches']) * 0.0127 + 0.008, r - 0.04) * 0.97, r - 0.03), r) for (x, y, z, r, wd) in WHEELS])
         for i, (x, y, z, r, wd) in enumerate(WHEELS):
             src, rad, ymin = load_rim(e['rims'][min(i // 2, len(e['rims']) - 1)])   # front pair first
             sgn = 1 if x > 0 else -1; s = r / 0.35
@@ -842,7 +922,7 @@ if a.wheel_layer:
             rim.scale = (k,) * 3; rim.rotation_euler = (0, 0, sgn * math.pi / 2)   # face (-Y) outwards (+-X)
             rim.location = (x + sgn * (wd / 2 - 0.012 * s + ymin * k), y, z)
             ri = min(ro * 0.97, r - 0.03)
-            ty = tyre(x, y, z, r, ri, wd)
+            ty = None if ftyres is not None else tyre(x, y, z, r, ri, wd, i < 2, sgn)
             bpy.ops.mesh.primitive_cylinder_add(vertices=96, radius=ro * 0.78, depth=0.03, location=(x - sgn * 0.07 * s, y, z),
                                                 rotation=(0, math.pi / 2, 0))
             dk = bpy.context.object; dk.data.materials.append(disc_m)
@@ -851,10 +931,11 @@ if a.wheel_layer:
             hat = bpy.context.object; hat.data.materials.append(hat_m)
             # trailing side on every wheel (behind the axle, as BMW fits them): it shows through the spokes in the 3/4 views
             cal = caliper(x - sgn * 0.07 * s, y, z, ro * 0.78, s, -1, sgn, i < 2, rim)
-            made += [rim, ty, dk, hat, cal]
+            made += [rim, dk, hat, cal] + ([ty] if ty is not None else []); rims.append(rim)
+        made += ftyres or []
         if receivers:
             for o in made: receivers.objects.link(o)
-        for o in made[0::5]: fill_rx.objects.link(o)   # the rims only: lit rubber turns grey
+        for o in rims: fill_rx.objects.link(o)   # the rims only: lit rubber turns grey
         return made, [m for d in fin.values() for m in d.values()]
 
     # The wheel fill: a low softbox beside the camera that lights only the wheels (light linking), as a car photographer

@@ -13,7 +13,7 @@ cd "$(dirname "$0")/../.."
 RIMS=${1:?usage: wheel-layers.sh <decoded rims dir> <out dir> [car ...]}
 OUT=${2:?usage: wheel-layers.sh <decoded rims dir> <out dir> [car ...]}
 shift 2
-CARS=${*:-m4_cs_g82 m2_g87 m5_g90 m5_touring_g99 ix3_m60 m3_g80 m3_touring_g81 x1_u11 x3_g45 m3_cs_g80 m3_cs_touring_g81 m4_g82 m4_csl_g82 m4_convertible_g83 x3_30e_g45 x5_g05 x5m_f95 m240i_g42 m340i_touring_g21}
+CARS=${*:-m4_cs_g82 m2_g87 m5_g90 m5_touring_g99 ix3_m60 m3_g80 m3_touring_g81 x1_u11 x3_g45 m3_cs_g80 m3_cs_touring_g81 m4_g82 m4_csl_g82 m4_convertible_g83 x3_30e_g45 x5_g05 x5m_f95 m240i_g42}
 PY=$(command -v python || command -v python3)
 mkdir -p "$OUT"
 bun scripts/prerender/wheel-combos.ts "$RIMS" 0 > "$OUT/combos_0.json"
@@ -37,6 +37,8 @@ run() { # <combos file> <views>
     if [ ! -f "$g" ]; then echo "== $car: no scene at $g, skipped"; continue; fi
     extra=()
     [ "$car" = m2_g87 ] && extra=(--hide '^Combined3DWheel')   # the M2 file's own wheel rings, as for its hero still
+    # the car's own factory tyres (extract-all-tyres.sh), sized to the rim fitted; the four prepared cars (/tmp/prerender) keep theirs
+    tb="$(dirname "$g")/factory_tyres.blend"; [ -f "$tb" ] && extra+=(--tyres-blend "$tb")
     echo "== $car $2 ($(date +%T))"
     if flock /tmp/forged-heavy.lock "$PY" scripts/prerender/render_car.py "$g" "$OUT/$car" --car "$car" --studio dark \
          --samples 12 --width 1440 --views "$2" --wheel-layer "$1" "${extra[@]}" > "$OUT/last.log" 2>&1; then

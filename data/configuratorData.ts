@@ -176,8 +176,11 @@ export const BMW_MODELS: CarModel[] = [
       'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
       'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue', 'frozen_pure_grey'
     ],
-    modelUrl: null,
-    modelLengthM: 4.79
+    modelUrl: '/models/m3_g80.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.79,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW M3 Touring 2025", Zifir3D): no modelUrl, see the iX3 above
@@ -204,8 +207,11 @@ export const BMW_MODELS: CarModel[] = [
       'isle_of_man_green', 'brooklyn_grey', 'portimao_blue', 'sao_paulo_yellow', 'toronto_red', 'fire_red',
       'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_portimao_blue', 'frozen_pure_grey'
     ],
-    modelUrl: null,
-    modelLengthM: 4.8
+    modelUrl: '/models/m3_touring_g81.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.8,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW X1 M Sportpaket", Zifir3D): no modelUrl, see the iX3 above. The model's
@@ -233,8 +239,11 @@ export const BMW_MODELS: CarModel[] = [
       'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'portimao_blue', 'skyscraper_grey', 'fire_red',
       'storm_bay'
     ],
-    modelUrl: null,
-    modelLengthM: 4.5
+    modelUrl: '/models/x1_u11.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.5,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "Bmw x3 m50 2025", Zifir3D): no modelUrl, see the iX3 above. Its axles were
@@ -262,8 +271,11 @@ export const BMW_MODELS: CarModel[] = [
       'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'skyscraper_grey', 'fire_red', 'portimao_blue',
       'frozen_pure_grey'
     ],
-    modelUrl: null,
-    modelLengthM: 4.755
+    modelUrl: '/models/x3_g45.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.755,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "Bmw m3 cs", Zifir3D): no modelUrl, see the iX3 above. The frames are scaled
@@ -293,8 +305,11 @@ export const BMW_MODELS: CarModel[] = [
     },
     bodyStyle: 'sedan',
     paintIds: ['signal_green', 'frozen_solid_white', 'brooklyn_grey', 'black_sapphire'],
-    modelUrl: null,
-    modelLengthM: 4.795
+    modelUrl: '/models/m3_cs_g80.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.795,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW M3 CS Touring 2025", Zifir3D): no modelUrl, see the iX3 above. The model
@@ -393,8 +408,11 @@ export const BMW_MODELS: CarModel[] = [
     },
     bodyStyle: 'coupe',
     paintIds: ['frozen_brooklyn_grey', 'alpine_white', 'black_sapphire'],
-    modelUrl: null,
-    modelLengthM: 4.794
+    modelUrl: '/models/m4_csl_g82.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.794,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW M4 Convertible 2025", Zifir3D): no modelUrl, see the iX3 above. The model
@@ -433,8 +451,11 @@ export const BMW_MODELS: CarModel[] = [
       'velvet_orchid_ii', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'sao_paulo_yellow', 'brooklyn_grey',
       'skyscraper_grey', 'black_sapphire', 'alpine_white', 'frozen_deep_grey'
     ],
-    modelUrl: null,
-    modelLengthM: 4.801
+    modelUrl: '/models/m4_convertible_g83.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.801,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "Bmw x3 2025", Zifir3D): no modelUrl, see the iX3 above. The id was chosen for
@@ -468,8 +489,11 @@ export const BMW_MODELS: CarModel[] = [
       'alpine_white', 'black_sapphire', 'mineral_white', 'skyscraper_grey', 'sophisto_grey_brilliant_effect', 'dune_grey',
       'arctic_race_blue', 'fire_red', 'tanzanite_blue_ii'
     ],
-    modelUrl: null,
-    modelLengthM: 4.755
+    modelUrl: '/models/x3_30e_g45.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.755,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "Bmw x5 2023", Zifir3D): no modelUrl, see the iX3 above. The download is about
@@ -508,8 +532,11 @@ export const BMW_MODELS: CarModel[] = [
       'blue_ridge_mountain', 'mineral_white', 'alpine_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey',
       'skyscraper_grey', 'manhattan', 'dravit_grey', 'tanzanite_blue_ii', 'ametrin', 'frozen_pure_grey'
     ],
-    modelUrl: null,
-    modelLengthM: 4.935
+    modelUrl: '/models/x5_g05.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.935,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW X5 M Competition", Zifir3D): no modelUrl, see the iX3 above. The model is
@@ -549,8 +576,11 @@ export const BMW_MODELS: CarModel[] = [
       'marina_bay_blue', 'toronto_red', 'donington_grey', 'carbon_black', 'black_sapphire', 'alpine_white', 'mineral_white',
       'manhattan', 'tanzanite_blue_ii', 'ametrin', 'frozen_black'
     ],
-    modelUrl: null,
-    modelLengthM: 4.938
+    modelUrl: '/models/x5m_f95.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.938,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW M240i coupe", Zifir3D): no modelUrl, see the iX3 above. The model is the
@@ -591,48 +621,11 @@ export const BMW_MODELS: CarModel[] = [
       'thundernight', 'alpine_white', 'mineral_white', 'black_sapphire', 'brooklyn_grey', 'portimao_blue', 'melbourne_red',
       'frozen_pure_grey', 'frozen_portimao_blue_c6r'
     ],
-    modelUrl: null,
-    modelLengthM: 4.548
-  },
-  {
-    // Frames-only (Blendkit Royalty Free "BMW 3-Series Touring", Zifir3D): no modelUrl, see the iX3 above. The download
-    // is the facelifted G21 as a 330e M Sport; the M340i's own parts (BMW press kit 05/2022: mesh kidney grille in the
-    // bright surround, M mirror caps in high-gloss black, M High-gloss Shadowline trim and roof rails, trapezoid
-    // tailpipes; the M340i badge) were built onto it in the private copy, the charging flaps closed, the tyres set to
-    // BMW's 662 mm and the body lowered 10 mm for the M Sport suspension. Scaled by the wheelbase (BMW's 2.851 m), which
-    // leaves the body 4.767 m long, 53 mm over BMW's 4.714 m (modelLengthM; public/models/CREDITS.md).
-    id: 'm340i_touring_g21',
-    name: 'BMW M340i Touring',
-    badge: 'M340i Touring G21',
-    generation: 'G21',
-    chassisCode: 'G21 M340i xDrive Touring',
-    // BMW does not sell the 3 Series Touring in South Africa (only the M3 Touring): BMW South Africa sells the M340i as a
-    // Sedan (285 kW, 0-100 km/h 4.3 s). So these are the Touring's own European figures, from BMW's press kit and
-    // technical data sheets (05/2022, 05/2024): 275 kW (374 hp), 500 Nm, 0-100 km/h 4.6 s, 4,714 mm long, wheelbase
-    // 2,851 mm, 48 V mild hybrid. 19-inch M light-alloy wheels per BMW's press release of 17 May 2022 (the data sheet's
-    // tyre table also lists 7.5J x 18 / 8.5J x 18); the 19 x 8J / 19 x 8.5J widths (styles 791 M / 995 M) are from
-    // genuine-parts listings, an estimate; bolt pattern and centre bore are the G-series hub values, not in the data
-    // sheet. paintIds: BMW's 3 Series colours offered on the M340i (launch range 05/2022 and the 2024 update's Arctic Race
-    // Blue and Fire Red; M Brooklyn Grey, the slide's colour, first), and Melbourne Red (A75), the launch range's red, since
-    // it joined BMW_PAINTS with the M240i. Solid Black (668) and Phytonic Blue (C1M) are not in BMW_PAINTS yet. Owner to
-    // confirm.
-    engine: '3.0L B58 Turbo Inline-6 48V Mild Hybrid',
-    power: '374 HP / 275 kW',
-    torque: '500 Nm (369 lb-ft)',
-    acceleration: '0-100 km/h in 4.6s',
-    recommendedWheelFitment: {
-      front: '19 x 8J',
-      rear: '19 x 8.5J',
-      pcd: '5x112',
-      cb: '66.6mm'
-    },
-    bodyStyle: 'touring',
-    paintIds: [
-      'brooklyn_grey', 'alpine_white', 'mineral_white', 'black_sapphire', 'skyscraper_grey', 'portimao_blue',
-      'arctic_race_blue', 'fire_red', 'melbourne_red', 'frozen_pure_grey'
-    ],
-    modelUrl: null,
-    modelLengthM: 4.714
+    modelUrl: '/models/m240i_g42.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.548,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   }
 ];
 

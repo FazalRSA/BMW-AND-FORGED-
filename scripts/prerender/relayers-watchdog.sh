@@ -10,5 +10,6 @@ LOG=$OUT.log
 pgrep -f scripts/prerender/wheel-layers.sh >/dev/null && exit 0
 grep -q '^DONE' "$LOG" 2>/dev/null && exit 0
 [ -f /tmp/prerender/m2_g87.glb ] || exit 0   # the four prepared cars' scenes are rebuilt by render-all.sh; nothing to resume without them
-(PATH=/opt/bpyenv/bin:$PATH setsid nohup scripts/prerender/wheel-layers.sh .scratch/wl/rims2 "$OUT" >> "$LOG" 2>&1 &)
+CARS=; [ -f "$OUT.cars" ] && CARS=$(cat "$OUT.cars")   # a run limited to some cars lists them in <out>.cars
+(PATH=/opt/bpyenv/bin:$PATH setsid nohup scripts/prerender/wheel-layers.sh .scratch/wl/rims2 "$OUT" $CARS >> "$LOG" 2>&1 &)
 echo "wheel-layer render restarted ($(date -u +%T))"

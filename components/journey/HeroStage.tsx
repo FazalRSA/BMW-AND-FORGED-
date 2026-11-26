@@ -11,7 +11,7 @@ import { cx } from './ui';
  * Stamp on every hero image URL. The stills keep their names when re-rendered and /hero/ is cached for a day plus a week of
  * stale-while-revalidate, so bump this whenever public/hero/* changes (phones kept showing the old M3 Touring still).
  */
-export const HERO_VERSION = '20261123d';
+export const HERO_VERSION = '20261124a';
 export const heroUrl = (carId: string, width: 960 | 1600) => `/hero/${carId}-${width}.webp?v=${HERO_VERSION}`;
 
 /** One car on the welcome stage: a Cycles still rendered in the reference studio (public/hero/<carId>-<w>.webp). */
@@ -42,8 +42,7 @@ export const HERO_SLIDES: HeroSlide[] = [
   { carId: 'x3_30e_g45', name: 'BMW X3', paint: 'Arctic Race Blue Metallic', paintId: 'arctic_race_blue' },
   { carId: 'x5_g05', name: 'BMW X5', paint: 'Blue Ridge Mountain Metallic', paintId: 'blue_ridge_mountain' },
   { carId: 'x5m_f95', name: 'BMW X5 M Competition', paint: 'Marina Bay Blue Metallic', paintId: 'marina_bay_blue' },
-  { carId: 'm240i_g42', name: 'BMW M240i', paint: 'Thundernight Metallic', paintId: 'thundernight' },
-  { carId: 'm340i_touring_g21', name: 'BMW M340i Touring', paint: 'Brooklyn Grey Metallic', paintId: 'brooklyn_grey' }
+  { carId: 'm240i_g42', name: 'BMW M240i', paint: 'Thundernight Metallic', paintId: 'thundernight' }
 ];
 
 const WHEEL_THRESHOLD = 40; // px of scroll in one gesture before it moves one car
