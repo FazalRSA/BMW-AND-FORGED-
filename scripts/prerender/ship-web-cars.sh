@@ -3,7 +3,7 @@
 # model fields (real length kept), the manifest entry turns from frames-only into frames + live model (as the four prepared cars: Cycles frames
 # at rest, the GLB when the car is turned), and the credits row records the author's permission. One migration per car is written, not applied.
 #   scripts/prerender/ship-web-cars.sh <car id> [car id ...]
-# Needs the dev server only for nothing: ingest runs without --check. Author's permission (CREDITS.md) must be filed before this is merged.
+# Needs no dev server (ingest runs without --check). The author's written permission (CREDITS.md) must be filed before this is merged.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 [ $# -gt 0 ] || { echo "usage: $0 <car id> ..."; exit 2; }
@@ -17,7 +17,8 @@ const p=m.split(/^    id: '/m).slice(1).find(s=>s.startsWith('$id'+\"'\"));const
     || { echo "FAILED $id: no modelLengthM in the catalogue"; fail=1; continue; }
   credits_before=$(mktemp) && cp public/models/CREDITS.md "$credits_before" || { echo "FAILED $id: cannot back up CREDITS.md"; fail=1; continue; }
   if ! node scripts/ingest-car.mjs "$glb" --car "$id" --length "$len" --hide-match '(^|[^a-z])rim($|[^a-z])' --keep-renders > ".scratch/web/ship-$id.log" 2>&1; then
-    echo "FAILED $id: ingest (see .scratch/web/ship-$id.log)"; fail=1; continue
+    cp "$credits_before" public/models/CREDITS.md; rm -f "$credits_before"   # a failed ingest must not leave its generic credits row behind
+    echo "FAILED $id: ingest (see .scratch/web/ship-$id.log); inspect git status before going on"; fail=1; continue
   fi
   # ingest adds a generic 'licence not confirmed' row; put back the file as it was before (keeping earlier cars' rows from this run), the real row is written below
   cp "$credits_before" public/models/CREDITS.md && rm -f "$credits_before" || { echo "FAILED $id: cannot restore CREDITS.md"; fail=1; continue; }
