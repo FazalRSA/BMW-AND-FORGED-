@@ -1,6 +1,6 @@
 """Exports one licensed car from its (fixed) .blend to a live-web GLB for the configurator engine.
 
-    blender -b --python scripts/prerender/export_web_car.py -- <car.blend> <out.glb> [--paint <material, default CarPaint>] [--caliper <colour material, e.g. MetallicRed>] [--subsurf <painted-panel level, default 1>] [--smooth <degrees>]
+    blender -b --python scripts/prerender/export_web_car.py -- <car.blend> <out.glb> [--paint <material, default CarPaint>] [--caliper <colour material, e.g. MetallicRed>] [--subsurf <painted-panel level, default 1>] [--smooth <degrees>] [--paint-min-size <metres>]
 
 The engine reads a car's own parts by name: the paint material is called Paint, tyres/discs by material (Tire*, *Disc*), calipers by a
 material containing "caliper". It hides the stock rim by object name, and splits wheel meshes that span both sides of the car itself.
@@ -14,13 +14,14 @@ if len(argv) < 2:
     sys.exit(__doc__)
 src, dst = argv[0], argv[1]
 opts = dict(zip(argv[2::2], argv[3::2]))
-unknown = set(opts) - {'--paint', '--caliper', '--subsurf', '--smooth'}
+unknown = set(opts) - {'--paint', '--caliper', '--subsurf', '--smooth', '--paint-min-size'}
 if unknown or len(argv) % 2:
     sys.exit(f'unknown or unpaired options {sorted(unknown)}\n{__doc__}')
 paint_name = opts.get('--paint', 'CarPaint')
 cal_mat = opts.get('--caliper')
 try:
     smooth_deg = float(opts['--smooth']) if '--smooth' in opts else None   # re-smooth painted panels by angle (degrees) before export
+    paint_min_size = float(opts['--paint-min-size']) if '--paint-min-size' in opts else None   # metres: smaller parts sharing the paint material stay unpainted (the M4's body shares one black with its trim)
     paint_levels = int(opts.get('--subsurf', 1))   # subdivision level kept on painted panels (the viewport level of the .blend, Cycles uses 2)
 except ValueError as e:
     sys.exit(f'bad --smooth/--subsurf value: {e}')
@@ -32,7 +33,23 @@ except RuntimeError as e:
 paint = bpy.data.materials.get(paint_name)
 if not paint:
     sys.exit(f'{src}: no material {paint_name!r}; pass --paint <the body paint material>')
+trim_mat = None
+if paint_min_size:
+    trim_mat = paint.copy(); trim_mat.name = paint.name + '_trim'
 paint.name = 'Paint'
+if trim_mat:
+    import mathutils
+    swapped = 0
+    for o in bpy.data.objects:
+        if o.type != 'MESH' or not any(sl.material is paint for sl in o.material_slots):
+            continue
+        pts = [o.matrix_world @ mathutils.Vector(v) for v in o.bound_box]
+        if max(max(p[i] for p in pts) - min(p[i] for p in pts) for i in range(3)) < paint_min_size:
+            for sl in o.material_slots:
+                if sl.material is paint:
+                    sl.material = trim_mat
+            swapped += 1
+    print('kept', swapped, 'small parts off the paint')
 
 n_cal = 0
 if cal_mat:
@@ -132,6 +149,22 @@ for mat in bpy.data.materials:
         if bsdf and not bsdf.inputs['Base Color'].links:
             tex = mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image = rubber
             mat.node_tree.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+
+# Glass made of a node setup the exporter cannot read (no Principled BSDF) exports as an empty material, and gltf-transform then merges all such
+# glass into one (the M3 CS Touring's windows took the tail-lamp glass's name and came out bright red). Give each a plain Principled BSDF of its
+# own colour: red lens glass for names with "red", dark smoked glass for the rest.
+for mat in bpy.data.materials:
+    if mat.users and 'glass' in mat.name.lower() and mat.node_tree and not any(n.type == 'BSDF_PRINCIPLED' for n in mat.node_tree.nodes):
+        red = 'red' in mat.name.lower()
+        mat.node_tree.nodes.clear()
+        out = mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
+        bsdf = mat.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+        bsdf.inputs['Base Color'].default_value = (0.45, 0.01, 0.015, 1.0) if red else (0.02, 0.02, 0.02, 1.0)
+        bsdf.inputs['Roughness'].default_value = 0.05
+        bsdf.inputs['Alpha'].default_value = 0.5 if red else 0.35
+        mat.node_tree.links.new(bsdf.outputs['BSDF'], out.inputs['Surface'])
+        mat.diffuse_color = (*bsdf.inputs['Base Color'].default_value[:3], bsdf.inputs['Alpha'].default_value)
+        print('plain glass for', mat.name)
 
 # Triangle budget (prepared cars are 250-330k; one level on trim took the X3 to 1.3M): painted panels keep --subsurf levels, the rest none.
 for o in bpy.data.objects:

@@ -149,8 +149,11 @@ export const BMW_MODELS: CarModel[] = [
       'alpine_white', 'mineral_white', 'black_sapphire', 'carbon_black', 'brooklyn_grey', 'fire_red', 'storm_bay',
       'frozen_deep_grey_c64'
     ],
-    modelUrl: null,
-    modelLengthM: 4.79
+    modelUrl: '/models/ix3_m60.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.79,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW M3 Sedan 2025", Zifir3D): no modelUrl, see the iX3 above
@@ -338,8 +341,11 @@ export const BMW_MODELS: CarModel[] = [
     },
     bodyStyle: 'touring',
     paintIds: ['british_racing_green', 'laguna_seca_blue', 'frozen_solid_white', 'black_sapphire'],
-    modelUrl: null,
-    modelLengthM: 4.796
+    modelUrl: '/models/m3_cs_touring_g81.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.796,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "BMW M4 Coupe 2024", Zifir3D): no modelUrl, see the iX3 above. The model is
@@ -376,8 +382,11 @@ export const BMW_MODELS: CarModel[] = [
       'sao_paulo_yellow', 'isle_of_man_green', 'portimao_blue', 'toronto_red', 'brooklyn_grey', 'skyscraper_grey',
       'black_sapphire', 'alpine_white', 'frozen_portimao_blue'
     ],
-    modelUrl: null,
-    modelLengthM: 4.801
+    modelUrl: '/models/m4_g82.glb',
+    modelRotationDeg: 0,
+    modelLengthM: 4.801,
+    paintMeshMatch: '(^|[^a-z])paint($|[^a-z])',
+    hideMeshMatch: '(^|[^a-z])rim($|[^a-z])'
   },
   {
     // Frames-only (Blendkit Royalty Free "Bmw m4 csl", Zifir3D): no modelUrl, see the iX3 above. The model's carbon

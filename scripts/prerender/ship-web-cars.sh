@@ -44,6 +44,18 @@ row = t[i:j].replace("Blendkit **Royalty Free** (paid plan, the owner's account)
 t = t[:i] + row + t[j:]
 tmp = c + '.tmp'; open(tmp, 'w').write(t); os.replace(tmp, c)
 PY
+  mig=$(ls -t supabase/migrations/*_car_"$id"_prepared_model.sql 2>/dev/null | head -1)
+  [ -n "$mig" ] || { echo "FAILED $id: ingest wrote no migration"; fail=1; continue; }
+  # ingest's own migration header says "licence not confirmed": replace it (same text as the merged car migrations)
+  python3 - "$id" "$mig" <<'PY' || { echo "FAILED $id: migration header"; fail=1; continue; }
+import os, sys
+car, f = sys.argv[1:3]
+s = open(f).read(); i = s.index('insert into public.cars')
+head = (f"-- {car}: live model served from the repo at /models/{car}.glb (the car's own tyres, discs and calipers; frames stay for the stage at rest).\n"
+        "-- Blendkit Royalty Free model by Zifir3D Fedorov; the author agreed to live serving (2026-11-25), see public/models/CREDITS.md.\n"
+        "-- Apply only after the GLB is deployed, or the car has no model to load. Only the model fields change; specs and paints are untouched.\n")
+tmp = f + '.tmp'; open(tmp, 'w').write(head + s[i:]); os.replace(tmp, f)
+PY
   echo "OK $id (length $len)"
 done
 exit $fail

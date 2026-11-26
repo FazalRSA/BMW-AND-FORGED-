@@ -1,45 +1,12 @@
 {
- "ix3_m60": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8106,
-    0.3735,
-    1.5075,
-    1.0671
-   ],
-   "front-right": [
-    0.8128,
-    0.3735,
-    1.5073,
-    1.0671
-   ],
-   "rear-left": [
-    -0.8106,
-    0.3735,
-    -1.3978,
-    1.0671
-   ],
-   "rear-right": [
-    0.8128,
-    0.3735,
-    -1.3979,
-    1.0671
-   ]
-  },
-  "footprint": [
-   2.406,
-   1.083
-  ]
- },
+ "ix3_m60": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m3_g80": [
   "front",
   "frontThreeQuarter",
@@ -72,47 +39,14 @@
   "side",
   "top"
  ],
- "m3_cs_touring_g81": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8014,
-    0.3465,
-    1.5196,
-    0.9901
-   ],
-   "front-right": [
-    0.7995,
-    0.3465,
-    1.5189,
-    0.9901
-   ],
-   "rear-left": [
-    -0.8014,
-    0.3465,
-    -1.3349,
-    0.9901
-   ],
-   "rear-right": [
-    0.7995,
-    0.3465,
-    -1.3356,
-    0.9901
-   ]
-  },
-  "footprint": [
-   2.42,
-   1.039
-  ]
- },
+ "m3_cs_touring_g81": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m3_cs_g80": [
   "front",
   "frontThreeQuarter",
@@ -129,47 +63,14 @@
   "side",
   "top"
  ],
- "m4_g82": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8,
-    0.3457,
-    1.5396,
-    0.9876
-   ],
-   "front-right": [
-    0.8013,
-    0.3457,
-    1.5387,
-    0.9876
-   ],
-   "rear-left": [
-    -0.8,
-    0.3457,
-    -1.3163,
-    0.9876
-   ],
-   "rear-right": [
-    0.8013,
-    0.3457,
-    -1.3172,
-    0.9876
-   ]
-  },
-  "footprint": [
-   2.412,
-   1.04
-  ]
- },
+ "m4_g82": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m4_convertible_g83": [
   "front",
   "frontThreeQuarter",
