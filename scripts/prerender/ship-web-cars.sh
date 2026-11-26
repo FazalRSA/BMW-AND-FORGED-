@@ -15,10 +15,12 @@ for id in "$@"; do
 const t=require('fs').readFileSync('data/configuratorData.ts','utf8');const m=t.slice(t.indexOf('export const BMW_MODELS'),t.indexOf('export const BMW_PAINTS'));
 const p=m.split(/^    id: '/m).slice(1).find(s=>s.startsWith('$id'+\"'\"));const v=p&&(p.match(/modelLengthM:\s*([\d.]+)/)||[])[1];if(!v){process.exit(1)}console.log(v)") \
     || { echo "FAILED $id: no modelLengthM in the catalogue"; fail=1; continue; }
+  credits_before=$(mktemp) && cp public/models/CREDITS.md "$credits_before" || { echo "FAILED $id: cannot back up CREDITS.md"; fail=1; continue; }
   if ! node scripts/ingest-car.mjs "$glb" --car "$id" --length "$len" --hide-match '(^|[^a-z])rim($|[^a-z])' --keep-renders > ".scratch/web/ship-$id.log" 2>&1; then
     echo "FAILED $id: ingest (see .scratch/web/ship-$id.log)"; fail=1; continue
   fi
-  git checkout -- public/models/CREDITS.md   # ingest writes a generic 'licence not confirmed' row; the real one is written below
+  # ingest adds a generic 'licence not confirmed' row; put back the file as it was before (keeping earlier cars' rows from this run), the real row is written below
+  cp "$credits_before" public/models/CREDITS.md && rm -f "$credits_before" || { echo "FAILED $id: cannot restore CREDITS.md"; fail=1; continue; }
   python3 - "$id" <<'PY' || { echo "FAILED $id: manifest/credits edit"; fail=1; continue; }
 import json, re, sys
 car = sys.argv[1]
@@ -27,16 +29,19 @@ raw = open(p).read(); m = json.loads(raw)
 e = m.get(car)
 if isinstance(e, dict): m[car] = e['views']
 elif e is None: sys.exit(f'{car} is not in the manifest')
-open(p, 'w').write(json.dumps(m, indent=1, ensure_ascii=False) + ('\n' if raw.endswith('\n') else ''))
+import os
+tmp = p + '.tmp'; open(tmp, 'w').write(json.dumps(m, indent=1, ensure_ascii=False) + ('\n' if raw.endswith('\n') else '')); os.replace(tmp, p)
 c = 'public/models/CREDITS.md'; t = open(c).read()
 old_file = f"_(no file: frames only)_ `../renders/{car}/`"
+if f"`{car}.glb`, frames" in t:
+    sys.exit(0)   # already shipped: the row is done
 if old_file not in t: sys.exit(f'no frames-only credits row for {car}')
 t = t.replace(old_file, f"`{car}.glb`, frames `../renders/{car}/`", 1)
 i = t.index(f"`{car}.glb`, frames"); j = t.index('\n', i)
 row = t[i:j].replace("Blendkit **Royalty Free** (paid plan, the owner's account)",
     "Blendkit **Royalty Free** (paid plan, the owner's account); served live with the author's permission (Zifir3D Fedorov, 2026-11-25, written reply to be filed)", 1)
 t = t[:i] + row + t[j:]
-open(c, 'w').write(t)
+tmp = c + '.tmp'; open(tmp, 'w').write(t); os.replace(tmp, c)
 PY
   echo "OK $id (length $len)"
 done
