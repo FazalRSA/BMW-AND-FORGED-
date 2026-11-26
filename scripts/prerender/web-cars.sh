@@ -6,10 +6,10 @@ set -uo pipefail
 cd "$(dirname "$0")/../.."
 mkdir -p .scratch/web
 want=("$@"); fail=0
-while IFS=$'\t' read -r id blend paint cal; do
+while IFS=$'\t' read -r id blend paint cal extra; do
   [[ -z "$id" || "$id" == \#* ]] && continue
   if [ ${#want[@]} -gt 0 ] && [[ ! " ${want[*]} " == *" $id "* ]]; then continue; fi
-  args=(--paint "$paint" --smooth "${SMOOTH:-30}"); [ -n "$cal" ] && args+=(--caliper "$cal")
+  args=(--paint "$paint" --smooth "${SMOOTH:-30}"); [ -n "${extra:-}" ] && read -r -a more <<< "$extra" && args+=("${more[@]}"); [ -n "$cal" ] && args+=(--caliper "$cal")
   rm -f ".scratch/web/$id.raw.glb" ".scratch/web/$id.glb"   # never accept a file left by an earlier run
   blender -b --python scripts/prerender/export_web_car.py -- "/opt/blendkit-assets/$blend" ".scratch/web/$id.raw.glb" "${args[@]}" > ".scratch/web/$id.export.log" 2>&1
   rc=$?
