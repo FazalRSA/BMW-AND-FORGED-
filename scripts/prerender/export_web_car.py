@@ -133,20 +133,22 @@ for mat in bpy.data.materials:
             tex = mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image = rubber
             mat.node_tree.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
 
-# Triangle budget (prepared cars are 250-330k): subdivision stays on for painted panels only, everything else exports at its base mesh.
+# Triangle budget (prepared cars are 250-330k; one level on trim took the X3 to 1.3M): painted panels keep --subsurf levels, the rest none.
 for o in bpy.data.objects:
     if o.type != 'MESH':
         continue
     painted = any(s.material is paint for s in o.material_slots)
+    level = paint_levels if painted else 0
     for m in o.modifiers:
         if m.type == 'SUBSURF':
-            m.levels = paint_levels if painted else 0
+            m.levels = level
 
 if smooth_deg is not None:
     import math
+    hub_names = {o.name for o in hub_parts()}
     bpy.ops.object.select_all(action='DESELECT')
     for o in bpy.data.objects:
-        if o.type == 'MESH' and any(s.material is paint for s in o.material_slots):
+        if o.type == 'MESH' and o.name not in hub_names:   # every body part, not only the paint: trim and bumpers crumpled too
             o.select_set(True); bpy.context.view_layer.objects.active = o
     try:
         bpy.ops.object.shade_smooth_by_angle(angle=math.radians(smooth_deg))
