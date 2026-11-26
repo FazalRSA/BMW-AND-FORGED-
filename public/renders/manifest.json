@@ -40,170 +40,38 @@
    1.083
   ]
  },
- "m3_g80": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.7904,
-    0.3434,
-    1.5432,
-    0.9812
-   ],
-   "front-right": [
-    0.7866,
-    0.3434,
-    1.5433,
-    0.9812
-   ],
-   "rear-left": [
-    -0.7904,
-    0.3434,
-    -1.3118,
-    0.9812
-   ],
-   "rear-right": [
-    0.7866,
-    0.3434,
-    -1.3117,
-    0.9812
-   ]
-  },
-  "footprint": [
-   2.413,
-   1.04
-  ]
- },
- "m3_touring_g81": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.7953,
-    0.3464,
-    1.537,
-    0.9898
-   ],
-   "front-right": [
-    0.7953,
-    0.3464,
-    1.5371,
-    0.9898
-   ],
-   "rear-left": [
-    -0.7953,
-    0.3464,
-    -1.311,
-    0.9898
-   ],
-   "rear-right": [
-    0.7953,
-    0.3464,
-    -1.311,
-    0.9898
-   ]
-  },
-  "footprint": [
-   2.41,
-   1.039
-  ]
- },
- "x1_u11": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.7809,
-    0.3533,
-    1.3503,
-    1.0094
-   ],
-   "front-right": [
-    0.7838,
-    0.3533,
-    1.3503,
-    1.0094
-   ],
-   "rear-left": [
-    -0.7806,
-    0.3533,
-    -1.2947,
-    1.0094
-   ],
-   "rear-right": [
-    0.7841,
-    0.3533,
-    -1.2947,
-    1.0094
-   ]
-  },
-  "footprint": [
-   2.262,
-   1.036
-  ]
- },
- "x3_g45": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.7992,
-    0.3713,
-    1.524,
-    1.0609
-   ],
-   "front-right": [
-    0.7992,
-    0.3713,
-    1.524,
-    1.0609
-   ],
-   "rear-left": [
-    -0.8271,
-    0.3713,
-    -1.3216,
-    1.0609
-   ],
-   "rear-right": [
-    0.8271,
-    0.3713,
-    -1.3216,
-    1.0609
-   ]
-  },
-  "footprint": [
-   2.378,
-   1.053
-  ]
- },
+ "m3_g80": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "m3_touring_g81": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "x1_u11": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "x3_g45": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m3_cs_touring_g81": {
   "framesOnly": true,
   "views": [
@@ -245,88 +113,22 @@
    1.039
   ]
  },
- "m3_cs_g80": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.787,
-    0.3401,
-    1.5433,
-    0.9716
-   ],
-   "front-right": [
-    0.7927,
-    0.3401,
-    1.5436,
-    0.9716
-   ],
-   "rear-left": [
-    -0.787,
-    0.3401,
-    -1.3139,
-    0.9716
-   ],
-   "rear-right": [
-    0.7927,
-    0.3401,
-    -1.3135,
-    0.9716
-   ]
-  },
-  "footprint": [
-   2.402,
-   1.039
-  ]
- },
- "m4_csl_g82": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8112,
-    0.3428,
-    1.5253,
-    0.9793
-   ],
-   "front-right": [
-    0.8112,
-    0.3428,
-    1.5253,
-    0.9793
-   ],
-   "rear-left": [
-    -0.8045,
-    0.3428,
-    -1.3318,
-    0.9793
-   ],
-   "rear-right": [
-    0.8045,
-    0.3428,
-    -1.3318,
-    0.9793
-   ]
-  },
-  "footprint": [
-   2.416,
-   1.037
-  ]
- },
+ "m3_cs_g80": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "m4_csl_g82": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m4_g82": {
   "framesOnly": true,
   "views": [
@@ -368,211 +170,46 @@
    1.04
   ]
  },
- "m4_convertible_g83": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.7995,
-    0.3468,
-    1.5387,
-    0.9908
-   ],
-   "front-right": [
-    0.8008,
-    0.3468,
-    1.5387,
-    0.9908
-   ],
-   "rear-left": [
-    -0.7995,
-    0.3468,
-    -1.3172,
-    0.9908
-   ],
-   "rear-right": [
-    0.8008,
-    0.3468,
-    -1.3172,
-    0.9908
-   ]
-  },
-  "footprint": [
-   2.412,
-   1.04
-  ]
- },
- "x3_30e_g45": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8049,
-    0.374,
-    1.529,
-    1.0685
-   ],
-   "front-right": [
-    0.8049,
-    0.374,
-    1.529,
-    1.0685
-   ],
-   "rear-left": [
-    -0.8296,
-    0.3742,
-    -1.3376,
-    1.0687
-   ],
-   "rear-right": [
-    0.8296,
-    0.3742,
-    -1.3376,
-    1.0687
-   ]
-  },
-  "footprint": [
-   2.385,
-   1.06
-  ]
- },
- "x5_g05": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8346,
-    0.3735,
-    1.5597,
-    1.0671
-   ],
-   "front-right": [
-    0.8346,
-    0.3735,
-    1.5597,
-    1.0671
-   ],
-   "rear-left": [
-    -0.8346,
-    0.3735,
-    -1.4161,
-    1.0671
-   ],
-   "rear-right": [
-    0.8346,
-    0.3735,
-    -1.4161,
-    1.0671
-   ]
-  },
-  "footprint": [
-   2.491,
-   1.099
-  ]
- },
- "x5m_f95": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.8336,
-    0.3734,
-    1.5825,
-    1.0667
-   ],
-   "front-right": [
-    0.8336,
-    0.3734,
-    1.5825,
-    1.0667
-   ],
-   "rear-left": [
-    -0.8336,
-    0.3734,
-    -1.3921,
-    1.0667
-   ],
-   "rear-right": [
-    0.8336,
-    0.3734,
-    -1.3921,
-    1.0667
-   ]
-  },
-  "footprint": [
-   2.486,
-   1.109
-  ]
- },
- "m240i_g42": {
-  "framesOnly": true,
-  "views": [
-   "front",
-   "frontThreeQuarter",
-   "frontWheel",
-   "rearThreeQuarter",
-   "side",
-   "top"
-  ],
-  "wheels": {
-   "front-left": [
-    -0.7761,
-    0.3375,
-    1.4497,
-    0.9642
-   ],
-   "front-right": [
-    0.7718,
-    0.3375,
-    1.4501,
-    0.9642
-   ],
-   "rear-left": [
-    -0.7761,
-    0.3375,
-    -1.2913,
-    0.9642
-   ],
-   "rear-right": [
-    0.7718,
-    0.3375,
-    -1.2908,
-    0.9642
-   ]
-  },
-  "footprint": [
-   2.307,
-   1.052
-  ]
- },
+ "m4_convertible_g83": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "x3_30e_g45": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "x5_g05": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "x5m_f95": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
+ "m240i_g42": [
+  "front",
+  "frontThreeQuarter",
+  "frontWheel",
+  "rearThreeQuarter",
+  "side",
+  "top"
+ ],
  "m4_cs_g82": [
   "front",
   "frontThreeQuarter",
